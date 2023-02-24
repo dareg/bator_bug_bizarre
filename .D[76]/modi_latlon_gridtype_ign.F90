@@ -1,0 +1,12 @@
+!depfile:latlon_gridtype_ign.F90
+MODULE MODI_LATLON_GRIDTYPE_IGN
+INTERFACE
+      SUBROUTINE LATLON_GRIDTYPE_IGN(G,KL,PDIR)
+USE MODD_SFX_GRID_n, ONLY : GRID_t
+TYPE(GRID_t), INTENT(INOUT) :: G
+INTEGER,                    INTENT(IN)  :: KL         ! number of points
+REAL, DIMENSION(KL),        INTENT(OUT) :: PDIR ! direction of main grid Y axis (deg. from N, clockwise)
+END SUBROUTINE LATLON_GRIDTYPE_IGN
+
+END INTERFACE
+END MODULE MODI_LATLON_GRIDTYPE_IGN

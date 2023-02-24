@@ -1,0 +1,246 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:54      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:54      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_window_e_budget.F90
+
+(    1) !depfile:window_e_budget.F90
+(    2) MODULE MODI_WINDOW_E_BUDGET
+(    3) INTERFACE
+(    4) SUBROUTINE WINDOW_E_BUDGET(B, PEMIS_WIN, PLW_W_TO_WIN, PLW_R_TO_WIN, PLW_G_TO_WIN, &
+(    5)                            PLW_NR_TO_WIN, PLW_S_TO_WIN, PRAD_RF_WIN, PRAD_WL_WIN,  &
+(    6)                            PABS_SW_WIN, PLW_RAD, PAC_WL, PRADHT_IN, PTS_FL, PRHOA, &
+(    7)                            PDN_RD, PT_CANYON, PTS_WL, PTS_RD, PTSN_RD, PTS_GD,     &
+(    8)                            PRAD_WIN_FL, PRAD_WIN_MA, PCONV_WIN_BLD, PEMIT_LW_WIN,  &
+(    9)                            PABS_LW_WIN, PLOAD_IN_WIN)
+(   10) USE MODD_BEM_n, ONLY : BEM_t
+(   11) TYPE(BEM_t), INTENT(INOUT) :: B
+(   12) REAL, DIMENSION(:), INTENT(IN)    :: PEMIS_WIN    ! window emissivity
+(   13) REAL, DIMENSION(:), INTENT(IN)    :: PLW_W_TO_WIN ! Radiative heat trasfer coeff window-wall outdoor
+(   14) REAL, DIMENSION(:), INTENT(IN)    :: PLW_R_TO_WIN ! Radiative heat trasfer coeff window-road 
+(   15) REAL, DIMENSION(:), INTENT(IN)    :: PLW_G_TO_WIN ! Radiative heat trasfer coeff window-garden
+(   16) REAL, DIMENSION(:), INTENT(IN)    :: PLW_NR_TO_WIN! Radiative heat trasfer coeff window-snow
+(   17) REAL, DIMENSION(:), INTENT(IN)    :: PLW_S_TO_WIN ! Radiative heat trasfer coeff window-sky 
+(   18) REAL, DIMENSION(:), INTENT(IN)    :: PRAD_RF_WIN  ! rad. fluxes from roof to win [W m-2(roof)]
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PRAD_WL_WIN  ! rad. fluxes from wall to win [W m-2(roof)]
+(   20) REAL, DIMENSION(:), INTENT(IN)    :: PABS_SW_WIN  ! window absorbed shortwave radiation [W m-2]
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PLW_RAD      ! atmospheric infrared radiation
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PAC_WL     ! aerodynamical conductance between wall and canyon
+(   23) REAL, DIMENSION(:),   INTENT(IN)  :: PRADHT_IN     ! Indoor radiant heat transfer coefficient
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PTS_FL    ! floor layers temperatures [K]
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA        ! rho
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RD     ! snow-covered fraction on roads
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PT_CANYON    ! air canyon temperature
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PTS_WL     ! wall outdoor surface temperature
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PTS_RD     ! road surface temperature
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PTSN_RD  ! road snow temperature
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:54      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PTS_GD   ! green area surface temperature
+(   32) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_WIN_FL ! rad. fluxes from window to floor [W m-2(window)]
+(   33) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_WIN_MA  ! rad. fluxes from window to mass [W m-2(window)]
+(   34) REAL, DIMENSION(:), INTENT(OUT)   :: PCONV_WIN_BLD  ! conv. fluxes from window to bld [W m-2(window)]
+(   35) REAL, DIMENSION(:), INTENT(OUT)   :: PEMIT_LW_WIN  ! Longwave radiation emitted by the window [W m-2(window)]
+(   36) REAL, DIMENSION(:), INTENT(OUT)   :: PABS_LW_WIN   ! Longwave radiation absorbed by the window [W m-2(window)]
+(   37) REAL, DIMENSION(:), INTENT(IN)    :: PLOAD_IN_WIN  ! solar + internal heat gain 
+(   38) END SUBROUTINE WINDOW_E_BUDGET
+(   39) 
+(   40) END INTERFACE
+(   41) END MODULE MODI_WINDOW_E_BUDGET
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:54      page 4
+
+(    1) # 1 "modi_window_e_budget.F90"
+(    1) !depfile:window_e_budget.F90
+(    2) MODULE MODI_WINDOW_E_BUDGET
+(    3) INTERFACE
+(    4) SUBROUTINE WINDOW_E_BUDGET(B, PEMIS_WIN, PLW_W_TO_WIN, PLW_R_TO_WIN, PLW_G_TO_WIN, &
+(    5)                            PLW_NR_TO_WIN, PLW_S_TO_WIN, PRAD_RF_WIN, PRAD_WL_WIN,  &
+(    6)                            PABS_SW_WIN, PLW_RAD, PAC_WL, PRADHT_IN, PTS_FL, PRHOA, &
+(    7)                            PDN_RD, PT_CANYON, PTS_WL, PTS_RD, PTSN_RD, PTS_GD,     &
+(    8)                            PRAD_WIN_FL, PRAD_WIN_MA, PCONV_WIN_BLD, PEMIT_LW_WIN,  &
+(    9)                            PABS_LW_WIN, PLOAD_IN_WIN)
+(   10) USE MODD_BEM_n, ONLY : BEM_t
+(   11) TYPE(BEM_t), INTENT(INOUT) :: B
+(   12) REAL, DIMENSION(:), INTENT(IN)    :: PEMIS_WIN    ! window emissivity
+(   13) REAL, DIMENSION(:), INTENT(IN)    :: PLW_W_TO_WIN ! Radiative heat trasfer coeff window-wall outdoor
+(   14) REAL, DIMENSION(:), INTENT(IN)    :: PLW_R_TO_WIN ! Radiative heat trasfer coeff window-road 
+(   15) REAL, DIMENSION(:), INTENT(IN)    :: PLW_G_TO_WIN ! Radiative heat trasfer coeff window-garden
+(   16) REAL, DIMENSION(:), INTENT(IN)    :: PLW_NR_TO_WIN! Radiative heat trasfer coeff window-snow
+(   17) REAL, DIMENSION(:), INTENT(IN)    :: PLW_S_TO_WIN ! Radiative heat trasfer coeff window-sky 
+(   18) REAL, DIMENSION(:), INTENT(IN)    :: PRAD_RF_WIN  ! rad. fluxes from roof to win [W m-2(roof)]
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PRAD_WL_WIN  ! rad. fluxes from wall to win [W m-2(roof)]
+(   20) REAL, DIMENSION(:), INTENT(IN)    :: PABS_SW_WIN  ! window absorbed shortwave radiation [W m-2]
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PLW_RAD      ! atmospheric infrared radiation
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PAC_WL     ! aerodynamical conductance between wall and canyon
+(   23) REAL, DIMENSION(:),   INTENT(IN)  :: PRADHT_IN     ! Indoor radiant heat transfer coefficient
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PTS_FL    ! floor layers temperatures [K]
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA        ! rho
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RD     ! snow-covered fraction on roads
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PT_CANYON    ! air canyon temperature
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PTS_WL     ! wall outdoor surface temperature
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PTS_RD     ! road surface temperature
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PTSN_RD  ! road snow temperature
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PTS_GD   ! green area surface temperature
+(   32) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_WIN_FL ! rad. fluxes from window to floor [W m-2(window)]
+(   33) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_WIN_MA  ! rad. fluxes from window to mass [W m-2(window)]
+(   34) REAL, DIMENSION(:), INTENT(OUT)   :: PCONV_WIN_BLD  ! conv. fluxes from window to bld [W m-2(window)]
+(   35) REAL, DIMENSION(:), INTENT(OUT)   :: PEMIT_LW_WIN  ! Longwave radiation emitted by the window [W m-2(window)]
+(   36) REAL, DIMENSION(:), INTENT(OUT)   :: PABS_LW_WIN   ! Longwave radiation absorbed by the window [W m-2(window)]
+(   37) REAL, DIMENSION(:), INTENT(IN)    :: PLOAD_IN_WIN  ! solar + internal heat gain 
+(   38) END SUBROUTINE WINDOW_E_BUDGET
+(   39) # 40 "modi_window_e_budget.F90"
+(   40) END INTERFACE
+(   41) END MODULE MODI_WINDOW_E_BUDGET

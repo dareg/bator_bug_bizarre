@@ -1,0 +1,16 @@
+INTERFACE
+SUBROUTINE RTTOV_BPR_CALC( &
+             & ERR,     &
+             & PHA,     &
+             & PHANGLE, &
+             & BPR,     &
+             & NTHREADS)
+  USE PARKIND1, ONLY : JPRB, JPIM
+  IMPLICIT NONE
+  INTEGER(KIND=JPIM), INTENT(OUT)          :: ERR
+  REAL(KIND=JPRB),    INTENT(IN)           :: PHA(:)
+  REAL(KIND=JPRB),    INTENT(IN)           :: PHANGLE(SIZE(PHA))
+  REAL(KIND=JPRB),    INTENT(OUT)          :: BPR
+  INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: NTHREADS
+END SUBROUTINE
+END INTERFACE

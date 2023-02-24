@@ -1,0 +1,787 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fadec1.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FADEC1_MT64                                                &
+(    4) &                     (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF,   &
+(    5) &                      LDCOSP, CDNOMA, KLNOMA, KVALCO, KLONGD,        &
+(    6) &                      PCHAMP, LDUNDF, PUNDF, YDGR1TAB)
+(    7) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme de controle et de DECODAGE d'un CHAMP HORIZONTAL
+(   14) !      venant d'etre lu sur un fichier ARPEGE/ALADIN.
+(   15) !       ( DECOdage de donnees )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   23) !                                    par des coefficients spectraux;
+(   24) !                CDNOMA (Sortie) ==> Nom de l'article-champ lu;
+(   25) !                KLNOMA (Sortie) ==> Nombre de caracteres utiles dans
+(   26) !                                    CDNOMA;
+(   27) !    ( Tableau ) KVALCO (Entree) ==> Donnees issues de la lecture;
+(   28) !                KLONGD (Entree) ==> Nombre de valeurs (mots de 64 bits
+(   29) !                                    en principe) lues;
+(   30) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 3
+
+(   31) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   32) !                                    indefinies
+(   33) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai,
+(   34) !                                    valeur non definie
+(   35) !
+(   36) !    Remarques:
+(   37) !
+(   38) !    - KVALCO est type entier, et doit avoir une longueur
+(   39) !      suffisante pour stocker les donnees codees. Le dimensionnement
+(   40) !      "tous terrains" est (2+ILCHAM), qui permet le cas echeant de
+(   41) !      stocker un champ a pleine resolution sans codage effectif.
+(   42) !      (ILCHAM est le nombre de valeurs du champ a decoder)
+(   43) !
+(   44) !    - CDNOMA doit avoir au moins FA%JPXNOM caracteres.
+(   45) !
+(   46) !
+(   47) TYPE(FA_COM)   :: FA
+(   48) TYPE(FAGR1TAB) :: YDGR1TAB
+(   49) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KLNOMA, KLONGD
+(   50) !
+(   51) !
+(   52) INTEGER (KIND=JPLIKB) IREP, ILPRFU, ILSUFU, ILNOMU
+(   53) INTEGER (KIND=JPLIKB) IRANG, INIMES
+(   54) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, IRANGC, IVALC1
+(   55) INTEGER (KIND=JPLIKB) IB1PAR (FA%JPLB1P)
+(   56) !
+(   57) REAL (KIND=JPDBLR) PCHAMP (*), PUNDF
+(   58) INTEGER (KIND=JPLIKB) KVALCO(*)
+(   59) !
+(   60) LOGICAL LLVERF, LLRLFI, LDCOSP, LLNOMU, LDUNDF
+(   61) !
+(   62) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*)
+(   63) CHARACTER CLPREF*(FA%JPXNOM), CLSUFF*(FA%JPXSUF)
+(   64) !
+(   65) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   66) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   67) LOGICAL                  LLFATA
+(   68) 
+(   69) !**
+(   70) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   71) !-----------------------------------------------------------------------
+(   72) !
+(   73) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   74) IF (LHOOK) CALL DR_HOOK('FADEC1_MT',0,ZHOOK_HANDLE)
+(   75) 
+(   76) LLVERF=.FALSE.
+(   77) LLRLFI=.FALSE.
+(   78) LLNOMU=.FALSE.
+(   79) ILPRFU=INT (LEN (CDPREF), JPLIKB)
+(   80) ILSUFU=INT (LEN (CDSUFF), JPLIKB)
+(   81) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   82) KLNOMA=0
+(   83) CALL FANUMU_MT64                 &
+(   84) &               (FA, KNUMER,IRANG)
+(   85) !
+(   86) IF (IRANG.EQ.0) THEN
+(   87)   IREP=-51
+(   88)   GOTO 1001
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 4
+
+(   89) ELSEIF (ILCDNO.LT.FA%JPXNOM) THEN
+(   90)   IREP=-65
+(   91)   GOTO 1001
+(   92) ELSE
+(   93)   CDNOMA=' '
+(   94) ENDIF
+(   95) !
+(   96) !         Verrouillage eventuel du fichier.
+(   97) !
+(   98) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   99) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(  100) LLVERF=FA%LFAMUL
+(  101) !
+(  102) IF (FA%FICHIER(IRANG)%LCREAF) THEN
+(  103)   IREP=-85
+(  104)   GOTO 1001
+(  105) ENDIF
+(  106) !**
+(  107) !     2.  -  FABRICATION DU NOM D'ARTICLE VIA LE SOUS-PROGRAMME "FANFAR"
+(  108) !            ( controles de CDPREF, KNIVAU, CDSUFF inclus )
+(  109) !-----------------------------------------------------------------------
+(  110) !
+(  111) CALL FANFAR_MT64                                             &
+(  112) &               (FA, IREP,IRANG,CDPREF,KNIVAU,CDSUFF,CDNOMA, &
+(  113) &                IB1PAR(6),ILPRFU,ILSUFU,ILNOMU)
+(  114) IF (IREP.NE.0) GOTO 1001
+(  115) LLNOMU=.TRUE.
+(  116) KLNOMA=ILNOMU
+(  117) !**
+(  118) !     3.  -  CONTROLE ET DECODAGE DE L'ARTICLE DEJA LU SUR LE FICHIER.
+(  119) !-----------------------------------------------------------------------
+(  120) !
+(  121) !
+(  122) !  Controle de l'homogeneite du type de rangement des coeff. spectraux
+(  123) !  parmi les champs lus/ecrits: ces champs compactes avec
+(  124) !  FA%NIGRIB=-1 ou 3 doivent etre ranges comme dans le modele ("verticalement"
+(  125) !  soit selon des colonnes JM=cst consecutives) et contrairement si compactes
+(  126) !  avec FA%NIGRIB= 0,1 ou 2.
+(  127) ! 
+(  128) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  129) IVALC1=KVALCO(1)
+(  130) IF (LDCOSP) THEN
+(  131)   IF (IVALC1.EQ.-1.OR.IVALC1.EQ.3) THEN
+(  132)     FA%FICHIER(IRANG)%NRASVE=FA%FICHIER(IRANG)%NRASVE+1
+(  133)     IF (FA%FICHIER(IRANG)%NRASVE.EQ.1.AND.FA%FICHIER(IRANG)%NRASHO.GT.0) THEN
+(  134)       WRITE(FA%NULOUT,*)                                 &
+(  135) &      '------------------------------------------------'
+(  136)       WRITE(FA%NULOUT,*)' FADEC1 :  WARNING !!!!!           '
+(  137)       WRITE(FA%NULOUT,*)' Un champ de coeff. spectraux avec'
+(  138)       WRITE(FA%NULOUT,*)                            &
+(  139) &      ' rangement type modele va etre lu alors que'
+(  140)       WRITE(FA%NULOUT,*)                                 &
+(  141) &      ' d''autres champs spect. ont un rangt different.'
+(  142)       WRITE(FA%NULOUT,*)                                 &
+(  143) &      ' ***  Prenez en compte cette heterogeneite!  ***'
+(  144)       WRITE(FA%NULOUT,*)                                 &
+(  145) &      '------------------------------------------------'
+(  146)     ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 5
+
+(  147)   ELSEIF (IVALC1.GE.0.AND.IVALC1.LE.2) THEN
+(  148)     FA%FICHIER(IRANG)%NRASHO=FA%FICHIER(IRANG)%NRASHO+1
+(  149)     IF (FA%FICHIER(IRANG)%NRASHO.EQ.1.AND.FA%FICHIER(IRANG)%NRASVE.GT.0) THEN
+(  150)       WRITE(FA%NULOUT,*)                                 &
+(  151) &      '------------------------------------------------'
+(  152)       WRITE(FA%NULOUT,*)' FADEC1 :  WARNING !!!!!           '
+(  153)       WRITE(FA%NULOUT,*)' Un champ de coeff. spectraux avec'
+(  154)       WRITE(FA%NULOUT,*)                                &
+(  155) &      ' rangement autre que celui du modele va etre lu'
+(  156)       WRITE(FA%NULOUT,*)                                &
+(  157) &      ' alors que d''autres champs ont le rangt modele'
+(  158)       WRITE(FA%NULOUT,*)                                 &
+(  159) &      ' ***  Prenez en compte cette heterogeneite!  ***'
+(  160)       WRITE(FA%NULOUT,*)                                 &
+(  161) &      '------------------------------------------------'
+(  162)     ENDIF
+(  163)   ENDIF
+(  164) ENDIF
+(  165) !
+(  166) IF (FALGRA (IVALC1)) THEN
+(  167) ! Cas d'un champ gribe avec GRIB_API
+(  168)   CALL FADGRA_MT64                                                 &
+(  169) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  170) &                  KLONGD, PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF, &
+(  171) &                  LDUNDF, PUNDF)
+(  172) ELSEIF (IVALC1.EQ.3) THEN
+(  173) ! Cas d'un champ gribe avec GRIBEX
+(  174)   CALL FADECX_MT64                                                 &
+(  175) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  176) &                  KLONGD, PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF, &
+(  177) &                  LDUNDF, PUNDF, YDGR1TAB)
+(  178) ELSEIF (IVALC1.EQ.4) THEN
+(  179)   CALL FADCPL_MT64                                                 &
+(  180) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  181) &                  KLONGD, PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(  182) ELSE
+(  183)   CALL FADECI_MT64                                                 &
+(  184) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  185) &                  KLONGD, PCHAMP, LDCOSP )
+(  186) ENDIF
+(  187) !**
+(  188) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  189) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  190) !-----------------------------------------------------------------------
+(  191) !
+(  192) 1001 CONTINUE
+(  193) KREP=IREP
+(  194) LLFATA=LLMOER (IREP,IRANG)
+(  195) !
+(  196) !        Deverrouillage eventuel du fichier.
+(  197) !
+(  198) IF (LLVERF) CALL LFIVER_MT64                                &
+(  199) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  200) !
+(  201) IF (LLFATA) THEN
+(  202)   INIMES=2
+(  203) ELSE
+(  204)   INIMES=IXNVMS(IRANG)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 6
+
+(  205) ENDIF
+(  206) !
+(  207) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  208)   IF (LHOOK) CALL DR_HOOK('FADEC1_MT',1,ZHOOK_HANDLE)
+(  209)   RETURN
+(  210) ENDIF
+(  211) !
+(  212) CLNSPR='FADEC1'
+(  213) !
+(  214) IF (ILPRFU.GE.1) THEN
+(  215)   ILPREF=MIN (ILPRFU,INT (LEN (CLPREF), JPLIKB))
+(  216)   CLPREF(1:ILPREF)=CDPREF(1:ILPREF)
+(  217) ELSE
+(  218)   ILPREF=8
+(  219)   CLPREF(1:ILPREF)=FA%CHAINC(:ILPREF)
+(  220) ENDIF
+(  221) !
+(  222) IF (ILSUFU.GE.1) THEN
+(  223)   ILSUFF=MIN (ILSUFU,INT (LEN (CLSUFF), JPLIKB))
+(  224)   CLSUFF(1:ILSUFF)=CDSUFF(1:ILSUFF)
+(  225) ELSE
+(  226)   ILSUFF=8
+(  227)   CLSUFF(1:ILSUFF)=FA%CHAINC(:ILSUFF)
+(  228) ENDIF
+(  229) !
+(  230) IF (.NOT.LLNOMU) THEN
+(  231)   ILNOMU=MIN (ILPREF,FA%NCPCAD)
+(  232)   CDNOMA(1:ILNOMU)=CLPREF(1:ILPREF)
+(  233) ENDIF
+(  234) !
+(  235) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,         &
+(  236) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  237) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  238) &   KREP,KNUMER,CLPREF(1:ILPREF),KNIVAU,CLSUFF(1:ILSUFF),LDCOSP
+(  239) CALL FAIPAR_MT64                                       &
+(  240) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  241) &                CLNSPR,CDNOMA(1:ILNOMU),LLRLFI)
+(  242) !
+(  243) IF (LHOOK) CALL DR_HOOK('FADEC1_MT',1,ZHOOK_HANDLE)
+(  244) 
+(  245) CONTAINS
+(  246) 
+(  247) #include "facom2.llmoer.h"
+(  248) #include "facom2.ixnvms.h"
+(  249) #include "falgra.h"
+(  250) 
+(  251) END SUBROUTINE FADEC1_MT64
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 7
+
+(    1) # 1 "fadec1.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FADEC1_MT64                                                &
+(    4) &                     (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF,   &
+(    5) &                      LDCOSP, CDNOMA, KLNOMA, KVALCO, KLONGD,        &
+(    6) &                      PCHAMP, LDUNDF, PUNDF, YDGR1TAB)
+(    7) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme de controle et de DECODAGE d'un CHAMP HORIZONTAL
+(   14) !      venant d'etre lu sur un fichier ARPEGE/ALADIN.
+(   15) !       ( DECOdage de donnees )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   23) !                                    par des coefficients spectraux;
+(   24) !                CDNOMA (Sortie) ==> Nom de l'article-champ lu;
+(   25) !                KLNOMA (Sortie) ==> Nombre de caracteres utiles dans
+(   26) !                                    CDNOMA;
+(   27) !    ( Tableau ) KVALCO (Entree) ==> Donnees issues de la lecture;
+(   28) !                KLONGD (Entree) ==> Nombre de valeurs (mots de 64 bits
+(   29) !                                    en principe) lues;
+(   30) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu.
+(   31) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   32) !                                    indefinies
+(   33) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai,
+(   34) !                                    valeur non definie
+(   35) !
+(   36) !    Remarques:
+(   37) !
+(   38) !    - KVALCO est type entier, et doit avoir une longueur
+(   39) !      suffisante pour stocker les donnees codees. Le dimensionnement
+(   40) !      "tous terrains" est (2+ILCHAM), qui permet le cas echeant de
+(   41) !      stocker un champ a pleine resolution sans codage effectif.
+(   42) !      (ILCHAM est le nombre de valeurs du champ a decoder)
+(   43) !
+(   44) !    - CDNOMA doit avoir au moins FA%JPXNOM caracteres.
+(   45) !
+(   46) !
+(   47) TYPE(FA_COM)   :: FA
+(   48) TYPE(FAGR1TAB) :: YDGR1TAB
+(   49) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KLNOMA, KLONGD
+(   50) !
+(   51) !
+(   52) INTEGER (KIND=JPLIKB) IREP, ILPRFU, ILSUFU, ILNOMU
+(   53) INTEGER (KIND=JPLIKB) IRANG, INIMES
+(   54) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, IRANGC, IVALC1
+(   55) INTEGER (KIND=JPLIKB) IB1PAR (FA%JPLB1P)
+(   56) !
+(   57) REAL (KIND=JPDBLR) PCHAMP (*), PUNDF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 8
+
+(   58) INTEGER (KIND=JPLIKB) KVALCO(*)
+(   59) !
+(   60) LOGICAL LLVERF, LLRLFI, LDCOSP, LLNOMU, LDUNDF
+(   61) !
+(   62) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*)
+(   63) CHARACTER CLPREF*(FA%JPXNOM), CLSUFF*(FA%JPXSUF)
+(   64) !
+(   65) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   66) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   67) LOGICAL                  LLFATA
+(   68) # 69 "fadec1.F90"
+(   69) !**
+(   70) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   71) !-----------------------------------------------------------------------
+(   72) !
+(   73) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   74) IF (LHOOK) CALL DR_HOOK('FADEC1_MT',0,ZHOOK_HANDLE)
+(   75) # 76 "fadec1.F90"
+(   76) LLVERF=.FALSE.
+(   77) LLRLFI=.FALSE.
+(   78) LLNOMU=.FALSE.
+(   79) ILPRFU=INT (LEN (CDPREF), JPLIKB)
+(   80) ILSUFU=INT (LEN (CDSUFF), JPLIKB)
+(   81) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   82) KLNOMA=0
+(   83) CALL FANUMU_MT64                 &
+(   84) &               (FA, KNUMER,IRANG)
+(   85) !
+(   86) IF (IRANG.EQ.0) THEN
+(   87)   IREP=-51
+(   88)   GOTO 1001
+(   89) ELSEIF (ILCDNO.LT.FA%JPXNOM) THEN
+(   90)   IREP=-65
+(   91)   GOTO 1001
+(   92) ELSE
+(   93)   CDNOMA=' '
+(   94) ENDIF
+(   95) !
+(   96) !         Verrouillage eventuel du fichier.
+(   97) !
+(   98) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   99) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(  100) LLVERF=FA%LFAMUL
+(  101) !
+(  102) IF (FA%FICHIER(IRANG)%LCREAF) THEN
+(  103)   IREP=-85
+(  104)   GOTO 1001
+(  105) ENDIF
+(  106) !**
+(  107) !     2.  -  FABRICATION DU NOM D'ARTICLE VIA LE SOUS-PROGRAMME "FANFAR"
+(  108) !            ( controles de CDPREF, KNIVAU, CDSUFF inclus )
+(  109) !-----------------------------------------------------------------------
+(  110) !
+(  111) CALL FANFAR_MT64                                             &
+(  112) &               (FA, IREP,IRANG,CDPREF,KNIVAU,CDSUFF,CDNOMA, &
+(  113) &                IB1PAR(6),ILPRFU,ILSUFU,ILNOMU)
+(  114) IF (IREP.NE.0) GOTO 1001
+(  115) LLNOMU=.TRUE.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 9
+
+(  116) KLNOMA=ILNOMU
+(  117) !**
+(  118) !     3.  -  CONTROLE ET DECODAGE DE L'ARTICLE DEJA LU SUR LE FICHIER.
+(  119) !-----------------------------------------------------------------------
+(  120) !
+(  121) !
+(  122) !  Controle de l'homogeneite du type de rangement des coeff. spectraux
+(  123) !  parmi les champs lus/ecrits: ces champs compactes avec
+(  124) !  FA%NIGRIB=-1 ou 3 doivent etre ranges comme dans le modele ("verticalement"
+(  125) !  soit selon des colonnes JM=cst consecutives) et contrairement si compactes
+(  126) !  avec FA%NIGRIB= 0,1 ou 2.
+(  127) ! 
+(  128) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  129) IVALC1=KVALCO(1)
+(  130) IF (LDCOSP) THEN
+(  131)   IF (IVALC1.EQ.-1.OR.IVALC1.EQ.3) THEN
+(  132)     FA%FICHIER(IRANG)%NRASVE=FA%FICHIER(IRANG)%NRASVE+1
+(  133)     IF (FA%FICHIER(IRANG)%NRASVE.EQ.1.AND.FA%FICHIER(IRANG)%NRASHO.GT.0) THEN
+(  134)       WRITE(FA%NULOUT,*)                                 &
+(  135) &      '------------------------------------------------'
+(  136)       WRITE(FA%NULOUT,*)' FADEC1 :  WARNING !!!!!           '
+(  137)       WRITE(FA%NULOUT,*)' Un champ de coeff. spectraux avec'
+(  138)       WRITE(FA%NULOUT,*)                            &
+(  139) &      ' rangement type modele va etre lu alors que'
+(  140)       WRITE(FA%NULOUT,*)                                 &
+(  141) &      ' d''autres champs spect. ont un rangt different.'
+(  142)       WRITE(FA%NULOUT,*)                                 &
+(  143) &      ' ***  Prenez en compte cette heterogeneite!  ***'
+(  144)       WRITE(FA%NULOUT,*)                                 &
+(  145) &      '------------------------------------------------'
+(  146)     ENDIF
+(  147)   ELSEIF (IVALC1.GE.0.AND.IVALC1.LE.2) THEN
+(  148)     FA%FICHIER(IRANG)%NRASHO=FA%FICHIER(IRANG)%NRASHO+1
+(  149)     IF (FA%FICHIER(IRANG)%NRASHO.EQ.1.AND.FA%FICHIER(IRANG)%NRASVE.GT.0) THEN
+(  150)       WRITE(FA%NULOUT,*)                                 &
+(  151) &      '------------------------------------------------'
+(  152)       WRITE(FA%NULOUT,*)' FADEC1 :  WARNING !!!!!           '
+(  153)       WRITE(FA%NULOUT,*)' Un champ de coeff. spectraux avec'
+(  154)       WRITE(FA%NULOUT,*)                                &
+(  155) &      ' rangement autre que celui du modele va etre lu'
+(  156)       WRITE(FA%NULOUT,*)                                &
+(  157) &      ' alors que d''autres champs ont le rangt modele'
+(  158)       WRITE(FA%NULOUT,*)                                 &
+(  159) &      ' ***  Prenez en compte cette heterogeneite!  ***'
+(  160)       WRITE(FA%NULOUT,*)                                 &
+(  161) &      '------------------------------------------------'
+(  162)     ENDIF
+(  163)   ENDIF
+(  164) ENDIF
+(  165) !
+(  166) IF (FALGRA (IVALC1)) THEN
+(  167) ! Cas d'un champ gribe avec GRIB_API
+(  168)   CALL FADGRA_MT64                                                 &
+(  169) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  170) &                  KLONGD, PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF, &
+(  171) &                  LDUNDF, PUNDF)
+(  172) ELSEIF (IVALC1.EQ.3) THEN
+(  173) ! Cas d'un champ gribe avec GRIBEX
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 10
+
+(  174)   CALL FADECX_MT64                                                 &
+(  175) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  176) &                  KLONGD, PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF, &
+(  177) &                  LDUNDF, PUNDF, YDGR1TAB)
+(  178) ELSEIF (IVALC1.EQ.4) THEN
+(  179)   CALL FADCPL_MT64                                                 &
+(  180) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  181) &                  KLONGD, PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(  182) ELSE
+(  183)   CALL FADECI_MT64                                                 &
+(  184) &                 (FA,  IREP,   IRANG,  CDNOMA(1:ILNOMU), KVALCO,  &
+(  185) &                  KLONGD, PCHAMP, LDCOSP )
+(  186) ENDIF
+(  187) !**
+(  188) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  189) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  190) !-----------------------------------------------------------------------
+(  191) !
+(  192) 1001 CONTINUE
+(  193) KREP=IREP
+(  194) LLFATA=LLMOER (IREP,IRANG)
+(  195) !
+(  196) !        Deverrouillage eventuel du fichier.
+(  197) !
+(  198) IF (LLVERF) CALL LFIVER_MT64                                &
+(  199) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  200) !
+(  201) IF (LLFATA) THEN
+(  202)   INIMES=2
+(  203) ELSE
+(  204)   INIMES=IXNVMS(IRANG)
+(  205) ENDIF
+(  206) !
+(  207) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  208)   IF (LHOOK) CALL DR_HOOK('FADEC1_MT',1,ZHOOK_HANDLE)
+(  209)   RETURN
+(  210) ENDIF
+(  211) !
+(  212) CLNSPR='FADEC1'
+(  213) !
+(  214) IF (ILPRFU.GE.1) THEN
+(  215)   ILPREF=MIN (ILPRFU,INT (LEN (CLPREF), JPLIKB))
+(  216)   CLPREF(1:ILPREF)=CDPREF(1:ILPREF)
+(  217) ELSE
+(  218)   ILPREF=8
+(  219)   CLPREF(1:ILPREF)=FA%CHAINC(:ILPREF)
+(  220) ENDIF
+(  221) !
+(  222) IF (ILSUFU.GE.1) THEN
+(  223)   ILSUFF=MIN (ILSUFU,INT (LEN (CLSUFF), JPLIKB))
+(  224)   CLSUFF(1:ILSUFF)=CDSUFF(1:ILSUFF)
+(  225) ELSE
+(  226)   ILSUFF=8
+(  227)   CLSUFF(1:ILSUFF)=FA%CHAINC(:ILSUFF)
+(  228) ENDIF
+(  229) !
+(  230) IF (.NOT.LLNOMU) THEN
+(  231)   ILNOMU=MIN (ILPREF,FA%NCPCAD)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 11
+
+(  232)   CDNOMA(1:ILNOMU)=CLPREF(1:ILPREF)
+(  233) ENDIF
+(  234) !
+(  235) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,         &
+(  236) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  237) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  238) &   KREP,KNUMER,CLPREF(1:ILPREF),KNIVAU,CLSUFF(1:ILSUFF),LDCOSP
+(  239) CALL FAIPAR_MT64                                       &
+(  240) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  241) &                CLNSPR,CDNOMA(1:ILNOMU),LLRLFI)
+(  242) !
+(  243) IF (LHOOK) CALL DR_HOOK('FADEC1_MT',1,ZHOOK_HANDLE)
+(  244) # 245 "fadec1.F90"
+(  245) CONTAINS
+(  246) # 247 "fadec1.F90"
+(  247) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 248 "fadec1.F90"
+(  248) # 248 "fadec1.F90"
+(  248) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 249 "fadec1.F90"
+(  249) # 249 "fadec1.F90"
+(  249) # 1 ".D[27]/falgra.h"
+(    1) LOGICAL FUNCTION FALGRA (KNGRIB)
+(    2) !****
+(    3) !    Cette fonction renvoie une valeur vraie si la methode d'encodage passee en argument fait appel a grib_api
+(    4) !**
+(    5) !    Arguments : KNGRIB (Entree) ==> Methode d'encodage
+(    6) !
+(    7) !
+(    8) INTEGER (KIND=JPLIKB) KNGRIB
+(    9) INTEGER (KIND=JPLIKB) INGRIB_SP, INGRIB_GP
+(   10) LOGICAL LLFALGRA_SP, LLFALGRA_GP
+(   11) # 12 ".D[27]/falgra.h"
+(   12) FALGRA = .FALSE.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:59      page 12
+
+(   13) # 14 ".D[27]/falgra.h"
+(   14) IF (100 <= KNGRIB .AND. KNGRIB <= 200) THEN
+(   15) # 16 ".D[27]/falgra.h"
+(   16)   INGRIB_SP = FALGRA_SP (KNGRIB)
+(   17)   INGRIB_GP = FALGRA_GP (KNGRIB)
+(   18)   
+(   19)   LLFALGRA_SP = &
+(   20)    & (INGRIB_SP - 100 ==  1) .OR. &      ! GRIB2 complex packing (bug)
+(   21)    & (INGRIB_SP - 100 ==  2) .OR. &      ! GRIB0 
+(   22)    & (INGRIB_SP - 100 ==  3)             ! GRIB2 complex packing
+(   23)   
+(   24)   LLFALGRA_GP = &
+(   25)    & ((INGRIB_GP-100) / 20 ==  1) .OR. & ! GRIB2 simple packing
+(   26)    & ((INGRIB_GP-100) / 20 ==  2) .OR. & ! GRIB2 second order packing
+(   27)    & ((INGRIB_GP-100) / 20 ==  3) .OR. & ! GRIB1 simple packing
+(   28)    & ((INGRIB_GP-100) / 20 ==  4) .OR. & ! GRIB1 second order packing
+(   29)    & ((INGRIB_GP-100) / 20 ==  5)        ! GRIB2 complex packing
+(   30)    
+(   31) # 32 ".D[27]/falgra.h"
+(   32)   IF (LLFALGRA_GP .AND. LLFALGRA_SP) THEN
+(   33)     FALGRA = .TRUE.
+(   34)   ELSEIF (LLFALGRA_GP) THEN
+(   35)     FALGRA = INGRIB_SP == 100
+(   36)   ELSEIF (LLFALGRA_SP) THEN
+(   37)     FALGRA = INGRIB_GP == 100
+(   38)   ENDIF
+(   39) # 40 ".D[27]/falgra.h"
+(   40) ENDIF
+(   41) # 42 ".D[27]/falgra.h"
+(   42) END FUNCTION FALGRA
+(   43) # 44 ".D[27]/falgra.h"
+(   44) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_SP (KNGRIB)
+(   45) INTEGER (KIND=JPLIKB) KNGRIB
+(   46) FALGRA_SP = 100+MODULO ((KNGRIB-100),20)
+(   47) END FUNCTION FALGRA_SP
+(   48) # 49 ".D[27]/falgra.h"
+(   49) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_GP (KNGRIB)
+(   50) INTEGER (KIND=JPLIKB) KNGRIB
+(   51) FALGRA_GP = 100+20*((KNGRIB-100)/20)
+(   52) END FUNCTION FALGRA_GP
+(   53) # 54 ".D[27]/falgra.h"
+(   54) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_ED (KNGRIB)
+(   55) INTEGER (KIND=JPLIKB) KNGRIB
+(   56) # 57 ".D[27]/falgra.h"
+(   57) SELECT CASE (KNGRIB)
+(   58)   CASE (160, 180)
+(   59)     FALGRA_ED = 1
+(   60)   CASE DEFAULT
+(   61)     FALGRA_ED = 2
+(   62) END SELECT 
+(   63) # 64 ".D[27]/falgra.h"
+(   64) END FUNCTION FALGRA_ED
+(   65) # 250 "fadec1.F90"
+(  250) # 251 "fadec1.F90"
+(  251) END SUBROUTINE FADEC1_MT64

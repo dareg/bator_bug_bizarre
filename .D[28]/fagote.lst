@@ -1,0 +1,1029 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fagote.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAGOTE_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, KNGRIB, KNARG1, KNARG2,  &
+(    5) &                      KNARG3, KNARG4, KNARG5)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Ce sous-programme permet d'ajuster, pour un fichier ARPEGE
+(   13) !     ouvert, les options liees au codage GRIB des champs.
+(   14) !     CES OPTIONS NE SONT UTILISEES QUE POUR (RE)ECRIRE DES CHAMPS
+(   15) !     codes en GRIB.
+(   16) !       ( Grib, Options Techniques Effectives )
+(   17) !**
+(   18) !     Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   19) !                 KNUMER (Entree) ==> Numero d'Unite Logique concernee;
+(   20) !                 KNGRIB (Entree) ==> Niveau de codage GRIB (-1,0,1,2,3,4);
+(   21) !
+(   22) !               * Pour KNGRIB compris entre -1 et 3, les arguments 
+(   23) !                 d'entree ont la signification suivante:
+(   24) !                 KNARG1 (Entree) ==> Nombre de bits par valeur point-
+(   25) !                                     de-grille; 
+(   26) !                 KNARG2 (Entree) ==> Nombre de bits par partie reelle/
+(   27) !                                     imaginaire de coeff. spectral;
+(   28) !                 KNARG3 (Entree) ==> Sous-troncature non compactee;
+(   29) !                 KNARG4 (Entree) ==> Puissance de laplacien;
+(   30) !                 KNARG5 (Entree) ==> Degre de modulation de KNARG4.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 3
+
+(   31) !
+(   32) !     Remarque:  KNARG3 egal a -1 est accepte; dans ce cas on indexera
+(   33) !                (pour chaque champ spectral ecrit) la sous-troncature
+(   34) !                effective sur la troncature et sur le nombre de bits
+(   35) !                par valeur compactee.
+(   36) !                 
+(   37) !               * Pour KNGRIB==4, les arguments d'entree ont la 
+(   38) !                 signification suivante:
+(   39) !                 
+(   40) !                 KNARG1 (Entree) ==> Taille de la couronne a conserver
+(   41) !                 KNARG2 (Entree) ==> Nombre de bits pour la mantisse
+(   42) !                 KNARG3 (Entree) ==> Inutilise
+(   43) !                 KNARG4 (Entree) ==> Inutilise
+(   44) !                 KNARG5 (Entree) ==> Inutilise
+(   45) !
+(   46) !     MODIF : 30/03/2007 JM AUDOIN  FA%LFAMOP Pour limiter Impression
+(   47) !
+(   48) !
+(   49) !
+(   50) TYPE(FA_COM) :: FA
+(   51) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNGRIB
+(   52) INTEGER (KIND=JPLIKB) KNARG1, KNARG2, KNARG3, KNARG4
+(   53) INTEGER (KIND=JPLIKB) KNARG5
+(   54) !
+(   55) INTEGER (KIND=JPLIKB) IMINIM, IREP, IRANGC
+(   56) INTEGER (KIND=JPLIKB) ITRONC, INIMES, IRANG, ITYPTR
+(   57) !
+(   58) LOGICAL LLVERF, LLMLAM
+(   59) !
+(   60) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   61) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   62) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   63) LOGICAL                  LLFATA
+(   64) 
+(   65) !**
+(   66) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   70) IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',0,ZHOOK_HANDLE)
+(   71) CLACTI=''
+(   72) LLVERF=.FALSE.
+(   73) CALL FANUMU_MT64                 &
+(   74) &               (FA, KNUMER,IRANG)
+(   75) !
+(   76) 
+(   77) IF (IRANG.EQ.0) THEN
+(   78)   IREP=-51
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) 
+(   82) IF (((KNGRIB >= -1) .AND. (KNGRIB <= 3)) .OR. FALGRA (KNGRIB)) THEN
+(   83) 
+(   84)   IMINIM=MIN (2+KNGRIB,2+KNARG1,2+KNARG2,2+KNARG3,1+KNARG5)
+(   85)   
+(   86)   IF (IMINIM.LE.0) THEN
+(   87)     IREP=-64
+(   88)     GOTO 1001
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 4
+
+(   89)   ELSEIF (KNARG1*KNARG2.EQ.0 .AND. KNGRIB.GT.0) THEN
+(   90)     IREP=-124
+(   91)     GOTO 1001
+(   92)   ELSEIF ((MAX (KNARG1,KNARG2).GT.FA%NBIMAX) .AND. (.NOT. FALGRA (KNGRIB)) .AND. (KNGRIB /= 0)) THEN
+(   93)     IREP=-97
+(   94)     GOTO 1001
+(   95)   ELSEIF (ABS (KNARG4).GT.2**15-1) THEN
+(   96)     IREP=-98
+(   97)     GOTO 1001
+(   98)   ENDIF
+(   99) 
+(  100) ELSEIF (KNGRIB == 4) THEN
+(  101) 
+(  102)   IF ((KNARG1 < 0) .OR. (KNARG2 < 0)) THEN
+(  103)     IREP=-64
+(  104)     GOTO 1001
+(  105)   ENDIF
+(  106) 
+(  107) ELSE
+(  108)   IREP=-96
+(  109)   GOTO 1001
+(  110) ENDIF
+(  111) !
+(  112) !         Verrouillage eventuel du fichier.
+(  113) !
+(  114) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(  115) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(  116) LLVERF=FA%LFAMUL
+(  117) !
+(  118) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  119) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  120) ITYPTR=FA%CADRE(IRANGC)%NTYPTR
+(  121) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  122) !
+(  123) 
+(  124) IF (KNGRIB /= 4) THEN
+(  125) 
+(  126)   IF (KNARG3.GE.ITRONC) THEN
+(  127)     IREP=-99
+(  128)     GOTO 1001
+(  129)   ELSEIF (ITYPTR.LT.0.AND.KNARG3.GE.(-ITYPTR)) THEN
+(  130)     IREP=-99
+(  131)     GOTO 1001
+(  132)   ENDIF
+(  133) !**
+(  134) !     2.  -  STOCKAGE DES NOUVEAUX PARAMETRES.
+(  135) !-----------------------------------------------------------------------
+(  136) !
+(  137)   IF (KNARG4.NE.FA%FICHIER(IRANG)%NPUFLA) THEN
+(  138)     FA%FICHIER(IRANG)%NPUFLA=KNARG4
+(  139)     FA%FICHIER(IRANG)%LIFLAP=.TRUE.
+(  140)   ENDIF
+(  141)   IF (KNARG3.NE.FA%FICHIER(IRANG)%NSTROF) THEN
+(  142)     FA%FICHIER(IRANG)%NSTROF=KNARG3
+(  143)     FA%FICHIER(IRANG)%LISC2F=.TRUE.
+(  144)   ENDIF
+(  145) !
+(  146)   IF (FA%LFAMOP.AND.(FA%FICHIER(IRANG)%NFGRIB.EQ.3              &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 5
+
+(  147)   &  .OR.FA%FICHIER(IRANG)%NFGRIB.EQ.-1)                        &
+(  148)   &  .AND.(KNGRIB.LT.3.AND.KNGRIB.GT.-1))           THEN
+(  149)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  150)     WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  151)   &        'FAGOTE: WARNING!! Les champs spectraux NE devront',     &
+(  152)   &        ' PAS etre ranges comme dans le modele (rangt horiz.)',  &
+(  153)   &        ' pour l''unite logique ',KNUMER
+(  154)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  155)   ENDIF
+(  156)   IF (FA%LFAMOP.AND.(FA%FICHIER(IRANG)%NFGRIB.LT.3              &
+(  157)   &  .AND.FA%FICHIER(IRANG)%NFGRIB.GT.-1)                       &
+(  158)   &  .AND.(KNGRIB.EQ.3.OR.KNGRIB.EQ.-1))           THEN
+(  159)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  160)     WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  161)   &        'FAGOTE: WARNING!! Les champs spectraux devront',        &
+(  162)   &        ' etre ranges comme dans le modele (rangt verti.) pour', &
+(  163)   &        ' l''unite logique ',KNUMER
+(  164)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  165)   ENDIF
+(  166) 
+(  167)   FA%FICHIER(IRANG)%NBFPDG=KNARG1
+(  168)   FA%FICHIER(IRANG)%NBFCSP=KNARG2
+(  169)   FA%FICHIER(IRANG)%NMFDPL=KNARG5
+(  170) 
+(  171) ELSE
+(  172) 
+(  173)   IF (.NOT. LLMLAM) THEN
+(  174)     IREP=-96
+(  175)     GOTO 1001
+(  176)   ENDIF
+(  177) 
+(  178)   FA%FICHIER(IRANG)%NCPLSIZE=KNARG1
+(  179)   FA%FICHIER(IRANG)%NCPLBITS=KNARG2
+(  180) 
+(  181) ENDIF
+(  182) 
+(  183) FA%FICHIER(IRANG)%NFGRIB=KNGRIB
+(  184) IREP=0
+(  185) 
+(  186) IF (KNGRIB /= 4) THEN
+(  187) !
+(  188) ! Appel a FAINOC pour interpreter les eventuels defauts
+(  189) ! de -1 pris par FA%NBFPDG, FA%NBFCSP, FA%NSTROF et FA%NPUFLA en
+(  190) ! IRANG-ieme position.
+(  191) !
+(  192)   CALL FAINOC_MT64 (FA, IRANG)
+(  193) ENDIF
+(  194) !
+(  195) !**
+(  196) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  197) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  198) !-----------------------------------------------------------------------
+(  199) !
+(  200) 1001 CONTINUE
+(  201) KREP=IREP
+(  202) LLFATA=LLMOER (IREP,IRANG)
+(  203) !
+(  204) !        Deverrouillage eventuel du fichier.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 6
+
+(  205) !
+(  206) IF (LLVERF) CALL LFIVER_MT64                                &
+(  207) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  208) !
+(  209) IF (LLFATA) THEN
+(  210)   INIMES=2
+(  211) ELSE
+(  212)   INIMES=IXNVMS(IRANG)
+(  213) ENDIF
+(  214) !
+(  215) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  216)   IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',1,ZHOOK_HANDLE)
+(  217)   RETURN
+(  218) ENDIF
+(  219) !
+(  220) CLNSPR='FAGOTE'
+(  221) !
+(  222) !***** FAZZZZ - KREP=iiii, KNUMER=iii, KNGRIB=ii, KNARG1=iii,   *****
+(  223) !*****          KNARG2=iii, KNARG3=ii, KNARG4=iii, KNARG5=iii  *****
+(  224) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,       &
+(  225) &       '', KNGRIB='',I3,'', KNARG1='',I3,'', KNARG2='',I3,   &
+(  226) &       '', KNARG3='',I2,'', KNARG4='',I3,'', KNARG5='',I3)') &
+(  227) &   KREP,KNUMER,KNGRIB,KNARG1,KNARG2,KNARG3,KNARG4,KNARG5
+(  228) CALL FAIPAR_MT64                                       &
+(  229) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  230) &                CLNSPR, CLACTI,.FALSE.)
+(  231) !
+(  232) IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',1,ZHOOK_HANDLE)
+(  233) 
+(  234) CONTAINS
+(  235) 
+(  236) #include "facom2.llmoer.h"
+(  237) #include "facom2.ixnvms.h"
+(  238) #include "falgra.h"
+(  239) 
+(  240) END SUBROUTINE FAGOTE_MT64
+(  241) 
+(  242) 
+(  243) 
+(  244) ! Oct-2012 P. Marguinaud 64b LFI
+(  245) SUBROUTINE FAGOTE64                                        &
+(  246) &           (KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  247) &           KNARG4, KNARG5)
+(  248) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  249) &                  FA_COM_DEFAULT_INIT,  &
+(  250) &                  NEW_FA_DEFAULT
+(  251) USE LFI_PRECISION
+(  252) IMPLICIT NONE
+(  253) ! Arguments
+(  254) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  255) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  256) INTEGER (KIND=JPLIKB)  KNGRIB                                 ! IN   
+(  257) INTEGER (KIND=JPLIKB)  KNARG1                                 ! IN   
+(  258) INTEGER (KIND=JPLIKB)  KNARG2                                 ! IN   
+(  259) INTEGER (KIND=JPLIKB)  KNARG3                                 ! IN   
+(  260) INTEGER (KIND=JPLIKB)  KNARG4                                 ! IN   
+(  261) INTEGER (KIND=JPLIKB)  KNARG5                                 ! IN   
+(  262) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 7
+
+(  263) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  264) 
+(  265) CALL FAGOTE_MT64                                               &
+(  266) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  267) &            KNARG4, KNARG5)
+(  268) 
+(  269) END SUBROUTINE FAGOTE64
+(  270) 
+(  271) SUBROUTINE FAGOTE                                          &
+(  272) &           (KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  273) &            KNARG4, KNARG5)
+(  274) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  275) &                  FA_COM_DEFAULT_INIT,  &
+(  276) &                  NEW_FA_DEFAULT
+(  277) USE LFI_PRECISION
+(  278) IMPLICIT NONE
+(  279) ! Arguments
+(  280) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  281) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  282) INTEGER (KIND=JPLIKM)  KNGRIB                                 ! IN   
+(  283) INTEGER (KIND=JPLIKM)  KNARG1                                 ! IN   
+(  284) INTEGER (KIND=JPLIKM)  KNARG2                                 ! IN   
+(  285) INTEGER (KIND=JPLIKM)  KNARG3                                 ! IN   
+(  286) INTEGER (KIND=JPLIKM)  KNARG4                                 ! IN   
+(  287) INTEGER (KIND=JPLIKM)  KNARG5                                 ! IN   
+(  288) 
+(  289) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  290) 
+(  291) CALL FAGOTE_MT                                                 &
+(  292) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  293) &            KNARG4, KNARG5)
+(  294) 
+(  295) END SUBROUTINE FAGOTE
+(  296) 
+(  297) SUBROUTINE FAGOTE_MT                                           &
+(  298) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  299) &            KNARG4, KNARG5)
+(  300) USE FA_MOD, ONLY : FA_COM
+(  301) USE LFI_PRECISION
+(  302) IMPLICIT NONE
+(  303) ! Arguments
+(  304) TYPE (FA_COM)          FA                                     ! INOUT
+(  305) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  306) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  307) INTEGER (KIND=JPLIKM)  KNGRIB                                 ! IN   
+(  308) INTEGER (KIND=JPLIKM)  KNARG1                                 ! IN   
+(  309) INTEGER (KIND=JPLIKM)  KNARG2                                 ! IN   
+(  310) INTEGER (KIND=JPLIKM)  KNARG3                                 ! IN   
+(  311) INTEGER (KIND=JPLIKM)  KNARG4                                 ! IN   
+(  312) INTEGER (KIND=JPLIKM)  KNARG5                                 ! IN   
+(  313) ! Local integers
+(  314) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  315) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  316) INTEGER (KIND=JPLIKB)  INGRIB                                 ! IN   
+(  317) INTEGER (KIND=JPLIKB)  INBPDG                                 ! IN   
+(  318) INTEGER (KIND=JPLIKB)  INBCSP                                 ! IN   
+(  319) INTEGER (KIND=JPLIKB)  ISTRON                                 ! IN   
+(  320) INTEGER (KIND=JPLIKB)  IPUILA                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 8
+
+(  321) INTEGER (KIND=JPLIKB)  IDMOPL                                 ! IN   
+(  322) ! Convert arguments
+(  323) 
+(  324) INUMER     = INT (    KNUMER, JPLIKB)
+(  325) INGRIB     = INT (    KNGRIB, JPLIKB)
+(  326) INBPDG     = INT (    KNARG1, JPLIKB)
+(  327) INBCSP     = INT (    KNARG2, JPLIKB)
+(  328) ISTRON     = INT (    KNARG3, JPLIKB)
+(  329) IPUILA     = INT (    KNARG4, JPLIKB)
+(  330) IDMOPL     = INT (    KNARG5, JPLIKB)
+(  331) 
+(  332) CALL FAGOTE_MT64                                               &
+(  333) &           (FA, IREP, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  334) &            IPUILA, IDMOPL)
+(  335) 
+(  336) KREP       = INT (      IREP, JPLIKM)
+(  337) 
+(  338) END SUBROUTINE FAGOTE_MT
+(  339) 
+(  340) !INTF KREP            OUT 
+(  341) !INTF KNUMER        IN    
+(  342) !INTF KNGRIB        IN    
+(  343) !INTF KNARG1        IN    
+(  344) !INTF KNARG2        IN    
+(  345) !INTF KNARG3        IN    
+(  346) !INTF KNARG4        IN    
+(  347) !INTF KNARG5        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 9
+
+(    1) # 1 "fagote.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAGOTE_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, KNGRIB, KNARG1, KNARG2,  &
+(    5) &                      KNARG3, KNARG4, KNARG5)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Ce sous-programme permet d'ajuster, pour un fichier ARPEGE
+(   13) !     ouvert, les options liees au codage GRIB des champs.
+(   14) !     CES OPTIONS NE SONT UTILISEES QUE POUR (RE)ECRIRE DES CHAMPS
+(   15) !     codes en GRIB.
+(   16) !       ( Grib, Options Techniques Effectives )
+(   17) !**
+(   18) !     Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   19) !                 KNUMER (Entree) ==> Numero d'Unite Logique concernee;
+(   20) !                 KNGRIB (Entree) ==> Niveau de codage GRIB (-1,0,1,2,3,4);
+(   21) !
+(   22) !               * Pour KNGRIB compris entre -1 et 3, les arguments 
+(   23) !                 d'entree ont la signification suivante:
+(   24) !                 KNARG1 (Entree) ==> Nombre de bits par valeur point-
+(   25) !                                     de-grille; 
+(   26) !                 KNARG2 (Entree) ==> Nombre de bits par partie reelle/
+(   27) !                                     imaginaire de coeff. spectral;
+(   28) !                 KNARG3 (Entree) ==> Sous-troncature non compactee;
+(   29) !                 KNARG4 (Entree) ==> Puissance de laplacien;
+(   30) !                 KNARG5 (Entree) ==> Degre de modulation de KNARG4.
+(   31) !
+(   32) !     Remarque:  KNARG3 egal a -1 est accepte; dans ce cas on indexera
+(   33) !                (pour chaque champ spectral ecrit) la sous-troncature
+(   34) !                effective sur la troncature et sur le nombre de bits
+(   35) !                par valeur compactee.
+(   36) !                 
+(   37) !               * Pour KNGRIB==4, les arguments d'entree ont la 
+(   38) !                 signification suivante:
+(   39) !                 
+(   40) !                 KNARG1 (Entree) ==> Taille de la couronne a conserver
+(   41) !                 KNARG2 (Entree) ==> Nombre de bits pour la mantisse
+(   42) !                 KNARG3 (Entree) ==> Inutilise
+(   43) !                 KNARG4 (Entree) ==> Inutilise
+(   44) !                 KNARG5 (Entree) ==> Inutilise
+(   45) !
+(   46) !     MODIF : 30/03/2007 JM AUDOIN  FA%LFAMOP Pour limiter Impression
+(   47) !
+(   48) !
+(   49) !
+(   50) TYPE(FA_COM) :: FA
+(   51) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNGRIB
+(   52) INTEGER (KIND=JPLIKB) KNARG1, KNARG2, KNARG3, KNARG4
+(   53) INTEGER (KIND=JPLIKB) KNARG5
+(   54) !
+(   55) INTEGER (KIND=JPLIKB) IMINIM, IREP, IRANGC
+(   56) INTEGER (KIND=JPLIKB) ITRONC, INIMES, IRANG, ITYPTR
+(   57) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 10
+
+(   58) LOGICAL LLVERF, LLMLAM
+(   59) !
+(   60) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   61) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   62) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   63) LOGICAL                  LLFATA
+(   64) # 65 "fagote.F90"
+(   65) !**
+(   66) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   70) IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',0,ZHOOK_HANDLE)
+(   71) CLACTI=''
+(   72) LLVERF=.FALSE.
+(   73) CALL FANUMU_MT64                 &
+(   74) &               (FA, KNUMER,IRANG)
+(   75) !
+(   76) # 77 "fagote.F90"
+(   77) IF (IRANG.EQ.0) THEN
+(   78)   IREP=-51
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) # 82 "fagote.F90"
+(   82) IF (((KNGRIB >= -1) .AND. (KNGRIB <= 3)) .OR. FALGRA (KNGRIB)) THEN
+(   83) # 84 "fagote.F90"
+(   84)   IMINIM=MIN (2+KNGRIB,2+KNARG1,2+KNARG2,2+KNARG3,1+KNARG5)
+(   85)   
+(   86)   IF (IMINIM.LE.0) THEN
+(   87)     IREP=-64
+(   88)     GOTO 1001
+(   89)   ELSEIF (KNARG1*KNARG2.EQ.0 .AND. KNGRIB.GT.0) THEN
+(   90)     IREP=-124
+(   91)     GOTO 1001
+(   92)   ELSEIF ((MAX (KNARG1,KNARG2).GT.FA%NBIMAX) .AND. (.NOT. FALGRA (KNGRIB)) .AND. (KNGRIB /= 0)) THEN
+(   93)     IREP=-97
+(   94)     GOTO 1001
+(   95)   ELSEIF (ABS (KNARG4).GT.2**15-1) THEN
+(   96)     IREP=-98
+(   97)     GOTO 1001
+(   98)   ENDIF
+(   99) # 100 "fagote.F90"
+(  100) ELSEIF (KNGRIB == 4) THEN
+(  101) # 102 "fagote.F90"
+(  102)   IF ((KNARG1 < 0) .OR. (KNARG2 < 0)) THEN
+(  103)     IREP=-64
+(  104)     GOTO 1001
+(  105)   ENDIF
+(  106) # 107 "fagote.F90"
+(  107) ELSE
+(  108)   IREP=-96
+(  109)   GOTO 1001
+(  110) ENDIF
+(  111) !
+(  112) !         Verrouillage eventuel du fichier.
+(  113) !
+(  114) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(  115) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 11
+
+(  116) LLVERF=FA%LFAMUL
+(  117) !
+(  118) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  119) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  120) ITYPTR=FA%CADRE(IRANGC)%NTYPTR
+(  121) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  122) !
+(  123) # 124 "fagote.F90"
+(  124) IF (KNGRIB /= 4) THEN
+(  125) # 126 "fagote.F90"
+(  126)   IF (KNARG3.GE.ITRONC) THEN
+(  127)     IREP=-99
+(  128)     GOTO 1001
+(  129)   ELSEIF (ITYPTR.LT.0.AND.KNARG3.GE.(-ITYPTR)) THEN
+(  130)     IREP=-99
+(  131)     GOTO 1001
+(  132)   ENDIF
+(  133) !**
+(  134) !     2.  -  STOCKAGE DES NOUVEAUX PARAMETRES.
+(  135) !-----------------------------------------------------------------------
+(  136) !
+(  137)   IF (KNARG4.NE.FA%FICHIER(IRANG)%NPUFLA) THEN
+(  138)     FA%FICHIER(IRANG)%NPUFLA=KNARG4
+(  139)     FA%FICHIER(IRANG)%LIFLAP=.TRUE.
+(  140)   ENDIF
+(  141)   IF (KNARG3.NE.FA%FICHIER(IRANG)%NSTROF) THEN
+(  142)     FA%FICHIER(IRANG)%NSTROF=KNARG3
+(  143)     FA%FICHIER(IRANG)%LISC2F=.TRUE.
+(  144)   ENDIF
+(  145) !
+(  146)   IF (FA%LFAMOP.AND.(FA%FICHIER(IRANG)%NFGRIB.EQ.3              &
+(  147)   &  .OR.FA%FICHIER(IRANG)%NFGRIB.EQ.-1)                        &
+(  148)   &  .AND.(KNGRIB.LT.3.AND.KNGRIB.GT.-1))           THEN
+(  149)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  150)     WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  151)   &        'FAGOTE: WARNING!! Les champs spectraux NE devront',     &
+(  152)   &        ' PAS etre ranges comme dans le modele (rangt horiz.)',  &
+(  153)   &        ' pour l''unite logique ',KNUMER
+(  154)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  155)   ENDIF
+(  156)   IF (FA%LFAMOP.AND.(FA%FICHIER(IRANG)%NFGRIB.LT.3              &
+(  157)   &  .AND.FA%FICHIER(IRANG)%NFGRIB.GT.-1)                       &
+(  158)   &  .AND.(KNGRIB.EQ.3.OR.KNGRIB.EQ.-1))           THEN
+(  159)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  160)     WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  161)   &        'FAGOTE: WARNING!! Les champs spectraux devront',        &
+(  162)   &        ' etre ranges comme dans le modele (rangt verti.) pour', &
+(  163)   &        ' l''unite logique ',KNUMER
+(  164)     WRITE (UNIT=FA%NULOUT,FMT=*)'-----------------'
+(  165)   ENDIF
+(  166) # 167 "fagote.F90"
+(  167)   FA%FICHIER(IRANG)%NBFPDG=KNARG1
+(  168)   FA%FICHIER(IRANG)%NBFCSP=KNARG2
+(  169)   FA%FICHIER(IRANG)%NMFDPL=KNARG5
+(  170) # 171 "fagote.F90"
+(  171) ELSE
+(  172) # 173 "fagote.F90"
+(  173)   IF (.NOT. LLMLAM) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 12
+
+(  174)     IREP=-96
+(  175)     GOTO 1001
+(  176)   ENDIF
+(  177) # 178 "fagote.F90"
+(  178)   FA%FICHIER(IRANG)%NCPLSIZE=KNARG1
+(  179)   FA%FICHIER(IRANG)%NCPLBITS=KNARG2
+(  180) # 181 "fagote.F90"
+(  181) ENDIF
+(  182) # 183 "fagote.F90"
+(  183) FA%FICHIER(IRANG)%NFGRIB=KNGRIB
+(  184) IREP=0
+(  185) # 186 "fagote.F90"
+(  186) IF (KNGRIB /= 4) THEN
+(  187) !
+(  188) ! Appel a FAINOC pour interpreter les eventuels defauts
+(  189) ! de -1 pris par FA%NBFPDG, FA%NBFCSP, FA%NSTROF et FA%NPUFLA en
+(  190) ! IRANG-ieme position.
+(  191) !
+(  192)   CALL FAINOC_MT64 (FA, IRANG)
+(  193) ENDIF
+(  194) !
+(  195) !**
+(  196) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  197) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  198) !-----------------------------------------------------------------------
+(  199) !
+(  200) 1001 CONTINUE
+(  201) KREP=IREP
+(  202) LLFATA=LLMOER (IREP,IRANG)
+(  203) !
+(  204) !        Deverrouillage eventuel du fichier.
+(  205) !
+(  206) IF (LLVERF) CALL LFIVER_MT64                                &
+(  207) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  208) !
+(  209) IF (LLFATA) THEN
+(  210)   INIMES=2
+(  211) ELSE
+(  212)   INIMES=IXNVMS(IRANG)
+(  213) ENDIF
+(  214) !
+(  215) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  216)   IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',1,ZHOOK_HANDLE)
+(  217)   RETURN
+(  218) ENDIF
+(  219) !
+(  220) CLNSPR='FAGOTE'
+(  221) !
+(  222) !***** FAZZZZ - KREP=iiii, KNUMER=iii, KNGRIB=ii, KNARG1=iii,   *****
+(  223) !*****          KNARG2=iii, KNARG3=ii, KNARG4=iii, KNARG5=iii  *****
+(  224) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,       &
+(  225) &       '', KNGRIB='',I3,'', KNARG1='',I3,'', KNARG2='',I3,   &
+(  226) &       '', KNARG3='',I2,'', KNARG4='',I3,'', KNARG5='',I3)') &
+(  227) &   KREP,KNUMER,KNGRIB,KNARG1,KNARG2,KNARG3,KNARG4,KNARG5
+(  228) CALL FAIPAR_MT64                                       &
+(  229) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  230) &                CLNSPR, CLACTI,.FALSE.)
+(  231) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 13
+
+(  232) IF (LHOOK) CALL DR_HOOK('FAGOTE_MT',1,ZHOOK_HANDLE)
+(  233) # 234 "fagote.F90"
+(  234) CONTAINS
+(  235) # 236 "fagote.F90"
+(  236) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 237 "fagote.F90"
+(  237) # 237 "fagote.F90"
+(  237) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 238 "fagote.F90"
+(  238) # 238 "fagote.F90"
+(  238) # 1 ".D[27]/falgra.h"
+(    1) LOGICAL FUNCTION FALGRA (KNGRIB)
+(    2) !****
+(    3) !    Cette fonction renvoie une valeur vraie si la methode d'encodage passee en argument fait appel a grib_api
+(    4) !**
+(    5) !    Arguments : KNGRIB (Entree) ==> Methode d'encodage
+(    6) !
+(    7) !
+(    8) INTEGER (KIND=JPLIKB) KNGRIB
+(    9) INTEGER (KIND=JPLIKB) INGRIB_SP, INGRIB_GP
+(   10) LOGICAL LLFALGRA_SP, LLFALGRA_GP
+(   11) # 12 ".D[27]/falgra.h"
+(   12) FALGRA = .FALSE.
+(   13) # 14 ".D[27]/falgra.h"
+(   14) IF (100 <= KNGRIB .AND. KNGRIB <= 200) THEN
+(   15) # 16 ".D[27]/falgra.h"
+(   16)   INGRIB_SP = FALGRA_SP (KNGRIB)
+(   17)   INGRIB_GP = FALGRA_GP (KNGRIB)
+(   18)   
+(   19)   LLFALGRA_SP = &
+(   20)    & (INGRIB_SP - 100 ==  1) .OR. &      ! GRIB2 complex packing (bug)
+(   21)    & (INGRIB_SP - 100 ==  2) .OR. &      ! GRIB0 
+(   22)    & (INGRIB_SP - 100 ==  3)             ! GRIB2 complex packing
+(   23)   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 14
+
+(   24)   LLFALGRA_GP = &
+(   25)    & ((INGRIB_GP-100) / 20 ==  1) .OR. & ! GRIB2 simple packing
+(   26)    & ((INGRIB_GP-100) / 20 ==  2) .OR. & ! GRIB2 second order packing
+(   27)    & ((INGRIB_GP-100) / 20 ==  3) .OR. & ! GRIB1 simple packing
+(   28)    & ((INGRIB_GP-100) / 20 ==  4) .OR. & ! GRIB1 second order packing
+(   29)    & ((INGRIB_GP-100) / 20 ==  5)        ! GRIB2 complex packing
+(   30)    
+(   31) # 32 ".D[27]/falgra.h"
+(   32)   IF (LLFALGRA_GP .AND. LLFALGRA_SP) THEN
+(   33)     FALGRA = .TRUE.
+(   34)   ELSEIF (LLFALGRA_GP) THEN
+(   35)     FALGRA = INGRIB_SP == 100
+(   36)   ELSEIF (LLFALGRA_SP) THEN
+(   37)     FALGRA = INGRIB_GP == 100
+(   38)   ENDIF
+(   39) # 40 ".D[27]/falgra.h"
+(   40) ENDIF
+(   41) # 42 ".D[27]/falgra.h"
+(   42) END FUNCTION FALGRA
+(   43) # 44 ".D[27]/falgra.h"
+(   44) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_SP (KNGRIB)
+(   45) INTEGER (KIND=JPLIKB) KNGRIB
+(   46) FALGRA_SP = 100+MODULO ((KNGRIB-100),20)
+(   47) END FUNCTION FALGRA_SP
+(   48) # 49 ".D[27]/falgra.h"
+(   49) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_GP (KNGRIB)
+(   50) INTEGER (KIND=JPLIKB) KNGRIB
+(   51) FALGRA_GP = 100+20*((KNGRIB-100)/20)
+(   52) END FUNCTION FALGRA_GP
+(   53) # 54 ".D[27]/falgra.h"
+(   54) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_ED (KNGRIB)
+(   55) INTEGER (KIND=JPLIKB) KNGRIB
+(   56) # 57 ".D[27]/falgra.h"
+(   57) SELECT CASE (KNGRIB)
+(   58)   CASE (160, 180)
+(   59)     FALGRA_ED = 1
+(   60)   CASE DEFAULT
+(   61)     FALGRA_ED = 2
+(   62) END SELECT 
+(   63) # 64 ".D[27]/falgra.h"
+(   64) END FUNCTION FALGRA_ED
+(   65) # 239 "fagote.F90"
+(  239) # 240 "fagote.F90"
+(  240) END SUBROUTINE FAGOTE_MT64
+(  241) # 244 "fagote.F90"
+(  244) ! Oct-2012 P. Marguinaud 64b LFI
+(  245) SUBROUTINE FAGOTE64                                        &
+(  246) &           (KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  247) &           KNARG4, KNARG5)
+(  248) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  249) &                  FA_COM_DEFAULT_INIT,  &
+(  250) &                  NEW_FA_DEFAULT
+(  251) USE LFI_PRECISION
+(  252) IMPLICIT NONE
+(  253) ! Arguments
+(  254) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  255) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  256) INTEGER (KIND=JPLIKB)  KNGRIB                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 15
+
+(  257) INTEGER (KIND=JPLIKB)  KNARG1                                 ! IN   
+(  258) INTEGER (KIND=JPLIKB)  KNARG2                                 ! IN   
+(  259) INTEGER (KIND=JPLIKB)  KNARG3                                 ! IN   
+(  260) INTEGER (KIND=JPLIKB)  KNARG4                                 ! IN   
+(  261) INTEGER (KIND=JPLIKB)  KNARG5                                 ! IN   
+(  262) # 263 "fagote.F90"
+(  263) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  264) # 265 "fagote.F90"
+(  265) CALL FAGOTE_MT64                                               &
+(  266) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  267) &            KNARG4, KNARG5)
+(  268) # 269 "fagote.F90"
+(  269) END SUBROUTINE FAGOTE64
+(  270) # 271 "fagote.F90"
+(  271) SUBROUTINE FAGOTE                                          &
+(  272) &           (KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  273) &            KNARG4, KNARG5)
+(  274) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  275) &                  FA_COM_DEFAULT_INIT,  &
+(  276) &                  NEW_FA_DEFAULT
+(  277) USE LFI_PRECISION
+(  278) IMPLICIT NONE
+(  279) ! Arguments
+(  280) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  281) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  282) INTEGER (KIND=JPLIKM)  KNGRIB                                 ! IN   
+(  283) INTEGER (KIND=JPLIKM)  KNARG1                                 ! IN   
+(  284) INTEGER (KIND=JPLIKM)  KNARG2                                 ! IN   
+(  285) INTEGER (KIND=JPLIKM)  KNARG3                                 ! IN   
+(  286) INTEGER (KIND=JPLIKM)  KNARG4                                 ! IN   
+(  287) INTEGER (KIND=JPLIKM)  KNARG5                                 ! IN   
+(  288) # 289 "fagote.F90"
+(  289) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  290) # 291 "fagote.F90"
+(  291) CALL FAGOTE_MT                                                 &
+(  292) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  293) &            KNARG4, KNARG5)
+(  294) # 295 "fagote.F90"
+(  295) END SUBROUTINE FAGOTE
+(  296) # 297 "fagote.F90"
+(  297) SUBROUTINE FAGOTE_MT                                           &
+(  298) &           (FA, KREP, KNUMER, KNGRIB, KNARG1, KNARG2, KNARG3, &
+(  299) &            KNARG4, KNARG5)
+(  300) USE FA_MOD, ONLY : FA_COM
+(  301) USE LFI_PRECISION
+(  302) IMPLICIT NONE
+(  303) ! Arguments
+(  304) TYPE (FA_COM)          FA                                     ! INOUT
+(  305) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  306) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  307) INTEGER (KIND=JPLIKM)  KNGRIB                                 ! IN   
+(  308) INTEGER (KIND=JPLIKM)  KNARG1                                 ! IN   
+(  309) INTEGER (KIND=JPLIKM)  KNARG2                                 ! IN   
+(  310) INTEGER (KIND=JPLIKM)  KNARG3                                 ! IN   
+(  311) INTEGER (KIND=JPLIKM)  KNARG4                                 ! IN   
+(  312) INTEGER (KIND=JPLIKM)  KNARG5                                 ! IN   
+(  313) ! Local integers
+(  314) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 16
+
+(  315) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  316) INTEGER (KIND=JPLIKB)  INGRIB                                 ! IN   
+(  317) INTEGER (KIND=JPLIKB)  INBPDG                                 ! IN   
+(  318) INTEGER (KIND=JPLIKB)  INBCSP                                 ! IN   
+(  319) INTEGER (KIND=JPLIKB)  ISTRON                                 ! IN   
+(  320) INTEGER (KIND=JPLIKB)  IPUILA                                 ! IN   
+(  321) INTEGER (KIND=JPLIKB)  IDMOPL                                 ! IN   
+(  322) ! Convert arguments
+(  323) # 324 "fagote.F90"
+(  324) INUMER     = INT (    KNUMER, JPLIKB)
+(  325) INGRIB     = INT (    KNGRIB, JPLIKB)
+(  326) INBPDG     = INT (    KNARG1, JPLIKB)
+(  327) INBCSP     = INT (    KNARG2, JPLIKB)
+(  328) ISTRON     = INT (    KNARG3, JPLIKB)
+(  329) IPUILA     = INT (    KNARG4, JPLIKB)
+(  330) IDMOPL     = INT (    KNARG5, JPLIKB)
+(  331) # 332 "fagote.F90"
+(  332) CALL FAGOTE_MT64                                               &
+(  333) &           (FA, IREP, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  334) &            IPUILA, IDMOPL)
+(  335) # 336 "fagote.F90"
+(  336) KREP       = INT (      IREP, JPLIKM)
+(  337) # 338 "fagote.F90"
+(  338) END SUBROUTINE FAGOTE_MT
+(  339) # 340 "fagote.F90"
+(  340) !INTF KREP            OUT 
+(  341) !INTF KNUMER        IN    
+(  342) !INTF KNGRIB        IN    
+(  343) !INTF KNARG1        IN    
+(  344) !INTF KNARG2        IN    
+(  345) !INTF KNARG3        IN    
+(  346) !INTF KNARG4        IN    
+(  347) !INTF KNARG5        IN    

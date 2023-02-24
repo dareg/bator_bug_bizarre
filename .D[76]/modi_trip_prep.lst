@@ -1,0 +1,524 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_trip_prep.F90
+
+(    1) !######
+(    2) PROGRAM TRIP_PREP
+(    3) !###########
+(    4) !
+(    5) !!****  *TRIP_PREP* - driver for TRIP fields preparation
+(    6) !!
+(    7) !!    PURPOSE
+(    8) !!    -------
+(    9) !
+(   10) !!**  METHOD
+(   11) !!    ------
+(   12) !!
+(   13) !!    REFERENCE
+(   14) !!    ---------
+(   15) !!      
+(   16) !!
+(   17) !!    AUTHOR
+(   18) !!    ------
+(   19) !!     B. Decharme 
+(   20) !!
+(   21) !!    MODIFICATIONS
+(   22) !!    -------------
+(   23) !!      Original    06/2008
+(   24) !!      S.Sénési    08/11/16 : interface to XIOS
+(   25) !!------------------------------------------------------------------
+(   26) !
+(   27) USE MODD_SURFEX_TRIP_n
+(   28) USE MODD_OFF_TRIP_n
+(   29) !
+(   30) USE MODD_TRIP_LISTING
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 3
+
+(   31) !
+(   32) USE MODI_INIT_TRIP_PAR
+(   33) USE MODI_PREP_TRIP_RUN
+(   34) !
+(   35) USE MODI_OPEN_TRIP_NAMELIST
+(   36) USE MODI_CLOSE_TRIP_NAMELIST
+(   37) USE MODI_ABORT_TRIP
+(   38) USE MODI_TRIP_POSNAM
+(   39) USE MODI_READ_NAM_TRIP
+(   40) USE MODI_READ_NAM_TRIP_GRID
+(   41) USE MODI_READ_NAM_TRIP_PREP
+(   42) !
+(   43) USE MODI_TRIP_OASIS_END
+(   44) !
+(   45) USE MODI_TRIP_OASIS_INIT
+(   46) USE MODI_TRIP_OASIS_READ_NAM
+(   47) USE MODI_TRIP_OASIS_PREP
+(   48) USE MODI_TRIP_OASIS_END
+(   49) !
+(   50) #ifdef SFX_MPI
+(   51) #ifdef SFX_MPL
+(   52) USE MPL_DATA_MODULE, ONLY : LMPLUSERCOMM, MPLUSERCOMM
+(   53) #endif
+(   54) #endif
+(   55) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   56) USE PARKIND1  ,ONLY : JPRB
+(   57) !
+(   58) IMPLICIT NONE
+(   59) !
+(   60) #ifdef CPLOASIS
+(   61) INCLUDE 'mpif.h'
+(   62) #endif
+(   63) !
+(   64) INTEGER  :: ILON
+(   65) INTEGER  :: ILAT
+(   66) !
+(   67) INTEGER  :: NYEAR           ! current year  (UTC)
+(   68) INTEGER  :: NMONTH          ! current month (UTC)
+(   69) INTEGER  :: NDAY            ! current day   (UTC)
+(   70) REAL     :: XTIME           ! current time    (s)
+(   71) !
+(   72) INTEGER  :: ILUNAM          ! namelist unit number
+(   73) LOGICAL  :: GFOUND          ! return logical when reading namelist
+(   74) INTEGER  :: ILOCAL_COMM     ! Local communicator
+(   75) LOGICAL  :: GOASIS          ! OASIS used(default=.false.)
+(   76) LOGICAL  :: GXIOS           ! XIOS used(default=.false.)
+(   77) !
+(   78) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   79) !
+(   80) NAMELIST/NAM_START_DATE/NYEAR,NMONTH,NDAY,XTIME
+(   81) !
+(   82) ! --------------------------------------------------------------------------------------
+(   83) ! * 0. MPI and OASIS must be initialized before any DR_HOOK call
+(   84) ! --------------------------------------------------------------------------------------
+(   85) !
+(   86)  CALL TRIP_OASIS_INIT(GOASIS,GXIOS,ILOCAL_COMM,LPREP=.TRUE.)
+(   87) #ifdef SFX_MPI
+(   88) #ifdef SFX_MPL
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 4
+
+(   89) IF (ILOCAL_COMM/=0) THEN
+(   90)   LMPLUSERCOMM = .TRUE.
+(   91)   MPLUSERCOMM = ILOCAL_COMM
+(   92) ENDIF
+(   93) #endif
+(   94) #endif
+(   95) !
+(   96) IF (LHOOK) CALL DR_HOOK('TRIP_PREP',0,ZHOOK_HANDLE)
+(   97) !
+(   98) !-------------------------------------------------------------------------------
+(   99)  CALL TRIP_ALLOC_LIST(1)
+(  100)  YTRIP_CUR => YTRIP_LIST(1)
+(  101) !-------------------------------------------------------------------------------
+(  102) !
+(  103)  CLISTING = CLISTING_PREP
+(  104) !
+(  105) OPEN (UNIT=NLISTING,FILE=CLISTING_PREP,FORM='FORMATTED',ACTION='WRITE')
+(  106) !
+(  107) ! --------------------------------------------------------------------------------------
+(  108) !* 1. Time configuration: start date of the run
+(  109) ! --------------------------------------------------------------------------------------
+(  110) !
+(  111)  CALL OPEN_TRIP_NAMELIST(ILUNAM)
+(  112)  CALL TRIP_POSNAM(ILUNAM,'NAM_START_DATE',GFOUND,NLISTING)
+(  113) IF (GFOUND) THEN
+(  114)    READ (UNIT=ILUNAM,NML=NAM_START_DATE)
+(  115) ELSE
+(  116)   WRITE(NLISTING,*)'NAM_START_DATE not found in namelist'
+(  117)   WRITE(NLISTING,*)'NYEAR, NMONTH, NDAY and XTIME must be initialized'
+(  118)   WRITE(NLISTING,*)'as the date of the beginning of the run'
+(  119)   CALL ABORT_TRIP('NAM_START_DATE not found in namelist')        
+(  120) ENDIF
+(  121)  CALL CLOSE_TRIP_NAMELIST(ILUNAM)
+(  122) !
+(  123) ! --------------------------------------------------------------------------------------
+(  124) !* 2. Initializations
+(  125) ! --------------------------------------------------------------------------------------
+(  126) !
+(  127)  CALL INIT_TRIP_PAR
+(  128) !
+(  129) ! --------------------------------------------------------------------------------------
+(  130) !* 3. Read grid and physical option namelists
+(  131) ! --------------------------------------------------------------------------------------
+(  132) !
+(  133)  CALL READ_NAM_TRIP(NLISTING)
+(  134) !
+(  135)  CALL READ_NAM_TRIP_PREP(NLISTING)
+(  136) !
+(  137)  CALL READ_NAM_TRIP_GRID(YTRIP_CUR%TPG, &
+(  138)                         NLISTING)
+(  139) !
+(  140) IF(GOASIS)THEN
+(  141)   CALL TRIP_OASIS_READ_NAM(NLISTING)
+(  142) ENDIF
+(  143) !
+(  144) ! --------------------------------------------------------------------------------------
+(  145) !* 4. TRIP parameters preparation
+(  146) ! --------------------------------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 5
+
+(  147) !
+(  148)  CALL PREP_TRIP_RUN(YTRIP_CUR%TP, YTRIP_CUR%TPG, &
+(  149)                    NYEAR,NMONTH,NDAY,XTIME,ILON,ILAT)
+(  150) !
+(  151) IF(GOASIS)THEN
+(  152)   CALL TRIP_OASIS_PREP(YTRIP_CUR%TPG, &
+(  153)                        NLISTING,ILON,ILAT)
+(  154) ENDIF
+(  155) !
+(  156) ! --------------------------------------------------------------------------------------
+(  157) !
+(  158) WRITE(NLISTING,*) ' '
+(  159) WRITE(NLISTING,*) '    ----------------------------'
+(  160) WRITE(NLISTING,*) '    | TRIP PREP ENDS CORRECTLY |'
+(  161) WRITE(NLISTING,*) '    ----------------------------'
+(  162) !
+(  163) WRITE(*,*) ' '
+(  164) WRITE(*,*) '    ----------------------------'
+(  165) WRITE(*,*) '    | TRIP PREP ENDS CORRECTLY |'
+(  166) WRITE(*,*) '    ----------------------------'
+(  167) !
+(  168)  CLOSE(NLISTING)
+(  169) !
+(  170) !-------------------------------------------------------------------------------
+(  171)  CALL TRIP_DEALLO_LIST
+(  172) !-------------------------------------------------------------------------------
+(  173) !
+(  174) IF (LHOOK) CALL DR_HOOK('TRIP_PREP',1,ZHOOK_HANDLE)
+(  175) !
+(  176) ! --------------------------------------------------------------------------------------
+(  177) ! * 3. MPI and OASIS must be finalized after the last DR_HOOK call
+(  178) ! --------------------------------------------------------------------------------------
+(  179) !
+(  180) CALL TRIP_OASIS_END(GOASIS,GXIOS)
+(  181) !
+(  182) !-------------------------------------------------------------------------------------
+(  183) !
+(  184) END PROGRAM TRIP_PREP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 6
+
+(    1) # 1 "modi_trip_prep.F90"
+(    1) !######
+(    2) PROGRAM TRIP_PREP
+(    3) !###########
+(    4) !
+(    5) !!****  *TRIP_PREP* - driver for TRIP fields preparation
+(    6) !!
+(    7) !!    PURPOSE
+(    8) !!    -------
+(    9) !
+(   10) !!**  METHOD
+(   11) !!    ------
+(   12) !!
+(   13) !!    REFERENCE
+(   14) !!    ---------
+(   15) !!      
+(   16) !!
+(   17) !!    AUTHOR
+(   18) !!    ------
+(   19) !!     B. Decharme 
+(   20) !!
+(   21) !!    MODIFICATIONS
+(   22) !!    -------------
+(   23) !!      Original    06/2008
+(   24) !!      S.Sénési    08/11/16 : interface to XIOS
+(   25) !!------------------------------------------------------------------
+(   26) !
+(   27) USE MODD_SURFEX_TRIP_n
+(   28) USE MODD_OFF_TRIP_n
+(   29) !
+(   30) USE MODD_TRIP_LISTING
+(   31) !
+(   32) USE MODI_INIT_TRIP_PAR
+(   33) USE MODI_PREP_TRIP_RUN
+(   34) !
+(   35) USE MODI_OPEN_TRIP_NAMELIST
+(   36) USE MODI_CLOSE_TRIP_NAMELIST
+(   37) USE MODI_ABORT_TRIP
+(   38) USE MODI_TRIP_POSNAM
+(   39) USE MODI_READ_NAM_TRIP
+(   40) USE MODI_READ_NAM_TRIP_GRID
+(   41) USE MODI_READ_NAM_TRIP_PREP
+(   42) !
+(   43) USE MODI_TRIP_OASIS_END
+(   44) !
+(   45) USE MODI_TRIP_OASIS_INIT
+(   46) USE MODI_TRIP_OASIS_READ_NAM
+(   47) USE MODI_TRIP_OASIS_PREP
+(   48) USE MODI_TRIP_OASIS_END
+(   49) !
+(   50) # 55 "modi_trip_prep.F90"
+(   55) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   56) USE PARKIND1  ,ONLY : JPRB
+(   57) !
+(   58) IMPLICIT NONE
+(   59) !
+(   60) # 63 "modi_trip_prep.F90"
+(   63) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 7
+
+(   64) INTEGER  :: ILON
+(   65) INTEGER  :: ILAT
+(   66) !
+(   67) INTEGER  :: NYEAR           ! current year  (UTC)
+(   68) INTEGER  :: NMONTH          ! current month (UTC)
+(   69) INTEGER  :: NDAY            ! current day   (UTC)
+(   70) REAL     :: XTIME           ! current time    (s)
+(   71) !
+(   72) INTEGER  :: ILUNAM          ! namelist unit number
+(   73) LOGICAL  :: GFOUND          ! return logical when reading namelist
+(   74) INTEGER  :: ILOCAL_COMM     ! Local communicator
+(   75) LOGICAL  :: GOASIS          ! OASIS used(default=.false.)
+(   76) LOGICAL  :: GXIOS           ! XIOS used(default=.false.)
+(   77) !
+(   78) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   79) !
+(   80) NAMELIST/NAM_START_DATE/NYEAR,NMONTH,NDAY,XTIME
+(   81) !
+(   82) ! --------------------------------------------------------------------------------------
+(   83) ! * 0. MPI and OASIS must be initialized before any DR_HOOK call
+(   84) ! --------------------------------------------------------------------------------------
+(   85) !
+(   86)  CALL TRIP_OASIS_INIT(GOASIS,GXIOS,ILOCAL_COMM,LPREP=.TRUE.)
+(   87) # 95 "modi_trip_prep.F90"
+(   95) !
+(   96) IF (LHOOK) CALL DR_HOOK('TRIP_PREP',0,ZHOOK_HANDLE)
+(   97) !
+(   98) !-------------------------------------------------------------------------------
+(   99)  CALL TRIP_ALLOC_LIST(1)
+(  100)  YTRIP_CUR => YTRIP_LIST(1)
+(  101) !-------------------------------------------------------------------------------
+(  102) !
+(  103)  CLISTING = CLISTING_PREP
+(  104) !
+(  105) OPEN (UNIT=NLISTING,FILE=CLISTING_PREP,FORM='FORMATTED',ACTION='WRITE')
+(  106) !
+(  107) ! --------------------------------------------------------------------------------------
+(  108) !* 1. Time configuration: start date of the run
+(  109) ! --------------------------------------------------------------------------------------
+(  110) !
+(  111)  CALL OPEN_TRIP_NAMELIST(ILUNAM)
+(  112)  CALL TRIP_POSNAM(ILUNAM,'NAM_START_DATE',GFOUND,NLISTING)
+(  113) IF (GFOUND) THEN
+(  114)    READ (UNIT=ILUNAM,NML=NAM_START_DATE)
+(  115) ELSE
+(  116)   WRITE(NLISTING,*)'NAM_START_DATE not found in namelist'
+(  117)   WRITE(NLISTING,*)'NYEAR, NMONTH, NDAY and XTIME must be initialized'
+(  118)   WRITE(NLISTING,*)'as the date of the beginning of the run'
+(  119)   CALL ABORT_TRIP('NAM_START_DATE not found in namelist')        
+(  120) ENDIF
+(  121)  CALL CLOSE_TRIP_NAMELIST(ILUNAM)
+(  122) !
+(  123) ! --------------------------------------------------------------------------------------
+(  124) !* 2. Initializations
+(  125) ! --------------------------------------------------------------------------------------
+(  126) !
+(  127)  CALL INIT_TRIP_PAR
+(  128) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:22      page 8
+
+(  129) ! --------------------------------------------------------------------------------------
+(  130) !* 3. Read grid and physical option namelists
+(  131) ! --------------------------------------------------------------------------------------
+(  132) !
+(  133)  CALL READ_NAM_TRIP(NLISTING)
+(  134) !
+(  135)  CALL READ_NAM_TRIP_PREP(NLISTING)
+(  136) !
+(  137)  CALL READ_NAM_TRIP_GRID(YTRIP_CUR%TPG, &
+(  138)                         NLISTING)
+(  139) !
+(  140) IF(GOASIS)THEN
+(  141)   CALL TRIP_OASIS_READ_NAM(NLISTING)
+(  142) ENDIF
+(  143) !
+(  144) ! --------------------------------------------------------------------------------------
+(  145) !* 4. TRIP parameters preparation
+(  146) ! --------------------------------------------------------------------------------------
+(  147) !
+(  148)  CALL PREP_TRIP_RUN(YTRIP_CUR%TP, YTRIP_CUR%TPG, &
+(  149)                    NYEAR,NMONTH,NDAY,XTIME,ILON,ILAT)
+(  150) !
+(  151) IF(GOASIS)THEN
+(  152)   CALL TRIP_OASIS_PREP(YTRIP_CUR%TPG, &
+(  153)                        NLISTING,ILON,ILAT)
+(  154) ENDIF
+(  155) !
+(  156) ! --------------------------------------------------------------------------------------
+(  157) !
+(  158) WRITE(NLISTING,*) ' '
+(  159) WRITE(NLISTING,*) '    ----------------------------'
+(  160) WRITE(NLISTING,*) '    | TRIP PREP ENDS CORRECTLY |'
+(  161) WRITE(NLISTING,*) '    ----------------------------'
+(  162) !
+(  163) WRITE(*,*) ' '
+(  164) WRITE(*,*) '    ----------------------------'
+(  165) WRITE(*,*) '    | TRIP PREP ENDS CORRECTLY |'
+(  166) WRITE(*,*) '    ----------------------------'
+(  167) !
+(  168)  CLOSE(NLISTING)
+(  169) !
+(  170) !-------------------------------------------------------------------------------
+(  171)  CALL TRIP_DEALLO_LIST
+(  172) !-------------------------------------------------------------------------------
+(  173) !
+(  174) IF (LHOOK) CALL DR_HOOK('TRIP_PREP',1,ZHOOK_HANDLE)
+(  175) !
+(  176) ! --------------------------------------------------------------------------------------
+(  177) ! * 3. MPI and OASIS must be finalized after the last DR_HOOK call
+(  178) ! --------------------------------------------------------------------------------------
+(  179) !
+(  180) CALL TRIP_OASIS_END(GOASIS,GXIOS)
+(  181) !
+(  182) !-------------------------------------------------------------------------------------
+(  183) !
+(  184) END PROGRAM TRIP_PREP

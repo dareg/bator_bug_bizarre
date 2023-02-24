@@ -1,0 +1,410 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: ice_fall.F90
+
+(    1) 
+(    2) subroutine ice_fall()
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) 
+(   15) ! Sedimentation of ice:
+(   16) 
+(   17) use vars
+(   18) use real_size
+(   19) use microphysics, only: micro_field, index_cloud_ice
+(   20) !use micro_params
+(   21) use params
+(   22) 
+(   23) implicit none
+(   24) 
+(   25) integer i,j,k, kb, kc, kmax, kmin, ici
+(   26) real(RR) coef,dqi,lat_heat,vt_ice
+(   27) real(RR) omnu, omnc, omnd, qiu, qic, qid, tmp_theta, tmp_phi
+(   28) real(RR) fz(nx,ny,nz)
+(   29) 
+(   30) kmax=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 3
+
+(   31) kmin=nzm+1
+(   32) 
+(   33) do k = 1,nzm
+(   34)  do j = 1, ny
+(   35)   do i = 1, nx
+(   36)       if(qcl(i,j,k)+qci(i,j,k).gt.0..and. tabs(i,j,k).lt.273.15) then
+(   37)         kmin = min(kmin,k)
+(   38)         kmax = max(kmax,k)
+(   39)       end if
+(   40)   end do
+(   41)  end do
+(   42) end do
+(   43) 
+(   44) do k = 1,nzm
+(   45)    qifall(k) = 0.
+(   46)    tlatqi(k) = 0.
+(   47) end do
+(   48) 
+(   49) if(index_cloud_ice.eq.-1) return
+(   50) 
+(   51) ! call t_startf ('ice_fall') ! commented by Phani
+(   52) 
+(   53) fz = 0.
+(   54) 
+(   55) ! Compute cloud ice flux (using flux limited advection scheme, as in
+(   56) ! chapter 6 of Finite Volume Methods for Hyperbolic Problems by R.J.
+(   57) ! LeVeque, Cambridge University Press, 2002). 
+(   58) do k = max(1,kmin-1),kmax
+(   59)    ! Set up indices for x-y planes above and below current plane.
+(   60)    kc = min(nzm,k+1)
+(   61)    kb = max(1,k-1)
+(   62)    ! CFL number based on grid spacing interpolated to interface i,j,k-1/2
+(   63)    coef = dtn/(0.5*(adz(kb)+adz(k))*dz)
+(   64)    do j = 1,ny
+(   65)       do i = 1,nx
+(   66)          ! Compute cloud ice density in this cell and the ones above/below.
+(   67)          ! Since cloud ice is falling, the above cell is u (upwind),
+(   68)          ! this cell is c (center) and the one below is d (downwind). 
+(   69) 
+(   70)          qiu = rho(kc)*qci(i,j,kc)
+(   71)          qic = rho(k) *qci(i,j,k) 
+(   72)          qid = rho(kb)*qci(i,j,kb) 
+(   73) 
+(   74)          ! Ice sedimentation velocity depends on ice content. The fiting is
+(   75)          ! based on the data by Heymsfield (JAS,2003). -Marat
+(   76)          !vt_ice = min(0.4,8.66*(max(0.,qic)+1.e-10)**0.24)   ! Heymsfield (JAS, 2003, p.2607)
+(   77)          vt_ice = 0.1
+(   78) 
+(   79)          ! Use MC flux limiter in computation of flux correction.
+(   80)          ! (MC = monotonized centered difference).
+(   81)          if (qic.eq.qid) then
+(   82)             tmp_phi = 0.
+(   83)          else
+(   84)             tmp_theta = (qiu-qic)/(qic-qid)
+(   85)             tmp_phi = max(0.,min(0.5*(1.+tmp_theta),2.,2.*tmp_theta))
+(   86)          end if
+(   87) 
+(   88)          ! Compute limited flux.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 4
+
+(   89)          ! Since falling cloud ice is a 1D advection problem, this
+(   90)          ! flux-limited advection scheme is monotonic.
+(   91)          fz(i,j,k) = -vt_ice*(qic - 0.5*(1.-coef*vt_ice)*tmp_phi*(qic-qid))
+(   92)       end do
+(   93)    end do
+(   94) end do
+(   95) fz(:,:,nz) = 0.
+(   96) 
+(   97) ici = index_cloud_ice
+(   98) 
+(   99) do k=max(1,kmin-2),kmax
+(  100)    coef=dtn/(dz*adz(k)*rho(k))
+(  101)    do j=1,ny
+(  102)       do i=1,nx
+(  103)          ! The cloud ice increment is the difference of the fluxes.
+(  104)          dqi=coef*(fz(i,j,k)-fz(i,j,k+1))
+(  105)          ! Add this increment to both non-precipitating and total water.
+(  106)          micro_field(i,j,k,ici)  = micro_field(i,j,k,ici)  + dqi
+(  107)          ! Include this effect in the total moisture budget.
+(  108)          qifall(k) = qifall(k) + dqi
+(  109) 
+(  110)          ! The latent heat flux induced by the falling cloud ice enters
+(  111)          ! the liquid-ice static energy budget in the same way as the
+(  112)          ! precipitation.  Note: use latent heat of sublimation. 
+(  113)          lat_heat  = (fac_cond+fac_fus)*dqi
+(  114)          ! Add divergence of latent heat flux to liquid-ice static energy.
+(  115)          t(i,j,k)  = t(i,j,k)  - lat_heat
+(  116)          ! Add divergence to liquid-ice static energy budget.
+(  117)          tlatqi(k) = tlatqi(k) - lat_heat
+(  118)       end do
+(  119)    end do
+(  120) end do
+(  121) 
+(  122) ! call t_stopf ('ice_fall') ! commented by Phani
+(  123) 
+(  124) end subroutine ice_fall
+(  125) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 5
+
+(    1) # 1 "ice_fall.F90"
+(    1) # 2 "ice_fall.F90"
+(    2) subroutine ice_fall()
+(    3) # 4 "ice_fall.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 15 "ice_fall.F90"
+(   15) ! Sedimentation of ice:
+(   16) # 17 "ice_fall.F90"
+(   17) use vars
+(   18) use real_size
+(   19) use microphysics, only: micro_field, index_cloud_ice
+(   20) !use micro_params
+(   21) use params
+(   22) # 23 "ice_fall.F90"
+(   23) implicit none
+(   24) # 25 "ice_fall.F90"
+(   25) integer i,j,k, kb, kc, kmax, kmin, ici
+(   26) real(RR) coef,dqi,lat_heat,vt_ice
+(   27) real(RR) omnu, omnc, omnd, qiu, qic, qid, tmp_theta, tmp_phi
+(   28) real(RR) fz(nx,ny,nz)
+(   29) # 30 "ice_fall.F90"
+(   30) kmax=0
+(   31) kmin=nzm+1
+(   32) # 33 "ice_fall.F90"
+(   33) do k = 1,nzm
+(   34)  do j = 1, ny
+(   35)   do i = 1, nx
+(   36)       if(qcl(i,j,k)+qci(i,j,k).gt.0..and. tabs(i,j,k).lt.273.15) then
+(   37)         kmin = min(kmin,k)
+(   38)         kmax = max(kmax,k)
+(   39)       end if
+(   40)   end do
+(   41)  end do
+(   42) end do
+(   43) # 44 "ice_fall.F90"
+(   44) do k = 1,nzm
+(   45)    qifall(k) = 0.
+(   46)    tlatqi(k) = 0.
+(   47) end do
+(   48) # 49 "ice_fall.F90"
+(   49) if(index_cloud_ice.eq.-1) return
+(   50) # 51 "ice_fall.F90"
+(   51) ! call t_startf ('ice_fall') ! commented by Phani
+(   52) # 53 "ice_fall.F90"
+(   53) fz = 0.
+(   54) # 55 "ice_fall.F90"
+(   55) ! Compute cloud ice flux (using flux limited advection scheme, as in
+(   56) ! chapter 6 of Finite Volume Methods for Hyperbolic Problems by R.J.
+(   57) ! LeVeque, Cambridge University Press, 2002). 
+(   58) do k = max(1,kmin-1),kmax
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 6
+
+(   59)    ! Set up indices for x-y planes above and below current plane.
+(   60)    kc = min(nzm,k+1)
+(   61)    kb = max(1,k-1)
+(   62)    ! CFL number based on grid spacing interpolated to interface i,j,k-1/2
+(   63)    coef = dtn/(0.5*(adz(kb)+adz(k))*dz)
+(   64)    do j = 1,ny
+(   65)       do i = 1,nx
+(   66)          ! Compute cloud ice density in this cell and the ones above/below.
+(   67)          ! Since cloud ice is falling, the above cell is u (upwind),
+(   68)          ! this cell is c (center) and the one below is d (downwind). 
+(   69) # 70 "ice_fall.F90"
+(   70)          qiu = rho(kc)*qci(i,j,kc)
+(   71)          qic = rho(k) *qci(i,j,k) 
+(   72)          qid = rho(kb)*qci(i,j,kb) 
+(   73) # 74 "ice_fall.F90"
+(   74)          ! Ice sedimentation velocity depends on ice content. The fiting is
+(   75)          ! based on the data by Heymsfield (JAS,2003). -Marat
+(   76)          !vt_ice = min(0.4,8.66*(max(0.,qic)+1.e-10)**0.24)   ! Heymsfield (JAS, 2003, p.2607)
+(   77)          vt_ice = 0.1
+(   78) # 79 "ice_fall.F90"
+(   79)          ! Use MC flux limiter in computation of flux correction.
+(   80)          ! (MC = monotonized centered difference).
+(   81)          if (qic.eq.qid) then
+(   82)             tmp_phi = 0.
+(   83)          else
+(   84)             tmp_theta = (qiu-qic)/(qic-qid)
+(   85)             tmp_phi = max(0.,min(0.5*(1.+tmp_theta),2.,2.*tmp_theta))
+(   86)          end if
+(   87) # 88 "ice_fall.F90"
+(   88)          ! Compute limited flux.
+(   89)          ! Since falling cloud ice is a 1D advection problem, this
+(   90)          ! flux-limited advection scheme is monotonic.
+(   91)          fz(i,j,k) = -vt_ice*(qic - 0.5*(1.-coef*vt_ice)*tmp_phi*(qic-qid))
+(   92)       end do
+(   93)    end do
+(   94) end do
+(   95) fz(:,:,nz) = 0.
+(   96) # 97 "ice_fall.F90"
+(   97) ici = index_cloud_ice
+(   98) # 99 "ice_fall.F90"
+(   99) do k=max(1,kmin-2),kmax
+(  100)    coef=dtn/(dz*adz(k)*rho(k))
+(  101)    do j=1,ny
+(  102)       do i=1,nx
+(  103)          ! The cloud ice increment is the difference of the fluxes.
+(  104)          dqi=coef*(fz(i,j,k)-fz(i,j,k+1))
+(  105)          ! Add this increment to both non-precipitating and total water.
+(  106)          micro_field(i,j,k,ici)  = micro_field(i,j,k,ici)  + dqi
+(  107)          ! Include this effect in the total moisture budget.
+(  108)          qifall(k) = qifall(k) + dqi
+(  109) # 110 "ice_fall.F90"
+(  110)          ! The latent heat flux induced by the falling cloud ice enters
+(  111)          ! the liquid-ice static energy budget in the same way as the
+(  112)          ! precipitation.  Note: use latent heat of sublimation. 
+(  113)          lat_heat  = (fac_cond+fac_fus)*dqi
+(  114)          ! Add divergence of latent heat flux to liquid-ice static energy.
+(  115)          t(i,j,k)  = t(i,j,k)  - lat_heat
+(  116)          ! Add divergence to liquid-ice static energy budget.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:59:00      page 7
+
+(  117)          tlatqi(k) = tlatqi(k) - lat_heat
+(  118)       end do
+(  119)    end do
+(  120) end do
+(  121) # 122 "ice_fall.F90"
+(  122) ! call t_stopf ('ice_fall') ! commented by Phani
+(  123) # 124 "ice_fall.F90"
+(  124) end subroutine ice_fall

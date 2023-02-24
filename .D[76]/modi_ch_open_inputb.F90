@@ -1,0 +1,11 @@
+!depfile:ch_open_inputb.F90
+MODULE MODI_CH_OPEN_INPUTB
+INTERFACE
+      SUBROUTINE CH_OPEN_INPUTB(HKEYWORD,KCHANNEL,KLUOUT)
+ CHARACTER(LEN=*), INTENT(IN) :: HKEYWORD         ! keyword for positioning
+INTEGER         , INTENT(IN) :: KCHANNEL         ! I/O channel to choose
+INTEGER,          INTENT(IN) :: KLUOUT           ! output listing logical unit
+END SUBROUTINE CH_OPEN_INPUTB
+
+END INTERFACE
+END MODULE MODI_CH_OPEN_INPUTB

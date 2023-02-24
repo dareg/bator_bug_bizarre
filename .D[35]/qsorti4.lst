@@ -1,0 +1,389 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: qsorti4.F
+
+(    1) ! Sort character strings
+(    2)       SUBROUTINE QSORTI4 (N,ORD,A)
+(    3)       USE PARKIND1, ONLY : JPIM, JPRB
+(    4) !      IMPLICIT INTEGER (A-Z)
+(    5)       IMPLICIT NONE
+(    6) 
+(    7)       INTEGER(KIND=4) :: N
+(    8)       INTEGER(KIND=4) :: A(N)
+(    9)       INTEGER(KIND=4) :: ORD(N)
+(   10)       INTEGER(KIND=4) :: X,XX,Z,ZZ,Y
+(   11) 
+(   12)       INTEGER(KIND=JPIM) :: I,IP,IQ,IX,IZ,L,L1,NDEEP,P
+(   13)       INTEGER(KIND=JPIM) :: POPLST(2,20)
+(   14)       INTEGER(KIND=JPIM) :: Q,U,U1,YP
+(   15) 
+(   16)       NDEEP=0
+(   17)       U1=N
+(   18)       L1=1
+(   19)       DO 1  I=1,N
+(   20)     1 ORD(I)=I
+(   21)     2 IF (U1.LE.L1) RETURN
+(   22) 
+(   23)     3 L=L1
+(   24)       U=U1
+(   25)     4 P=L
+(   26)       Q=U
+(   27) 
+(   28)       X=A(ORD(P))
+(   29)       Z=A(ORD(Q))
+(   30)       IF (X.LE.Z) GO TO 5
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 3
+
+(   31)       Y=X
+(   32)       X=Z
+(   33)       Z=Y
+(   34)       YP=ORD(P)
+(   35)       ORD(P)=ORD(Q)
+(   36)       ORD(Q)=YP
+(   37)     5 IF (U-L.LE.1) GO TO 15
+(   38)       XX=X
+(   39)       IX=P
+(   40)       ZZ=Z
+(   41)       IZ=Q
+(   42) 
+(   43)     6 P=P+1
+(   44)       IF (P.GE.Q) GO TO 7
+(   45)       X=A(ORD(P))
+(   46)       IF (X.GE.XX) GO TO 8
+(   47)       GO TO 6
+(   48)     7 P=Q-1
+(   49)       GO TO 13
+(   50) 
+(   51)     8 Q=Q-1
+(   52)       IF (Q.LE.P) GO TO 9
+(   53)       Z=A(ORD(Q))
+(   54)       IF (Z.LE.ZZ) GO TO 10
+(   55)       GO TO 8
+(   56)     9 Q=P
+(   57)       P=P-1
+(   58)       Z=X
+(   59)       X=A(ORD(P))
+(   60) 
+(   61)    10 IF (X.LE.Z) GO TO 11
+(   62)       Y=X
+(   63)       X=Z
+(   64)       Z=Y
+(   65)       IP=ORD(P)
+(   66)       ORD(P)=ORD(Q)
+(   67)       ORD(Q)=IP
+(   68)    11 IF (X.LE.XX) GO TO 12
+(   69)       XX=X
+(   70)       IX=P
+(   71)    12 IF (Z.GE.ZZ) GO TO 6
+(   72)       ZZ=Z
+(   73)       IZ=Q
+(   74)       GO TO 6
+(   75) 
+(   76)    13 CONTINUE
+(   77)       IF (.NOT.(P.NE.IX.AND.X.NE.XX)) GO TO 14
+(   78)       IP=ORD(P)
+(   79)       ORD(P)=ORD(IX)
+(   80)       ORD(IX)=IP
+(   81)    14 CONTINUE
+(   82)       IF (.NOT.(Q.NE.IZ.AND.Z.NE.ZZ)) GO TO 15
+(   83)       IQ=ORD(Q)
+(   84)       ORD(Q)=ORD(IZ)
+(   85)       ORD(IZ)=IQ
+(   86)    15 CONTINUE
+(   87)       IF (U-Q.LE.P-L) GO TO 16
+(   88)       L1=L
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 4
+
+(   89)       U1=P-1
+(   90)       L=Q+1
+(   91)       GO TO 17
+(   92)    16 U1=U
+(   93)       L1=Q+1
+(   94)       U=P-1
+(   95)    17 CONTINUE
+(   96)       IF (U1.LE.L1) GO TO 18
+(   97) 
+(   98)       NDEEP=NDEEP+1
+(   99)       POPLST(1,NDEEP)=U
+(  100)       POPLST(2,NDEEP)=L
+(  101)       GO TO 3
+(  102)    18 IF (U.GT.L) GO TO 4
+(  103) 
+(  104)       IF (NDEEP.EQ.0) GO TO 2
+(  105)       U=POPLST(1,NDEEP)
+(  106)       L=POPLST(2,NDEEP)
+(  107)       NDEEP=NDEEP-1
+(  108)       GO TO 18
+(  109) 
+(  110)       ENDSUBROUTINE QSORTI4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 5
+
+(    1) # 1 "qsorti4.F"
+(    1) ! Sort character strings
+(    2)       SUBROUTINE QSORTI4 (N,ORD,A)
+(    3)       USE PARKIND1, ONLY : JPIM, JPRB
+(    4) !      IMPLICIT INTEGER (A-Z)
+(    5)       IMPLICIT NONE
+(    6) # 7 "qsorti4.F"
+(    7)       INTEGER(KIND=4) :: N
+(    8)       INTEGER(KIND=4) :: A(N)
+(    9)       INTEGER(KIND=4) :: ORD(N)
+(   10)       INTEGER(KIND=4) :: X,XX,Z,ZZ,Y
+(   11) # 12 "qsorti4.F"
+(   12)       INTEGER(KIND=JPIM) :: I,IP,IQ,IX,IZ,L,L1,NDEEP,P
+(   13)       INTEGER(KIND=JPIM) :: POPLST(2,20)
+(   14)       INTEGER(KIND=JPIM) :: Q,U,U1,YP
+(   15) # 16 "qsorti4.F"
+(   16)       NDEEP=0
+(   17)       U1=N
+(   18)       L1=1
+(   19)       DO 1  I=1,N
+(   20)     1 ORD(I)=I
+(   21)     2 IF (U1.LE.L1) RETURN
+(   22) # 23 "qsorti4.F"
+(   23)     3 L=L1
+(   24)       U=U1
+(   25)     4 P=L
+(   26)       Q=U
+(   27) # 28 "qsorti4.F"
+(   28)       X=A(ORD(P))
+(   29)       Z=A(ORD(Q))
+(   30)       IF (X.LE.Z) GO TO 5
+(   31)       Y=X
+(   32)       X=Z
+(   33)       Z=Y
+(   34)       YP=ORD(P)
+(   35)       ORD(P)=ORD(Q)
+(   36)       ORD(Q)=YP
+(   37)     5 IF (U-L.LE.1) GO TO 15
+(   38)       XX=X
+(   39)       IX=P
+(   40)       ZZ=Z
+(   41)       IZ=Q
+(   42) # 43 "qsorti4.F"
+(   43)     6 P=P+1
+(   44)       IF (P.GE.Q) GO TO 7
+(   45)       X=A(ORD(P))
+(   46)       IF (X.GE.XX) GO TO 8
+(   47)       GO TO 6
+(   48)     7 P=Q-1
+(   49)       GO TO 13
+(   50) # 51 "qsorti4.F"
+(   51)     8 Q=Q-1
+(   52)       IF (Q.LE.P) GO TO 9
+(   53)       Z=A(ORD(Q))
+(   54)       IF (Z.LE.ZZ) GO TO 10
+(   55)       GO TO 8
+(   56)     9 Q=P
+(   57)       P=P-1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:32      page 6
+
+(   58)       Z=X
+(   59)       X=A(ORD(P))
+(   60) # 61 "qsorti4.F"
+(   61)    10 IF (X.LE.Z) GO TO 11
+(   62)       Y=X
+(   63)       X=Z
+(   64)       Z=Y
+(   65)       IP=ORD(P)
+(   66)       ORD(P)=ORD(Q)
+(   67)       ORD(Q)=IP
+(   68)    11 IF (X.LE.XX) GO TO 12
+(   69)       XX=X
+(   70)       IX=P
+(   71)    12 IF (Z.GE.ZZ) GO TO 6
+(   72)       ZZ=Z
+(   73)       IZ=Q
+(   74)       GO TO 6
+(   75) # 76 "qsorti4.F"
+(   76)    13 CONTINUE
+(   77)       IF (.NOT.(P.NE.IX.AND.X.NE.XX)) GO TO 14
+(   78)       IP=ORD(P)
+(   79)       ORD(P)=ORD(IX)
+(   80)       ORD(IX)=IP
+(   81)    14 CONTINUE
+(   82)       IF (.NOT.(Q.NE.IZ.AND.Z.NE.ZZ)) GO TO 15
+(   83)       IQ=ORD(Q)
+(   84)       ORD(Q)=ORD(IZ)
+(   85)       ORD(IZ)=IQ
+(   86)    15 CONTINUE
+(   87)       IF (U-Q.LE.P-L) GO TO 16
+(   88)       L1=L
+(   89)       U1=P-1
+(   90)       L=Q+1
+(   91)       GO TO 17
+(   92)    16 U1=U
+(   93)       L1=Q+1
+(   94)       U=P-1
+(   95)    17 CONTINUE
+(   96)       IF (U1.LE.L1) GO TO 18
+(   97) # 98 "qsorti4.F"
+(   98)       NDEEP=NDEEP+1
+(   99)       POPLST(1,NDEEP)=U
+(  100)       POPLST(2,NDEEP)=L
+(  101)       GO TO 3
+(  102)    18 IF (U.GT.L) GO TO 4
+(  103) # 104 "qsorti4.F"
+(  104)       IF (NDEEP.EQ.0) GO TO 2
+(  105)       U=POPLST(1,NDEEP)
+(  106)       L=POPLST(2,NDEEP)
+(  107)       NDEEP=NDEEP-1
+(  108)       GO TO 18
+(  109) # 110 "qsorti4.F"
+(  110)       ENDSUBROUTINE QSORTI4

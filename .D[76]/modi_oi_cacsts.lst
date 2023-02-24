@@ -1,0 +1,278 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:05      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:05      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_oi_cacsts.F90
+
+(    1) !depfile:oi_cacsts.F90
+(    2) MODULE MODI_OI_CACSTS
+(    3) INTERFACE
+(    4) SUBROUTINE OI_CACSTS(KNBPT,PT2INC,PH2INC,PWGINC,PSNINC,PWS_O,               &
+(    5)                      KDAT,KSSSSS,                                           &
+(    6)                      PTP,PWP,PTL,PSNS,PTS,PWS,                              &
+(    7)                      PTCLS,PHCLS,PUCLS,PVCLS,PSSTC,PWPINC1,PWPINC2,PWPINC3, &
+(    8)                      PT2MBIAS,PH2MBIAS,                                     &
+(    9)                      PRRCL,PRRSL,PRRCN,PRRSN,PATMNEB,PEVAP,PEVAPTR,         &
+(   10)                      PITM,PVEG,PALBF,PEMISF,PZ0F,                           &
+(   11)                      PIVEG,PARG,PD2,PSAB,PLAI,PRSMIN,PZ0H,                  &
+(   12)                      PTSC,PTPC,PWSC,PWPC,PSNC,PGELAT,PGELAM,PGEMU)  
+(   13) INTEGER,INTENT(IN)    :: KNBPT, KDAT, KSSSSS
+(   14) REAL   ,INTENT(IN)    :: PT2INC(KNBPT) 
+(   15) REAL   ,INTENT(IN)    :: PH2INC(KNBPT) 
+(   16) REAL   ,INTENT(IN)    :: PWGINC(KNBPT)
+(   17) REAL   ,INTENT(IN)    :: PSNINC(KNBPT)
+(   18) REAL   ,INTENT(IN)    :: PWS_O(KNBPT)
+(   19) REAL   ,INTENT(INOUT) :: PTP(KNBPT)
+(   20) REAL   ,INTENT(INOUT) :: PWP(KNBPT)
+(   21) REAL   ,INTENT(INOUT) :: PTL(KNBPT)
+(   22) REAL   ,INTENT(INOUT) :: PSNS(KNBPT)
+(   23) REAL   ,INTENT(INOUT) :: PTS(KNBPT)
+(   24) REAL   ,INTENT(INOUT) :: PWS(KNBPT)
+(   25) REAL   ,INTENT(INOUT) :: PTCLS(KNBPT) 
+(   26) REAL   ,INTENT(INOUT) :: PHCLS(KNBPT) 
+(   27) REAL   ,INTENT(INOUT) :: PUCLS(KNBPT)
+(   28) REAL   ,INTENT(INOUT) :: PVCLS(KNBPT)
+(   29) REAL   ,INTENT(INOUT) :: PSSTC(KNBPT)
+(   30) REAL   ,INTENT(INOUT) :: PWPINC1(KNBPT)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:05      page 3
+
+(   31) REAL   ,INTENT(INOUT) :: PWPINC2(KNBPT)
+(   32) REAL   ,INTENT(INOUT) :: PWPINC3(KNBPT)
+(   33) REAL   ,INTENT(INOUT) :: PT2MBIAS(KNBPT)
+(   34) REAL   ,INTENT(INOUT) :: PH2MBIAS(KNBPT)
+(   35) REAL   ,INTENT(IN)    :: PRRCL(KNBPT)
+(   36) REAL   ,INTENT(IN)    :: PRRSL(KNBPT)
+(   37) REAL   ,INTENT(IN)    :: PRRCN(KNBPT)
+(   38) REAL   ,INTENT(IN)    :: PRRSN(KNBPT)
+(   39) REAL   ,INTENT(IN)    :: PATMNEB(KNBPT)
+(   40) REAL   ,INTENT(IN)    :: PEVAP(KNBPT)
+(   41) REAL   ,INTENT(IN)    :: PEVAPTR(KNBPT)
+(   42) REAL   ,INTENT(IN)    :: PITM(KNBPT) 
+(   43) REAL   ,INTENT(IN) :: PVEG(KNBPT) 
+(   44) REAL   ,INTENT(INOUT) :: PALBF(KNBPT)
+(   45) REAL   ,INTENT(INOUT) :: PEMISF(KNBPT)
+(   46) REAL   ,INTENT(INOUT) :: PZ0F(KNBPT)
+(   47) REAL   ,INTENT(INOUT) :: PIVEG(KNBPT)
+(   48) REAL   ,INTENT(INOUT) :: PARG(KNBPT)
+(   49) REAL   ,INTENT(INOUT) :: PD2(KNBPT)
+(   50) REAL   ,INTENT(INOUT) :: PSAB(KNBPT) 
+(   51) REAL   ,INTENT(INOUT) :: PLAI(KNBPT)
+(   52) REAL   ,INTENT(INOUT) :: PRSMIN(KNBPT)
+(   53) REAL   ,INTENT(INOUT) :: PZ0H(KNBPT)
+(   54) REAL   ,INTENT(IN)    :: PTSC(KNBPT)
+(   55) REAL   ,INTENT(IN)    :: PTPC(KNBPT)
+(   56) REAL   ,INTENT(IN)    :: PWSC(KNBPT)
+(   57) REAL   ,INTENT(IN)    :: PWPC(KNBPT)
+(   58) REAL   ,INTENT(IN)    :: PSNC(KNBPT) 
+(   59) REAL   ,INTENT(IN)    :: PGELAT(KNBPT) 
+(   60) REAL   ,INTENT(IN)    :: PGELAM(KNBPT) 
+(   61) REAL   ,INTENT(IN)    :: PGEMU(KNBPT)
+(   62) END SUBROUTINE OI_CACSTS
+(   63) 
+(   64) END INTERFACE
+(   65) END MODULE MODI_OI_CACSTS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:05      page 4
+
+(    1) # 1 "modi_oi_cacsts.F90"
+(    1) !depfile:oi_cacsts.F90
+(    2) MODULE MODI_OI_CACSTS
+(    3) INTERFACE
+(    4) SUBROUTINE OI_CACSTS(KNBPT,PT2INC,PH2INC,PWGINC,PSNINC,PWS_O,               &
+(    5)                      KDAT,KSSSSS,                                           &
+(    6)                      PTP,PWP,PTL,PSNS,PTS,PWS,                              &
+(    7)                      PTCLS,PHCLS,PUCLS,PVCLS,PSSTC,PWPINC1,PWPINC2,PWPINC3, &
+(    8)                      PT2MBIAS,PH2MBIAS,                                     &
+(    9)                      PRRCL,PRRSL,PRRCN,PRRSN,PATMNEB,PEVAP,PEVAPTR,         &
+(   10)                      PITM,PVEG,PALBF,PEMISF,PZ0F,                           &
+(   11)                      PIVEG,PARG,PD2,PSAB,PLAI,PRSMIN,PZ0H,                  &
+(   12)                      PTSC,PTPC,PWSC,PWPC,PSNC,PGELAT,PGELAM,PGEMU)  
+(   13) INTEGER,INTENT(IN)    :: KNBPT, KDAT, KSSSSS
+(   14) REAL   ,INTENT(IN)    :: PT2INC(KNBPT) 
+(   15) REAL   ,INTENT(IN)    :: PH2INC(KNBPT) 
+(   16) REAL   ,INTENT(IN)    :: PWGINC(KNBPT)
+(   17) REAL   ,INTENT(IN)    :: PSNINC(KNBPT)
+(   18) REAL   ,INTENT(IN)    :: PWS_O(KNBPT)
+(   19) REAL   ,INTENT(INOUT) :: PTP(KNBPT)
+(   20) REAL   ,INTENT(INOUT) :: PWP(KNBPT)
+(   21) REAL   ,INTENT(INOUT) :: PTL(KNBPT)
+(   22) REAL   ,INTENT(INOUT) :: PSNS(KNBPT)
+(   23) REAL   ,INTENT(INOUT) :: PTS(KNBPT)
+(   24) REAL   ,INTENT(INOUT) :: PWS(KNBPT)
+(   25) REAL   ,INTENT(INOUT) :: PTCLS(KNBPT) 
+(   26) REAL   ,INTENT(INOUT) :: PHCLS(KNBPT) 
+(   27) REAL   ,INTENT(INOUT) :: PUCLS(KNBPT)
+(   28) REAL   ,INTENT(INOUT) :: PVCLS(KNBPT)
+(   29) REAL   ,INTENT(INOUT) :: PSSTC(KNBPT)
+(   30) REAL   ,INTENT(INOUT) :: PWPINC1(KNBPT)
+(   31) REAL   ,INTENT(INOUT) :: PWPINC2(KNBPT)
+(   32) REAL   ,INTENT(INOUT) :: PWPINC3(KNBPT)
+(   33) REAL   ,INTENT(INOUT) :: PT2MBIAS(KNBPT)
+(   34) REAL   ,INTENT(INOUT) :: PH2MBIAS(KNBPT)
+(   35) REAL   ,INTENT(IN)    :: PRRCL(KNBPT)
+(   36) REAL   ,INTENT(IN)    :: PRRSL(KNBPT)
+(   37) REAL   ,INTENT(IN)    :: PRRCN(KNBPT)
+(   38) REAL   ,INTENT(IN)    :: PRRSN(KNBPT)
+(   39) REAL   ,INTENT(IN)    :: PATMNEB(KNBPT)
+(   40) REAL   ,INTENT(IN)    :: PEVAP(KNBPT)
+(   41) REAL   ,INTENT(IN)    :: PEVAPTR(KNBPT)
+(   42) REAL   ,INTENT(IN)    :: PITM(KNBPT) 
+(   43) REAL   ,INTENT(IN) :: PVEG(KNBPT) 
+(   44) REAL   ,INTENT(INOUT) :: PALBF(KNBPT)
+(   45) REAL   ,INTENT(INOUT) :: PEMISF(KNBPT)
+(   46) REAL   ,INTENT(INOUT) :: PZ0F(KNBPT)
+(   47) REAL   ,INTENT(INOUT) :: PIVEG(KNBPT)
+(   48) REAL   ,INTENT(INOUT) :: PARG(KNBPT)
+(   49) REAL   ,INTENT(INOUT) :: PD2(KNBPT)
+(   50) REAL   ,INTENT(INOUT) :: PSAB(KNBPT) 
+(   51) REAL   ,INTENT(INOUT) :: PLAI(KNBPT)
+(   52) REAL   ,INTENT(INOUT) :: PRSMIN(KNBPT)
+(   53) REAL   ,INTENT(INOUT) :: PZ0H(KNBPT)
+(   54) REAL   ,INTENT(IN)    :: PTSC(KNBPT)
+(   55) REAL   ,INTENT(IN)    :: PTPC(KNBPT)
+(   56) REAL   ,INTENT(IN)    :: PWSC(KNBPT)
+(   57) REAL   ,INTENT(IN)    :: PWPC(KNBPT)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:05      page 5
+
+(   58) REAL   ,INTENT(IN)    :: PSNC(KNBPT) 
+(   59) REAL   ,INTENT(IN)    :: PGELAT(KNBPT) 
+(   60) REAL   ,INTENT(IN)    :: PGELAM(KNBPT) 
+(   61) REAL   ,INTENT(IN)    :: PGEMU(KNBPT)
+(   62) END SUBROUTINE OI_CACSTS
+(   63) # 64 "modi_oi_cacsts.F90"
+(   64) END INTERFACE
+(   65) END MODULE MODI_OI_CACSTS

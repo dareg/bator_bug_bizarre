@@ -1,0 +1,14 @@
+!depfile:split_grid_cartesian.F90
+MODULE MODI_SPLIT_GRID_CARTESIAN
+INTERFACE
+      SUBROUTINE SPLIT_GRID_CARTESIAN(HPROGRAM,KDIM_FULL,KSIZE_FULL,KGRID_PAR,PGRID_PAR,KHALO)
+ CHARACTER(LEN=6),   INTENT(IN)    :: HPROGRAM  ! host program 
+INTEGER,            INTENT(IN)    :: KDIM_FULL ! total number of points
+INTEGER,            INTENT(OUT)   :: KSIZE_FULL! number of points on this processor
+INTEGER,            INTENT(INOUT) :: KGRID_PAR ! size of PGRID_PAR pointer
+REAL, DIMENSION(:), POINTER       :: PGRID_PAR ! parameters defining this grid
+INTEGER, OPTIONAL,  INTENT(IN)    :: KHALO ! size of the Halo
+END SUBROUTINE SPLIT_GRID_CARTESIAN
+
+END INTERFACE
+END MODULE MODI_SPLIT_GRID_CARTESIAN

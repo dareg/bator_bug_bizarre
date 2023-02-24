@@ -1,0 +1,389 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fagrtw.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAGRTW_MT64           &
+(    4) &                     (FA, KREP, KUNIT)
+(    5) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) TYPE(FA_COM) :: FA
+(   11) INTEGER (KIND=JPLIKB) KREP, KUNIT
+(   12) !
+(   13) INTEGER (KIND=JPLIKB) JJ
+(   14) 
+(   15) INTEGER :: IOST
+(   16) 
+(   17) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   18) 
+(   19) IF (LHOOK) CALL DR_HOOK('FAGRTW_MT',0,ZHOOK_HANDLE)
+(   20) 
+(   21) KREP=0
+(   22) 
+(   23) IF (.NOT. ASSOCIATED (FA%YGR1TAB)) THEN
+(   24)   CALL FAICOR_MT64 (FA)
+(   25) ENDIF
+(   26) 
+(   27) IOST = 0
+(   28) 
+(   29) WRITE (KUNIT, '("VERSION = ",I10)', ERR=999, IOSTAT=IOST) 1                
+(   30) WRITE (KUNIT, '(I10)', ERR=999, IOSTAT=IOST) SIZE (FA%YGR1TAB) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 3
+
+(   31) 
+(   32) DO JJ = 1, SIZE (FA%YGR1TAB)
+(   33)   WRITE (KUNIT, '(" | ",A8," | ",A24," | ",7I10," | ",L1," | ",E23.16," | ",L1," | ")', &
+(   34) &        ERR=999, IOSTAT=IOST)                                                          &
+(   35) &        FA%YGR1TAB (JJ)%CIPREF, FA%YGR1TAB (JJ)%CISUFF, FA%YGR1TAB (JJ)%NCODPA(1:7),   &
+(   36) &        FA%YGR1TAB (JJ)%LFNIVA, FA%YGR1TAB (JJ)%FMULTI, FA%YGR1TAB (JJ)%LMULTI
+(   37) ENDDO
+(   38) 
+(   39) 
+(   40) 
+(   41) 999 CONTINUE
+(   42) 
+(   43) IF (IOST /= 0) THEN
+(   44)   KREP = IOST
+(   45) ENDIF
+(   46) 
+(   47) IF (LHOOK) CALL DR_HOOK('FAGRTW_MT',1,ZHOOK_HANDLE)
+(   48) 
+(   49) END SUBROUTINE FAGRTW_MT64
+(   50) 
+(   51) ! Oct-2012 P. Marguinaud 64b LFI
+(   52) SUBROUTINE FAGRTW64                    &
+(   53) &           (KREP, KUNIT)
+(   54) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   55) &                  FA_COM_DEFAULT_INIT,  &
+(   56) &                  NEW_FA_DEFAULT
+(   57) USE LFI_PRECISION
+(   58) IMPLICIT NONE
+(   59) ! Arguments
+(   60) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   61) INTEGER (KIND=JPLIKB)  KUNIT                                  ! IN   
+(   62) 
+(   63) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   64) 
+(   65) CALL FAGRTW_MT64                           &
+(   66) &           (FA, KREP, KUNIT)
+(   67) 
+(   68) END SUBROUTINE FAGRTW64
+(   69) 
+(   70) SUBROUTINE FAGRTW                      &
+(   71) &           (KREP, KUNIT)
+(   72) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   73) &                  FA_COM_DEFAULT_INIT,  &
+(   74) &                  NEW_FA_DEFAULT
+(   75) USE LFI_PRECISION
+(   76) IMPLICIT NONE
+(   77) ! Arguments
+(   78) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   79) INTEGER (KIND=JPLIKM)  KUNIT                                  ! IN   
+(   80) 
+(   81) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   82) 
+(   83) CALL FAGRTW_MT                             &
+(   84) &           (FA, KREP, KUNIT)
+(   85) 
+(   86) END SUBROUTINE FAGRTW
+(   87) 
+(   88) SUBROUTINE FAGRTW_MT                       &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 4
+
+(   89) &           (FA, KREP, KUNIT)
+(   90) USE FA_MOD, ONLY : FA_COM
+(   91) USE LFI_PRECISION
+(   92) IMPLICIT NONE
+(   93) ! Arguments
+(   94) TYPE (FA_COM)          FA                                     ! INOUT
+(   95) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   96) INTEGER (KIND=JPLIKM)  KUNIT                                  !   OUT
+(   97) ! Local integers
+(   98) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(   99) INTEGER (KIND=JPLIKB)  IUNIT                                  ! IN   
+(  100) ! Convert arguments
+(  101) 
+(  102) IUNIT      = INT (     KUNIT, JPLIKB)
+(  103) 
+(  104) CALL FAGRTW_MT64                           &
+(  105) &           (FA, IREP, IUNIT)
+(  106) 
+(  107) KREP       = INT (      IREP, JPLIKM)
+(  108) 
+(  109) END SUBROUTINE FAGRTW_MT
+(  110) 
+(  111) !INTF KREP            OUT
+(  112) !INTF KUNIT         IN                                                                 
+(  113) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 5
+
+(    1) # 1 "fagrtw.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAGRTW_MT64           &
+(    4) &                     (FA, KREP, KUNIT)
+(    5) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) TYPE(FA_COM) :: FA
+(   11) INTEGER (KIND=JPLIKB) KREP, KUNIT
+(   12) !
+(   13) INTEGER (KIND=JPLIKB) JJ
+(   14) # 15 "fagrtw.F90"
+(   15) INTEGER :: IOST
+(   16) # 17 "fagrtw.F90"
+(   17) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   18) # 19 "fagrtw.F90"
+(   19) IF (LHOOK) CALL DR_HOOK('FAGRTW_MT',0,ZHOOK_HANDLE)
+(   20) # 21 "fagrtw.F90"
+(   21) KREP=0
+(   22) # 23 "fagrtw.F90"
+(   23) IF (.NOT. ASSOCIATED (FA%YGR1TAB)) THEN
+(   24)   CALL FAICOR_MT64 (FA)
+(   25) ENDIF
+(   26) # 27 "fagrtw.F90"
+(   27) IOST = 0
+(   28) # 29 "fagrtw.F90"
+(   29) WRITE (KUNIT, '("VERSION = ",I10)', ERR=999, IOSTAT=IOST) 1                
+(   30) WRITE (KUNIT, '(I10)', ERR=999, IOSTAT=IOST) SIZE (FA%YGR1TAB) 
+(   31) # 32 "fagrtw.F90"
+(   32) DO JJ = 1, SIZE (FA%YGR1TAB)
+(   33)   WRITE (KUNIT, '(" | ",A8," | ",A24," | ",7I10," | ",L1," | ",E23.16," | ",L1," | ")', &
+(   34) &        ERR=999, IOSTAT=IOST)                                                          &
+(   35) &        FA%YGR1TAB (JJ)%CIPREF, FA%YGR1TAB (JJ)%CISUFF, FA%YGR1TAB (JJ)%NCODPA(1:7),   &
+(   36) &        FA%YGR1TAB (JJ)%LFNIVA, FA%YGR1TAB (JJ)%FMULTI, FA%YGR1TAB (JJ)%LMULTI
+(   37) ENDDO
+(   38) # 41 "fagrtw.F90"
+(   41) 999 CONTINUE
+(   42) # 43 "fagrtw.F90"
+(   43) IF (IOST /= 0) THEN
+(   44)   KREP = IOST
+(   45) ENDIF
+(   46) # 47 "fagrtw.F90"
+(   47) IF (LHOOK) CALL DR_HOOK('FAGRTW_MT',1,ZHOOK_HANDLE)
+(   48) # 49 "fagrtw.F90"
+(   49) END SUBROUTINE FAGRTW_MT64
+(   50) # 51 "fagrtw.F90"
+(   51) ! Oct-2012 P. Marguinaud 64b LFI
+(   52) SUBROUTINE FAGRTW64                    &
+(   53) &           (KREP, KUNIT)
+(   54) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   55) &                  FA_COM_DEFAULT_INIT,  &
+(   56) &                  NEW_FA_DEFAULT
+(   57) USE LFI_PRECISION
+(   58) IMPLICIT NONE
+(   59) ! Arguments
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:19      page 6
+
+(   60) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   61) INTEGER (KIND=JPLIKB)  KUNIT                                  ! IN   
+(   62) # 63 "fagrtw.F90"
+(   63) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   64) # 65 "fagrtw.F90"
+(   65) CALL FAGRTW_MT64                           &
+(   66) &           (FA, KREP, KUNIT)
+(   67) # 68 "fagrtw.F90"
+(   68) END SUBROUTINE FAGRTW64
+(   69) # 70 "fagrtw.F90"
+(   70) SUBROUTINE FAGRTW                      &
+(   71) &           (KREP, KUNIT)
+(   72) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   73) &                  FA_COM_DEFAULT_INIT,  &
+(   74) &                  NEW_FA_DEFAULT
+(   75) USE LFI_PRECISION
+(   76) IMPLICIT NONE
+(   77) ! Arguments
+(   78) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   79) INTEGER (KIND=JPLIKM)  KUNIT                                  ! IN   
+(   80) # 81 "fagrtw.F90"
+(   81) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   82) # 83 "fagrtw.F90"
+(   83) CALL FAGRTW_MT                             &
+(   84) &           (FA, KREP, KUNIT)
+(   85) # 86 "fagrtw.F90"
+(   86) END SUBROUTINE FAGRTW
+(   87) # 88 "fagrtw.F90"
+(   88) SUBROUTINE FAGRTW_MT                       &
+(   89) &           (FA, KREP, KUNIT)
+(   90) USE FA_MOD, ONLY : FA_COM
+(   91) USE LFI_PRECISION
+(   92) IMPLICIT NONE
+(   93) ! Arguments
+(   94) TYPE (FA_COM)          FA                                     ! INOUT
+(   95) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   96) INTEGER (KIND=JPLIKM)  KUNIT                                  !   OUT
+(   97) ! Local integers
+(   98) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(   99) INTEGER (KIND=JPLIKB)  IUNIT                                  ! IN   
+(  100) ! Convert arguments
+(  101) # 102 "fagrtw.F90"
+(  102) IUNIT      = INT (     KUNIT, JPLIKB)
+(  103) # 104 "fagrtw.F90"
+(  104) CALL FAGRTW_MT64                           &
+(  105) &           (FA, IREP, IUNIT)
+(  106) # 107 "fagrtw.F90"
+(  107) KREP       = INT (      IREP, JPLIKM)
+(  108) # 109 "fagrtw.F90"
+(  109) END SUBROUTINE FAGRTW_MT
+(  110) # 111 "fagrtw.F90"
+(  111) !INTF KREP            OUT
+(  112) !INTF KUNIT         IN                                                                 

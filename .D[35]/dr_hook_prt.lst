@@ -1,0 +1,375 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: dr_hook_prt.F90
+
+(    1) SUBROUTINE DR_HOOK_PRT(KUNIT, CDSTR)
+(    2) USE PARKIND1  ,ONLY : JPIM
+(    3) IMPLICIT NONE
+(    4) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(    5) CHARACTER(LEN=*), INTENT(IN) :: CDSTR
+(    6) IF (KUNIT < 0) THEN
+(    7)   WRITE(*,'(A)') CDSTR
+(    8) ELSE
+(    9)   WRITE(KUNIT,'(A)') CDSTR
+(   10)   CALL FLUSH(KUNIT)
+(   11) ENDIF
+(   12) END SUBROUTINE DR_HOOK_PRT
+(   13) 
+(   14) SUBROUTINE DR_HOOK_PRT_CHAR(KUNIT, CD, KLD)
+(   15) USE PARKIND1  ,ONLY : JPIM
+(   16) IMPLICIT NONE
+(   17) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   18) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   19) CHARACTER(LEN=1), INTENT(IN) :: CD(KLD)
+(   20) IF (KUNIT < 0) THEN
+(   21)   WRITE(*,'(40A1)') CD
+(   22) ELSE
+(   23)   WRITE(*,'(40A1)') CD
+(   24)   CALL FLUSH(KUNIT)
+(   25) ENDIF
+(   26) END SUBROUTINE DR_HOOK_PRT_CHAR
+(   27) 
+(   28) SUBROUTINE DR_HOOK_PRT_LOGICAL(KUNIT, LD, KLD)
+(   29) USE PARKIND1  ,ONLY : JPIM
+(   30) IMPLICIT NONE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 3
+
+(   31) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   32) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   33) LOGICAL, INTENT(IN) :: LD(KLD)
+(   34) IF (KUNIT < 0) THEN
+(   35)   WRITE(*,'(40L2)') LD
+(   36) ELSE
+(   37)   WRITE(KUNIT,'(40L2)') LD
+(   38)   CALL FLUSH(KUNIT)
+(   39) ENDIF
+(   40) END SUBROUTINE DR_HOOK_PRT_LOGICAL
+(   41) 
+(   42) SUBROUTINE DR_HOOK_PRT_I4(KUNIT, KD, KLD)
+(   43) USE PARKIND1  ,ONLY : JPIM
+(   44) IMPLICIT NONE
+(   45) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   46) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   47) INTEGER(KIND=JPIM), INTENT(IN) :: KD(KLD)
+(   48) IF (KUNIT < 0) THEN
+(   49)   WRITE(*,'(5I12)') KD
+(   50) ELSE
+(   51)   WRITE(KUNIT,'(5I12)') KD
+(   52)   CALL FLUSH(KUNIT)
+(   53) ENDIF
+(   54) END SUBROUTINE DR_HOOK_PRT_I4
+(   55) 
+(   56) SUBROUTINE DR_HOOK_PRT_I8(KUNIT, KD, KLD)
+(   57) USE PARKIND1  ,ONLY : JPIM, JPIB
+(   58) IMPLICIT NONE
+(   59) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   60) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   61) INTEGER(KIND=JPIB), INTENT(IN) :: KD(KLD)
+(   62) IF (KUNIT < 0) THEN
+(   63)   WRITE(*,'(5I20)') KD
+(   64) ELSE
+(   65)   WRITE(KUNIT,'(5I20)') KD
+(   66)   CALL FLUSH(KUNIT)
+(   67) ENDIF
+(   68) END SUBROUTINE DR_HOOK_PRT_I8
+(   69) 
+(   70) SUBROUTINE DR_HOOK_PRT_R4(KUNIT, PD, KLD)
+(   71) USE PARKIND1  ,ONLY : JPIM, JPIB, JPRM
+(   72) IMPLICIT NONE
+(   73) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   74) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   75) REAL(KIND=JPRM), INTENT(IN) :: PD(KLD)
+(   76) IF (KUNIT < 0) THEN
+(   77)   WRITE(*,*) PD
+(   78) ELSE
+(   79)   WRITE(KUNIT,*) PD
+(   80)   CALL FLUSH(KUNIT)
+(   81) ENDIF
+(   82) END SUBROUTINE DR_HOOK_PRT_R4
+(   83) 
+(   84) SUBROUTINE DR_HOOK_PRT_R8(KUNIT, PD, KLD)
+(   85) USE PARKIND1  ,ONLY : JPIM, JPIB, JPRB
+(   86) IMPLICIT NONE
+(   87) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   88) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 4
+
+(   89) REAL(KIND=JPRB), INTENT(IN) :: PD(KLD)
+(   90) IF (KUNIT < 0) THEN
+(   91)   WRITE(*,*) PD
+(   92) ELSE
+(   93)   WRITE(KUNIT,*) PD
+(   94)   CALL FLUSH(KUNIT)
+(   95) ENDIF
+(   96) END SUBROUTINE DR_HOOK_PRT_R8
+(   97) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 5
+
+(    1) # 1 "dr_hook_prt.F90"
+(    1) SUBROUTINE DR_HOOK_PRT(KUNIT, CDSTR)
+(    2) USE PARKIND1  ,ONLY : JPIM
+(    3) IMPLICIT NONE
+(    4) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(    5) CHARACTER(LEN=*), INTENT(IN) :: CDSTR
+(    6) IF (KUNIT < 0) THEN
+(    7)   WRITE(*,'(A)') CDSTR
+(    8) ELSE
+(    9)   WRITE(KUNIT,'(A)') CDSTR
+(   10)   CALL FLUSH(KUNIT)
+(   11) ENDIF
+(   12) END SUBROUTINE DR_HOOK_PRT
+(   13) # 14 "dr_hook_prt.F90"
+(   14) SUBROUTINE DR_HOOK_PRT_CHAR(KUNIT, CD, KLD)
+(   15) USE PARKIND1  ,ONLY : JPIM
+(   16) IMPLICIT NONE
+(   17) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   18) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   19) CHARACTER(LEN=1), INTENT(IN) :: CD(KLD)
+(   20) IF (KUNIT < 0) THEN
+(   21)   WRITE(*,'(40A1)') CD
+(   22) ELSE
+(   23)   WRITE(*,'(40A1)') CD
+(   24)   CALL FLUSH(KUNIT)
+(   25) ENDIF
+(   26) END SUBROUTINE DR_HOOK_PRT_CHAR
+(   27) # 28 "dr_hook_prt.F90"
+(   28) SUBROUTINE DR_HOOK_PRT_LOGICAL(KUNIT, LD, KLD)
+(   29) USE PARKIND1  ,ONLY : JPIM
+(   30) IMPLICIT NONE
+(   31) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   32) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   33) LOGICAL, INTENT(IN) :: LD(KLD)
+(   34) IF (KUNIT < 0) THEN
+(   35)   WRITE(*,'(40L2)') LD
+(   36) ELSE
+(   37)   WRITE(KUNIT,'(40L2)') LD
+(   38)   CALL FLUSH(KUNIT)
+(   39) ENDIF
+(   40) END SUBROUTINE DR_HOOK_PRT_LOGICAL
+(   41) # 42 "dr_hook_prt.F90"
+(   42) SUBROUTINE DR_HOOK_PRT_I4(KUNIT, KD, KLD)
+(   43) USE PARKIND1  ,ONLY : JPIM
+(   44) IMPLICIT NONE
+(   45) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   46) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   47) INTEGER(KIND=JPIM), INTENT(IN) :: KD(KLD)
+(   48) IF (KUNIT < 0) THEN
+(   49)   WRITE(*,'(5I12)') KD
+(   50) ELSE
+(   51)   WRITE(KUNIT,'(5I12)') KD
+(   52)   CALL FLUSH(KUNIT)
+(   53) ENDIF
+(   54) END SUBROUTINE DR_HOOK_PRT_I4
+(   55) # 56 "dr_hook_prt.F90"
+(   56) SUBROUTINE DR_HOOK_PRT_I8(KUNIT, KD, KLD)
+(   57) USE PARKIND1  ,ONLY : JPIM, JPIB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:30      page 6
+
+(   58) IMPLICIT NONE
+(   59) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   60) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   61) INTEGER(KIND=JPIB), INTENT(IN) :: KD(KLD)
+(   62) IF (KUNIT < 0) THEN
+(   63)   WRITE(*,'(5I20)') KD
+(   64) ELSE
+(   65)   WRITE(KUNIT,'(5I20)') KD
+(   66)   CALL FLUSH(KUNIT)
+(   67) ENDIF
+(   68) END SUBROUTINE DR_HOOK_PRT_I8
+(   69) # 70 "dr_hook_prt.F90"
+(   70) SUBROUTINE DR_HOOK_PRT_R4(KUNIT, PD, KLD)
+(   71) USE PARKIND1  ,ONLY : JPIM, JPIB, JPRM
+(   72) IMPLICIT NONE
+(   73) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   74) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   75) REAL(KIND=JPRM), INTENT(IN) :: PD(KLD)
+(   76) IF (KUNIT < 0) THEN
+(   77)   WRITE(*,*) PD
+(   78) ELSE
+(   79)   WRITE(KUNIT,*) PD
+(   80)   CALL FLUSH(KUNIT)
+(   81) ENDIF
+(   82) END SUBROUTINE DR_HOOK_PRT_R4
+(   83) # 84 "dr_hook_prt.F90"
+(   84) SUBROUTINE DR_HOOK_PRT_R8(KUNIT, PD, KLD)
+(   85) USE PARKIND1  ,ONLY : JPIM, JPIB, JPRB
+(   86) IMPLICIT NONE
+(   87) INTEGER(KIND=JPIM), INTENT(IN) :: KUNIT
+(   88) INTEGER(KIND=JPIM), INTENT(IN) :: KLD
+(   89) REAL(KIND=JPRB), INTENT(IN) :: PD(KLD)
+(   90) IF (KUNIT < 0) THEN
+(   91)   WRITE(*,*) PD
+(   92) ELSE
+(   93)   WRITE(KUNIT,*) PD
+(   94)   CALL FLUSH(KUNIT)
+(   95) ENDIF
+(   96) END SUBROUTINE DR_HOOK_PRT_R8

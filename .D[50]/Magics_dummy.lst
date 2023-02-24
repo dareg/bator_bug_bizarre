@@ -1,0 +1,280 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:48      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:48      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Magics_dummy.F90
+
+(    1) SUBROUTINE MAGICS_DUMMY_ABORT(CDNAME)
+(    2) IMPLICIT NONE
+(    3) CHARACTER(LEN=*), INTENT(IN) :: CDNAME
+(    4) CHARACTER(LEN=*), PARAMETER  :: CLMSG = &
+(    5) #ifdef NEW_MAGICS
+(    6) & '***ERROR: The program has not been linked with the proper MAGICS++ library. This is a dummy version of routine '
+(    7) #else
+(    8) & '***ERROR: The program has not been linked with the proper MAGICS library. This is a dummy version of routine '
+(    9) #endif
+(   10) WRITE(0,'(1x,a)') CLMSG//CDNAME
+(   11) !CALL ABOR1(CLMSG//CDNAME)
+(   12) END SUBROUTINE MAGICS_DUMMY_ABORT
+(   13) #ifndef HAS_MAGICS
+(   14) SUBROUTINE POPEN
+(   15) !!CALL MAGICS_DUMMY_ABORT('POPEN')
+(   16) END SUBROUTINE POPEN
+(   17) SUBROUTINE PSETC
+(   18) !!CALL MAGICS_DUMMY_ABORT('PSETC')
+(   19) END SUBROUTINE PSETC
+(   20) SUBROUTINE PSETR
+(   21) !!CALL MAGICS_DUMMY_ABORT('PSETR')
+(   22) END SUBROUTINE PSETR
+(   23) SUBROUTINE PSETI
+(   24) !!CALL MAGICS_DUMMY_ABORT('PSETI')
+(   25) END SUBROUTINE PSETI
+(   26) SUBROUTINE PTEXT
+(   27) !!CALL MAGICS_DUMMY_ABORT('PTEXT')
+(   28) END SUBROUTINE PTEXT
+(   29) SUBROUTINE PNEW
+(   30) !!CALL MAGICS_DUMMY_ABORT('PNEW')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:48      page 3
+
+(   31) END SUBROUTINE PNEW
+(   32) SUBROUTINE PSET1C
+(   33) !!CALL MAGICS_DUMMY_ABORT('PSET1C')
+(   34) END SUBROUTINE PSET1C
+(   35) SUBROUTINE PAXIS
+(   36) !!CALL MAGICS_DUMMY_ABORT('PAXIS')
+(   37) END SUBROUTINE PAXIS
+(   38) SUBROUTINE PSET1R
+(   39) !!CALL MAGICS_DUMMY_ABORT('PSET1R')
+(   40) END SUBROUTINE PSET1R
+(   41) SUBROUTINE PGRAPH
+(   42) !!CALL MAGICS_DUMMY_ABORT('PGRAPH')
+(   43) END SUBROUTINE PGRAPH
+(   44) SUBROUTINE PENQC
+(   45) !!CALL MAGICS_DUMMY_ABORT('PENQC')
+(   46) END SUBROUTINE PENQC
+(   47) SUBROUTINE PCLOSE
+(   48) CALL MAGICS_DUMMY_ABORT('PCLOSE')
+(   49) END SUBROUTINE PCLOSE
+(   50) SUBROUTINE PRESET
+(   51) !!CALL MAGICS_DUMMY_ABORT('PRESET')
+(   52) END SUBROUTINE PRESET
+(   53) SUBROUTINE PSET2R
+(   54) !!CALL MAGICS_DUMMY_ABORT('PSET2R')
+(   55) END SUBROUTINE PSET2R
+(   56) SUBROUTINE PSET1I
+(   57) !!CALL MAGICS_DUMMY_ABORT('PSET1I')
+(   58) END SUBROUTINE PSET1I
+(   59) SUBROUTINE PCOAST
+(   60) !!CALL MAGICS_DUMMY_ABORT('PCOAST')
+(   61) END SUBROUTINE PCOAST
+(   62) SUBROUTINE PCONT
+(   63) !!CALL MAGICS_DUMMY_ABORT('PCONT')
+(   64) END SUBROUTINE PCONT
+(   65) SUBROUTINE PWIND
+(   66) !!CALL MAGICS_DUMMY_ABORT('PWIND')
+(   67) END SUBROUTINE PWIND
+(   68) SUBROUTINE PSYMB
+(   69) !!CALL MAGICS_DUMMY_ABORT('PSYMB')
+(   70) END SUBROUTINE PSYMB
+(   71) #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:48      page 4
+
+(    1) # 1 "Magics_dummy.F90"
+(    1) SUBROUTINE MAGICS_DUMMY_ABORT(CDNAME)
+(    2) IMPLICIT NONE
+(    3) CHARACTER(LEN=*), INTENT(IN) :: CDNAME
+(    4) CHARACTER(LEN=*), PARAMETER  :: CLMSG = &
+(    8) & '***ERROR: The program has not been linked with the proper MAGICS library. This is a dummy version of routine '
+(    9) # 10 "Magics_dummy.F90"
+(   10) WRITE(0,'(1x,a)') CLMSG//CDNAME
+(   11) !CALL ABOR1(CLMSG//CDNAME)
+(   12) END SUBROUTINE MAGICS_DUMMY_ABORT
+(   13) # 14 "Magics_dummy.F90"
+(   14) SUBROUTINE POPEN
+(   15) !!CALL MAGICS_DUMMY_ABORT('POPEN')
+(   16) END SUBROUTINE POPEN
+(   17) SUBROUTINE PSETC
+(   18) !!CALL MAGICS_DUMMY_ABORT('PSETC')
+(   19) END SUBROUTINE PSETC
+(   20) SUBROUTINE PSETR
+(   21) !!CALL MAGICS_DUMMY_ABORT('PSETR')
+(   22) END SUBROUTINE PSETR
+(   23) SUBROUTINE PSETI
+(   24) !!CALL MAGICS_DUMMY_ABORT('PSETI')
+(   25) END SUBROUTINE PSETI
+(   26) SUBROUTINE PTEXT
+(   27) !!CALL MAGICS_DUMMY_ABORT('PTEXT')
+(   28) END SUBROUTINE PTEXT
+(   29) SUBROUTINE PNEW
+(   30) !!CALL MAGICS_DUMMY_ABORT('PNEW')
+(   31) END SUBROUTINE PNEW
+(   32) SUBROUTINE PSET1C
+(   33) !!CALL MAGICS_DUMMY_ABORT('PSET1C')
+(   34) END SUBROUTINE PSET1C
+(   35) SUBROUTINE PAXIS
+(   36) !!CALL MAGICS_DUMMY_ABORT('PAXIS')
+(   37) END SUBROUTINE PAXIS
+(   38) SUBROUTINE PSET1R
+(   39) !!CALL MAGICS_DUMMY_ABORT('PSET1R')
+(   40) END SUBROUTINE PSET1R
+(   41) SUBROUTINE PGRAPH
+(   42) !!CALL MAGICS_DUMMY_ABORT('PGRAPH')
+(   43) END SUBROUTINE PGRAPH
+(   44) SUBROUTINE PENQC
+(   45) !!CALL MAGICS_DUMMY_ABORT('PENQC')
+(   46) END SUBROUTINE PENQC
+(   47) SUBROUTINE PCLOSE
+(   48) CALL MAGICS_DUMMY_ABORT('PCLOSE')
+(   49) END SUBROUTINE PCLOSE
+(   50) SUBROUTINE PRESET
+(   51) !!CALL MAGICS_DUMMY_ABORT('PRESET')
+(   52) END SUBROUTINE PRESET
+(   53) SUBROUTINE PSET2R
+(   54) !!CALL MAGICS_DUMMY_ABORT('PSET2R')
+(   55) END SUBROUTINE PSET2R
+(   56) SUBROUTINE PSET1I
+(   57) !!CALL MAGICS_DUMMY_ABORT('PSET1I')
+(   58) END SUBROUTINE PSET1I
+(   59) SUBROUTINE PCOAST
+(   60) !!CALL MAGICS_DUMMY_ABORT('PCOAST')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:48      page 5
+
+(   61) END SUBROUTINE PCOAST
+(   62) SUBROUTINE PCONT
+(   63) !!CALL MAGICS_DUMMY_ABORT('PCONT')
+(   64) END SUBROUTINE PCONT
+(   65) SUBROUTINE PWIND
+(   66) !!CALL MAGICS_DUMMY_ABORT('PWIND')
+(   67) END SUBROUTINE PWIND
+(   68) SUBROUTINE PSYMB
+(   69) !!CALL MAGICS_DUMMY_ABORT('PSYMB')
+(   70) END SUBROUTINE PSYMB

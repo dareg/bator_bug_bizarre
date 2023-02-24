@@ -1,0 +1,866 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faieno.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIENO_MT64                                           &
+(    4) &                     (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme d'ECRITURE d'un CHAMP HORIZONTAL sur un fichier
+(   13) !     ARPEGE, avec reordonnement des coefficients spectraux si necessaire.
+(   14) !       ( Integration par Ecriture d'un (Nouveau ?) Champ )
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !    ( Tableau ) PCHAMP (Entree) ==> Valeurs REELLES du champ a ecrire;
+(   22) !                                    rangement modele.
+(   23) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   24) !                                    par des coefficients spectraux.
+(   25) !                LDUNDF (Entree) ==> Vrai si ce champ a des valeurs 
+(   26) !                                    indefinies
+(   27) !                PUNDF  (Entree) ==> Dans le cas ou LDUNDF est vrai,
+(   28) !                                    valeur non definie
+(   29) !
+(   30) TYPE(FA_COM)           FA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 3
+
+(   31) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   32) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   33) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   34) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   35) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   36) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   37) LOGICAL                LDCOSP                                 ! IN   
+(   38) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   39) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   40) !
+(   41) INTEGER (KIND=JPLIKB) IREP
+(   42) INTEGER (KIND=JPLIKB) IRANG, INIMES, INGRIB
+(   43) INTEGER (KIND=JPLIKB) ISMAX, IMSMAX
+(   44) !
+(   45) INTEGER (KIND=JPLIKB) IRANGC
+(   46) !
+(   47) LOGICAL LLVERF, LLRLFI, LLREORD
+(   48) !
+(   49) REAL (KIND=JPDBLR), ALLOCATABLE :: ZCHAMP (:)
+(   50) LOGICAL               :: LLUNDF                   
+(   51) REAL (KIND=JPDBLR)    :: ZUNDF                    
+(   52) TYPE (FAGR1TAB)       :: YLGR1TAB
+(   53) !
+(   54) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   55) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   56) LOGICAL                  LLFATA
+(   57) 
+(   58) !**
+(   59) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   60) !-----------------------------------------------------------------------
+(   61) !
+(   62) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   63) IF (LHOOK) CALL DR_HOOK('FAIENO_MT',0,ZHOOK_HANDLE)
+(   64) 
+(   65) LLUNDF = .FALSE.
+(   66) IF (PRESENT (LDUNDF  )) LLUNDF   = LDUNDF
+(   67) ZUNDF  = 0._JPDBLR
+(   68) IF (PRESENT (PUNDF   )) ZUNDF    = PUNDF 
+(   69) 
+(   70) IREP=0
+(   71) LLVERF=.FALSE.
+(   72) LLRLFI=.FALSE.
+(   73) !
+(   74) CALL FANUMU_MT64                 &
+(   75) &               (FA, KNUMER,IRANG)
+(   76) !
+(   77) IF (IRANG.EQ.0) THEN
+(   78)   IREP=-51
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) !
+(   82) !         Verrouillage eventuel du fichier.
+(   83) !
+(   84) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   85) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   86) LLVERF=FA%LFAMUL
+(   87) !
+(   88) IRANGC=FA%FICHIER(IRANG)%NUCADR
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 4
+
+(   89) INGRIB=FA%FICHIER(IRANG)%NFGRIB
+(   90) 
+(   91) LLREORD = LDCOSP .AND. (.NOT.(INGRIB==-1 .OR. INGRIB==3 .OR. FALGRA (INGRIB)))
+(   92) 
+(   93) IF (LLREORD) THEN
+(   94)   ISMAX  = FA%CADRE(IRANGC)%NSMAX     
+(   95)   IMSMAX = FA%CADRE(IRANGC)%NMSMAX     
+(   96)   ALLOCATE (ZCHAMP (4 * (IMSMAX+1) * (ISMAX+1))) ! Assez grand
+(   97)   CALL FAREOR_MT64 (FA, IREP, KNUMER, PCHAMP, ZCHAMP, .FALSE.)
+(   98)   IF (IREP /= 0) GOTO 1001
+(   99)   CALL FAIEN1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, ZCHAMP, LDCOSP, &
+(  100)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  101)   IF (IREP /= 0) GOTO 1001
+(  102)   DEALLOCATE (ZCHAMP)
+(  103) ELSE
+(  104)   CALL FAIEN1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  105)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  106) ENDIF
+(  107) 
+(  108) 1001 CONTINUE
+(  109) KREP=IREP
+(  110) LLFATA=LLMOER (IREP,IRANG)
+(  111) !
+(  112) !        Deverrouillage eventuel du fichier.
+(  113) !
+(  114) IF (LLVERF) CALL LFIVER_MT64                                &
+(  115) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  116) !
+(  117) IF (LLFATA) THEN
+(  118)   INIMES=2
+(  119) ELSE
+(  120)   INIMES=IXNVMS(IRANG)
+(  121) ENDIF
+(  122) !
+(  123) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  124)   IF (LHOOK) CALL DR_HOOK('FAIENO_MT',1,ZHOOK_HANDLE)
+(  125)   RETURN
+(  126) ENDIF
+(  127) !
+(  128) CLNSPR='FAIENO'
+(  129) !
+(  130) WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KNUMER='',I3,         &
+(  131) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  132) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  133) &   KREP,KNUMER,TRIM (CDPREF),KNIVAU,TRIM (CDSUFF),LDCOSP
+(  134) CALL FAIPAR_MT64                                       &
+(  135) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  136) &                CLNSPR, '',LLRLFI)
+(  137) !
+(  138) 
+(  139) IF (LHOOK) CALL DR_HOOK('FAIENO_MT',1,ZHOOK_HANDLE)
+(  140) 
+(  141) CONTAINS
+(  142) 
+(  143) #include "facom2.llmoer.h"
+(  144) #include "facom2.ixnvms.h"
+(  145) #include "falgra.h"
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 5
+
+(  147) END SUBROUTINE FAIENO_MT64
+(  148) 
+(  149) 
+(  150) 
+(  151) ! Oct-2012 P. Marguinaud 64b LFI
+(  152) SUBROUTINE FAIENO64 (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  153)                    & LDUNDF, PUNDF)
+(  154) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  155) &                  FA_COM_DEFAULT_INIT,  &
+(  156) &                  NEW_FA_DEFAULT
+(  157) USE LFI_PRECISION
+(  158) IMPLICIT NONE
+(  159) ! Arguments
+(  160) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  161) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  162) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  163) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  164) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  165) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  166) LOGICAL                LDCOSP                                 ! IN   
+(  167) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  168) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  169) 
+(  170) #include "faieno_mt64.h"
+(  171) 
+(  172) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  173) 
+(  174) CALL FAIENO_MT64 (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  175)                 & LDUNDF, PUNDF)
+(  176) 
+(  177) END SUBROUTINE FAIENO64
+(  178) 
+(  179) SUBROUTINE FAIENO                                          &
+(  180) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  181) &            LDCOSP, LDUNDF, PUNDF)
+(  182) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  183) &                  FA_COM_DEFAULT_INIT,  &
+(  184) &                  NEW_FA_DEFAULT
+(  185) USE LFI_PRECISION
+(  186) IMPLICIT NONE
+(  187) ! Arguments
+(  188) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  189) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  190) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  191) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  192) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  193) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  194) LOGICAL                LDCOSP                                 ! IN   
+(  195) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  196) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  197) 
+(  198) #include "faieno_mt.h"
+(  199) 
+(  200) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  201) 
+(  202) CALL FAIENO_MT (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  203)               & LDUNDF, PUNDF)
+(  204) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 6
+
+(  205) END SUBROUTINE FAIENO
+(  206) 
+(  207) SUBROUTINE FAIENO_MT (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  208)                     & LDUNDF, PUNDF)
+(  209) USE FA_MOD, ONLY : FA_COM
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+(  213) TYPE (FA_COM)          FA                                     ! INOUT
+(  214) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  215) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  216) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  217) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  218) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  219) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  220) LOGICAL                LDCOSP                                 ! IN   
+(  221) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  222) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  223) 
+(  224) #include "faieno_mt64.h"
+(  225) 
+(  226) ! Local integers
+(  227) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  228) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  229) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  230) ! Convert arguments
+(  231) 
+(  232) INUMER     = INT (    KNUMER, JPLIKB)
+(  233) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  234) 
+(  235) CALL FAIENO_MT64 (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  236)                 & LDUNDF, PUNDF)
+(  237) 
+(  238) KREP       = INT (      IREP, JPLIKM)
+(  239) 
+(  240) END SUBROUTINE FAIENO_MT
+(  241) 
+(  242) !INTF KREP            OUT                               
+(  243) !INTF KNUMER        IN                                  
+(  244) !INTF CDPREF        IN                                  
+(  245) !INTF KNIVAU        IN                                  
+(  246) !INTF CDSUFF        IN                                  
+(  247) !INTF PCHAMP        IN    DIMS=*                        
+(  248) !INTF LDCOSP        IN                                  
+(  249) !INTF LDUNDF        IN                                  
+(  250) !INTF PUNDF         IN                                  
+(  251) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 7
+
+(    1) # 1 "faieno.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIENO_MT64                                           &
+(    4) &                     (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme d'ECRITURE d'un CHAMP HORIZONTAL sur un fichier
+(   13) !     ARPEGE, avec reordonnement des coefficients spectraux si necessaire.
+(   14) !       ( Integration par Ecriture d'un (Nouveau ?) Champ )
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !    ( Tableau ) PCHAMP (Entree) ==> Valeurs REELLES du champ a ecrire;
+(   22) !                                    rangement modele.
+(   23) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   24) !                                    par des coefficients spectraux.
+(   25) !                LDUNDF (Entree) ==> Vrai si ce champ a des valeurs 
+(   26) !                                    indefinies
+(   27) !                PUNDF  (Entree) ==> Dans le cas ou LDUNDF est vrai,
+(   28) !                                    valeur non definie
+(   29) !
+(   30) TYPE(FA_COM)           FA
+(   31) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   32) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   33) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   34) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   35) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   36) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   37) LOGICAL                LDCOSP                                 ! IN   
+(   38) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   39) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   40) !
+(   41) INTEGER (KIND=JPLIKB) IREP
+(   42) INTEGER (KIND=JPLIKB) IRANG, INIMES, INGRIB
+(   43) INTEGER (KIND=JPLIKB) ISMAX, IMSMAX
+(   44) !
+(   45) INTEGER (KIND=JPLIKB) IRANGC
+(   46) !
+(   47) LOGICAL LLVERF, LLRLFI, LLREORD
+(   48) !
+(   49) REAL (KIND=JPDBLR), ALLOCATABLE :: ZCHAMP (:)
+(   50) LOGICAL               :: LLUNDF                   
+(   51) REAL (KIND=JPDBLR)    :: ZUNDF                    
+(   52) TYPE (FAGR1TAB)       :: YLGR1TAB
+(   53) !
+(   54) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   55) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   56) LOGICAL                  LLFATA
+(   57) # 58 "faieno.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 8
+
+(   58) !**
+(   59) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   60) !-----------------------------------------------------------------------
+(   61) !
+(   62) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   63) IF (LHOOK) CALL DR_HOOK('FAIENO_MT',0,ZHOOK_HANDLE)
+(   64) # 65 "faieno.F90"
+(   65) LLUNDF = .FALSE.
+(   66) IF (PRESENT (LDUNDF  )) LLUNDF   = LDUNDF
+(   67) ZUNDF  = 0._JPDBLR
+(   68) IF (PRESENT (PUNDF   )) ZUNDF    = PUNDF 
+(   69) # 70 "faieno.F90"
+(   70) IREP=0
+(   71) LLVERF=.FALSE.
+(   72) LLRLFI=.FALSE.
+(   73) !
+(   74) CALL FANUMU_MT64                 &
+(   75) &               (FA, KNUMER,IRANG)
+(   76) !
+(   77) IF (IRANG.EQ.0) THEN
+(   78)   IREP=-51
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) !
+(   82) !         Verrouillage eventuel du fichier.
+(   83) !
+(   84) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   85) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   86) LLVERF=FA%LFAMUL
+(   87) !
+(   88) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(   89) INGRIB=FA%FICHIER(IRANG)%NFGRIB
+(   90) # 91 "faieno.F90"
+(   91) LLREORD = LDCOSP .AND. (.NOT.(INGRIB==-1 .OR. INGRIB==3 .OR. FALGRA (INGRIB)))
+(   92) # 93 "faieno.F90"
+(   93) IF (LLREORD) THEN
+(   94)   ISMAX  = FA%CADRE(IRANGC)%NSMAX     
+(   95)   IMSMAX = FA%CADRE(IRANGC)%NMSMAX     
+(   96)   ALLOCATE (ZCHAMP (4 * (IMSMAX+1) * (ISMAX+1))) ! Assez grand
+(   97)   CALL FAREOR_MT64 (FA, IREP, KNUMER, PCHAMP, ZCHAMP, .FALSE.)
+(   98)   IF (IREP /= 0) GOTO 1001
+(   99)   CALL FAIEN1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, ZCHAMP, LDCOSP, &
+(  100)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  101)   IF (IREP /= 0) GOTO 1001
+(  102)   DEALLOCATE (ZCHAMP)
+(  103) ELSE
+(  104)   CALL FAIEN1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  105)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  106) ENDIF
+(  107) # 108 "faieno.F90"
+(  108) 1001 CONTINUE
+(  109) KREP=IREP
+(  110) LLFATA=LLMOER (IREP,IRANG)
+(  111) !
+(  112) !        Deverrouillage eventuel du fichier.
+(  113) !
+(  114) IF (LLVERF) CALL LFIVER_MT64                                &
+(  115) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 9
+
+(  116) !
+(  117) IF (LLFATA) THEN
+(  118)   INIMES=2
+(  119) ELSE
+(  120)   INIMES=IXNVMS(IRANG)
+(  121) ENDIF
+(  122) !
+(  123) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  124)   IF (LHOOK) CALL DR_HOOK('FAIENO_MT',1,ZHOOK_HANDLE)
+(  125)   RETURN
+(  126) ENDIF
+(  127) !
+(  128) CLNSPR='FAIENO'
+(  129) !
+(  130) WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KNUMER='',I3,         &
+(  131) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  132) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  133) &   KREP,KNUMER,TRIM (CDPREF),KNIVAU,TRIM (CDSUFF),LDCOSP
+(  134) CALL FAIPAR_MT64                                       &
+(  135) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  136) &                CLNSPR, '',LLRLFI)
+(  137) !
+(  138) # 139 "faieno.F90"
+(  139) IF (LHOOK) CALL DR_HOOK('FAIENO_MT',1,ZHOOK_HANDLE)
+(  140) # 141 "faieno.F90"
+(  141) CONTAINS
+(  142) # 143 "faieno.F90"
+(  143) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 144 "faieno.F90"
+(  144) # 144 "faieno.F90"
+(  144) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 145 "faieno.F90"
+(  145) # 145 "faieno.F90"
+(  145) # 1 ".D[27]/falgra.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 10
+
+(    1) LOGICAL FUNCTION FALGRA (KNGRIB)
+(    2) !****
+(    3) !    Cette fonction renvoie une valeur vraie si la methode d'encodage passee en argument fait appel a grib_api
+(    4) !**
+(    5) !    Arguments : KNGRIB (Entree) ==> Methode d'encodage
+(    6) !
+(    7) !
+(    8) INTEGER (KIND=JPLIKB) KNGRIB
+(    9) INTEGER (KIND=JPLIKB) INGRIB_SP, INGRIB_GP
+(   10) LOGICAL LLFALGRA_SP, LLFALGRA_GP
+(   11) # 12 ".D[27]/falgra.h"
+(   12) FALGRA = .FALSE.
+(   13) # 14 ".D[27]/falgra.h"
+(   14) IF (100 <= KNGRIB .AND. KNGRIB <= 200) THEN
+(   15) # 16 ".D[27]/falgra.h"
+(   16)   INGRIB_SP = FALGRA_SP (KNGRIB)
+(   17)   INGRIB_GP = FALGRA_GP (KNGRIB)
+(   18)   
+(   19)   LLFALGRA_SP = &
+(   20)    & (INGRIB_SP - 100 ==  1) .OR. &      ! GRIB2 complex packing (bug)
+(   21)    & (INGRIB_SP - 100 ==  2) .OR. &      ! GRIB0 
+(   22)    & (INGRIB_SP - 100 ==  3)             ! GRIB2 complex packing
+(   23)   
+(   24)   LLFALGRA_GP = &
+(   25)    & ((INGRIB_GP-100) / 20 ==  1) .OR. & ! GRIB2 simple packing
+(   26)    & ((INGRIB_GP-100) / 20 ==  2) .OR. & ! GRIB2 second order packing
+(   27)    & ((INGRIB_GP-100) / 20 ==  3) .OR. & ! GRIB1 simple packing
+(   28)    & ((INGRIB_GP-100) / 20 ==  4) .OR. & ! GRIB1 second order packing
+(   29)    & ((INGRIB_GP-100) / 20 ==  5)        ! GRIB2 complex packing
+(   30)    
+(   31) # 32 ".D[27]/falgra.h"
+(   32)   IF (LLFALGRA_GP .AND. LLFALGRA_SP) THEN
+(   33)     FALGRA = .TRUE.
+(   34)   ELSEIF (LLFALGRA_GP) THEN
+(   35)     FALGRA = INGRIB_SP == 100
+(   36)   ELSEIF (LLFALGRA_SP) THEN
+(   37)     FALGRA = INGRIB_GP == 100
+(   38)   ENDIF
+(   39) # 40 ".D[27]/falgra.h"
+(   40) ENDIF
+(   41) # 42 ".D[27]/falgra.h"
+(   42) END FUNCTION FALGRA
+(   43) # 44 ".D[27]/falgra.h"
+(   44) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_SP (KNGRIB)
+(   45) INTEGER (KIND=JPLIKB) KNGRIB
+(   46) FALGRA_SP = 100+MODULO ((KNGRIB-100),20)
+(   47) END FUNCTION FALGRA_SP
+(   48) # 49 ".D[27]/falgra.h"
+(   49) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_GP (KNGRIB)
+(   50) INTEGER (KIND=JPLIKB) KNGRIB
+(   51) FALGRA_GP = 100+20*((KNGRIB-100)/20)
+(   52) END FUNCTION FALGRA_GP
+(   53) # 54 ".D[27]/falgra.h"
+(   54) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_ED (KNGRIB)
+(   55) INTEGER (KIND=JPLIKB) KNGRIB
+(   56) # 57 ".D[27]/falgra.h"
+(   57) SELECT CASE (KNGRIB)
+(   58)   CASE (160, 180)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 11
+
+(   59)     FALGRA_ED = 1
+(   60)   CASE DEFAULT
+(   61)     FALGRA_ED = 2
+(   62) END SELECT 
+(   63) # 64 ".D[27]/falgra.h"
+(   64) END FUNCTION FALGRA_ED
+(   65) # 146 "faieno.F90"
+(  146) # 147 "faieno.F90"
+(  147) END SUBROUTINE FAIENO_MT64
+(  148) # 151 "faieno.F90"
+(  151) ! Oct-2012 P. Marguinaud 64b LFI
+(  152) SUBROUTINE FAIENO64 (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  153)                    & LDUNDF, PUNDF)
+(  154) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  155) &                  FA_COM_DEFAULT_INIT,  &
+(  156) &                  NEW_FA_DEFAULT
+(  157) USE LFI_PRECISION
+(  158) IMPLICIT NONE
+(  159) ! Arguments
+(  160) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  161) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  162) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  163) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  164) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  165) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  166) LOGICAL                LDCOSP                                 ! IN   
+(  167) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  168) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  169) # 170 "faieno.F90"
+(  170) # 1 ".D[27]/faieno_mt64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/faieno_mt64.h"
+(    3) SUBROUTINE FAIENO_MT64                                           &
+(    4) &                     (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE LFI_PRECISION
+(    8) IMPLICIT NONE
+(    9) TYPE(FA_COM)           FA
+(   10) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   12) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   15) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   16) LOGICAL                LDCOSP                                 ! IN   
+(   17) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   18) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   19) END SUBROUTINE
+(   20) # 21 ".D[27]/faieno_mt64.h"
+(   21) END INTERFACE
+(   22) # 171 "faieno.F90"
+(  171) # 172 "faieno.F90"
+(  172) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  173) # 174 "faieno.F90"
+(  174) CALL FAIENO_MT64 (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  175)                 & LDUNDF, PUNDF)
+(  176) # 177 "faieno.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 12
+
+(  177) END SUBROUTINE FAIENO64
+(  178) # 179 "faieno.F90"
+(  179) SUBROUTINE FAIENO                                          &
+(  180) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  181) &            LDCOSP, LDUNDF, PUNDF)
+(  182) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  183) &                  FA_COM_DEFAULT_INIT,  &
+(  184) &                  NEW_FA_DEFAULT
+(  185) USE LFI_PRECISION
+(  186) IMPLICIT NONE
+(  187) ! Arguments
+(  188) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  189) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  190) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  191) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  192) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  193) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  194) LOGICAL                LDCOSP                                 ! IN   
+(  195) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  196) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  197) # 198 "faieno.F90"
+(  198) # 1 ".D[27]/faieno_mt.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/faieno_mt.h"
+(    3) SUBROUTINE FAIENO_MT (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(    4)                     & LDUNDF, PUNDF)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE LFI_PRECISION
+(    7) IMPLICIT NONE
+(    8) ! Arguments
+(    9) TYPE (FA_COM)          FA                                     ! INOUT
+(   10) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   11) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(   12) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   13) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   15) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   16) LOGICAL                LDCOSP                                 ! IN   
+(   17) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   18) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   19) END SUBROUTINE
+(   20) # 21 ".D[27]/faieno_mt.h"
+(   21) END INTERFACE
+(   22) # 199 "faieno.F90"
+(  199) # 200 "faieno.F90"
+(  200) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  201) # 202 "faieno.F90"
+(  202) CALL FAIENO_MT (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  203)               & LDUNDF, PUNDF)
+(  204) # 205 "faieno.F90"
+(  205) END SUBROUTINE FAIENO
+(  206) # 207 "faieno.F90"
+(  207) SUBROUTINE FAIENO_MT (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  208)                     & LDUNDF, PUNDF)
+(  209) USE FA_MOD, ONLY : FA_COM
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 13
+
+(  213) TYPE (FA_COM)          FA                                     ! INOUT
+(  214) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  215) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  216) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  217) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  218) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  219) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  220) LOGICAL                LDCOSP                                 ! IN   
+(  221) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(  222) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(  223) # 224 "faieno.F90"
+(  224) # 1 ".D[27]/faieno_mt64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/faieno_mt64.h"
+(    3) SUBROUTINE FAIENO_MT64                                           &
+(    4) &                     (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE LFI_PRECISION
+(    8) IMPLICIT NONE
+(    9) TYPE(FA_COM)           FA
+(   10) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   12) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   15) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   16) LOGICAL                LDCOSP                                 ! IN   
+(   17) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   18) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   19) END SUBROUTINE
+(   20) # 21 ".D[27]/faieno_mt64.h"
+(   21) END INTERFACE
+(   22) # 225 "faieno.F90"
+(  225) # 226 "faieno.F90"
+(  226) ! Local integers
+(  227) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  228) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  229) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  230) ! Convert arguments
+(  231) # 232 "faieno.F90"
+(  232) INUMER     = INT (    KNUMER, JPLIKB)
+(  233) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  234) # 235 "faieno.F90"
+(  235) CALL FAIENO_MT64 (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  236)                 & LDUNDF, PUNDF)
+(  237) # 238 "faieno.F90"
+(  238) KREP       = INT (      IREP, JPLIKM)
+(  239) # 240 "faieno.F90"
+(  240) END SUBROUTINE FAIENO_MT
+(  241) # 242 "faieno.F90"
+(  242) !INTF KREP            OUT                               
+(  243) !INTF KNUMER        IN                                  
+(  244) !INTF CDPREF        IN                                  
+(  245) !INTF KNIVAU        IN                                  
+(  246) !INTF CDSUFF        IN                                  
+(  247) !INTF PCHAMP        IN    DIMS=*                        
+(  248) !INTF LDCOSP        IN                                  
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:33      page 14
+
+(  249) !INTF LDUNDF        IN                                  
+(  250) !INTF PUNDF         IN                                  

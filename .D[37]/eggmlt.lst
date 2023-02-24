@@ -1,0 +1,522 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: eggmlt.F90
+
+(    1) SUBROUTINE EGGMLT (PRPI, KDLUX, KDLUN, KDGUX, KDGUN, KULOUT,&
+(    2)  & KPRINT, PRPK, PLON0U, PLON1U, PLON2U, KSOTRP, PLAT1R, PLAT2R,&
+(    3)  & PHSUD,PBETA)  
+(    4) 
+(    5) !--------------------------------------------------------------------------
+(    6) !     GEOGRAPHY OF GRID-POINTS AUXILLARY ROUTINE
+(    7) !     LATITUDE FOR ISOTROPIC GRID
+(    8) !     ARPEGE-ALADIN
+(    9) !     ------------------------------------------
+(   10) 
+(   11) !     GIVEN THE PROJECTION PARAMETER (PRPK), THE LONGITUDES AND
+(   12) !     ONE LATITUDE, EGGMLT PROVIDES THE OTHER LATITUDE IN SUCH A WAY
+(   13) !     THAT THE GRID SIZE WILL BE THE SAME FOLLOWING X AND Y
+(   14) 
+(   15) !     THIS ROUTINE IS CALLED AND CAN BE USED ONLY IN CONNECTION WITH
+(   16) !     SUBROUTINE EGGX
+(   17) 
+(   18) !     INPUT PARAMETERS
+(   19) !     ----------------
+(   20) !      PRPI :  PI
+(   21) !      KDLUN, KDLUX : ADRESSES OF EXTREME POINTS OF USEFUL DOMAIN IN X
+(   22) !      KDGUN, KDGUX :                                                Y
+(   23) !      KULOUT : OUTPUT FILE UNIT
+(   24) !      KPRINT : IMPRESSIONS SEULEMENT SI KPRINT = 1
+(   25) !      PRPK : PROJECTION PARAMETER, SEE EGGX
+(   26) !      PLON0U : REFERENCE LONGITUDE (MODIFIED FOR DOMAINS ASTRIDE GREEWICH)
+(   27) !      PLON1U : LONGITUDE OF SW CORNER (EQUALLY MODIFIED)
+(   28) !      PLON2U : LONGITUDE OF NE CORNER
+(   29) !      KSOTRP = 0, PLAT1R, PLAT2R KNOWN : EGGMLT SHOULD NOT BE CALLED
+(   30) !             = 1, PLAT1R KNOWN, EGGMLT COMPUTES PLAT2R
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 3
+
+(   31) !             = 2, PLAT2R KONWN, EGGMLT COMPUTES PLAT1R
+(   32) !      PLAT1R : LATITUDE OF SW CORNER
+(   33) !      PLAT2R : LATITUDE OF NE CORNER
+(   34) !      PHSUD  = 1., NORTH HEMISPHERE MAPPING OR MERCATOR
+(   35) !             = -1., SOUTH HEMISPHERE MAPPING
+(   36) !      PBETA  : ANGLE BETWEEN X-AXIS AND LATITUDE AT PLON0
+(   37) 
+(   38) !     OUTPUT PARAMETERS
+(   39) !     -----------------
+(   40) !      EITHER PLAT1R IF KSOTRP = 2
+(   41) !      OR     PLAT2R IF KSOTRP = 1
+(   42) 
+(   43) !     WRITTEN BY
+(   44) !     ---------- ALAIN JOLY
+(   45) 
+(   46) !     ORIGINAL NORTHERN HEMISPHERE VERSION : 31/1/92
+(   47) !     SOUTH HEMISPEHER VERSION : 27/1/93
+(   48) !--------------------------------------------------------------------------
+(   49) 
+(   50) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   51) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   52) 
+(   53) !--------------------------------------------------------------------------
+(   54) 
+(   55) IMPLICIT NONE
+(   56) 
+(   57) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPI 
+(   58) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX 
+(   59) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN 
+(   60) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX 
+(   61) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN 
+(   62) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT 
+(   63) INTEGER(KIND=JPIM),INTENT(IN)    :: KPRINT 
+(   64) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPK 
+(   65) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON0U 
+(   66) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON1U 
+(   67) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON2U 
+(   68) INTEGER(KIND=JPIM),INTENT(IN)    :: KSOTRP 
+(   69) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1R 
+(   70) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2R 
+(   71) REAL(KIND=JPRB)   ,INTENT(IN)    :: PHSUD 
+(   72) REAL(KIND=JPRB)   ,INTENT(IN)    :: PBETA 
+(   73) 
+(   74) !--------------------------------------------------------------------------
+(   75) 
+(   76) REAL(KIND=JPRB) :: ZCS, ZCS1, ZCS2, ZDCLA1, ZDCLA2, ZPIS2, ZPIS4,&
+(   77)  & ZRAPP, ZTG1, ZTG2, ZTGK1, ZTGK2  
+(   78) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   79) 
+(   80) !--------------------------------------------------------------------------
+(   81) IF (LHOOK) CALL DR_HOOK('EGGMLT',0,ZHOOK_HANDLE)
+(   82) !--------------------------------------------------------------------------
+(   83) 
+(   84) IF ( KPRINT == 1 ) THEN
+(   85)   WRITE (KULOUT,*) ' '
+(   86)   WRITE (KULOUT,*) ' --- EGGMLT --- '
+(   87)   WRITE (KULOUT,*) ' '
+(   88) ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 4
+
+(   89) ZPIS2 = PRPI*0.5_JPRB
+(   90) ZPIS4 = PRPI*0.25_JPRB
+(   91) 
+(   92) IF ( KSOTRP >= 1.AND. PRPK /= 0.0_JPRB ) THEN
+(   93) 
+(   94)   ! * STEREO LAMBERT PROJECTION
+(   95)   ZRAPP = PHSUD*(REAL( KDLUX-KDLUN ,JPRB)/REAL( KDGUX-KDGUN ,JPRB))
+(   96)   ZCS1 = COS( PRPK*(PLON1U-PLON0U)-PBETA )*ZRAPP +&
+(   97)    & SIN( PRPK*(PLON1U-PLON0U)-PBETA )  
+(   98)   IF ( KPRINT == 1 ) THEN
+(   99)     WRITE (KULOUT,*) ' ZRAPP = ',ZRAPP
+(  100)     WRITE (KULOUT,*) ' PLON1U = ',PLON1U,' 0U = ',PLON0U
+(  101)     WRITE (KULOUT,*) ' PLON1U-PLON0U ',PLON1U-PLON0U
+(  102)   ENDIF
+(  103)   ZCS2 = COS( PRPK*(PLON2U-PLON0U)-PBETA )*ZRAPP +&
+(  104)    & SIN( PRPK*(PLON2U-PLON0U)-PBETA )  
+(  105)   IF ( KSOTRP == 1 ) THEN
+(  106)     ZDCLA1 = ZPIS4 - 0.5_JPRB*PLAT1R
+(  107)     ZTGK1 = TAN( ZDCLA1 )**PRPK
+(  108)     ZTG2 = ( ZTGK1*ZCS1/ZCS2 )**(1.0_JPRB/PRPK)
+(  109)     PLAT2R = ZPIS2 - 2.0_JPRB*ATAN( ZTG2 )
+(  110)     IF ( KPRINT == 1 ) THEN
+(  111)       WRITE (KULOUT,*) ' '
+(  112)       WRITE (KULOUT,*) ' NE LATITUDE PLAT2 MODIFIED '
+(  113)       WRITE (KULOUT,*) ' ZTGK1 = ',ZTGK1
+(  114)       WRITE (KULOUT,*) ' ZCS1 = ',ZCS1
+(  115)       WRITE (KULOUT,*) ' ZCS2 = ',ZCS2
+(  116)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT2 R = ',PLAT2R
+(  117)     ENDIF
+(  118)   ENDIF
+(  119)   IF ( KSOTRP == 2 ) THEN
+(  120)     ZDCLA2 = ZPIS4 - 0.5_JPRB*PLAT2R
+(  121)     ZTGK2 = TAN( ZDCLA2 )**PRPK
+(  122)     ZTG1 = ( ZTGK2*ZCS2/ZCS1 )**(1.0_JPRB/PRPK)
+(  123)     PLAT1R = ZPIS2 - 2.0_JPRB*ATAN( ZTG1 )
+(  124)     IF ( KPRINT == 1 ) THEN
+(  125)       WRITE (KULOUT,*) ' '
+(  126)       WRITE (KULOUT,*) ' NE LATITUDE PLAT1 MODIFIED '
+(  127)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT1 R = ',PLAT1R
+(  128)     ENDIF
+(  129)   ENDIF
+(  130) ELSEIF ( KSOTRP >= 1.AND. PRPK == 0.0_JPRB ) THEN
+(  131) 
+(  132)   ! * MERCATOR PROJECTION
+(  133)   ZRAPP = REAL( KDGUX-KDGUN ,JPRB)/REAL( KDLUX-KDLUN ,JPRB)
+(  134)   ZCS = ( PLON2U - PLON1U )*(ZRAPP*COS(PBETA)+SIN(PBETA))&
+(  135)    & /(COS(PBETA)-ZRAPP*SIN(PBETA))  
+(  136)   IF ( KSOTRP == 1 ) THEN
+(  137)     ZDCLA1 = ZPIS4 - 0.5_JPRB*PLAT1R
+(  138)     ZTGK1 = LOG( TAN( ZDCLA1 ) )
+(  139)     ZTG2 = EXP( ZTGK1 - ZCS )
+(  140)     PLAT2R = ZPIS2 - 2.0_JPRB*ATAN( ZTG2 )
+(  141)     IF ( KPRINT == 1 ) THEN
+(  142)       WRITE (KULOUT,*) ' '
+(  143)       WRITE (KULOUT,*) ' NE LATITUDE PLAT2 MODIFIED '
+(  144)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT2 R = ',PLAT2R
+(  145)     ENDIF
+(  146)   ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 5
+
+(  147)   IF ( KSOTRP == 2 ) THEN
+(  148)     ZDCLA2 = ZPIS4 - 0.5_JPRB*PLAT2R
+(  149)     ZTGK2 = LOG( TAN( ZDCLA2 ) )
+(  150)     ZTG1 = EXP( ZTGK2 + ZCS )
+(  151)     PLAT1R = ZPIS2 - 2.0_JPRB*ATAN( ZTG1 )
+(  152)     IF ( KPRINT == 1 ) THEN
+(  153)       WRITE (KULOUT,*) ' '
+(  154)       WRITE (KULOUT,*) ' NE LATITUDE PLAT1 MODIFIED '
+(  155)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT1 R = ',PLAT1R
+(  156)     ENDIF
+(  157)   ENDIF
+(  158) ELSEIF (KSOTRP == 0 ) THEN
+(  159)   WRITE (KULOUT,*) ' EGGMLT USELESSLY CALLED '
+(  160) ENDIF
+(  161) 
+(  162) IF ( KPRINT == 1 ) THEN
+(  163)   WRITE (KULOUT,*) ' EGGMLT OVER '
+(  164)   WRITE (KULOUT,*) ' '
+(  165) ENDIF
+(  166) 
+(  167) !--------------------------------------------------------------------------
+(  168) IF (LHOOK) CALL DR_HOOK('EGGMLT',1,ZHOOK_HANDLE)
+(  169) END SUBROUTINE EGGMLT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 6
+
+(    1) # 1 "eggmlt.F90"
+(    1) SUBROUTINE EGGMLT (PRPI, KDLUX, KDLUN, KDGUX, KDGUN, KULOUT,&
+(    2)  & KPRINT, PRPK, PLON0U, PLON1U, PLON2U, KSOTRP, PLAT1R, PLAT2R,&
+(    3)  & PHSUD,PBETA)  
+(    4) # 5 "eggmlt.F90"
+(    5) !--------------------------------------------------------------------------
+(    6) !     GEOGRAPHY OF GRID-POINTS AUXILLARY ROUTINE
+(    7) !     LATITUDE FOR ISOTROPIC GRID
+(    8) !     ARPEGE-ALADIN
+(    9) !     ------------------------------------------
+(   10) # 11 "eggmlt.F90"
+(   11) !     GIVEN THE PROJECTION PARAMETER (PRPK), THE LONGITUDES AND
+(   12) !     ONE LATITUDE, EGGMLT PROVIDES THE OTHER LATITUDE IN SUCH A WAY
+(   13) !     THAT THE GRID SIZE WILL BE THE SAME FOLLOWING X AND Y
+(   14) # 15 "eggmlt.F90"
+(   15) !     THIS ROUTINE IS CALLED AND CAN BE USED ONLY IN CONNECTION WITH
+(   16) !     SUBROUTINE EGGX
+(   17) # 18 "eggmlt.F90"
+(   18) !     INPUT PARAMETERS
+(   19) !     ----------------
+(   20) !      PRPI :  PI
+(   21) !      KDLUN, KDLUX : ADRESSES OF EXTREME POINTS OF USEFUL DOMAIN IN X
+(   22) !      KDGUN, KDGUX :                                                Y
+(   23) !      KULOUT : OUTPUT FILE UNIT
+(   24) !      KPRINT : IMPRESSIONS SEULEMENT SI KPRINT = 1
+(   25) !      PRPK : PROJECTION PARAMETER, SEE EGGX
+(   26) !      PLON0U : REFERENCE LONGITUDE (MODIFIED FOR DOMAINS ASTRIDE GREEWICH)
+(   27) !      PLON1U : LONGITUDE OF SW CORNER (EQUALLY MODIFIED)
+(   28) !      PLON2U : LONGITUDE OF NE CORNER
+(   29) !      KSOTRP = 0, PLAT1R, PLAT2R KNOWN : EGGMLT SHOULD NOT BE CALLED
+(   30) !             = 1, PLAT1R KNOWN, EGGMLT COMPUTES PLAT2R
+(   31) !             = 2, PLAT2R KONWN, EGGMLT COMPUTES PLAT1R
+(   32) !      PLAT1R : LATITUDE OF SW CORNER
+(   33) !      PLAT2R : LATITUDE OF NE CORNER
+(   34) !      PHSUD  = 1., NORTH HEMISPHERE MAPPING OR MERCATOR
+(   35) !             = -1., SOUTH HEMISPHERE MAPPING
+(   36) !      PBETA  : ANGLE BETWEEN X-AXIS AND LATITUDE AT PLON0
+(   37) # 38 "eggmlt.F90"
+(   38) !     OUTPUT PARAMETERS
+(   39) !     -----------------
+(   40) !      EITHER PLAT1R IF KSOTRP = 2
+(   41) !      OR     PLAT2R IF KSOTRP = 1
+(   42) # 43 "eggmlt.F90"
+(   43) !     WRITTEN BY
+(   44) !     ---------- ALAIN JOLY
+(   45) # 46 "eggmlt.F90"
+(   46) !     ORIGINAL NORTHERN HEMISPHERE VERSION : 31/1/92
+(   47) !     SOUTH HEMISPEHER VERSION : 27/1/93
+(   48) !--------------------------------------------------------------------------
+(   49) # 50 "eggmlt.F90"
+(   50) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   51) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   52) # 53 "eggmlt.F90"
+(   53) !--------------------------------------------------------------------------
+(   54) # 55 "eggmlt.F90"
+(   55) IMPLICIT NONE
+(   56) # 57 "eggmlt.F90"
+(   57) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPI 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 7
+
+(   58) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX 
+(   59) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN 
+(   60) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX 
+(   61) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN 
+(   62) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT 
+(   63) INTEGER(KIND=JPIM),INTENT(IN)    :: KPRINT 
+(   64) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPK 
+(   65) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON0U 
+(   66) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON1U 
+(   67) REAL(KIND=JPRB)   ,INTENT(IN)    :: PLON2U 
+(   68) INTEGER(KIND=JPIM),INTENT(IN)    :: KSOTRP 
+(   69) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1R 
+(   70) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2R 
+(   71) REAL(KIND=JPRB)   ,INTENT(IN)    :: PHSUD 
+(   72) REAL(KIND=JPRB)   ,INTENT(IN)    :: PBETA 
+(   73) # 74 "eggmlt.F90"
+(   74) !--------------------------------------------------------------------------
+(   75) # 76 "eggmlt.F90"
+(   76) REAL(KIND=JPRB) :: ZCS, ZCS1, ZCS2, ZDCLA1, ZDCLA2, ZPIS2, ZPIS4,&
+(   77)  & ZRAPP, ZTG1, ZTG2, ZTGK1, ZTGK2  
+(   78) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   79) # 80 "eggmlt.F90"
+(   80) !--------------------------------------------------------------------------
+(   81) IF (LHOOK) CALL DR_HOOK('EGGMLT',0,ZHOOK_HANDLE)
+(   82) !--------------------------------------------------------------------------
+(   83) # 84 "eggmlt.F90"
+(   84) IF ( KPRINT == 1 ) THEN
+(   85)   WRITE (KULOUT,*) ' '
+(   86)   WRITE (KULOUT,*) ' --- EGGMLT --- '
+(   87)   WRITE (KULOUT,*) ' '
+(   88) ENDIF
+(   89) ZPIS2 = PRPI*0.5_JPRB
+(   90) ZPIS4 = PRPI*0.25_JPRB
+(   91) # 92 "eggmlt.F90"
+(   92) IF ( KSOTRP >= 1.AND. PRPK /= 0.0_JPRB ) THEN
+(   93) # 94 "eggmlt.F90"
+(   94)   ! * STEREO LAMBERT PROJECTION
+(   95)   ZRAPP = PHSUD*(REAL( KDLUX-KDLUN ,JPRB)/REAL( KDGUX-KDGUN ,JPRB))
+(   96)   ZCS1 = COS( PRPK*(PLON1U-PLON0U)-PBETA )*ZRAPP +&
+(   97)    & SIN( PRPK*(PLON1U-PLON0U)-PBETA )  
+(   98)   IF ( KPRINT == 1 ) THEN
+(   99)     WRITE (KULOUT,*) ' ZRAPP = ',ZRAPP
+(  100)     WRITE (KULOUT,*) ' PLON1U = ',PLON1U,' 0U = ',PLON0U
+(  101)     WRITE (KULOUT,*) ' PLON1U-PLON0U ',PLON1U-PLON0U
+(  102)   ENDIF
+(  103)   ZCS2 = COS( PRPK*(PLON2U-PLON0U)-PBETA )*ZRAPP +&
+(  104)    & SIN( PRPK*(PLON2U-PLON0U)-PBETA )  
+(  105)   IF ( KSOTRP == 1 ) THEN
+(  106)     ZDCLA1 = ZPIS4 - 0.5_JPRB*PLAT1R
+(  107)     ZTGK1 = TAN( ZDCLA1 )**PRPK
+(  108)     ZTG2 = ( ZTGK1*ZCS1/ZCS2 )**(1.0_JPRB/PRPK)
+(  109)     PLAT2R = ZPIS2 - 2.0_JPRB*ATAN( ZTG2 )
+(  110)     IF ( KPRINT == 1 ) THEN
+(  111)       WRITE (KULOUT,*) ' '
+(  112)       WRITE (KULOUT,*) ' NE LATITUDE PLAT2 MODIFIED '
+(  113)       WRITE (KULOUT,*) ' ZTGK1 = ',ZTGK1
+(  114)       WRITE (KULOUT,*) ' ZCS1 = ',ZCS1
+(  115)       WRITE (KULOUT,*) ' ZCS2 = ',ZCS2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:42:05      page 8
+
+(  116)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT2 R = ',PLAT2R
+(  117)     ENDIF
+(  118)   ENDIF
+(  119)   IF ( KSOTRP == 2 ) THEN
+(  120)     ZDCLA2 = ZPIS4 - 0.5_JPRB*PLAT2R
+(  121)     ZTGK2 = TAN( ZDCLA2 )**PRPK
+(  122)     ZTG1 = ( ZTGK2*ZCS2/ZCS1 )**(1.0_JPRB/PRPK)
+(  123)     PLAT1R = ZPIS2 - 2.0_JPRB*ATAN( ZTG1 )
+(  124)     IF ( KPRINT == 1 ) THEN
+(  125)       WRITE (KULOUT,*) ' '
+(  126)       WRITE (KULOUT,*) ' NE LATITUDE PLAT1 MODIFIED '
+(  127)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT1 R = ',PLAT1R
+(  128)     ENDIF
+(  129)   ENDIF
+(  130) ELSEIF ( KSOTRP >= 1.AND. PRPK == 0.0_JPRB ) THEN
+(  131) # 132 "eggmlt.F90"
+(  132)   ! * MERCATOR PROJECTION
+(  133)   ZRAPP = REAL( KDGUX-KDGUN ,JPRB)/REAL( KDLUX-KDLUN ,JPRB)
+(  134)   ZCS = ( PLON2U - PLON1U )*(ZRAPP*COS(PBETA)+SIN(PBETA))&
+(  135)    & /(COS(PBETA)-ZRAPP*SIN(PBETA))  
+(  136)   IF ( KSOTRP == 1 ) THEN
+(  137)     ZDCLA1 = ZPIS4 - 0.5_JPRB*PLAT1R
+(  138)     ZTGK1 = LOG( TAN( ZDCLA1 ) )
+(  139)     ZTG2 = EXP( ZTGK1 - ZCS )
+(  140)     PLAT2R = ZPIS2 - 2.0_JPRB*ATAN( ZTG2 )
+(  141)     IF ( KPRINT == 1 ) THEN
+(  142)       WRITE (KULOUT,*) ' '
+(  143)       WRITE (KULOUT,*) ' NE LATITUDE PLAT2 MODIFIED '
+(  144)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT2 R = ',PLAT2R
+(  145)     ENDIF
+(  146)   ENDIF
+(  147)   IF ( KSOTRP == 2 ) THEN
+(  148)     ZDCLA2 = ZPIS4 - 0.5_JPRB*PLAT2R
+(  149)     ZTGK2 = LOG( TAN( ZDCLA2 ) )
+(  150)     ZTG1 = EXP( ZTGK2 + ZCS )
+(  151)     PLAT1R = ZPIS2 - 2.0_JPRB*ATAN( ZTG1 )
+(  152)     IF ( KPRINT == 1 ) THEN
+(  153)       WRITE (KULOUT,*) ' '
+(  154)       WRITE (KULOUT,*) ' NE LATITUDE PLAT1 MODIFIED '
+(  155)       WRITE (KULOUT,*) ' ROTATED LATITUDE LAT1 R = ',PLAT1R
+(  156)     ENDIF
+(  157)   ENDIF
+(  158) ELSEIF (KSOTRP == 0 ) THEN
+(  159)   WRITE (KULOUT,*) ' EGGMLT USELESSLY CALLED '
+(  160) ENDIF
+(  161) # 162 "eggmlt.F90"
+(  162) IF ( KPRINT == 1 ) THEN
+(  163)   WRITE (KULOUT,*) ' EGGMLT OVER '
+(  164)   WRITE (KULOUT,*) ' '
+(  165) ENDIF
+(  166) # 167 "eggmlt.F90"
+(  167) !--------------------------------------------------------------------------
+(  168) IF (LHOOK) CALL DR_HOOK('EGGMLT',1,ZHOOK_HANDLE)
+(  169) END SUBROUTINE EGGMLT

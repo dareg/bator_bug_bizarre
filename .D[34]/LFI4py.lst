@@ -1,0 +1,1336 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: LFI4py.F90
+
+(    1) SUBROUTINE WLFIOUV(KRETURNCODE, CDFILE, CDSTATE, KNUMER)
+(    2) ! ** PURPOSE
+(    3) !    Open a LFI file
+(    4) !
+(    5) ! ** DUMMY ARGUMENTS
+(    6) !    KRETURNCODE: error code
+(    7) !    CDFILE: path to file to open
+(    8) !    CDSTATE: state of file ('NEW', 'OLD', 'UNKNOWN', 'SCRATCH')
+(    9) !    KNUMER: logical unit number associated to file
+(   10) !
+(   11) ! ** AUTHOR
+(   12) !    9 April 2014, S. Riette
+(   13) !
+(   14) ! ** MODIFICATIONS
+(   15) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(   16) !    16 march 2021, A. Mary: remove LFIENG calls
+(   17) !
+(   18) ! I. Dummy arguments declaration
+(   19) USE LFI_PRECISION
+(   20) IMPLICIT NONE
+(   21) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   22) CHARACTER(LEN=*), INTENT(IN) :: CDFILE
+(   23) CHARACTER(LEN=*), INTENT(IN) :: CDSTATE
+(   24) INTEGER(KIND=8), INTENT(OUT) :: KNUMER
+(   25) !
+(   26) ! II. Local variables declaration
+(   27) INTEGER, PARAMETER :: JPMAXLOGICALUNITNUMBER=5000
+(   28) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   29) LOGICAL :: LLEXISTS, LLOPEN
+(   30) INTEGER(KIND=JPLIKB) :: IRECORDNUMBER
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 3
+
+(   31) INTEGER(KIND=JPLIKB) :: INUMER
+(   32) !
+(   33) ! III. File opening
+(   34) !
+(   35) ! III.a Search for an available logical unit
+(   36) !       (unit=0 since 14/12/2015, P.Marguinaud)
+(   37) IRETURNCODE=0
+(   38) INUMER=0
+(   39) !
+(   40) #ifdef __GFORTRAN__
+(   41) ! III.b (Re)-init of libgfortran to enable big_endian file reading
+(   42) !**** *** ** * only gfortran will work with this * ** *** ****
+(   43) CALL INIT_GFORTRAN_BIG_ENDIAN()
+(   44) #endif
+(   45) !
+(   46) ! III.c LFI file opening
+(   47) CALL LFINEG64(2_JPLIKB)
+(   48) CALL LFIOUV64(IRETURNCODE, INUMER, .TRUE., CDFILE, CDSTATE, .FALSE.,&
+(   49)              &.FALSE., 0_JPLIKB, 1_JPLIKB, IRECORDNUMBER)
+(   50) !
+(   51) #ifdef __GFORTRAN__
+(   52) ! III.d (Re)-init of libgfortran to enable native endianess file reading
+(   53) !**** *** ** * only gfortran will work with this * ** *** ****
+(   54) CALL INIT_GFORTRAN_NATIVE_ENDIAN()
+(   55) #endif
+(   56) !
+(   57) ! On supprime les stats à la fermeture du fichier
+(   58) IF(IRETURNCODE==0)THEN
+(   59)   CALL LFIMST64(IRETURNCODE, INUMER, .FALSE.)
+(   60) ENDIF
+(   61) KNUMER=INT(INUMER, 8)
+(   62) KRETURNCODE=INT(IRETURNCODE,8)
+(   63) 
+(   64) END SUBROUTINE WLFIOUV
+(   65) 
+(   66) !______________________________________________________________________
+(   67) 
+(   68) SUBROUTINE WLFINAF(KRETURNCODE, KNUMER, KNALDO, KNTROU, KNARES, KNAMAX)
+(   69) ! ** PURPOSE
+(   70) !    Wrapper to LFINAF
+(   71) !
+(   72) ! ** DUMMY ARGUMENTS
+(   73) !    KRETURNCODE: error code
+(   74) !    KNUMER: logical unit number associated to file
+(   75) !    KNALDO: Number of actual logical data records (holes excluded)
+(   76) !    KNTROU: Number of logical records which are holes
+(   77) !    KNARES: Number of logical records which can be written in the reserved part of index (holes included)
+(   78) !    KNAMAX: Maximum number of logical records which one can write on logical unit
+(   79) !
+(   80) ! ** AUTHOR
+(   81) !    9 April 2014, S. Riette
+(   82) !
+(   83) ! ** MODIFICATIONS
+(   84) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(   85) !    16 march 2021, A. Mary: remove LFIENG calls
+(   86) !
+(   87) ! I. Dummy arguments declaration
+(   88) USE LFI_PRECISION
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 4
+
+(   89) IMPLICIT NONE
+(   90) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   91) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(   92) INTEGER(KIND=8), INTENT(OUT) :: KNALDO, KNTROU, KNARES, KNAMAX
+(   93) !
+(   94) ! II. Local variables declaration
+(   95) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   96) INTEGER(KIND=JPLIKB) :: INUMER
+(   97) INTEGER(KIND=JPLIKB) :: INALDO, INTROU, INARES, INAMAX
+(   98) !
+(   99) ! III. LFINAF call
+(  100) INUMER=INT(KNUMER, JPLIKB)
+(  101) CALL LFINAF64(IRETURNCODE, INUMER, INALDO, INTROU, INARES, INAMAX)
+(  102) KRETURNCODE=INT(IRETURNCODE,8)
+(  103) KNALDO=INT(INALDO, 8)
+(  104) KNTROU=INT(INTROU, 8)
+(  105) KNARES=INT(INARES, 8)
+(  106) KNAMAX=INT(INAMAX, 8)
+(  107) !
+(  108) END SUBROUTINE WLFINAF
+(  109) 
+(  110) !______________________________________________________________________
+(  111) 
+(  112) SUBROUTINE WLFIPOS(KRETURNCODE, KNUMER)
+(  113) ! ** PURPOSE
+(  114) !    Wrapper to LFIPOS
+(  115) !
+(  116) ! ** DUMMY ARGUMENTS
+(  117) !    KRETURNCODE: error code
+(  118) !    KNUMER: logical unit number associated to file
+(  119) !
+(  120) ! ** AUTHOR
+(  121) !    9 April 2014, S. Riette
+(  122) !
+(  123) ! ** MODIFICATIONS
+(  124) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  125) !
+(  126) ! I. Dummy arguments declaration
+(  127) USE LFI_PRECISION
+(  128) IMPLICIT NONE
+(  129) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  130) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  131) !
+(  132) ! II. Local variables declaration
+(  133) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  134) INTEGER(KIND=JPLIKB) :: INUMER
+(  135) !
+(  136) ! III. LFIPOS call
+(  137) INUMER=INT(KNUMER, JPLIKB)
+(  138) CALL LFIPOS64(IRETURNCODE, INUMER)
+(  139) KRETURNCODE=INT(IRETURNCODE,8)
+(  140) !
+(  141) END SUBROUTINE WLFIPOS
+(  142) 
+(  143) !______________________________________________________________________
+(  144) 
+(  145) SUBROUTINE WLFICAS(KRETURNCODE, KNUMER, CDNOMA, KLONG, KPOSEX, LDAVAN)
+(  146) ! ** PURPOSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 5
+
+(  147) !    Wrapper to LFICAS
+(  148) !
+(  149) ! ** DUMMY ARGUMENTS
+(  150) !    KRETURNCODE: error code
+(  151) !    KNUMER: logical unit number associated to file
+(  152) !    CDNOMA: name of next record
+(  153) !    KLONG: length of next record
+(  154) !    KPOSEX: position in file of the first word of next record
+(  155) !    LDAVAN: true if one must move forward the pointer
+(  156) !
+(  157) ! ** AUTHOR
+(  158) !    9 April 2014, S. Riette
+(  159) !
+(  160) ! ** MODIFICATIONS
+(  161) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  162) !                             use of true logical instead of integer
+(  163) !
+(  164) ! I. Dummy arguments declaration
+(  165) USE LFI_PRECISION
+(  166) IMPLICIT NONE
+(  167) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  168) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  169) CHARACTER(LEN=16), INTENT(OUT) :: CDNOMA
+(  170) INTEGER(KIND=8), INTENT(OUT) :: KLONG, KPOSEX
+(  171) LOGICAL, INTENT(IN) :: LDAVAN
+(  172) !
+(  173) ! II. Local variables declaration
+(  174) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  175) INTEGER(KIND=JPLIKB) :: INUMER
+(  176) INTEGER(KIND=JPLIKB) :: ILONG, IPOSEX
+(  177) !
+(  178) ! III. LFICAS call
+(  179) INUMER=INT(KNUMER, JPLIKB)
+(  180) CALL LFICAS64(IRETURNCODE, INUMER, CDNOMA, ILONG, IPOSEX, LDAVAN)
+(  181) KRETURNCODE=INT(IRETURNCODE,8)
+(  182) KLONG=INT(ILONG, 8)
+(  183) KPOSEX=INT(IPOSEX, 8)
+(  184) !
+(  185) END SUBROUTINE WLFICAS
+(  186) 
+(  187) !______________________________________________________________________
+(  188) 
+(  189) SUBROUTINE WLFIREN(KRETURNCODE, KNUMER, CDNOM1, CDNOM2)
+(  190) ! ** PURPOSE
+(  191) !    Wrapper to LFIREN
+(  192) !
+(  193) ! ** DUMMY ARGUMENTS
+(  194) !    KRETURNCODE: error code
+(  195) !    KNUMER: logical unit number associated to file
+(  196) !    CDNOM1: name of record to rename
+(  197) !    CDNOM2: new name of record
+(  198) !
+(  199) ! ** AUTHOR
+(  200) !    9 April 2014, S. Riette
+(  201) !
+(  202) ! ** MODIFICATIONS
+(  203) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  204) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 6
+
+(  205) ! I. Dummy arguments declaration
+(  206) USE LFI_PRECISION
+(  207) IMPLICIT NONE
+(  208) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  209) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  210) CHARACTER(LEN=16), INTENT(IN) :: CDNOM1
+(  211) CHARACTER(LEN=16), INTENT(IN) :: CDNOM2
+(  212) !
+(  213) ! II. Local variables declaration
+(  214) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  215) INTEGER(KIND=JPLIKB) :: INUMER
+(  216) !
+(  217) ! III. LFIREN call
+(  218) INUMER=INT(KNUMER, JPLIKB)
+(  219) CALL LFIREN64(IRETURNCODE, INUMER, CDNOM1, CDNOM2)
+(  220) KRETURNCODE=INT(IRETURNCODE,8)
+(  221) !
+(  222) END SUBROUTINE WLFIREN
+(  223) 
+(  224) !______________________________________________________________________
+(  225) 
+(  226) SUBROUTINE WLFISUP(KRETURNCODE, KNUMER, CDNOMA)
+(  227) ! ** PURPOSE
+(  228) !    Wrapper to LFISUP
+(  229) !
+(  230) ! ** DUMMY ARGUMENTS
+(  231) !    KRETURNCODE: error code
+(  232) !    KNUMER: logical unit number associated to file
+(  233) !    CDNOMA: name of record to delete
+(  234) !
+(  235) ! ** AUTHOR
+(  236) !    9 April 2014, S. Riette
+(  237) !
+(  238) ! ** MODIFICATIONS
+(  239) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  240) !
+(  241) ! I. Dummy arguments declaration
+(  242) USE LFI_PRECISION
+(  243) IMPLICIT NONE
+(  244) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  245) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  246) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  247) !
+(  248) ! II. Local variables declaration
+(  249) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  250) INTEGER(KIND=JPLIKB) :: INUMER
+(  251) INTEGER(KIND=JPLIKB) :: ILONUT
+(  252) !
+(  253) ! III. LFISUP call
+(  254) INUMER=INT(KNUMER, JPLIKB)
+(  255) CALL LFISUP64(IRETURNCODE, INUMER, CDNOMA, ILONUT)
+(  256) KRETURNCODE=INT(IRETURNCODE,8)
+(  257) !
+(  258) END SUBROUTINE WLFISUP
+(  259) 
+(  260) !________________________________________________________________________
+(  261) 
+(  262) SUBROUTINE WLFINFO(KRETURNCODE, KNUMER, CDNOMA, KLONG, KPOSEX)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 7
+
+(  263) ! ** PURPOSE
+(  264) !    Wrapper to LFINFO
+(  265) !
+(  266) ! ** DUMMY ARGUMENTS
+(  267) !    KRETURNCODE: error code
+(  268) !    KNUMER: logical unit number associated to file
+(  269) !    CDNOMA: name of record
+(  270) !    KLONG: length of record
+(  271) !    KPOSEX: position in file of the first word of next record
+(  272) 
+(  273) ! ** AUTHOR
+(  274) !    9 April 2014, S. Riette
+(  275) !
+(  276) ! ** MODIFICATIONS
+(  277) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  278) !
+(  279) ! I. Dummy arguments declaration
+(  280) USE LFI_PRECISION
+(  281) IMPLICIT NONE
+(  282) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  283) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  284) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  285) INTEGER(KIND=8), INTENT(OUT) :: KLONG, KPOSEX
+(  286) !
+(  287) ! II. Local variables declaration
+(  288) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  289) INTEGER(KIND=JPLIKB) :: INUMER
+(  290) INTEGER(KIND=JPLIKB) :: ILONG, IPOSEX
+(  291) !
+(  292) ! III. LFINFO call
+(  293) INUMER=INT(KNUMER, JPLIKB)
+(  294) CALL LFINFO64(IRETURNCODE, INUMER, CDNOMA, ILONG, IPOSEX)
+(  295) KRETURNCODE=INT(IRETURNCODE,8)
+(  296) KLONG=INT(ILONG, 8)
+(  297) KPOSEX=INT(IPOSEX, 8)
+(  298) !
+(  299) END SUBROUTINE WLFINFO
+(  300) 
+(  301) !______________________________________________________________________
+(  302) 
+(  303) SUBROUTINE WLFILEC(KRETURNCODE, KNUMER, CDNOMA, KLONG, LDABORT, KTAB)
+(  304) ! ** PURPOSE
+(  305) !    Wrapper to LFILEC
+(  306) !
+(  307) ! ** DUMMY ARGUMENTS
+(  308) !    KRETURNCODE: error code
+(  309) !    KNUMER: logical unit number associated to file
+(  310) !    CDNOMA: name of record
+(  311) !    KLONG: length of record
+(  312) !    LDABORT: must we raise an exception on error -21 ?
+(  313) !    KTAB: integer array read
+(  314) 
+(  315) ! ** AUTHOR
+(  316) !    9 April 2014, S. Riette
+(  317) !
+(  318) ! ** MODIFICATIONS
+(  319) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  320) !                             use of true logical instead of integer
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 8
+
+(  321) !    16 march 2021, A. Mary: remove LFIENG calls
+(  322) !
+(  323) ! I. Dummy arguments declaration
+(  324) USE LFI_PRECISION
+(  325) IMPLICIT NONE
+(  326) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  327) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  328) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  329) INTEGER(KIND=8), INTENT(IN) :: KLONG
+(  330) LOGICAL, INTENT(IN) :: LDABORT
+(  331) INTEGER(KIND=8), INTENT(OUT), DIMENSION(KLONG) :: KTAB
+(  332) !
+(  333) ! II. Local variables declaration
+(  334) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  335) INTEGER(KIND=JPLIKB) :: INUMER, ILONG
+(  336) !
+(  337) ! III. LFILEC call
+(  338) INUMER=INT(KNUMER, JPLIKB)
+(  339) ILONG=INT(KLONG, JPLIKB)
+(  340) CALL LFILEC64(IRETURNCODE, INUMER, CDNOMA, KTAB, ILONG)
+(  341) IF (IRETURNCODE==-21 .AND. .NOT. LDABORT) THEN
+(  342)   IRETURNCODE=0
+(  343) ENDIF
+(  344) KRETURNCODE=INT(IRETURNCODE,8)
+(  345) !
+(  346) END SUBROUTINE WLFILEC
+(  347) 
+(  348) !_________________________________________________________________________________________________
+(  349) 
+(  350) SUBROUTINE WGET_COMPHEADER(KSIZE, KDATA, KLONG, KLONU, KTYPECOMP)
+(  351) ! ** PURPOSE
+(  352) !    Wrapper to GET_COMPHEADER
+(  353) !
+(  354) ! ** DUMMY ARGUMENTS
+(  355) !    KSIZE: Size of KDATA
+(  356) !    KDATA: (part of) integer array read from record
+(  357) !    KLONG: length of compressed data
+(  358) !    KLONU: length of uncompressed data
+(  359) !    KTYPECOMP: type of compression
+(  360) !
+(  361) ! ** AUTHOR
+(  362) !    9 April 2014, S. Riette
+(  363) !
+(  364) ! ** MODIFICATIONS
+(  365) !    16 march 2021, A. Mary: remove LFIENG calls
+(  366) !
+(  367) ! I. Dummy arguments declaration
+(  368) IMPLICIT NONE
+(  369) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  370) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KDATA
+(  371) INTEGER(KIND=8), INTENT(IN) :: KLONG
+(  372) INTEGER(KIND=8), INTENT(OUT) :: KLONU
+(  373) INTEGER(KIND=8), INTENT(OUT) :: KTYPECOMP
+(  374) !
+(  375) ! II. Local variables declaration
+(  376) INTEGER :: ILONG
+(  377) INTEGER :: ILONU, ITYPECOMP
+(  378) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 9
+
+(  379) ! III. GET_COMPHEADER call
+(  380) ILONG=KLONG
+(  381) CALL GET_COMPHEADER(KDATA, ILONG, ILONU, ITYPECOMP)
+(  382) KLONU=INT(ILONU, 8)
+(  383) KTYPECOMP=INT(ITYPECOMP, 8)
+(  384) !
+(  385) END SUBROUTINE WGET_COMPHEADER
+(  386) 
+(  387) !_________________________________________________________________________________________________
+(  388) 
+(  389) SUBROUTINE WCOMPRESS_FIELD(KTAB, KX, KY, KSIZEDECOMP, KSIZECOMP)
+(  390) ! ** PURPOSE
+(  391) !    Wrapper to COMPRESS_FIELD
+(  392) !
+(  393) ! ** DUMMY ARGUMENTS
+(  394) !    KTAB: decompressed integer array (IN)
+(  395) !          compressed data integer array (OUT)
+(  396) !    KX, KY: x and y dimensions
+(  397) !    KSIZEDECOMP: size of decompressed data
+(  398) !    KSIZECOMP: size of compressed integer array
+(  399) !
+(  400) ! ** AUTHOR
+(  401) !    16 July 2015, S. Riette
+(  402) !
+(  403) ! ** MODIFICATIONS
+(  404) !    16 march 2021, A. Mary: remove LFIENG calls
+(  405) !
+(  406) ! I. Dummy arguments declaration
+(  407) IMPLICIT NONE
+(  408) INTEGER(KIND=8), INTENT(IN) :: KX, KY, KSIZEDECOMP
+(  409) INTEGER(KIND=8), INTENT(INOUT), DIMENSION(KSIZEDECOMP) :: KTAB
+(  410) INTEGER(KIND=8), INTENT(OUT) :: KSIZECOMP
+(  411) !
+(  412) ! II. Local variables declaration
+(  413) INTEGER :: ISIZEDECOMP, ISIZECOMP, IX, IY
+(  414) !
+(  415) ! III. COMPRESS_FIELD call
+(  416) ISIZEDECOMP=KSIZEDECOMP
+(  417) IX=KX
+(  418) IY=KY
+(  419) CALL COMPRESS_FIELD(KTAB, IX, IY, ISIZEDECOMP, ISIZECOMP)
+(  420) KSIZECOMP=ISIZECOMP
+(  421) !
+(  422) END SUBROUTINE WCOMPRESS_FIELD
+(  423) 
+(  424) !_________________________________________________________________________________________________
+(  425) 
+(  426) 
+(  427) SUBROUTINE WDECOMPRESS_FIELD(KSIZE, KCOMP, KTYPECOMP, KLDECOMP, KDECOMP)
+(  428) ! ** PURPOSE
+(  429) !    Wrapper to DECOMPRESS_FIELD
+(  430) !
+(  431) ! ** DUMMY ARGUMENTS
+(  432) !    KSIZE: size of KCOMP
+(  433) !    KCOMP: compressed integer array
+(  434) !    KTYPECOMP: type of compression
+(  435) !    KDECOMP: decompressed data integer array
+(  436) !    KLDECOMP: length of decompressed data
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 10
+
+(  437) !
+(  438) ! ** AUTHOR
+(  439) !    9 April 2014, S. Riette
+(  440) !
+(  441) ! ** MODIFICATIONS
+(  442) !    16 march 2021, A. Mary: remove LFIENG calls
+(  443) !
+(  444) ! I. Dummy arguments declaration
+(  445) IMPLICIT NONE
+(  446) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  447) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KCOMP
+(  448) INTEGER(KIND=8), INTENT(IN) :: KTYPECOMP
+(  449) INTEGER(KIND=8), INTENT(IN) :: KLDECOMP
+(  450) INTEGER(KIND=8), INTENT(OUT), DIMENSION(KLDECOMP) :: KDECOMP
+(  451) !
+(  452) ! II. Local variables declaration
+(  453) INTEGER :: ITYPECOMP, ILDECOMP
+(  454) !
+(  455) ! III. DECOMPRESS_FIELD call
+(  456) ILDECOMP=KLDECOMP
+(  457) ITYPECOMP=KTYPECOMP
+(  458) CALL DECOMPRESS_FIELD(KDECOMP, ILDECOMP, KCOMP, SIZE(KCOMP,1), ITYPECOMP)
+(  459) !
+(  460) END SUBROUTINE WDECOMPRESS_FIELD
+(  461) 
+(  462) !_________________________________________________________________________________________________
+(  463) 
+(  464) SUBROUTINE WLFIFER(KRETURNCODE, KNUMER, CDSTTC)
+(  465) ! ** PURPOSE
+(  466) !    Close a LFI file
+(  467) !
+(  468) ! ** DUMMY ARGUMENTS
+(  469) !    KRETURNCODE: error code
+(  470) !    KNUMER: logical unit number associated to file
+(  471) !    CDSTTC: close status ('KEEP', 'SCRATCH', 'DELETE')
+(  472) !
+(  473) ! ** AUTHOR
+(  474) !    9 April 2014, S. Riette
+(  475) !
+(  476) ! ** MODIFICATIONS
+(  477) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  478) !    16 march 2021, A. Mary: remove LFIENG calls
+(  479) !
+(  480) ! I. Dummy arguments declaration
+(  481) USE LFI_PRECISION
+(  482) IMPLICIT NONE
+(  483) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  484) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  485) CHARACTER(LEN=7), INTENT(IN) :: CDSTTC
+(  486) !
+(  487) ! II.  Local variables declaration
+(  488) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  489) INTEGER(KIND=JPLIKB) :: INUMER
+(  490) !
+(  491) ! III. LFIFER call
+(  492) INUMER=INT(KNUMER, JPLIKB)
+(  493) CALL LFIFER64(IRETURNCODE, INUMER, CDSTTC)
+(  494) KRETURNCODE=INT(IRETURNCODE,8)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 11
+
+(  495) !
+(  496) END SUBROUTINE WLFIFER
+(  497) 
+(  498) !_________________________________________________________________________________________________
+(  499) 
+(  500) SUBROUTINE WLFIECR(KRETURNCODE, KNUMER, CDNOMA, KSIZE, KTAB)
+(  501) ! ** PURPOSE
+(  502) !    Wrapper to LFIECR
+(  503) !
+(  504) ! ** DUMMY ARGUMENTS
+(  505) !    KRETURNCODE: error code
+(  506) !    KNUMER: logical unit number associated to file
+(  507) !    CDNOMA: name of field to write
+(  508) !    KSIZE: Size of KTAB
+(  509) !    KTAB: integer array to write
+(  510) !
+(  511) ! ** AUTHOR
+(  512) !    9 April 2014, S. Riette
+(  513) !
+(  514) ! ** MODIFICATIONS
+(  515) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  516) !    16 march 2021, A. Mary: remove LFIENG calls
+(  517) !
+(  518) ! I. Dummy arguments declaration
+(  519) USE LFI_PRECISION
+(  520) IMPLICIT NONE
+(  521) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  522) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  523) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  524) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  525) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KTAB
+(  526) !
+(  527) ! II.  Local variables declaration
+(  528) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  529) INTEGER(KIND=JPLIKB) :: INUMER
+(  530) INTEGER(KIND=JPLIKB) :: ISIZE
+(  531) !
+(  532) ! III. LFIECR call
+(  533) INUMER=INT(KNUMER, JPLIKB)
+(  534) ISIZE=INT(KSIZE, JPLIKB)
+(  535) CALL LFIECR64(IRETURNCODE, INUMER, CDNOMA, KTAB, ISIZE)
+(  536) KRETURNCODE=INT(IRETURNCODE,8)
+(  537) !
+(  538) END SUBROUTINE WLFIECR
+(  539) 
+(  540) !_________________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 12
+
+(    1) # 1 "LFI4py.F90"
+(    1) SUBROUTINE WLFIOUV(KRETURNCODE, CDFILE, CDSTATE, KNUMER)
+(    2) ! ** PURPOSE
+(    3) !    Open a LFI file
+(    4) !
+(    5) ! ** DUMMY ARGUMENTS
+(    6) !    KRETURNCODE: error code
+(    7) !    CDFILE: path to file to open
+(    8) !    CDSTATE: state of file ('NEW', 'OLD', 'UNKNOWN', 'SCRATCH')
+(    9) !    KNUMER: logical unit number associated to file
+(   10) !
+(   11) ! ** AUTHOR
+(   12) !    9 April 2014, S. Riette
+(   13) !
+(   14) ! ** MODIFICATIONS
+(   15) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(   16) !    16 march 2021, A. Mary: remove LFIENG calls
+(   17) !
+(   18) ! I. Dummy arguments declaration
+(   19) USE LFI_PRECISION
+(   20) IMPLICIT NONE
+(   21) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   22) CHARACTER(LEN=*), INTENT(IN) :: CDFILE
+(   23) CHARACTER(LEN=*), INTENT(IN) :: CDSTATE
+(   24) INTEGER(KIND=8), INTENT(OUT) :: KNUMER
+(   25) !
+(   26) ! II. Local variables declaration
+(   27) INTEGER, PARAMETER :: JPMAXLOGICALUNITNUMBER=5000
+(   28) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   29) LOGICAL :: LLEXISTS, LLOPEN
+(   30) INTEGER(KIND=JPLIKB) :: IRECORDNUMBER
+(   31) INTEGER(KIND=JPLIKB) :: INUMER
+(   32) !
+(   33) ! III. File opening
+(   34) !
+(   35) ! III.a Search for an available logical unit
+(   36) !       (unit=0 since 14/12/2015, P.Marguinaud)
+(   37) IRETURNCODE=0
+(   38) INUMER=0
+(   39) !
+(   40) # 45 "LFI4py.F90"
+(   45) !
+(   46) ! III.c LFI file opening
+(   47) CALL LFINEG64(2_JPLIKB)
+(   48) CALL LFIOUV64(IRETURNCODE, INUMER, .TRUE., CDFILE, CDSTATE, .FALSE.,&
+(   49)              &.FALSE., 0_JPLIKB, 1_JPLIKB, IRECORDNUMBER)
+(   50) !
+(   51) # 56 "LFI4py.F90"
+(   56) !
+(   57) ! On supprime les stats à la fermeture du fichier
+(   58) IF(IRETURNCODE==0)THEN
+(   59)   CALL LFIMST64(IRETURNCODE, INUMER, .FALSE.)
+(   60) ENDIF
+(   61) KNUMER=INT(INUMER, 8)
+(   62) KRETURNCODE=INT(IRETURNCODE,8)
+(   63) # 64 "LFI4py.F90"
+(   64) END SUBROUTINE WLFIOUV
+(   65) # 66 "LFI4py.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 13
+
+(   66) !______________________________________________________________________
+(   67) # 68 "LFI4py.F90"
+(   68) SUBROUTINE WLFINAF(KRETURNCODE, KNUMER, KNALDO, KNTROU, KNARES, KNAMAX)
+(   69) ! ** PURPOSE
+(   70) !    Wrapper to LFINAF
+(   71) !
+(   72) ! ** DUMMY ARGUMENTS
+(   73) !    KRETURNCODE: error code
+(   74) !    KNUMER: logical unit number associated to file
+(   75) !    KNALDO: Number of actual logical data records (holes excluded)
+(   76) !    KNTROU: Number of logical records which are holes
+(   77) !    KNARES: Number of logical records which can be written in the reserved part of index (holes included)
+(   78) !    KNAMAX: Maximum number of logical records which one can write on logical unit
+(   79) !
+(   80) ! ** AUTHOR
+(   81) !    9 April 2014, S. Riette
+(   82) !
+(   83) ! ** MODIFICATIONS
+(   84) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(   85) !    16 march 2021, A. Mary: remove LFIENG calls
+(   86) !
+(   87) ! I. Dummy arguments declaration
+(   88) USE LFI_PRECISION
+(   89) IMPLICIT NONE
+(   90) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   91) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(   92) INTEGER(KIND=8), INTENT(OUT) :: KNALDO, KNTROU, KNARES, KNAMAX
+(   93) !
+(   94) ! II. Local variables declaration
+(   95) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   96) INTEGER(KIND=JPLIKB) :: INUMER
+(   97) INTEGER(KIND=JPLIKB) :: INALDO, INTROU, INARES, INAMAX
+(   98) !
+(   99) ! III. LFINAF call
+(  100) INUMER=INT(KNUMER, JPLIKB)
+(  101) CALL LFINAF64(IRETURNCODE, INUMER, INALDO, INTROU, INARES, INAMAX)
+(  102) KRETURNCODE=INT(IRETURNCODE,8)
+(  103) KNALDO=INT(INALDO, 8)
+(  104) KNTROU=INT(INTROU, 8)
+(  105) KNARES=INT(INARES, 8)
+(  106) KNAMAX=INT(INAMAX, 8)
+(  107) !
+(  108) END SUBROUTINE WLFINAF
+(  109) # 110 "LFI4py.F90"
+(  110) !______________________________________________________________________
+(  111) # 112 "LFI4py.F90"
+(  112) SUBROUTINE WLFIPOS(KRETURNCODE, KNUMER)
+(  113) ! ** PURPOSE
+(  114) !    Wrapper to LFIPOS
+(  115) !
+(  116) ! ** DUMMY ARGUMENTS
+(  117) !    KRETURNCODE: error code
+(  118) !    KNUMER: logical unit number associated to file
+(  119) !
+(  120) ! ** AUTHOR
+(  121) !    9 April 2014, S. Riette
+(  122) !
+(  123) ! ** MODIFICATIONS
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 14
+
+(  124) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  125) !
+(  126) ! I. Dummy arguments declaration
+(  127) USE LFI_PRECISION
+(  128) IMPLICIT NONE
+(  129) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  130) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  131) !
+(  132) ! II. Local variables declaration
+(  133) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  134) INTEGER(KIND=JPLIKB) :: INUMER
+(  135) !
+(  136) ! III. LFIPOS call
+(  137) INUMER=INT(KNUMER, JPLIKB)
+(  138) CALL LFIPOS64(IRETURNCODE, INUMER)
+(  139) KRETURNCODE=INT(IRETURNCODE,8)
+(  140) !
+(  141) END SUBROUTINE WLFIPOS
+(  142) # 143 "LFI4py.F90"
+(  143) !______________________________________________________________________
+(  144) # 145 "LFI4py.F90"
+(  145) SUBROUTINE WLFICAS(KRETURNCODE, KNUMER, CDNOMA, KLONG, KPOSEX, LDAVAN)
+(  146) ! ** PURPOSE
+(  147) !    Wrapper to LFICAS
+(  148) !
+(  149) ! ** DUMMY ARGUMENTS
+(  150) !    KRETURNCODE: error code
+(  151) !    KNUMER: logical unit number associated to file
+(  152) !    CDNOMA: name of next record
+(  153) !    KLONG: length of next record
+(  154) !    KPOSEX: position in file of the first word of next record
+(  155) !    LDAVAN: true if one must move forward the pointer
+(  156) !
+(  157) ! ** AUTHOR
+(  158) !    9 April 2014, S. Riette
+(  159) !
+(  160) ! ** MODIFICATIONS
+(  161) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  162) !                             use of true logical instead of integer
+(  163) !
+(  164) ! I. Dummy arguments declaration
+(  165) USE LFI_PRECISION
+(  166) IMPLICIT NONE
+(  167) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  168) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  169) CHARACTER(LEN=16), INTENT(OUT) :: CDNOMA
+(  170) INTEGER(KIND=8), INTENT(OUT) :: KLONG, KPOSEX
+(  171) LOGICAL, INTENT(IN) :: LDAVAN
+(  172) !
+(  173) ! II. Local variables declaration
+(  174) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  175) INTEGER(KIND=JPLIKB) :: INUMER
+(  176) INTEGER(KIND=JPLIKB) :: ILONG, IPOSEX
+(  177) !
+(  178) ! III. LFICAS call
+(  179) INUMER=INT(KNUMER, JPLIKB)
+(  180) CALL LFICAS64(IRETURNCODE, INUMER, CDNOMA, ILONG, IPOSEX, LDAVAN)
+(  181) KRETURNCODE=INT(IRETURNCODE,8)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 15
+
+(  182) KLONG=INT(ILONG, 8)
+(  183) KPOSEX=INT(IPOSEX, 8)
+(  184) !
+(  185) END SUBROUTINE WLFICAS
+(  186) # 187 "LFI4py.F90"
+(  187) !______________________________________________________________________
+(  188) # 189 "LFI4py.F90"
+(  189) SUBROUTINE WLFIREN(KRETURNCODE, KNUMER, CDNOM1, CDNOM2)
+(  190) ! ** PURPOSE
+(  191) !    Wrapper to LFIREN
+(  192) !
+(  193) ! ** DUMMY ARGUMENTS
+(  194) !    KRETURNCODE: error code
+(  195) !    KNUMER: logical unit number associated to file
+(  196) !    CDNOM1: name of record to rename
+(  197) !    CDNOM2: new name of record
+(  198) !
+(  199) ! ** AUTHOR
+(  200) !    9 April 2014, S. Riette
+(  201) !
+(  202) ! ** MODIFICATIONS
+(  203) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  204) !
+(  205) ! I. Dummy arguments declaration
+(  206) USE LFI_PRECISION
+(  207) IMPLICIT NONE
+(  208) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  209) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  210) CHARACTER(LEN=16), INTENT(IN) :: CDNOM1
+(  211) CHARACTER(LEN=16), INTENT(IN) :: CDNOM2
+(  212) !
+(  213) ! II. Local variables declaration
+(  214) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  215) INTEGER(KIND=JPLIKB) :: INUMER
+(  216) !
+(  217) ! III. LFIREN call
+(  218) INUMER=INT(KNUMER, JPLIKB)
+(  219) CALL LFIREN64(IRETURNCODE, INUMER, CDNOM1, CDNOM2)
+(  220) KRETURNCODE=INT(IRETURNCODE,8)
+(  221) !
+(  222) END SUBROUTINE WLFIREN
+(  223) # 224 "LFI4py.F90"
+(  224) !______________________________________________________________________
+(  225) # 226 "LFI4py.F90"
+(  226) SUBROUTINE WLFISUP(KRETURNCODE, KNUMER, CDNOMA)
+(  227) ! ** PURPOSE
+(  228) !    Wrapper to LFISUP
+(  229) !
+(  230) ! ** DUMMY ARGUMENTS
+(  231) !    KRETURNCODE: error code
+(  232) !    KNUMER: logical unit number associated to file
+(  233) !    CDNOMA: name of record to delete
+(  234) !
+(  235) ! ** AUTHOR
+(  236) !    9 April 2014, S. Riette
+(  237) !
+(  238) ! ** MODIFICATIONS
+(  239) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 16
+
+(  240) !
+(  241) ! I. Dummy arguments declaration
+(  242) USE LFI_PRECISION
+(  243) IMPLICIT NONE
+(  244) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  245) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  246) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  247) !
+(  248) ! II. Local variables declaration
+(  249) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  250) INTEGER(KIND=JPLIKB) :: INUMER
+(  251) INTEGER(KIND=JPLIKB) :: ILONUT
+(  252) !
+(  253) ! III. LFISUP call
+(  254) INUMER=INT(KNUMER, JPLIKB)
+(  255) CALL LFISUP64(IRETURNCODE, INUMER, CDNOMA, ILONUT)
+(  256) KRETURNCODE=INT(IRETURNCODE,8)
+(  257) !
+(  258) END SUBROUTINE WLFISUP
+(  259) # 260 "LFI4py.F90"
+(  260) !________________________________________________________________________
+(  261) # 262 "LFI4py.F90"
+(  262) SUBROUTINE WLFINFO(KRETURNCODE, KNUMER, CDNOMA, KLONG, KPOSEX)
+(  263) ! ** PURPOSE
+(  264) !    Wrapper to LFINFO
+(  265) !
+(  266) ! ** DUMMY ARGUMENTS
+(  267) !    KRETURNCODE: error code
+(  268) !    KNUMER: logical unit number associated to file
+(  269) !    CDNOMA: name of record
+(  270) !    KLONG: length of record
+(  271) !    KPOSEX: position in file of the first word of next record
+(  272) # 273 "LFI4py.F90"
+(  273) ! ** AUTHOR
+(  274) !    9 April 2014, S. Riette
+(  275) !
+(  276) ! ** MODIFICATIONS
+(  277) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  278) !
+(  279) ! I. Dummy arguments declaration
+(  280) USE LFI_PRECISION
+(  281) IMPLICIT NONE
+(  282) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  283) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  284) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  285) INTEGER(KIND=8), INTENT(OUT) :: KLONG, KPOSEX
+(  286) !
+(  287) ! II. Local variables declaration
+(  288) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  289) INTEGER(KIND=JPLIKB) :: INUMER
+(  290) INTEGER(KIND=JPLIKB) :: ILONG, IPOSEX
+(  291) !
+(  292) ! III. LFINFO call
+(  293) INUMER=INT(KNUMER, JPLIKB)
+(  294) CALL LFINFO64(IRETURNCODE, INUMER, CDNOMA, ILONG, IPOSEX)
+(  295) KRETURNCODE=INT(IRETURNCODE,8)
+(  296) KLONG=INT(ILONG, 8)
+(  297) KPOSEX=INT(IPOSEX, 8)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 17
+
+(  298) !
+(  299) END SUBROUTINE WLFINFO
+(  300) # 301 "LFI4py.F90"
+(  301) !______________________________________________________________________
+(  302) # 303 "LFI4py.F90"
+(  303) SUBROUTINE WLFILEC(KRETURNCODE, KNUMER, CDNOMA, KLONG, LDABORT, KTAB)
+(  304) ! ** PURPOSE
+(  305) !    Wrapper to LFILEC
+(  306) !
+(  307) ! ** DUMMY ARGUMENTS
+(  308) !    KRETURNCODE: error code
+(  309) !    KNUMER: logical unit number associated to file
+(  310) !    CDNOMA: name of record
+(  311) !    KLONG: length of record
+(  312) !    LDABORT: must we raise an exception on error -21 ?
+(  313) !    KTAB: integer array read
+(  314) # 315 "LFI4py.F90"
+(  315) ! ** AUTHOR
+(  316) !    9 April 2014, S. Riette
+(  317) !
+(  318) ! ** MODIFICATIONS
+(  319) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  320) !                             use of true logical instead of integer
+(  321) !    16 march 2021, A. Mary: remove LFIENG calls
+(  322) !
+(  323) ! I. Dummy arguments declaration
+(  324) USE LFI_PRECISION
+(  325) IMPLICIT NONE
+(  326) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  327) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  328) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  329) INTEGER(KIND=8), INTENT(IN) :: KLONG
+(  330) LOGICAL, INTENT(IN) :: LDABORT
+(  331) INTEGER(KIND=8), INTENT(OUT), DIMENSION(KLONG) :: KTAB
+(  332) !
+(  333) ! II. Local variables declaration
+(  334) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  335) INTEGER(KIND=JPLIKB) :: INUMER, ILONG
+(  336) !
+(  337) ! III. LFILEC call
+(  338) INUMER=INT(KNUMER, JPLIKB)
+(  339) ILONG=INT(KLONG, JPLIKB)
+(  340) CALL LFILEC64(IRETURNCODE, INUMER, CDNOMA, KTAB, ILONG)
+(  341) IF (IRETURNCODE==-21 .AND. .NOT. LDABORT) THEN
+(  342)   IRETURNCODE=0
+(  343) ENDIF
+(  344) KRETURNCODE=INT(IRETURNCODE,8)
+(  345) !
+(  346) END SUBROUTINE WLFILEC
+(  347) # 348 "LFI4py.F90"
+(  348) !_________________________________________________________________________________________________
+(  349) # 350 "LFI4py.F90"
+(  350) SUBROUTINE WGET_COMPHEADER(KSIZE, KDATA, KLONG, KLONU, KTYPECOMP)
+(  351) ! ** PURPOSE
+(  352) !    Wrapper to GET_COMPHEADER
+(  353) !
+(  354) ! ** DUMMY ARGUMENTS
+(  355) !    KSIZE: Size of KDATA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 18
+
+(  356) !    KDATA: (part of) integer array read from record
+(  357) !    KLONG: length of compressed data
+(  358) !    KLONU: length of uncompressed data
+(  359) !    KTYPECOMP: type of compression
+(  360) !
+(  361) ! ** AUTHOR
+(  362) !    9 April 2014, S. Riette
+(  363) !
+(  364) ! ** MODIFICATIONS
+(  365) !    16 march 2021, A. Mary: remove LFIENG calls
+(  366) !
+(  367) ! I. Dummy arguments declaration
+(  368) IMPLICIT NONE
+(  369) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  370) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KDATA
+(  371) INTEGER(KIND=8), INTENT(IN) :: KLONG
+(  372) INTEGER(KIND=8), INTENT(OUT) :: KLONU
+(  373) INTEGER(KIND=8), INTENT(OUT) :: KTYPECOMP
+(  374) !
+(  375) ! II. Local variables declaration
+(  376) INTEGER :: ILONG
+(  377) INTEGER :: ILONU, ITYPECOMP
+(  378) !
+(  379) ! III. GET_COMPHEADER call
+(  380) ILONG=KLONG
+(  381) CALL GET_COMPHEADER(KDATA, ILONG, ILONU, ITYPECOMP)
+(  382) KLONU=INT(ILONU, 8)
+(  383) KTYPECOMP=INT(ITYPECOMP, 8)
+(  384) !
+(  385) END SUBROUTINE WGET_COMPHEADER
+(  386) # 387 "LFI4py.F90"
+(  387) !_________________________________________________________________________________________________
+(  388) # 389 "LFI4py.F90"
+(  389) SUBROUTINE WCOMPRESS_FIELD(KTAB, KX, KY, KSIZEDECOMP, KSIZECOMP)
+(  390) ! ** PURPOSE
+(  391) !    Wrapper to COMPRESS_FIELD
+(  392) !
+(  393) ! ** DUMMY ARGUMENTS
+(  394) !    KTAB: decompressed integer array (IN)
+(  395) !          compressed data integer array (OUT)
+(  396) !    KX, KY: x and y dimensions
+(  397) !    KSIZEDECOMP: size of decompressed data
+(  398) !    KSIZECOMP: size of compressed integer array
+(  399) !
+(  400) ! ** AUTHOR
+(  401) !    16 July 2015, S. Riette
+(  402) !
+(  403) ! ** MODIFICATIONS
+(  404) !    16 march 2021, A. Mary: remove LFIENG calls
+(  405) !
+(  406) ! I. Dummy arguments declaration
+(  407) IMPLICIT NONE
+(  408) INTEGER(KIND=8), INTENT(IN) :: KX, KY, KSIZEDECOMP
+(  409) INTEGER(KIND=8), INTENT(INOUT), DIMENSION(KSIZEDECOMP) :: KTAB
+(  410) INTEGER(KIND=8), INTENT(OUT) :: KSIZECOMP
+(  411) !
+(  412) ! II. Local variables declaration
+(  413) INTEGER :: ISIZEDECOMP, ISIZECOMP, IX, IY
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 19
+
+(  414) !
+(  415) ! III. COMPRESS_FIELD call
+(  416) ISIZEDECOMP=KSIZEDECOMP
+(  417) IX=KX
+(  418) IY=KY
+(  419) CALL COMPRESS_FIELD(KTAB, IX, IY, ISIZEDECOMP, ISIZECOMP)
+(  420) KSIZECOMP=ISIZECOMP
+(  421) !
+(  422) END SUBROUTINE WCOMPRESS_FIELD
+(  423) # 424 "LFI4py.F90"
+(  424) !_________________________________________________________________________________________________
+(  425) # 427 "LFI4py.F90"
+(  427) SUBROUTINE WDECOMPRESS_FIELD(KSIZE, KCOMP, KTYPECOMP, KLDECOMP, KDECOMP)
+(  428) ! ** PURPOSE
+(  429) !    Wrapper to DECOMPRESS_FIELD
+(  430) !
+(  431) ! ** DUMMY ARGUMENTS
+(  432) !    KSIZE: size of KCOMP
+(  433) !    KCOMP: compressed integer array
+(  434) !    KTYPECOMP: type of compression
+(  435) !    KDECOMP: decompressed data integer array
+(  436) !    KLDECOMP: length of decompressed data
+(  437) !
+(  438) ! ** AUTHOR
+(  439) !    9 April 2014, S. Riette
+(  440) !
+(  441) ! ** MODIFICATIONS
+(  442) !    16 march 2021, A. Mary: remove LFIENG calls
+(  443) !
+(  444) ! I. Dummy arguments declaration
+(  445) IMPLICIT NONE
+(  446) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  447) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KCOMP
+(  448) INTEGER(KIND=8), INTENT(IN) :: KTYPECOMP
+(  449) INTEGER(KIND=8), INTENT(IN) :: KLDECOMP
+(  450) INTEGER(KIND=8), INTENT(OUT), DIMENSION(KLDECOMP) :: KDECOMP
+(  451) !
+(  452) ! II. Local variables declaration
+(  453) INTEGER :: ITYPECOMP, ILDECOMP
+(  454) !
+(  455) ! III. DECOMPRESS_FIELD call
+(  456) ILDECOMP=KLDECOMP
+(  457) ITYPECOMP=KTYPECOMP
+(  458) CALL DECOMPRESS_FIELD(KDECOMP, ILDECOMP, KCOMP, SIZE(KCOMP,1), ITYPECOMP)
+(  459) !
+(  460) END SUBROUTINE WDECOMPRESS_FIELD
+(  461) # 462 "LFI4py.F90"
+(  462) !_________________________________________________________________________________________________
+(  463) # 464 "LFI4py.F90"
+(  464) SUBROUTINE WLFIFER(KRETURNCODE, KNUMER, CDSTTC)
+(  465) ! ** PURPOSE
+(  466) !    Close a LFI file
+(  467) !
+(  468) ! ** DUMMY ARGUMENTS
+(  469) !    KRETURNCODE: error code
+(  470) !    KNUMER: logical unit number associated to file
+(  471) !    CDSTTC: close status ('KEEP', 'SCRATCH', 'DELETE')
+(  472) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 20
+
+(  473) ! ** AUTHOR
+(  474) !    9 April 2014, S. Riette
+(  475) !
+(  476) ! ** MODIFICATIONS
+(  477) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  478) !    16 march 2021, A. Mary: remove LFIENG calls
+(  479) !
+(  480) ! I. Dummy arguments declaration
+(  481) USE LFI_PRECISION
+(  482) IMPLICIT NONE
+(  483) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  484) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  485) CHARACTER(LEN=7), INTENT(IN) :: CDSTTC
+(  486) !
+(  487) ! II.  Local variables declaration
+(  488) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  489) INTEGER(KIND=JPLIKB) :: INUMER
+(  490) !
+(  491) ! III. LFIFER call
+(  492) INUMER=INT(KNUMER, JPLIKB)
+(  493) CALL LFIFER64(IRETURNCODE, INUMER, CDSTTC)
+(  494) KRETURNCODE=INT(IRETURNCODE,8)
+(  495) !
+(  496) END SUBROUTINE WLFIFER
+(  497) # 498 "LFI4py.F90"
+(  498) !_________________________________________________________________________________________________
+(  499) # 500 "LFI4py.F90"
+(  500) SUBROUTINE WLFIECR(KRETURNCODE, KNUMER, CDNOMA, KSIZE, KTAB)
+(  501) ! ** PURPOSE
+(  502) !    Wrapper to LFIECR
+(  503) !
+(  504) ! ** DUMMY ARGUMENTS
+(  505) !    KRETURNCODE: error code
+(  506) !    KNUMER: logical unit number associated to file
+(  507) !    CDNOMA: name of field to write
+(  508) !    KSIZE: Size of KTAB
+(  509) !    KTAB: integer array to write
+(  510) !
+(  511) ! ** AUTHOR
+(  512) !    9 April 2014, S. Riette
+(  513) !
+(  514) ! ** MODIFICATIONS
+(  515) !    26 sept 2014, S. Riette: use 64bits LFI subroutines
+(  516) !    16 march 2021, A. Mary: remove LFIENG calls
+(  517) !
+(  518) ! I. Dummy arguments declaration
+(  519) USE LFI_PRECISION
+(  520) IMPLICIT NONE
+(  521) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  522) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  523) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  524) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  525) INTEGER(KIND=8), INTENT(IN), DIMENSION(KSIZE) :: KTAB
+(  526) !
+(  527) ! II.  Local variables declaration
+(  528) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  529) INTEGER(KIND=JPLIKB) :: INUMER
+(  530) INTEGER(KIND=JPLIKB) :: ISIZE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:44      page 21
+
+(  531) !
+(  532) ! III. LFIECR call
+(  533) INUMER=INT(KNUMER, JPLIKB)
+(  534) ISIZE=INT(KSIZE, JPLIKB)
+(  535) CALL LFIECR64(IRETURNCODE, INUMER, CDNOMA, KTAB, ISIZE)
+(  536) KRETURNCODE=INT(IRETURNCODE,8)
+(  537) !
+(  538) END SUBROUTINE WLFIECR
+(  539) # 540 "LFI4py.F90"
+(  540) !_________________________________________________________________________________________________

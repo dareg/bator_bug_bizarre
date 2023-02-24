@@ -1,0 +1,26 @@
+!depfile:put_sfx_land.F90
+MODULE MODI_PUT_SFX_LAND 
+INTERFACE
+      SUBROUTINE PUT_SFX_LAND (IO, S, K, NK, NP, U, &
+                               KLUOUT,OCPL_WTD,OCPL_FLOOD, &
+                              PWTD,PFWTD,PFFLOOD,PPIFLOOD )  
+USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+USE MODD_ISBA_n, ONLY : ISBA_S_t, ISBA_K_t, ISBA_NK_t, ISBA_NP_t, ISBA_P_t
+USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+TYPE(ISBA_S_t), INTENT(INOUT) :: S
+TYPE(ISBA_K_t), INTENT(INOUT) :: K
+TYPE(ISBA_NK_t), INTENT(INOUT) :: NK
+TYPE(ISBA_NP_t), INTENT(INOUT) :: NP
+TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+INTEGER,           INTENT(IN)  :: KLUOUT
+LOGICAL,           INTENT(IN)  :: OCPL_WTD
+LOGICAL,           INTENT(IN)  :: OCPL_FLOOD
+REAL, DIMENSION(:), INTENT(IN) :: PWTD     ! water table depth (negative below soil surface) (m)
+REAL, DIMENSION(:), INTENT(IN) :: PFWTD    ! fraction of water table rise (-)
+REAL, DIMENSION(:), INTENT(IN) :: PFFLOOD  ! fraction of flooded area (-)
+REAL, DIMENSION(:), INTENT(IN) :: PPIFLOOD ! Potential floodplain infiltration (kg/m2)
+END SUBROUTINE PUT_SFX_LAND
+
+END INTERFACE
+END MODULE MODI_PUT_SFX_LAND 

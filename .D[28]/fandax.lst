@@ -1,0 +1,674 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fandax.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FANDAX_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, KDATEF)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de definition d'une (Nouvelle) Date sur un fichier
+(   12) !     ARpege.
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie)        ==> Code-reponse du sous-programme;
+(   15) !                KNUMER (Entree)        ==> Numero de l'unite logique;
+(   16) !     (Tableau)  KDATEF (Entree/Sortie) ==> Date elle-meme (FA%JPLDAT*2 mots).
+(   17) !*
+(   18) !        En cas de modification effective (si le fichier etait deja muni
+(   19) !     d'une date), il y a messagerie de niveau 1.
+(   20) !
+(   21) !
+(   22) !
+(   23) TYPE(FA_COM) :: FA
+(   24) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   25) INTEGER (KIND=JPLIKB) KDATEF (FA%JPLDAT*2)
+(   26) !
+(   27) INTEGER (KIND=JPLIKB) IRANG, IREP, INIMES, J
+(   28) !
+(   29) LOGICAL LLVERF, LLRLFI, LLMODA
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 3
+
+(   31) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) LOGICAL                  LLFATA
+(   35) 
+(   36) !**
+(   37) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, PUIS INITIALISATIONS.
+(   38) !-----------------------------------------------------------------------
+(   39) !
+(   40) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   41) IF (LHOOK) CALL DR_HOOK('FANDAX_MT',0,ZHOOK_HANDLE)
+(   42) CLACTI=''
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) LLMODA=.FALSE.
+(   46) CALL FANUMU_MT64                 &
+(   47) &               (FA, KNUMER,IRANG)
+(   48) !
+(   49) IF (IRANG.EQ.0) THEN
+(   50)   IREP=-51
+(   51)   GOTO 1001
+(   52) ENDIF
+(   53) !
+(   54) !         Verrouillage eventuel du fichier.
+(   55) !
+(   56) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   57) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   58) LLVERF=FA%LFAMUL
+(   59) !**
+(   60) !     2.  -  DEFINITION PROPREMENT DITE VIA LE SOUS-PROGRAMME "FANDAI".
+(   61) !            ( controles, puis mise a jour de FA%MADATE(.,IRANG) )
+(   62) !-----------------------------------------------------------------------
+(   63) !
+(   64) CALL FANDAI_MT64                                            &
+(   65) &               (FA,IREP,IRANG,KDATEF(1:FA%JPLDAT),         &
+(   66) &                KDATEF(FA%JPLDAT+1:FA%JPLDAT*2),LLMODA)
+(   67) !
+(   68) IF (IREP.EQ.0) THEN
+(   69)   IF (FA%FICHIER(IRANG)%LNOMME) THEN
+(   70) !**
+(   71) !     3.  -  ECRITURE DE LA DATE SUR LE FICHIER.
+(   72) !-----------------------------------------------------------------------
+(   73) !
+(   74)     CALL LFIECR_MT64                                                 &
+(   75) &                   (FA%LFI, IREP,KNUMER,FA%CPDATE,KDATEF(1:FA%JPLDAT),FA%JPLDAT)
+(   76)     CALL LFIECR_MT64                                                 &
+(   77) &                   (FA%LFI, IREP,KNUMER,FA%CPDATX,KDATEF(FA%JPLDAT+1:FA%JPLDAT*2),FA%JPLDAT)
+(   78)     LLRLFI=IREP.NE.0
+(   79)     FA%FICHIER(IRANG)%LCREAF=FA%FICHIER(IRANG)%LCREAF.AND.LLRLFI
+(   80)   ELSE
+(   81)     LLRLFI=.FALSE.
+(   82)     FA%FICHIER(IRANG)%LCREAF=.FALSE.
+(   83)   ENDIF
+(   84) ENDIF
+(   85) !**
+(   86) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   87) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   88) !-----------------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 4
+
+(   89) !
+(   90) 1001 CONTINUE
+(   91) KREP=IREP
+(   92) LLFATA=LLMOER (IREP,IRANG)
+(   93) !
+(   94) !        Deverrouillage eventuel du fichier.
+(   95) !
+(   96) IF (LLVERF) CALL LFIVER_MT64                                &
+(   97) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(   98) !
+(   99) IF (LLFATA) THEN
+(  100)   INIMES=2
+(  101) ELSEIF (IREP.NE.0) THEN
+(  102)   INIMES=0
+(  103) ELSE
+(  104)   INIMES=IXNVMS(IRANG)
+(  105) ENDIF
+(  106) !
+(  107) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN
+(  108)   IF (LHOOK) CALL DR_HOOK('FANDAX_MT',1,ZHOOK_HANDLE)
+(  109)   RETURN
+(  110) ENDIF
+(  111) !
+(  112) CLNSPR='FANDAX'
+(  113) !
+(  114) IF (INIMES.GE.1.AND.LLMODA) THEN
+(  115)   WRITE (UNIT=CLMESS,FMT=                                  &
+(  116) &         '(''MODIFICATION DE LA DATE, UNITE'',I3)') KNUMER
+(  117) 
+(  118)   CALL FAIPAR_MT64                                        &
+(  119) &                 (FA, KNUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(  120) &                  CLNSPR,CLACTI,.FALSE.)
+(  121) ENDIF
+(  122) !
+(  123) IF (INIMES.EQ.2) THEN
+(  124) !***** FAZZZZ - KREP=iiii, KNUMER=iii, KDATEF(1:5)=iiiii/ii/ii iii:ii, *****
+(  125) !*****          KDATEF(7:8)=iiiiii-iiiiii                              *****
+(  126)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,  &
+(  127) &       '', KDATEF(1:5)='',I5,2(''/'',I2),I3,'':'',I2.2,   &
+(  128) &       '', KDATEF(7:8)='',I6,''-'',I6)') KREP,KNUMER,     &
+(  129) &     (KDATEF(J),J=1,5),(KDATEF(J),J=7,8)
+(  130)   CALL FAIPAR_MT64                                       &
+(  131) &                 (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  132) &               CLNSPR,CLACTI,LLRLFI)
+(  133) ENDIF
+(  134) !
+(  135) IF (LHOOK) CALL DR_HOOK('FANDAX_MT',1,ZHOOK_HANDLE)
+(  136) 
+(  137) CONTAINS
+(  138) 
+(  139) #include "facom2.llmoer.h"
+(  140) #include "facom2.ixnvms.h"
+(  141) 
+(  142) END SUBROUTINE FANDAX_MT64
+(  143) 
+(  144) 
+(  145) 
+(  146) ! Oct-2012 P. Marguinaud 64b LFI
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 5
+
+(  147) SUBROUTINE FANDAX64              &
+(  148) &           (KREP, KNUMER, KDATEF)
+(  149) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  150) &                  FA_COM_DEFAULT_INIT,  &
+(  151) &                  NEW_FA_DEFAULT
+(  152) USE LFI_PRECISION
+(  153) IMPLICIT NONE
+(  154) ! Arguments
+(  155) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  156) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  157) INTEGER (KIND=JPLIKB)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  158) 
+(  159) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  160) 
+(  161) CALL FANDAX_MT64                     &
+(  162) &           (FA, KREP, KNUMER, KDATEF)
+(  163) 
+(  164) END SUBROUTINE FANDAX64
+(  165) 
+(  166) SUBROUTINE FANDAX                &
+(  167) &           (KREP, KNUMER, KDATEF)
+(  168) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  169) &                  FA_COM_DEFAULT_INIT,  &
+(  170) &                  NEW_FA_DEFAULT
+(  171) USE LFI_PRECISION
+(  172) IMPLICIT NONE
+(  173) ! Arguments
+(  174) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  175) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  176) INTEGER (KIND=JPLIKM)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  177) 
+(  178) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  179) 
+(  180) CALL FANDAX_MT                       &
+(  181) &           (FA, KREP, KNUMER, KDATEF)
+(  182) 
+(  183) END SUBROUTINE FANDAX
+(  184) 
+(  185) SUBROUTINE FANDAX_MT                 &
+(  186) &           (FA, KREP, KNUMER, KDATEF)
+(  187) USE FA_MOD, ONLY : FA_COM
+(  188) USE LFI_PRECISION
+(  189) IMPLICIT NONE
+(  190) ! Arguments
+(  191) TYPE (FA_COM)          FA                                     ! INOUT
+(  192) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  193) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  194) INTEGER (KIND=JPLIKM)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  195) ! Local integers
+(  196) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  197) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  198) INTEGER (KIND=JPLIKB)  IDATEF     (FA%JPLDAT*2)               ! INOUT
+(  199) ! Convert arguments
+(  200) 
+(  201) INUMER     = INT (    KNUMER, JPLIKB)
+(  202) IDATEF     = INT (    KDATEF, JPLIKB)
+(  203) 
+(  204) CALL FANDAX_MT64                     &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 6
+
+(  205) &           (FA, IREP, INUMER, IDATEF)
+(  206) 
+(  207) KREP       = INT (      IREP, JPLIKM)
+(  208) KDATEF     = INT (    IDATEF, JPLIKM)
+(  209) 
+(  210) END SUBROUTINE FANDAX_MT
+(  211) 
+(  212) !INTF KREP            OUT                               
+(  213) !INTF KNUMER        IN                                  
+(  214) !INTF KDATEF        INOUT DIMS=FA%JPLDAT*2            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 7
+
+(    1) # 1 "fandax.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FANDAX_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, KDATEF)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de definition d'une (Nouvelle) Date sur un fichier
+(   12) !     ARpege.
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie)        ==> Code-reponse du sous-programme;
+(   15) !                KNUMER (Entree)        ==> Numero de l'unite logique;
+(   16) !     (Tableau)  KDATEF (Entree/Sortie) ==> Date elle-meme (FA%JPLDAT*2 mots).
+(   17) !*
+(   18) !        En cas de modification effective (si le fichier etait deja muni
+(   19) !     d'une date), il y a messagerie de niveau 1.
+(   20) !
+(   21) !
+(   22) !
+(   23) TYPE(FA_COM) :: FA
+(   24) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   25) INTEGER (KIND=JPLIKB) KDATEF (FA%JPLDAT*2)
+(   26) !
+(   27) INTEGER (KIND=JPLIKB) IRANG, IREP, INIMES, J
+(   28) !
+(   29) LOGICAL LLVERF, LLRLFI, LLMODA
+(   30) !
+(   31) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) LOGICAL                  LLFATA
+(   35) # 36 "fandax.F90"
+(   36) !**
+(   37) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, PUIS INITIALISATIONS.
+(   38) !-----------------------------------------------------------------------
+(   39) !
+(   40) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   41) IF (LHOOK) CALL DR_HOOK('FANDAX_MT',0,ZHOOK_HANDLE)
+(   42) CLACTI=''
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) LLMODA=.FALSE.
+(   46) CALL FANUMU_MT64                 &
+(   47) &               (FA, KNUMER,IRANG)
+(   48) !
+(   49) IF (IRANG.EQ.0) THEN
+(   50)   IREP=-51
+(   51)   GOTO 1001
+(   52) ENDIF
+(   53) !
+(   54) !         Verrouillage eventuel du fichier.
+(   55) !
+(   56) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   57) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 8
+
+(   58) LLVERF=FA%LFAMUL
+(   59) !**
+(   60) !     2.  -  DEFINITION PROPREMENT DITE VIA LE SOUS-PROGRAMME "FANDAI".
+(   61) !            ( controles, puis mise a jour de FA%MADATE(.,IRANG) )
+(   62) !-----------------------------------------------------------------------
+(   63) !
+(   64) CALL FANDAI_MT64                                            &
+(   65) &               (FA,IREP,IRANG,KDATEF(1:FA%JPLDAT),         &
+(   66) &                KDATEF(FA%JPLDAT+1:FA%JPLDAT*2),LLMODA)
+(   67) !
+(   68) IF (IREP.EQ.0) THEN
+(   69)   IF (FA%FICHIER(IRANG)%LNOMME) THEN
+(   70) !**
+(   71) !     3.  -  ECRITURE DE LA DATE SUR LE FICHIER.
+(   72) !-----------------------------------------------------------------------
+(   73) !
+(   74)     CALL LFIECR_MT64                                                 &
+(   75) &                   (FA%LFI, IREP,KNUMER,FA%CPDATE,KDATEF(1:FA%JPLDAT),FA%JPLDAT)
+(   76)     CALL LFIECR_MT64                                                 &
+(   77) &                   (FA%LFI, IREP,KNUMER,FA%CPDATX,KDATEF(FA%JPLDAT+1:FA%JPLDAT*2),FA%JPLDAT)
+(   78)     LLRLFI=IREP.NE.0
+(   79)     FA%FICHIER(IRANG)%LCREAF=FA%FICHIER(IRANG)%LCREAF.AND.LLRLFI
+(   80)   ELSE
+(   81)     LLRLFI=.FALSE.
+(   82)     FA%FICHIER(IRANG)%LCREAF=.FALSE.
+(   83)   ENDIF
+(   84) ENDIF
+(   85) !**
+(   86) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   87) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   88) !-----------------------------------------------------------------------
+(   89) !
+(   90) 1001 CONTINUE
+(   91) KREP=IREP
+(   92) LLFATA=LLMOER (IREP,IRANG)
+(   93) !
+(   94) !        Deverrouillage eventuel du fichier.
+(   95) !
+(   96) IF (LLVERF) CALL LFIVER_MT64                                &
+(   97) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(   98) !
+(   99) IF (LLFATA) THEN
+(  100)   INIMES=2
+(  101) ELSEIF (IREP.NE.0) THEN
+(  102)   INIMES=0
+(  103) ELSE
+(  104)   INIMES=IXNVMS(IRANG)
+(  105) ENDIF
+(  106) !
+(  107) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN
+(  108)   IF (LHOOK) CALL DR_HOOK('FANDAX_MT',1,ZHOOK_HANDLE)
+(  109)   RETURN
+(  110) ENDIF
+(  111) !
+(  112) CLNSPR='FANDAX'
+(  113) !
+(  114) IF (INIMES.GE.1.AND.LLMODA) THEN
+(  115)   WRITE (UNIT=CLMESS,FMT=                                  &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 9
+
+(  116) &         '(''MODIFICATION DE LA DATE, UNITE'',I3)') KNUMER
+(  117) # 118 "fandax.F90"
+(  118)   CALL FAIPAR_MT64                                        &
+(  119) &                 (FA, KNUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(  120) &                  CLNSPR,CLACTI,.FALSE.)
+(  121) ENDIF
+(  122) !
+(  123) IF (INIMES.EQ.2) THEN
+(  124) !***** FAZZZZ - KREP=iiii, KNUMER=iii, KDATEF(1:5)=iiiii/ii/ii iii:ii, *****
+(  125) !*****          KDATEF(7:8)=iiiiii-iiiiii                              *****
+(  126)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3,  &
+(  127) &       '', KDATEF(1:5)='',I5,2(''/'',I2),I3,'':'',I2.2,   &
+(  128) &       '', KDATEF(7:8)='',I6,''-'',I6)') KREP,KNUMER,     &
+(  129) &     (KDATEF(J),J=1,5),(KDATEF(J),J=7,8)
+(  130)   CALL FAIPAR_MT64                                       &
+(  131) &                 (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  132) &               CLNSPR,CLACTI,LLRLFI)
+(  133) ENDIF
+(  134) !
+(  135) IF (LHOOK) CALL DR_HOOK('FANDAX_MT',1,ZHOOK_HANDLE)
+(  136) # 137 "fandax.F90"
+(  137) CONTAINS
+(  138) # 139 "fandax.F90"
+(  139) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 140 "fandax.F90"
+(  140) # 140 "fandax.F90"
+(  140) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 141 "fandax.F90"
+(  141) # 142 "fandax.F90"
+(  142) END SUBROUTINE FANDAX_MT64
+(  143) # 146 "fandax.F90"
+(  146) ! Oct-2012 P. Marguinaud 64b LFI
+(  147) SUBROUTINE FANDAX64              &
+(  148) &           (KREP, KNUMER, KDATEF)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 10
+
+(  149) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  150) &                  FA_COM_DEFAULT_INIT,  &
+(  151) &                  NEW_FA_DEFAULT
+(  152) USE LFI_PRECISION
+(  153) IMPLICIT NONE
+(  154) ! Arguments
+(  155) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  156) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  157) INTEGER (KIND=JPLIKB)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  158) # 159 "fandax.F90"
+(  159) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  160) # 161 "fandax.F90"
+(  161) CALL FANDAX_MT64                     &
+(  162) &           (FA, KREP, KNUMER, KDATEF)
+(  163) # 164 "fandax.F90"
+(  164) END SUBROUTINE FANDAX64
+(  165) # 166 "fandax.F90"
+(  166) SUBROUTINE FANDAX                &
+(  167) &           (KREP, KNUMER, KDATEF)
+(  168) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  169) &                  FA_COM_DEFAULT_INIT,  &
+(  170) &                  NEW_FA_DEFAULT
+(  171) USE LFI_PRECISION
+(  172) IMPLICIT NONE
+(  173) ! Arguments
+(  174) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  175) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  176) INTEGER (KIND=JPLIKM)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  177) # 178 "fandax.F90"
+(  178) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  179) # 180 "fandax.F90"
+(  180) CALL FANDAX_MT                       &
+(  181) &           (FA, KREP, KNUMER, KDATEF)
+(  182) # 183 "fandax.F90"
+(  183) END SUBROUTINE FANDAX
+(  184) # 185 "fandax.F90"
+(  185) SUBROUTINE FANDAX_MT                 &
+(  186) &           (FA, KREP, KNUMER, KDATEF)
+(  187) USE FA_MOD, ONLY : FA_COM
+(  188) USE LFI_PRECISION
+(  189) IMPLICIT NONE
+(  190) ! Arguments
+(  191) TYPE (FA_COM)          FA                                     ! INOUT
+(  192) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  193) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  194) INTEGER (KIND=JPLIKM)  KDATEF     (FA%JPLDAT*2)               ! INOUT
+(  195) ! Local integers
+(  196) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  197) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  198) INTEGER (KIND=JPLIKB)  IDATEF     (FA%JPLDAT*2)               ! INOUT
+(  199) ! Convert arguments
+(  200) # 201 "fandax.F90"
+(  201) INUMER     = INT (    KNUMER, JPLIKB)
+(  202) IDATEF     = INT (    KDATEF, JPLIKB)
+(  203) # 204 "fandax.F90"
+(  204) CALL FANDAX_MT64                     &
+(  205) &           (FA, IREP, INUMER, IDATEF)
+(  206) # 207 "fandax.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:46      page 11
+
+(  207) KREP       = INT (      IREP, JPLIKM)
+(  208) KDATEF     = INT (    IDATEF, JPLIKM)
+(  209) # 210 "fandax.F90"
+(  210) END SUBROUTINE FANDAX_MT
+(  211) # 212 "fandax.F90"
+(  212) !INTF KREP            OUT                               
+(  213) !INTF KNUMER        IN                                  
+(  214) !INTF KDATEF        INOUT DIMS=FA%JPLDAT*2            

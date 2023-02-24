@@ -1,0 +1,17 @@
+!depfile:put_zs_inland_watern.F90
+MODULE MODI_PUT_ZS_INLAND_WATER_n 
+INTERFACE
+      SUBROUTINE PUT_ZS_INLAND_WATER_n (F, W, &
+                                        HPROGRAM,KI,PZS,HWATER)
+USE MODD_FLAKE_n, ONLY : FLAKE_t
+USE MODD_WATFLUX_n, ONLY : WATFLUX_t
+TYPE(FLAKE_t), INTENT(INOUT) :: F
+TYPE(WATFLUX_t), INTENT(INOUT) :: W
+ CHARACTER(LEN=6),    INTENT(IN)  :: HWATER ! name of the scheme for inland water
+ CHARACTER(LEN=6),    INTENT(IN)  :: HPROGRAM
+INTEGER,             INTENT(IN)  :: KI      ! horizontal dim. of cover
+REAL, DIMENSION(KI), INTENT(IN)  :: PZS     ! orography
+END SUBROUTINE PUT_ZS_INLAND_WATER_n
+
+END INTERFACE
+END MODULE MODI_PUT_ZS_INLAND_WATER_n 

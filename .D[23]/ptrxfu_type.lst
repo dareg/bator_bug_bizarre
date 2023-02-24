@@ -1,0 +1,367 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: ptrxfu_type.F90
+
+(    1) MODULE PTRXFU_TYPE
+(    2) 
+(    3) USE PARKIND1  ,ONLY : JPIM    
+(    4) 
+(    5) IMPLICIT NONE
+(    6) 
+(    7) SAVE
+(    8) 
+(    9) !     ------------------------------------------------------------
+(   10) 
+(   11) !*    Pointers for instantaneous fluxes diagnostics (XFU).
+(   12) 
+(   13) 
+(   14) TYPE TXFUPTR
+(   15) INTEGER(KIND=JPIM) :: MXCAPE        = 0 ! CAPE (convective available potential energy)
+(   16) INTEGER(KIND=JPIM) :: MXCLPH        = 0 ! height of the PBL out of the model
+(   17) INTEGER(KIND=JPIM) :: MXCLWC2        = 0 ! maximum of CLWC
+(   18) INTEGER(KIND=JPIM) :: MXCLWC        = 0 ! maximum of CLWC
+(   19) INTEGER(KIND=JPIM) :: MXCTOP        = 0 ! pressure of top of deep convection
+(   20) INTEGER(KIND=JPIM) :: MXDICQ        = 0 ! contribution of convection to q
+(   21) INTEGER(KIND=JPIM) :: MXDICS        = 0 ! contribution of convection to (cp T)
+(   22) INTEGER(KIND=JPIM) :: MXDITQ        = 0 ! contribution of turbulence to T
+(   23) INTEGER(KIND=JPIM) :: MXDITS        = 0 ! contribution of turbulence to (cp T)
+(   24) INTEGER(KIND=JPIM) :: MXFCHSP        = 0 ! heat flux in soil
+(   25) INTEGER(KIND=JPIM) :: MXFEVL        = 0 ! liquid evaporation
+(   26) INTEGER(KIND=JPIM) :: MXFEVV        = 0 ! evapotranspiration
+(   27) INTEGER(KIND=JPIM) :: MXFLWSP        = 0 ! water flux in soil
+(   28) INTEGER(KIND=JPIM) :: MXFONTE        = 0 ! melt snow
+(   29) INTEGER(KIND=JPIM) :: MXFTR        = 0 ! transpiration
+(   30) INTEGER(KIND=JPIM) :: MXHUN        = 0 ! minimum relative humidity at 2 meters (pbl)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 3
+
+(   31) INTEGER(KIND=JPIM) :: MXHUX        = 0 ! maximum relative humidity at 2 meters (pbl)
+(   32) INTEGER(KIND=JPIM) :: MXMOCON        = 0 ! moisture convergence
+(   33) INTEGER(KIND=JPIM) :: MXMRT        = 0 ! mean radiant temperature at 2 meters
+(   34) INTEGER(KIND=JPIM) :: MXNBBAS        = 0 ! low cloud cover
+(   35) INTEGER(KIND=JPIM) :: MXNBCON        = 0 ! convective cloud cover
+(   36) INTEGER(KIND=JPIM) :: MXNBHAU        = 0 ! high cloud cover
+(   37) INTEGER(KIND=JPIM) :: MXNBMOY        = 0 ! medium cloud cover
+(   38) INTEGER(KIND=JPIM) :: MXNEB        = 0 ! cloud cover
+(   39) INTEGER(KIND=JPIM) :: MXNEBT        = 0 ! total cloudiness
+(   40) INTEGER(KIND=JPIM) :: MXNUCLS        = 0 ! U-component of neutral wind at 10 meters (pbl)
+(   41) INTEGER(KIND=JPIM) :: MXNVCLS        = 0 ! V-component of neutral wind at 10 meters (pbl)
+(   42) INTEGER(KIND=JPIM) :: MXPLCG        = 0 ! convective graupel fall
+(   43) INTEGER(KIND=JPIM) :: MXPLCH        = 0 ! convective hail fall
+(   44) INTEGER(KIND=JPIM) :: MXPLCL        = 0 ! convective precipitation
+(   45) INTEGER(KIND=JPIM) :: MXPLCN        = 0 ! convective snow fall
+(   46) INTEGER(KIND=JPIM) :: MXPLSG        = 0 ! large scale graupel fall (stratiform)
+(   47) INTEGER(KIND=JPIM) :: MXPLSH        = 0 ! large scale hail fall (stratiform)
+(   48) INTEGER(KIND=JPIM) :: MXPLSL        = 0 ! large scale precipitation (stratiform)
+(   49) INTEGER(KIND=JPIM) :: MXPLSN        = 0 ! large scale snow fall (stratiform)
+(   50) INTEGER(KIND=JPIM) :: MXPTYPE2        = 0 ! frequent precipitations type
+(   51) INTEGER(KIND=JPIM) :: MXPTYPE        = 0 ! frequent precipitations type
+(   52) INTEGER(KIND=JPIM) :: MXPTYPESEV2        = 0 ! severe precipitations type
+(   53) INTEGER(KIND=JPIM) :: MXPTYPESEV        = 0 ! severe precipitations type
+(   54) INTEGER(KIND=JPIM) :: MXQCLS        = 0 ! specific humidity at 2 meters (pbl)
+(   55) INTEGER(KIND=JPIM) :: MXQICE        = 0 ! ice water
+(   56) INTEGER(KIND=JPIM) :: MXQLI        = 0 ! liquid water
+(   57) INTEGER(KIND=JPIM) :: MXRHCLS        = 0 ! relative humidity at 2 meters (pbl)
+(   58) INTEGER(KIND=JPIM) :: MXRSO        = 0 ! solar radiation
+(   59) INTEGER(KIND=JPIM) :: MXRTH        = 0 ! surface radiation
+(   60) INTEGER(KIND=JPIM) :: MXRUISL        = 0 ! interception soil layer runoff
+(   61) INTEGER(KIND=JPIM) :: MXRUISP        = 0 ! deep soil runoff
+(   62) INTEGER(KIND=JPIM) :: MXRUISS        = 0 ! surface soil runoff
+(   63) INTEGER(KIND=JPIM) :: MXSIC        = 0 ! 
+(   64) INTEGER(KIND=JPIM) :: MXTCLS        = 0 ! temperature at 2 meters (pbl)
+(   65) INTEGER(KIND=JPIM) :: MXTHW        = 0 ! theta prime_w surface
+(   66) INTEGER(KIND=JPIM) :: MXTN        = 0 ! minimum temperature at 2 meters
+(   67) INTEGER(KIND=JPIM) :: MXTPWCLS        = 0 ! wet bulb temperature at 2 meters (pbl)
+(   68) INTEGER(KIND=JPIM) :: MXTRCU        = 0 ! contribution of convection to U
+(   69) INTEGER(KIND=JPIM) :: MXTRCV        = 0 ! contribution of convection to V
+(   70) INTEGER(KIND=JPIM) :: MXTRDU        = 0 ! U-wind gravity wave stress
+(   71) INTEGER(KIND=JPIM) :: MXTRDV        = 0 ! V-wind gravity wave stress
+(   72) INTEGER(KIND=JPIM) :: MXTRTU        = 0 ! contribution of turbulence to U
+(   73) INTEGER(KIND=JPIM) :: MXTRTV        = 0 ! contribution of turbulence to V
+(   74) INTEGER(KIND=JPIM) :: MXTX        = 0 ! maximum temperature at 2 meters
+(   75) INTEGER(KIND=JPIM) :: MXUCLS        = 0 ! U-component of wind at 10 meters (pbl)
+(   76) INTEGER(KIND=JPIM) :: MXUGST2        = 0 ! U-momentum of gusts2
+(   77) INTEGER(KIND=JPIM) :: MXUGST        = 0 ! U-momentum of gusts out of the model
+(   78) INTEGER(KIND=JPIM) :: MXVCLS        = 0 ! V-component of wind at 10 meters (pbl)
+(   79) INTEGER(KIND=JPIM) :: MXVEIN        = 0 ! ventilation index in PBL
+(   80) INTEGER(KIND=JPIM) :: MXVGST2        = 0 ! V-momentum of gusts2
+(   81) INTEGER(KIND=JPIM) :: MXVGST        = 0 ! V-momentum of gusts out of the model
+(   82) INTEGER(KIND=JPIM) :: MXVISICLD2        = 0 ! visibility due to water and/or ice cloud
+(   83) INTEGER(KIND=JPIM) :: MXVISICLD        = 0 ! visibility due to water and/or ice cloud
+(   84) INTEGER(KIND=JPIM) :: MXVISIHYD2        = 0 ! visibility due to precipitations
+(   85) INTEGER(KIND=JPIM) :: MXVISIHYD        = 0 ! visibility due to precipitations
+(   86) INTEGER(KIND=JPIM) :: MXXDIAGH        = 0 ! hail diagnostic
+(   87) END TYPE TXFUPTR
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 4
+
+(   89) END MODULE PTRXFU_TYPE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 5
+
+(    1) # 1 "ptrxfu_type.F90"
+(    1) MODULE PTRXFU_TYPE
+(    2) # 3 "ptrxfu_type.F90"
+(    3) USE PARKIND1  ,ONLY : JPIM    
+(    4) # 5 "ptrxfu_type.F90"
+(    5) IMPLICIT NONE
+(    6) # 7 "ptrxfu_type.F90"
+(    7) SAVE
+(    8) # 9 "ptrxfu_type.F90"
+(    9) !     ------------------------------------------------------------
+(   10) # 11 "ptrxfu_type.F90"
+(   11) !*    Pointers for instantaneous fluxes diagnostics (XFU).
+(   12) # 14 "ptrxfu_type.F90"
+(   14) TYPE TXFUPTR
+(   15) INTEGER(KIND=JPIM) :: MXCAPE        = 0 ! CAPE (convective available potential energy)
+(   16) INTEGER(KIND=JPIM) :: MXCLPH        = 0 ! height of the PBL out of the model
+(   17) INTEGER(KIND=JPIM) :: MXCLWC2        = 0 ! maximum of CLWC
+(   18) INTEGER(KIND=JPIM) :: MXCLWC        = 0 ! maximum of CLWC
+(   19) INTEGER(KIND=JPIM) :: MXCTOP        = 0 ! pressure of top of deep convection
+(   20) INTEGER(KIND=JPIM) :: MXDICQ        = 0 ! contribution of convection to q
+(   21) INTEGER(KIND=JPIM) :: MXDICS        = 0 ! contribution of convection to (cp T)
+(   22) INTEGER(KIND=JPIM) :: MXDITQ        = 0 ! contribution of turbulence to T
+(   23) INTEGER(KIND=JPIM) :: MXDITS        = 0 ! contribution of turbulence to (cp T)
+(   24) INTEGER(KIND=JPIM) :: MXFCHSP        = 0 ! heat flux in soil
+(   25) INTEGER(KIND=JPIM) :: MXFEVL        = 0 ! liquid evaporation
+(   26) INTEGER(KIND=JPIM) :: MXFEVV        = 0 ! evapotranspiration
+(   27) INTEGER(KIND=JPIM) :: MXFLWSP        = 0 ! water flux in soil
+(   28) INTEGER(KIND=JPIM) :: MXFONTE        = 0 ! melt snow
+(   29) INTEGER(KIND=JPIM) :: MXFTR        = 0 ! transpiration
+(   30) INTEGER(KIND=JPIM) :: MXHUN        = 0 ! minimum relative humidity at 2 meters (pbl)
+(   31) INTEGER(KIND=JPIM) :: MXHUX        = 0 ! maximum relative humidity at 2 meters (pbl)
+(   32) INTEGER(KIND=JPIM) :: MXMOCON        = 0 ! moisture convergence
+(   33) INTEGER(KIND=JPIM) :: MXMRT        = 0 ! mean radiant temperature at 2 meters
+(   34) INTEGER(KIND=JPIM) :: MXNBBAS        = 0 ! low cloud cover
+(   35) INTEGER(KIND=JPIM) :: MXNBCON        = 0 ! convective cloud cover
+(   36) INTEGER(KIND=JPIM) :: MXNBHAU        = 0 ! high cloud cover
+(   37) INTEGER(KIND=JPIM) :: MXNBMOY        = 0 ! medium cloud cover
+(   38) INTEGER(KIND=JPIM) :: MXNEB        = 0 ! cloud cover
+(   39) INTEGER(KIND=JPIM) :: MXNEBT        = 0 ! total cloudiness
+(   40) INTEGER(KIND=JPIM) :: MXNUCLS        = 0 ! U-component of neutral wind at 10 meters (pbl)
+(   41) INTEGER(KIND=JPIM) :: MXNVCLS        = 0 ! V-component of neutral wind at 10 meters (pbl)
+(   42) INTEGER(KIND=JPIM) :: MXPLCG        = 0 ! convective graupel fall
+(   43) INTEGER(KIND=JPIM) :: MXPLCH        = 0 ! convective hail fall
+(   44) INTEGER(KIND=JPIM) :: MXPLCL        = 0 ! convective precipitation
+(   45) INTEGER(KIND=JPIM) :: MXPLCN        = 0 ! convective snow fall
+(   46) INTEGER(KIND=JPIM) :: MXPLSG        = 0 ! large scale graupel fall (stratiform)
+(   47) INTEGER(KIND=JPIM) :: MXPLSH        = 0 ! large scale hail fall (stratiform)
+(   48) INTEGER(KIND=JPIM) :: MXPLSL        = 0 ! large scale precipitation (stratiform)
+(   49) INTEGER(KIND=JPIM) :: MXPLSN        = 0 ! large scale snow fall (stratiform)
+(   50) INTEGER(KIND=JPIM) :: MXPTYPE2        = 0 ! frequent precipitations type
+(   51) INTEGER(KIND=JPIM) :: MXPTYPE        = 0 ! frequent precipitations type
+(   52) INTEGER(KIND=JPIM) :: MXPTYPESEV2        = 0 ! severe precipitations type
+(   53) INTEGER(KIND=JPIM) :: MXPTYPESEV        = 0 ! severe precipitations type
+(   54) INTEGER(KIND=JPIM) :: MXQCLS        = 0 ! specific humidity at 2 meters (pbl)
+(   55) INTEGER(KIND=JPIM) :: MXQICE        = 0 ! ice water
+(   56) INTEGER(KIND=JPIM) :: MXQLI        = 0 ! liquid water
+(   57) INTEGER(KIND=JPIM) :: MXRHCLS        = 0 ! relative humidity at 2 meters (pbl)
+(   58) INTEGER(KIND=JPIM) :: MXRSO        = 0 ! solar radiation
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:59      page 6
+
+(   59) INTEGER(KIND=JPIM) :: MXRTH        = 0 ! surface radiation
+(   60) INTEGER(KIND=JPIM) :: MXRUISL        = 0 ! interception soil layer runoff
+(   61) INTEGER(KIND=JPIM) :: MXRUISP        = 0 ! deep soil runoff
+(   62) INTEGER(KIND=JPIM) :: MXRUISS        = 0 ! surface soil runoff
+(   63) INTEGER(KIND=JPIM) :: MXSIC        = 0 ! 
+(   64) INTEGER(KIND=JPIM) :: MXTCLS        = 0 ! temperature at 2 meters (pbl)
+(   65) INTEGER(KIND=JPIM) :: MXTHW        = 0 ! theta prime_w surface
+(   66) INTEGER(KIND=JPIM) :: MXTN        = 0 ! minimum temperature at 2 meters
+(   67) INTEGER(KIND=JPIM) :: MXTPWCLS        = 0 ! wet bulb temperature at 2 meters (pbl)
+(   68) INTEGER(KIND=JPIM) :: MXTRCU        = 0 ! contribution of convection to U
+(   69) INTEGER(KIND=JPIM) :: MXTRCV        = 0 ! contribution of convection to V
+(   70) INTEGER(KIND=JPIM) :: MXTRDU        = 0 ! U-wind gravity wave stress
+(   71) INTEGER(KIND=JPIM) :: MXTRDV        = 0 ! V-wind gravity wave stress
+(   72) INTEGER(KIND=JPIM) :: MXTRTU        = 0 ! contribution of turbulence to U
+(   73) INTEGER(KIND=JPIM) :: MXTRTV        = 0 ! contribution of turbulence to V
+(   74) INTEGER(KIND=JPIM) :: MXTX        = 0 ! maximum temperature at 2 meters
+(   75) INTEGER(KIND=JPIM) :: MXUCLS        = 0 ! U-component of wind at 10 meters (pbl)
+(   76) INTEGER(KIND=JPIM) :: MXUGST2        = 0 ! U-momentum of gusts2
+(   77) INTEGER(KIND=JPIM) :: MXUGST        = 0 ! U-momentum of gusts out of the model
+(   78) INTEGER(KIND=JPIM) :: MXVCLS        = 0 ! V-component of wind at 10 meters (pbl)
+(   79) INTEGER(KIND=JPIM) :: MXVEIN        = 0 ! ventilation index in PBL
+(   80) INTEGER(KIND=JPIM) :: MXVGST2        = 0 ! V-momentum of gusts2
+(   81) INTEGER(KIND=JPIM) :: MXVGST        = 0 ! V-momentum of gusts out of the model
+(   82) INTEGER(KIND=JPIM) :: MXVISICLD2        = 0 ! visibility due to water and/or ice cloud
+(   83) INTEGER(KIND=JPIM) :: MXVISICLD        = 0 ! visibility due to water and/or ice cloud
+(   84) INTEGER(KIND=JPIM) :: MXVISIHYD2        = 0 ! visibility due to precipitations
+(   85) INTEGER(KIND=JPIM) :: MXVISIHYD        = 0 ! visibility due to precipitations
+(   86) INTEGER(KIND=JPIM) :: MXXDIAGH        = 0 ! hail diagnostic
+(   87) END TYPE TXFUPTR
+(   88) # 89 "ptrxfu_type.F90"
+(   89) END MODULE PTRXFU_TYPE

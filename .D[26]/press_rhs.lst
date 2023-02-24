@@ -1,0 +1,390 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: press_rhs.F90
+
+(    1) 
+(    2) subroutine press_rhs
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) !       right-hand-side of the Poisson equation for pressure
+(   15) 
+(   16) use vars
+(   17) 
+(   18) implicit none
+(   19)          
+(   20) 
+(   21) real(8) dta,rdx,rdy,rdz,btat,ctat,rup,rdn
+(   22) integer i,j,k,ic,jc,kc
+(   23) 
+(   24) if(dowallx.and.mod(rank,nsubdomains_x).eq.0) then
+(   25) 
+(   26)     do k=1,nzm
+(   27)      do j=1,ny
+(   28)       dudt(1,j,k,na) = 0.
+(   29)      end do
+(   30)     end do
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 3
+
+(   31) 
+(   32) end if
+(   33) 
+(   34) if(dowally.and.RUN3D.and.rank.lt.nsubdomains_x) then
+(   35) 
+(   36)     do k=1,nzm
+(   37)      do i=1,nx
+(   38)       dvdt(i,1,k,na) = 0.
+(   39)      end do
+(   40)     end do
+(   41) 
+(   42) end if
+(   43) 
+(   44) 
+(   45) if(dompi) then
+(   46)    call task_bound_duvdt()
+(   47) else
+(   48)    call bound_duvdt()   
+(   49) endif
+(   50) 
+(   51) dta=1./dt3(na)/at
+(   52) rdx=1./dx
+(   53) rdy=1./dy
+(   54) btat=bt/at
+(   55) ctat=ct/at
+(   56) 
+(   57) if(RUN3D) then
+(   58) 
+(   59) do k=1,nzm
+(   60)  kc=k+1 
+(   61)  rdz=1./(adz(k)*dz)
+(   62)  rup = rhow(kc)/rho(k)*rdz
+(   63)  rdn = rhow(k)/rho(k)*rdz
+(   64)  do j=1,ny
+(   65)   jc=j+1 
+(   66)   do i=1,nx
+(   67)    ic=i+1
+(   68)    p(i,j,k)=(rdx*(u(ic,j,k)-u(i,j,k))+ &
+(   69)              rdy*(v(i,jc,k)-v(i,j,k))+ &
+(   70)              (w(i,j,kc)*rup-w(i,j,k)*rdn) )*dta + &
+(   71)             (rdx*(dudt(ic,j,k,na)-dudt(i,j,k,na))+ &
+(   72)              rdy*(dvdt(i,jc,k,na)-dvdt(i,j,k,na))+ &
+(   73)              (dwdt(i,j,kc,na)*rup-dwdt(i,j,k,na)*rdn) ) + &
+(   74)        btat*(rdx*(dudt(ic,j,k,nb)-dudt(i,j,k,nb))+ &
+(   75)              rdy*(dvdt(i,jc,k,nb)-dvdt(i,j,k,nb))+ &
+(   76)              (dwdt(i,j,kc,nb)*rup-dwdt(i,j,k,nb)*rdn) ) + &
+(   77)        ctat*(rdx*(dudt(ic,j,k,nc)-dudt(i,j,k,nc))+ &
+(   78)              rdy*(dvdt(i,jc,k,nc)-dvdt(i,j,k,nc))+ &
+(   79)              (dwdt(i,j,kc,nc)*rup-dwdt(i,j,k,nc)*rdn) )
+(   80)    p(i,j,k)=p(i,j,k)*rho(k)
+(   81)   end do
+(   82)  end do
+(   83) end do
+(   84) 
+(   85) 
+(   86) else
+(   87) 
+(   88) j=1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 4
+
+(   89) 
+(   90) do k=1,nzm
+(   91)  kc=k+1 
+(   92)  rdz=1./(adz(k)*dz)
+(   93)  rup = rhow(kc)/rho(k)*rdz
+(   94)  rdn = rhow(k)/rho(k)*rdz
+(   95)  do i=1,nx
+(   96)   ic=i+1
+(   97)   p(i,j,k)=(rdx*(u(ic,j,k)-u(i,j,k))+ &
+(   98)                 (w(i,j,kc)*rup-w(i,j,k)*rdn) )*dta + &
+(   99)                 (rdx*(dudt(ic,j,k,na)-dudt(i,j,k,na))+ &
+(  100)                 (dwdt(i,j,kc,na)*rup-dwdt(i,j,k,na)*rdn) ) + &
+(  101)            btat*(rdx*(dudt(ic,j,k,nb)-dudt(i,j,k,nb))+ &
+(  102)                  (dwdt(i,j,kc,nb)*rup-dwdt(i,j,k,nb)*rdn) ) + &
+(  103)            ctat*(rdx*(dudt(ic,j,k,nc)-dudt(i,j,k,nc))+ &
+(  104)                  (dwdt(i,j,kc,nc)*rup-dwdt(i,j,k,nc)*rdn) )
+(  105)   p(i,j,k)=p(i,j,k)*rho(k)
+(  106)  end do
+(  107) end do
+(  108) 
+(  109) 
+(  110) endif
+(  111) 
+(  112) call task_barrier()
+(  113) 
+(  114) end subroutine press_rhs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 5
+
+(    1) # 1 "press_rhs.F90"
+(    1) # 2 "press_rhs.F90"
+(    2) subroutine press_rhs
+(    3) # 4 "press_rhs.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "press_rhs.F90"
+(   14) !       right-hand-side of the Poisson equation for pressure
+(   15) # 16 "press_rhs.F90"
+(   16) use vars
+(   17) # 18 "press_rhs.F90"
+(   18) implicit none
+(   19)          
+(   20) # 21 "press_rhs.F90"
+(   21) real(8) dta,rdx,rdy,rdz,btat,ctat,rup,rdn
+(   22) integer i,j,k,ic,jc,kc
+(   23) # 24 "press_rhs.F90"
+(   24) if(dowallx.and.mod(rank,nsubdomains_x).eq.0) then
+(   25) # 26 "press_rhs.F90"
+(   26)     do k=1,nzm
+(   27)      do j=1,ny
+(   28)       dudt(1,j,k,na) = 0.
+(   29)      end do
+(   30)     end do
+(   31) # 32 "press_rhs.F90"
+(   32) end if
+(   33) # 34 "press_rhs.F90"
+(   34) if(dowally.and.RUN3D.and.rank.lt.nsubdomains_x) then
+(   35) # 36 "press_rhs.F90"
+(   36)     do k=1,nzm
+(   37)      do i=1,nx
+(   38)       dvdt(i,1,k,na) = 0.
+(   39)      end do
+(   40)     end do
+(   41) # 42 "press_rhs.F90"
+(   42) end if
+(   43) # 45 "press_rhs.F90"
+(   45) if(dompi) then
+(   46)    call task_bound_duvdt()
+(   47) else
+(   48)    call bound_duvdt()   
+(   49) endif
+(   50) # 51 "press_rhs.F90"
+(   51) dta=1./dt3(na)/at
+(   52) rdx=1./dx
+(   53) rdy=1./dy
+(   54) btat=bt/at
+(   55) ctat=ct/at
+(   56) # 57 "press_rhs.F90"
+(   57) if(RUN3D) then
+(   58) # 59 "press_rhs.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:46      page 6
+
+(   59) do k=1,nzm
+(   60)  kc=k+1 
+(   61)  rdz=1./(adz(k)*dz)
+(   62)  rup = rhow(kc)/rho(k)*rdz
+(   63)  rdn = rhow(k)/rho(k)*rdz
+(   64)  do j=1,ny
+(   65)   jc=j+1 
+(   66)   do i=1,nx
+(   67)    ic=i+1
+(   68)    p(i,j,k)=(rdx*(u(ic,j,k)-u(i,j,k))+ &
+(   69)              rdy*(v(i,jc,k)-v(i,j,k))+ &
+(   70)              (w(i,j,kc)*rup-w(i,j,k)*rdn) )*dta + &
+(   71)             (rdx*(dudt(ic,j,k,na)-dudt(i,j,k,na))+ &
+(   72)              rdy*(dvdt(i,jc,k,na)-dvdt(i,j,k,na))+ &
+(   73)              (dwdt(i,j,kc,na)*rup-dwdt(i,j,k,na)*rdn) ) + &
+(   74)        btat*(rdx*(dudt(ic,j,k,nb)-dudt(i,j,k,nb))+ &
+(   75)              rdy*(dvdt(i,jc,k,nb)-dvdt(i,j,k,nb))+ &
+(   76)              (dwdt(i,j,kc,nb)*rup-dwdt(i,j,k,nb)*rdn) ) + &
+(   77)        ctat*(rdx*(dudt(ic,j,k,nc)-dudt(i,j,k,nc))+ &
+(   78)              rdy*(dvdt(i,jc,k,nc)-dvdt(i,j,k,nc))+ &
+(   79)              (dwdt(i,j,kc,nc)*rup-dwdt(i,j,k,nc)*rdn) )
+(   80)    p(i,j,k)=p(i,j,k)*rho(k)
+(   81)   end do
+(   82)  end do
+(   83) end do
+(   84) # 86 "press_rhs.F90"
+(   86) else
+(   87) # 88 "press_rhs.F90"
+(   88) j=1
+(   89) # 90 "press_rhs.F90"
+(   90) do k=1,nzm
+(   91)  kc=k+1 
+(   92)  rdz=1./(adz(k)*dz)
+(   93)  rup = rhow(kc)/rho(k)*rdz
+(   94)  rdn = rhow(k)/rho(k)*rdz
+(   95)  do i=1,nx
+(   96)   ic=i+1
+(   97)   p(i,j,k)=(rdx*(u(ic,j,k)-u(i,j,k))+ &
+(   98)                 (w(i,j,kc)*rup-w(i,j,k)*rdn) )*dta + &
+(   99)                 (rdx*(dudt(ic,j,k,na)-dudt(i,j,k,na))+ &
+(  100)                 (dwdt(i,j,kc,na)*rup-dwdt(i,j,k,na)*rdn) ) + &
+(  101)            btat*(rdx*(dudt(ic,j,k,nb)-dudt(i,j,k,nb))+ &
+(  102)                  (dwdt(i,j,kc,nb)*rup-dwdt(i,j,k,nb)*rdn) ) + &
+(  103)            ctat*(rdx*(dudt(ic,j,k,nc)-dudt(i,j,k,nc))+ &
+(  104)                  (dwdt(i,j,kc,nc)*rup-dwdt(i,j,k,nc)*rdn) )
+(  105)   p(i,j,k)=p(i,j,k)*rho(k)
+(  106)  end do
+(  107) end do
+(  108) # 110 "press_rhs.F90"
+(  110) endif
+(  111) # 112 "press_rhs.F90"
+(  112) call task_barrier()
+(  113) # 114 "press_rhs.F90"
+(  114) end subroutine press_rhs

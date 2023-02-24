@@ -1,0 +1,409 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: cma_prt_stat.F90
+
+(    1) SUBROUTINE cma_prt_stat( &
+(    2)  & ftn_unit, cma_unit, &
+(    3)  & binno, numbins, &
+(    4)  & fileno, &
+(    5)  & str_open_time,  str_close_time, &
+(    6)  & logical_name,   true_name, &
+(    7)  & pipecmd,        cmd, &
+(    8)  & read_only, packmethod, blocksize, &
+(    9)  & numddrs,   lenddrs, &
+(   10)  & numobs,    maxreplen,  cmalen, &
+(   11)  & filesize,  filepos, blksize,  &
+(   12)  & bytes,     num_trans, &
+(   13)  & readbuf_len, readbuf_is_alloc, &
+(   14)  & writebuf_len, writebuf_is_alloc, &
+(   15)  & prealloc, extent,   &
+(   16)  & mrfs_flag, &
+(   17)  & walltime,  xfer_speed, &
+(   18)  & usercpu,   syscpu) 
+(   19) 
+(   20) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(   21) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   22) 
+(   23) #ifdef NAG
+(   24) use f90_unix_io, only: flush
+(   25) #endif
+(   26) 
+(   27) implicit none
+(   28) INTEGER(KIND=JPIM), intent(in)       :: ftn_unit, cma_unit, binno, fileno
+(   29) CHARACTER (LEN = *), intent(in) :: str_open_time,  str_close_time 
+(   30) CHARACTER (LEN = *), intent(in) :: logical_name,   true_name
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 3
+
+(   31) CHARACTER (LEN = *), intent(in) :: pipecmd,        cmd
+(   32) INTEGER(KIND=JPIM), intent(in)       :: read_only, numbins, packmethod
+(   33) INTEGER(KIND=JPIM), intent(in)       :: blocksize
+(   34) INTEGER(KIND=JPIM), intent(in)       :: numddrs,   lenddrs
+(   35) INTEGER(KIND=JPIM), intent(in)       :: numobs,    maxreplen,  cmalen
+(   36) INTEGER(KIND=JPIM), intent(in)       :: filesize,  filepos, blksize
+(   37) INTEGER(KIND=JPIM), intent(in)       :: bytes,     num_trans
+(   38) INTEGER(KIND=JPIM), intent(in)       :: readbuf_len,  writebuf_len
+(   39) INTEGER(KIND=JPIM), intent(in)       :: readbuf_is_alloc, writebuf_is_alloc
+(   40) INTEGER(KIND=JPIM), intent(in)       :: prealloc, extent, mrfs_flag
+(   41) REAL(KIND=JPRD), intent(in)          :: walltime,  xfer_speed
+(   42) REAL(KIND=JPRD), intent(in)          :: usercpu,   syscpu
+(   43) ! === END OF INTERFACE BLOCK ===
+(   44) 
+(   45) !-----------------------------------------------------------------------
+(   46) !234567890c234567890c234567890c234567890c234567890c234567890c234567890--
+(   47) 
+(   48) INTEGER(KIND=JPIM) :: io
+(   49) REAL(KIND=JPRD) :: saving
+(   50) character(len=20), save :: alloc_msg(0:1)
+(   51) REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   52) data alloc_msg/'  (NOT allocated)', '  (allocated)'/
+(   53) 
+(   54) IF (LHOOK) CALL DR_HOOK('CMA_PRT_STAT',0,ZHOOK_HANDLE)
+(   55) io = ftn_unit
+(   56) 
+(   57) if (io >= 0) then
+(   58)   if (binno == 0) then
+(   59)     write(io,*) "*** STATISTICS for CMA-file '"// &
+(   60)      & logical_name//"'" 
+(   61)   else
+(   62)     write(io,*)
+(   63)   endif
+(   64) 
+(   65)   write(io,*) "Physical filename     : '"//true_name//"'"
+(   66)   if (read_only == 1) then
+(   67)     write(io,*) "Open mode             :  READ-ONLY"
+(   68)   else
+(   69)     write(io,*) "Open mode             :  WRITE-ONLY"
+(   70)   endif
+(   71)   write(io,*) "CMA-index no.         : ",cma_unit
+(   72)   write(io,*) "  --- bin no.         : ",binno
+(   73)   write(io,*) "No. of bins           : ",numbins
+(   74)   write(io,*) "UNIX-file no.         : ",fileno
+(   75)   write(io,*) "Disk blocksize        : ",blksize
+(   76)   if (mrfs_flag == 1) &
+(   77)    & write(io,*) "Assigned to the memory resident file system" 
+(   78)   write(io,*) "Opened at "//str_open_time
+(   79)   write(io,*) "Closed at "//str_close_time
+(   80)          
+(   81)   if (read_only == 1 .and. binno == 0) then
+(   82)     write(io,*) "No. of DDRs           : ",numddrs
+(   83)     write(io,*) "Total DDR length      : ",lenddrs
+(   84)     write(io,*) "No. of reports        : ",numobs
+(   85)     write(io,*) "Longest report (words): ",maxreplen
+(   86)     write(io,*) "Report data length    : ",cmalen
+(   87)   endif
+(   88)          
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 4
+
+(   89)   write(io,*) "Pipe cmd (unfiltered) : "//pipecmd
+(   90)   write(io,*) "Pipe cmd (filtered)   : "//cmd
+(   91)   write(io,*) "Packing method        : ",packmethod
+(   92)   write(io,*) "Blocksize             : ",blocksize
+(   93)   write(io,*) "File size (in bytes)  : ",filesize
+(   94)   write(io,*) "File position         : ",filepos
+(   95)   if ( filesize >  0 .and.  &
+(   96)      & filepos  >  0 .and.  &
+(   97)      & filepos  >= filesize ) then 
+(   98)     saving = 100.0D0*(1.0D0 - dble(filesize)/dble(filepos))
+(   99)     write(io,1) "Space saving          : ",saving
+(  100)     1          format(1x,a,f12.2,'%')
+(  101)   endif
+(  102)   write(io,*) "Bytes processed       : ",bytes
+(  103)   write(io,*) "No. of transactions   : ",num_trans
+(  104)   write(io,*) "I/O-buffer size: read : ",readbuf_len, &
+(  105)    & alloc_msg(readbuf_is_alloc) 
+(  106)   write(io,*) "            --- write : ",writebuf_len, &
+(  107)    & alloc_msg(writebuf_is_alloc) 
+(  108)   write(io,*) "Preallocation & extent: ",prealloc,extent
+(  109)   write(io,1000) "I/O-times: Wall clock : ", &
+(  110)    & walltime," sec", &
+(  111)    & xfer_speed," MB/s" 
+(  112)   write(io,1000) "        --- CPU-times : ", &
+(  113)    & usercpu," sec (user)", &
+(  114)    & syscpu," sec (sys)" 
+(  115)   1000    format(1x,a,f10.3,a,f10.3,a)
+(  116) 
+(  117)   if (binno == numbins-1) then
+(  118)     write(io,*) "*** END OF STATISTICS ***"
+(  119) !--   Make sure it comes to the logfile (... before an abort ... ;-)
+(  120)     call flush(io)
+(  121)   endif
+(  122) 
+(  123) endif
+(  124) IF (LHOOK) CALL DR_HOOK('CMA_PRT_STAT',1,ZHOOK_HANDLE)
+(  125) 
+(  126) END SUBROUTINE cma_prt_stat
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 5
+
+(    1) # 1 "cma_prt_stat.F90"
+(    1) SUBROUTINE cma_prt_stat( &
+(    2)  & ftn_unit, cma_unit, &
+(    3)  & binno, numbins, &
+(    4)  & fileno, &
+(    5)  & str_open_time,  str_close_time, &
+(    6)  & logical_name,   true_name, &
+(    7)  & pipecmd,        cmd, &
+(    8)  & read_only, packmethod, blocksize, &
+(    9)  & numddrs,   lenddrs, &
+(   10)  & numobs,    maxreplen,  cmalen, &
+(   11)  & filesize,  filepos, blksize,  &
+(   12)  & bytes,     num_trans, &
+(   13)  & readbuf_len, readbuf_is_alloc, &
+(   14)  & writebuf_len, writebuf_is_alloc, &
+(   15)  & prealloc, extent,   &
+(   16)  & mrfs_flag, &
+(   17)  & walltime,  xfer_speed, &
+(   18)  & usercpu,   syscpu) 
+(   19) # 20 "cma_prt_stat.F90"
+(   20) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(   21) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   22) # 27 "cma_prt_stat.F90"
+(   27) implicit none
+(   28) INTEGER(KIND=JPIM), intent(in)       :: ftn_unit, cma_unit, binno, fileno
+(   29) CHARACTER (LEN = *), intent(in) :: str_open_time,  str_close_time 
+(   30) CHARACTER (LEN = *), intent(in) :: logical_name,   true_name
+(   31) CHARACTER (LEN = *), intent(in) :: pipecmd,        cmd
+(   32) INTEGER(KIND=JPIM), intent(in)       :: read_only, numbins, packmethod
+(   33) INTEGER(KIND=JPIM), intent(in)       :: blocksize
+(   34) INTEGER(KIND=JPIM), intent(in)       :: numddrs,   lenddrs
+(   35) INTEGER(KIND=JPIM), intent(in)       :: numobs,    maxreplen,  cmalen
+(   36) INTEGER(KIND=JPIM), intent(in)       :: filesize,  filepos, blksize
+(   37) INTEGER(KIND=JPIM), intent(in)       :: bytes,     num_trans
+(   38) INTEGER(KIND=JPIM), intent(in)       :: readbuf_len,  writebuf_len
+(   39) INTEGER(KIND=JPIM), intent(in)       :: readbuf_is_alloc, writebuf_is_alloc
+(   40) INTEGER(KIND=JPIM), intent(in)       :: prealloc, extent, mrfs_flag
+(   41) REAL(KIND=JPRD), intent(in)          :: walltime,  xfer_speed
+(   42) REAL(KIND=JPRD), intent(in)          :: usercpu,   syscpu
+(   43) ! === END OF INTERFACE BLOCK ===
+(   44) # 45 "cma_prt_stat.F90"
+(   45) !-----------------------------------------------------------------------
+(   46) !234567890c234567890c234567890c234567890c234567890c234567890c234567890--
+(   47) # 48 "cma_prt_stat.F90"
+(   48) INTEGER(KIND=JPIM) :: io
+(   49) REAL(KIND=JPRD) :: saving
+(   50) character(len=20), save :: alloc_msg(0:1)
+(   51) REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   52) data alloc_msg/'  (NOT allocated)', '  (allocated)'/
+(   53) # 54 "cma_prt_stat.F90"
+(   54) IF (LHOOK) CALL DR_HOOK('CMA_PRT_STAT',0,ZHOOK_HANDLE)
+(   55) io = ftn_unit
+(   56) # 57 "cma_prt_stat.F90"
+(   57) if (io >= 0) then
+(   58)   if (binno == 0) then
+(   59)     write(io,*) "*** STATISTICS for CMA-file '"// &
+(   60)      & logical_name//"'" 
+(   61)   else
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 6
+
+(   62)     write(io,*)
+(   63)   endif
+(   64) # 65 "cma_prt_stat.F90"
+(   65)   write(io,*) "Physical filename     : '"//true_name//"'"
+(   66)   if (read_only == 1) then
+(   67)     write(io,*) "Open mode             :  READ-ONLY"
+(   68)   else
+(   69)     write(io,*) "Open mode             :  WRITE-ONLY"
+(   70)   endif
+(   71)   write(io,*) "CMA-index no.         : ",cma_unit
+(   72)   write(io,*) "  --- bin no.         : ",binno
+(   73)   write(io,*) "No. of bins           : ",numbins
+(   74)   write(io,*) "UNIX-file no.         : ",fileno
+(   75)   write(io,*) "Disk blocksize        : ",blksize
+(   76)   if (mrfs_flag == 1) &
+(   77)    & write(io,*) "Assigned to the memory resident file system" 
+(   78)   write(io,*) "Opened at "//str_open_time
+(   79)   write(io,*) "Closed at "//str_close_time
+(   80)          
+(   81)   if (read_only == 1 .and. binno == 0) then
+(   82)     write(io,*) "No. of DDRs           : ",numddrs
+(   83)     write(io,*) "Total DDR length      : ",lenddrs
+(   84)     write(io,*) "No. of reports        : ",numobs
+(   85)     write(io,*) "Longest report (words): ",maxreplen
+(   86)     write(io,*) "Report data length    : ",cmalen
+(   87)   endif
+(   88)          
+(   89)   write(io,*) "Pipe cmd (unfiltered) : "//pipecmd
+(   90)   write(io,*) "Pipe cmd (filtered)   : "//cmd
+(   91)   write(io,*) "Packing method        : ",packmethod
+(   92)   write(io,*) "Blocksize             : ",blocksize
+(   93)   write(io,*) "File size (in bytes)  : ",filesize
+(   94)   write(io,*) "File position         : ",filepos
+(   95)   if ( filesize >  0 .and.  &
+(   96)      & filepos  >  0 .and.  &
+(   97)      & filepos  >= filesize ) then 
+(   98)     saving = 100.0D0*(1.0D0 - dble(filesize)/dble(filepos))
+(   99)     write(io,1) "Space saving          : ",saving
+(  100)     1          format(1x,a,f12.2,'%')
+(  101)   endif
+(  102)   write(io,*) "Bytes processed       : ",bytes
+(  103)   write(io,*) "No. of transactions   : ",num_trans
+(  104)   write(io,*) "I/O-buffer size: read : ",readbuf_len, &
+(  105)    & alloc_msg(readbuf_is_alloc) 
+(  106)   write(io,*) "            --- write : ",writebuf_len, &
+(  107)    & alloc_msg(writebuf_is_alloc) 
+(  108)   write(io,*) "Preallocation & extent: ",prealloc,extent
+(  109)   write(io,1000) "I/O-times: Wall clock : ", &
+(  110)    & walltime," sec", &
+(  111)    & xfer_speed," MB/s" 
+(  112)   write(io,1000) "        --- CPU-times : ", &
+(  113)    & usercpu," sec (user)", &
+(  114)    & syscpu," sec (sys)" 
+(  115)   1000    format(1x,a,f10.3,a,f10.3,a)
+(  116) # 117 "cma_prt_stat.F90"
+(  117)   if (binno == numbins-1) then
+(  118)     write(io,*) "*** END OF STATISTICS ***"
+(  119) !--   Make sure it comes to the logfile (... before an abort ... ;-)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:35      page 7
+
+(  120)     call flush(io)
+(  121)   endif
+(  122) # 123 "cma_prt_stat.F90"
+(  123) endif
+(  124) IF (LHOOK) CALL DR_HOOK('CMA_PRT_STAT',1,ZHOOK_HANDLE)
+(  125) # 126 "cma_prt_stat.F90"
+(  126) END SUBROUTINE cma_prt_stat

@@ -1,0 +1,247 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:00      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:00      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_sfx_oasis_send.F90
+
+(    1) !depfile:sfx_oasis_send.F90
+(    2) MODULE MODI_SFX_OASIS_SEND
+(    3) INTERFACE
+(    4) SUBROUTINE SFX_OASIS_SEND(KLUOUT,KI,KDATE,OSEND_LAND,OSEND_LAKE,OSEND_SEA,      &
+(    5)                           PLAND_RUNOFF,PLAND_DRAIN,PLAND_CALVING,               &
+(    6)                           PLAND_SRCFLOOD,                                       &
+(    7)                           PLAKE_EVAP,PLAKE_RAIN,PLAKE_SNOW,PLAKE_WATF,          &
+(    8)                           PSEA_FWSU,PSEA_FWSV,PSEA_HEAT,PSEA_SNET,PSEA_WIND,    &
+(    9)                           PSEA_FWSM,PSEA_EVAP,PSEA_RAIN,PSEA_SNOW,PSEA_WATF,    &
+(   10)                           PSEA_PRES,PSEAICE_HEAT,PSEAICE_SNET,PSEAICE_EVAP                )
+(   11) INTEGER,             INTENT(IN) :: KLUOUT
+(   12) INTEGER,             INTENT(IN) :: KI            ! number of points
+(   13) INTEGER,             INTENT(IN) :: KDATE  ! current coupling time step (s)
+(   14) LOGICAL,             INTENT(IN) :: OSEND_LAND
+(   15) LOGICAL,             INTENT(IN) :: OSEND_LAKE
+(   16) LOGICAL,             INTENT(IN) :: OSEND_SEA
+(   17) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_RUNOFF    ! Cumulated Surface runoff             (kg/m2)
+(   18) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_DRAIN     ! Cumulated Deep drainage              (kg/m2)
+(   19) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_CALVING   ! Cumulated Calving flux               (kg/m2)
+(   20) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_SRCFLOOD  ! Cumulated flood freshwater flux      (kg/m2)
+(   21) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_EVAP  ! Cumulated Evaporation              (kg/m2)
+(   22) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_RAIN  ! Cumulated Rainfall rate            (kg/m2)
+(   23) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_SNOW  ! Cumulated Snowfall rate            (kg/m2)
+(   24) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_WATF  ! Cumulated freshwater flux          (kg/m2)
+(   25) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSU  ! Cumulated zonal wind stress       (Pa.s)
+(   26) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSV  ! Cumulated meridian wind stress    (Pa.s)
+(   27) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_HEAT  ! Cumulated Non solar net heat flux (J/m2)
+(   28) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_SNET  ! Cumulated Solar net heat flux     (J/m2)
+(   29) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_WIND  ! Cumulated 10m wind speed          (m)
+(   30) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSM  ! Cumulated wind stress             (Pa.s)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:00      page 3
+
+(   31) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_EVAP  ! Cumulated Evaporation             (kg/m2)
+(   32) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_RAIN  ! Cumulated Rainfall rate           (kg/m2)
+(   33) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_SNOW  ! Cumulated Snowfall rate           (kg/m2)
+(   34) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_WATF  ! Cumulated freshwater flux         (kg/m2)
+(   35) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_PRES  ! Cumulated Surface pressure (Pa.s)
+(   36) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_HEAT ! Cumulated Sea-ice non solar net heat flux (J/m2)
+(   37) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_SNET ! Cumulated Sea-ice solar net heat flux     (J/m2)
+(   38) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_EVAP ! Cumulated Sea-ice sublimation             (kg/m2)
+(   39) END SUBROUTINE SFX_OASIS_SEND
+(   40) 
+(   41) END INTERFACE
+(   42) END MODULE MODI_SFX_OASIS_SEND
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:00      page 4
+
+(    1) # 1 "modi_sfx_oasis_send.F90"
+(    1) !depfile:sfx_oasis_send.F90
+(    2) MODULE MODI_SFX_OASIS_SEND
+(    3) INTERFACE
+(    4) SUBROUTINE SFX_OASIS_SEND(KLUOUT,KI,KDATE,OSEND_LAND,OSEND_LAKE,OSEND_SEA,      &
+(    5)                           PLAND_RUNOFF,PLAND_DRAIN,PLAND_CALVING,               &
+(    6)                           PLAND_SRCFLOOD,                                       &
+(    7)                           PLAKE_EVAP,PLAKE_RAIN,PLAKE_SNOW,PLAKE_WATF,          &
+(    8)                           PSEA_FWSU,PSEA_FWSV,PSEA_HEAT,PSEA_SNET,PSEA_WIND,    &
+(    9)                           PSEA_FWSM,PSEA_EVAP,PSEA_RAIN,PSEA_SNOW,PSEA_WATF,    &
+(   10)                           PSEA_PRES,PSEAICE_HEAT,PSEAICE_SNET,PSEAICE_EVAP                )
+(   11) INTEGER,             INTENT(IN) :: KLUOUT
+(   12) INTEGER,             INTENT(IN) :: KI            ! number of points
+(   13) INTEGER,             INTENT(IN) :: KDATE  ! current coupling time step (s)
+(   14) LOGICAL,             INTENT(IN) :: OSEND_LAND
+(   15) LOGICAL,             INTENT(IN) :: OSEND_LAKE
+(   16) LOGICAL,             INTENT(IN) :: OSEND_SEA
+(   17) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_RUNOFF    ! Cumulated Surface runoff             (kg/m2)
+(   18) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_DRAIN     ! Cumulated Deep drainage              (kg/m2)
+(   19) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_CALVING   ! Cumulated Calving flux               (kg/m2)
+(   20) REAL, DIMENSION(KI), INTENT(IN) :: PLAND_SRCFLOOD  ! Cumulated flood freshwater flux      (kg/m2)
+(   21) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_EVAP  ! Cumulated Evaporation              (kg/m2)
+(   22) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_RAIN  ! Cumulated Rainfall rate            (kg/m2)
+(   23) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_SNOW  ! Cumulated Snowfall rate            (kg/m2)
+(   24) REAL, DIMENSION(KI), INTENT(IN) :: PLAKE_WATF  ! Cumulated freshwater flux          (kg/m2)
+(   25) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSU  ! Cumulated zonal wind stress       (Pa.s)
+(   26) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSV  ! Cumulated meridian wind stress    (Pa.s)
+(   27) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_HEAT  ! Cumulated Non solar net heat flux (J/m2)
+(   28) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_SNET  ! Cumulated Solar net heat flux     (J/m2)
+(   29) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_WIND  ! Cumulated 10m wind speed          (m)
+(   30) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_FWSM  ! Cumulated wind stress             (Pa.s)
+(   31) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_EVAP  ! Cumulated Evaporation             (kg/m2)
+(   32) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_RAIN  ! Cumulated Rainfall rate           (kg/m2)
+(   33) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_SNOW  ! Cumulated Snowfall rate           (kg/m2)
+(   34) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_WATF  ! Cumulated freshwater flux         (kg/m2)
+(   35) REAL, DIMENSION(KI), INTENT(IN) :: PSEA_PRES  ! Cumulated Surface pressure (Pa.s)
+(   36) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_HEAT ! Cumulated Sea-ice non solar net heat flux (J/m2)
+(   37) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_SNET ! Cumulated Sea-ice solar net heat flux     (J/m2)
+(   38) REAL, DIMENSION(KI), INTENT(IN) :: PSEAICE_EVAP ! Cumulated Sea-ice sublimation             (kg/m2)
+(   39) END SUBROUTINE SFX_OASIS_SEND
+(   40) # 41 "modi_sfx_oasis_send.F90"
+(   41) END INTERFACE
+(   42) END MODULE MODI_SFX_OASIS_SEND

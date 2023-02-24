@@ -1,0 +1,252 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:24      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:24      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: uniquenumdb.F90
+
+(    1) #ifdef RS6K
+(    2) @PROCESS NOEXTCHK
+(    3) #endif
+(    4) SUBROUTINE uniquenumdb(p, kldim, kvals, klen, keff)
+(    5) 
+(    6) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(    7) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(    8) 
+(    9) implicit none
+(   10) INTEGER(KIND=JPIM), intent(in)  :: klen, kldim, kvals
+(   11) REAL(KIND=JPRD),    intent(in)  :: p(kldim, klen)
+(   12) INTEGER(KIND=JPIM), intent(out) :: keff
+(   13) INTEGER(KIND=JPIM), parameter :: UI_RATIO = 2 ! sizeof(real(8)) / sizeof(integer(4))
+(   14) INTEGER(KIND=JPIM) :: hash(klen)
+(   15) INTEGER(KIND=JPIM) :: i, itag, is_unique, ihash
+(   16) REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   17) 
+(   18) IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',0,ZHOOK_HANDLE)
+(   19) keff = 0
+(   20) if (klen <= 1) then
+(   21)   keff = klen
+(   22)   IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',1,ZHOOK_HANDLE)
+(   23)   return
+(   24) endif
+(   25) 
+(   26) CALL cODB_hash_set_lock()
+(   27) CALL cODB_hash_init()
+(   28) 
+(   29) CALL cODB_vechash(&
+(   30)  & kvals * UI_RATIO, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:24      page 3
+
+(   31)  & kldim * UI_RATIO,&
+(   32)  & klen, &
+(   33)  & p(1,1), hash(1)) 
+(   34) 
+(   35) keff = 0
+(   36) do i=1,klen
+(   37)   itag = i
+(   38)   CALL cODB_d_unique( &
+(   39)    & kvals, p(1,i), hash(i), &
+(   40)    & is_unique, itag, ihash) 
+(   41)   if (is_unique == 1) keff = keff + 1
+(   42) enddo
+(   43) 
+(   44) CALL cODB_hash_init()
+(   45) CALL cODB_hash_unset_lock()
+(   46) 
+(   47) IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',1,ZHOOK_HANDLE)
+(   48) 
+(   49) END SUBROUTINE uniquenumdb
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:24      page 4
+
+(    1) # 1 "uniquenumdb.F90"
+(    1) # 4 "uniquenumdb.F90"
+(    4) SUBROUTINE uniquenumdb(p, kldim, kvals, klen, keff)
+(    5) # 6 "uniquenumdb.F90"
+(    6) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(    7) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(    8) # 9 "uniquenumdb.F90"
+(    9) implicit none
+(   10) INTEGER(KIND=JPIM), intent(in)  :: klen, kldim, kvals
+(   11) REAL(KIND=JPRD),    intent(in)  :: p(kldim, klen)
+(   12) INTEGER(KIND=JPIM), intent(out) :: keff
+(   13) INTEGER(KIND=JPIM), parameter :: UI_RATIO = 2 ! sizeof(real(8)) / sizeof(integer(4))
+(   14) INTEGER(KIND=JPIM) :: hash(klen)
+(   15) INTEGER(KIND=JPIM) :: i, itag, is_unique, ihash
+(   16) REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   17) # 18 "uniquenumdb.F90"
+(   18) IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',0,ZHOOK_HANDLE)
+(   19) keff = 0
+(   20) if (klen <= 1) then
+(   21)   keff = klen
+(   22)   IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',1,ZHOOK_HANDLE)
+(   23)   return
+(   24) endif
+(   25) # 26 "uniquenumdb.F90"
+(   26) CALL cODB_hash_set_lock()
+(   27) CALL cODB_hash_init()
+(   28) # 29 "uniquenumdb.F90"
+(   29) CALL cODB_vechash(&
+(   30)  & kvals * UI_RATIO, &
+(   31)  & kldim * UI_RATIO,&
+(   32)  & klen, &
+(   33)  & p(1,1), hash(1)) 
+(   34) # 35 "uniquenumdb.F90"
+(   35) keff = 0
+(   36) do i=1,klen
+(   37)   itag = i
+(   38)   CALL cODB_d_unique( &
+(   39)    & kvals, p(1,i), hash(i), &
+(   40)    & is_unique, itag, ihash) 
+(   41)   if (is_unique == 1) keff = keff + 1
+(   42) enddo
+(   43) # 44 "uniquenumdb.F90"
+(   44) CALL cODB_hash_init()
+(   45) CALL cODB_hash_unset_lock()
+(   46) # 47 "uniquenumdb.F90"
+(   47) IF (LHOOK) CALL DR_HOOK('UNIQUENUMDB',1,ZHOOK_HANDLE)
+(   48) # 49 "uniquenumdb.F90"
+(   49) END SUBROUTINE uniquenumdb

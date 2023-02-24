@@ -1,0 +1,529 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: stepout.F90
+
+(    1) subroutine stepout()
+(    2) 
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) 
+(   13) use vars
+(   14) !use rad, only: qrad
+(   15) use crmtracers
+(   16) use microphysics, only: micro_print
+(   17) use params
+(   18) use real_size
+(   19) 
+(   20) implicit none
+(   21) 
+(   22) integer i,j,k,ic,jc,nstatsteps
+(   23) real(RR) div, divmax, divmin
+(   24) real(RR) rdx, rdy, rdz, coef
+(   25) integer im,jm,km
+(   26) real(RR) wmax, qnmax(1), qnmax1(1)
+(   27) real(8) buffer(5), buffer1(5)
+(   28) 
+(   29) 
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 3
+
+(   31) !------------------------------------------------------------------------------
+(   32) !------------------------------------------------------------------------------
+(   33) ! Print stuff out:
+(   34) 
+(   35) ! call t_startf ('print_out') ! commented by Phani
+(   36) 
+(   37) if(masterproc) print *,'NSTEP = ',nstep,'    NCYCLE=',ncycle
+(   38) 
+(   39) if(mod(nstep,nprint).eq.0) then
+(   40) 
+(   41) 
+(   42)  divmin=1.e20
+(   43)  divmax=-1.e20
+(   44)  
+(   45)  rdx = 1./dx
+(   46)  rdy = 1./dy
+(   47) 
+(   48)  wmax=0.
+(   49)  do k=1,nzm
+(   50)   coef = rho(k)*adz(k)*dz
+(   51)   rdz = 1./coef
+(   52)   if(ny.ne.1) then
+(   53)    do j=1,ny-1*YES3D
+(   54)     jc = j+1*YES3D
+(   55)     do i=1,nx-1
+(   56)      ic = i+1
+(   57)      div = (u(ic,j,k)-u(i,j,k))*rdx + (v(i,jc,k)-v(i,j,k))*rdy + &
+(   58)      (w(i,j,k+1)*rhow(k+1)-w(i,j,k)*rhow(k))*rdz
+(   59)      divmax = max(divmax,div)
+(   60)      divmin = min(divmin,div)
+(   61)      if(w(i,j,k).gt.wmax) then
+(   62)      wmax=w(i,j,k)
+(   63)      im=i
+(   64)      jm=j
+(   65)      km=k
+(   66)      endif
+(   67)     end do
+(   68)    end do
+(   69)   else
+(   70)     j = 1
+(   71)     do i=1,nx-1
+(   72)     ic = i+1
+(   73)      div = (u(ic,j,k)-u(i,j,k))*rdx +(w(i,j,k+1)*rhow(k+1)-w(i,j,k)*rhow(k))*rdz
+(   74)      divmax = max(divmax,div)
+(   75)      divmin = min(divmin,div)
+(   76)      if(w(i,j,k).gt.wmax) then
+(   77)       wmax=w(i,j,k)
+(   78)       im=i
+(   79)       jm=j
+(   80)       km=k
+(   81)      endif
+(   82)     end do
+(   83)   endif
+(   84)  end do
+(   85) 
+(   86)  if(dompi) then
+(   87)    buffer(1) = total_water_before
+(   88)    buffer(2) = total_water_after
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 4
+
+(   89)    buffer(3) = total_water_evap
+(   90)    buffer(4) = total_water_prec
+(   91)    buffer(5) = total_water_ls
+(   92)    call task_sum_real8(buffer, buffer1,5)
+(   93)    total_water_before = buffer1(1)
+(   94)    total_water_after = buffer1(2)
+(   95)    total_water_evap = buffer1(3)
+(   96)    total_water_prec = buffer1(4)
+(   97)    total_water_ls = buffer1(5)
+(   98)  end if
+(   99) 
+(  100) !print*,rank,minval(u(1:nx,1:ny,:)),maxval(u(1:nx,1:ny,:))
+(  101) !print*,rank,'min:',minloc(u(1:nx,1:ny,:))
+(  102) !print*,rank,'max:',maxloc(u(1:nx,1:ny,:))
+(  103) 
+(  104) !if(rank.eq.2) then
+(  105) 
+(  106) !print*,'p:'
+(  107) !write(6,'(16f7.2)')((p(i,1,k),i=1,16),k=30,1,-1)
+(  108) print*,'u:'
+(  109) write(6,'(16f7.2)')((u(i,1,k),i=1,16),k=30,1,-1)
+(  110) !print*,'v:'
+(  111) !write(6,'(16f7.2)')((v(i,1,k),i=1,16),k=30,1,-1)
+(  112) print*,'w:'
+(  113) write(6,'(16f7.2)')((w(i,1,k),i=1,16),k=30,1,-1)
+(  114) print*,'qcl:'
+(  115) write(6,'(16f7.2)')((qcl(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  116) print*,'qci:'
+(  117) write(6,'(16f7.2)')((qci(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  118) print*,'qpl:'
+(  119) write(6,'(16f7.2)')((qpl(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  120) print*,'qpi:'
+(  121) write(6,'(16f7.2)')((qpi(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  122) !print*,'qrad:'
+(  123) !write(6,'(16f7.2)')((qrad(i,1,k)*3600.,i=1,16),k=30,1,-1)
+(  124) print*,'qv:'
+(  125) write(6,'(16f7.2)')((qv(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  126) print*,'tabs:'
+(  127) write(6,'(16f7.2)')((tabs(i,1,k),i=1,16),k=30,1,-1)
+(  128) !
+(  129) !end if
+(  130) 
+(  131) !--------------------------------------------------------
+(  132)  if(masterproc) then
+(  133) 
+(  134)     print*,'DAY = ',day
+(  135)     write(6,*) 'NSTEP=',nstep
+(  136)     write(6,*) 'div:',divmax,divmin
+(  137)     write(6,*) 'SST=',tabs_s, '  surface pressure=',pres0
+(  138) 
+(  139)  endif
+(  140) 
+(  141)  call fminmax_print('u:',u,dimx1_u,dimx2_u,dimy1_u,dimy2_u,nzm)
+(  142)  call fminmax_print('v:',v,dimx1_v,dimx2_v,dimy1_v,dimy2_v,nzm-5)
+(  143)  call fminmax_print('w:',w,dimx1_w,dimx2_w,dimy1_w,dimy2_w,nz)
+(  144)  call fminmax_print('p:',p,0,nx,1-YES3D,ny,nzm)
+(  145)  call fminmax_print('t:',t,dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  146)  call fminmax_print('tabs:',tabs,1,nx,1,ny,nzm)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 5
+
+(  147)  call fminmax_print('qv:',qv,1,nx,1,ny,nzm)
+(  148)  call fminmax_print('tke:',tke,dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  149)  call fminmax_print('tk:',tk,0,nxp1,1-YES3D,nyp1,nzm)
+(  150)  call fminmax_print('tkh:',tkh,0,nxp1,1-YES3D,nyp1,nzm)
+(  151)  if(docloud) then
+(  152)    call fminmax_print('qcl:',qcl,1,nx,1,ny,nzm)
+(  153)    call fminmax_print('qci:',qci,1,nx,1,ny,nzm)
+(  154)    call micro_print()
+(  155)  end if
+(  156)  if(doprecip) then
+(  157)    call fminmax_print('qpl:',qpl,1,nx,1,ny,nzm)
+(  158)    call fminmax_print('qpi:',qpi,1,nx,1,ny,nzm)
+(  159)  end if
+(  160) ! if(dolongwave.or.doshortwave) call fminmax_print('qrad(K/day):',qrad*86400.,1,nx,1,ny,nzm)
+(  161)  if(dotracers) then
+(  162)    do k=1,ntracers
+(  163)      call fminmax_print(trim(tracername(k))//':',tracer(:,:,:,k),dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  164)    end do
+(  165)  end if
+(  166)  call fminmax_print('shf:',fluxbt*cp*rho(1),1,nx,1,ny,1)
+(  167)  call fminmax_print('lhf:',fluxbq*lcond*rho(1),1,nx,1,ny,1)
+(  168)  call fminmax_print('uw:',fluxbu,1,nx,1,ny,1)
+(  169)  call fminmax_print('vw:',fluxbv,1,nx,1,ny,1)
+(  170)  call fminmax_print('sst:',sstxy,0,nx,1-YES3D,ny,1)
+(  171) 
+(  172) end if ! (mod(nstep,nprint).eq.0)
+(  173) 
+(  174) ! call t_stopf ('print_out') ! commented by Phani
+(  175) 
+(  176) end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 6
+
+(    1) # 1 "stepout.F90"
+(    1) subroutine stepout()
+(    2) # 3 "stepout.F90"
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) # 13 "stepout.F90"
+(   13) use vars
+(   14) !use rad, only: qrad
+(   15) use crmtracers
+(   16) use microphysics, only: micro_print
+(   17) use params
+(   18) use real_size
+(   19) # 20 "stepout.F90"
+(   20) implicit none
+(   21) # 22 "stepout.F90"
+(   22) integer i,j,k,ic,jc,nstatsteps
+(   23) real(RR) div, divmax, divmin
+(   24) real(RR) rdx, rdy, rdz, coef
+(   25) integer im,jm,km
+(   26) real(RR) wmax, qnmax(1), qnmax1(1)
+(   27) real(8) buffer(5), buffer1(5)
+(   28) # 31 "stepout.F90"
+(   31) !------------------------------------------------------------------------------
+(   32) !------------------------------------------------------------------------------
+(   33) ! Print stuff out:
+(   34) # 35 "stepout.F90"
+(   35) ! call t_startf ('print_out') ! commented by Phani
+(   36) # 37 "stepout.F90"
+(   37) if(masterproc) print *,'NSTEP = ',nstep,'    NCYCLE=',ncycle
+(   38) # 39 "stepout.F90"
+(   39) if(mod(nstep,nprint).eq.0) then
+(   40) # 42 "stepout.F90"
+(   42)  divmin=1.e20
+(   43)  divmax=-1.e20
+(   44)  
+(   45)  rdx = 1./dx
+(   46)  rdy = 1./dy
+(   47) # 48 "stepout.F90"
+(   48)  wmax=0.
+(   49)  do k=1,nzm
+(   50)   coef = rho(k)*adz(k)*dz
+(   51)   rdz = 1./coef
+(   52)   if(ny.ne.1) then
+(   53)    do j=1,ny-1*YES3D
+(   54)     jc = j+1*YES3D
+(   55)     do i=1,nx-1
+(   56)      ic = i+1
+(   57)      div = (u(ic,j,k)-u(i,j,k))*rdx + (v(i,jc,k)-v(i,j,k))*rdy + &
+(   58)      (w(i,j,k+1)*rhow(k+1)-w(i,j,k)*rhow(k))*rdz
+(   59)      divmax = max(divmax,div)
+(   60)      divmin = min(divmin,div)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 7
+
+(   61)      if(w(i,j,k).gt.wmax) then
+(   62)      wmax=w(i,j,k)
+(   63)      im=i
+(   64)      jm=j
+(   65)      km=k
+(   66)      endif
+(   67)     end do
+(   68)    end do
+(   69)   else
+(   70)     j = 1
+(   71)     do i=1,nx-1
+(   72)     ic = i+1
+(   73)      div = (u(ic,j,k)-u(i,j,k))*rdx +(w(i,j,k+1)*rhow(k+1)-w(i,j,k)*rhow(k))*rdz
+(   74)      divmax = max(divmax,div)
+(   75)      divmin = min(divmin,div)
+(   76)      if(w(i,j,k).gt.wmax) then
+(   77)       wmax=w(i,j,k)
+(   78)       im=i
+(   79)       jm=j
+(   80)       km=k
+(   81)      endif
+(   82)     end do
+(   83)   endif
+(   84)  end do
+(   85) # 86 "stepout.F90"
+(   86)  if(dompi) then
+(   87)    buffer(1) = total_water_before
+(   88)    buffer(2) = total_water_after
+(   89)    buffer(3) = total_water_evap
+(   90)    buffer(4) = total_water_prec
+(   91)    buffer(5) = total_water_ls
+(   92)    call task_sum_real8(buffer, buffer1,5)
+(   93)    total_water_before = buffer1(1)
+(   94)    total_water_after = buffer1(2)
+(   95)    total_water_evap = buffer1(3)
+(   96)    total_water_prec = buffer1(4)
+(   97)    total_water_ls = buffer1(5)
+(   98)  end if
+(   99) # 100 "stepout.F90"
+(  100) !print*,rank,minval(u(1:nx,1:ny,:)),maxval(u(1:nx,1:ny,:))
+(  101) !print*,rank,'min:',minloc(u(1:nx,1:ny,:))
+(  102) !print*,rank,'max:',maxloc(u(1:nx,1:ny,:))
+(  103) # 104 "stepout.F90"
+(  104) !if(rank.eq.2) then
+(  105) # 106 "stepout.F90"
+(  106) !print*,'p:'
+(  107) !write(6,'(16f7.2)')((p(i,1,k),i=1,16),k=30,1,-1)
+(  108) print*,'u:'
+(  109) write(6,'(16f7.2)')((u(i,1,k),i=1,16),k=30,1,-1)
+(  110) !print*,'v:'
+(  111) !write(6,'(16f7.2)')((v(i,1,k),i=1,16),k=30,1,-1)
+(  112) print*,'w:'
+(  113) write(6,'(16f7.2)')((w(i,1,k),i=1,16),k=30,1,-1)
+(  114) print*,'qcl:'
+(  115) write(6,'(16f7.2)')((qcl(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  116) print*,'qci:'
+(  117) write(6,'(16f7.2)')((qci(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  118) print*,'qpl:'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:56      page 8
+
+(  119) write(6,'(16f7.2)')((qpl(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  120) print*,'qpi:'
+(  121) write(6,'(16f7.2)')((qpi(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  122) !print*,'qrad:'
+(  123) !write(6,'(16f7.2)')((qrad(i,1,k)*3600.,i=1,16),k=30,1,-1)
+(  124) print*,'qv:'
+(  125) write(6,'(16f7.2)')((qv(i,1,k)*1000.,i=1,16),k=30,1,-1)
+(  126) print*,'tabs:'
+(  127) write(6,'(16f7.2)')((tabs(i,1,k),i=1,16),k=30,1,-1)
+(  128) !
+(  129) !end if
+(  130) # 131 "stepout.F90"
+(  131) !--------------------------------------------------------
+(  132)  if(masterproc) then
+(  133) # 134 "stepout.F90"
+(  134)     print*,'DAY = ',day
+(  135)     write(6,*) 'NSTEP=',nstep
+(  136)     write(6,*) 'div:',divmax,divmin
+(  137)     write(6,*) 'SST=',tabs_s, '  surface pressure=',pres0
+(  138) # 139 "stepout.F90"
+(  139)  endif
+(  140) # 141 "stepout.F90"
+(  141)  call fminmax_print('u:',u,dimx1_u,dimx2_u,dimy1_u,dimy2_u,nzm)
+(  142)  call fminmax_print('v:',v,dimx1_v,dimx2_v,dimy1_v,dimy2_v,nzm-5)
+(  143)  call fminmax_print('w:',w,dimx1_w,dimx2_w,dimy1_w,dimy2_w,nz)
+(  144)  call fminmax_print('p:',p,0,nx,1-YES3D,ny,nzm)
+(  145)  call fminmax_print('t:',t,dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  146)  call fminmax_print('tabs:',tabs,1,nx,1,ny,nzm)
+(  147)  call fminmax_print('qv:',qv,1,nx,1,ny,nzm)
+(  148)  call fminmax_print('tke:',tke,dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  149)  call fminmax_print('tk:',tk,0,nxp1,1-YES3D,nyp1,nzm)
+(  150)  call fminmax_print('tkh:',tkh,0,nxp1,1-YES3D,nyp1,nzm)
+(  151)  if(docloud) then
+(  152)    call fminmax_print('qcl:',qcl,1,nx,1,ny,nzm)
+(  153)    call fminmax_print('qci:',qci,1,nx,1,ny,nzm)
+(  154)    call micro_print()
+(  155)  end if
+(  156)  if(doprecip) then
+(  157)    call fminmax_print('qpl:',qpl,1,nx,1,ny,nzm)
+(  158)    call fminmax_print('qpi:',qpi,1,nx,1,ny,nzm)
+(  159)  end if
+(  160) ! if(dolongwave.or.doshortwave) call fminmax_print('qrad(K/day):',qrad*86400.,1,nx,1,ny,nzm)
+(  161)  if(dotracers) then
+(  162)    do k=1,ntracers
+(  163)      call fminmax_print(trim(tracername(k))//':',tracer(:,:,:,k),dimx1_s,dimx2_s,dimy1_s,dimy2_s,nzm)
+(  164)    end do
+(  165)  end if
+(  166)  call fminmax_print('shf:',fluxbt*cp*rho(1),1,nx,1,ny,1)
+(  167)  call fminmax_print('lhf:',fluxbq*lcond*rho(1),1,nx,1,ny,1)
+(  168)  call fminmax_print('uw:',fluxbu,1,nx,1,ny,1)
+(  169)  call fminmax_print('vw:',fluxbv,1,nx,1,ny,1)
+(  170)  call fminmax_print('sst:',sstxy,0,nx,1-YES3D,ny,1)
+(  171) # 172 "stepout.F90"
+(  172) end if ! (mod(nstep,nprint).eq.0)
+(  173) # 174 "stepout.F90"
+(  174) ! call t_stopf ('print_out') ! commented by Phani
+(  175) # 176 "stepout.F90"
+(  176) end
+
+
+

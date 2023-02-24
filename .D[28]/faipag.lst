@@ -1,0 +1,910 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faipag.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIPAG_MT64                                              &
+(    4) &                     (FA,  KREP,  KNUMER,  CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      KNIPAR, YDGR1TAB)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL, FAGR1TAB, NUNDEF
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme du logiciel de Fichiers ARPEGE:
+(   13) !      Initialisation de quelques descripteurs de l'entete Gribex
+(   14) !      (section 1) relatifs au parametre, a partir du nom FA du champ.
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !    ( Tableau ) KNIPAR (Sortie) ==> quelques descripteurs de la section 1 de
+(   22) !                                    GRIBEX (KNIPAR(1)  =KSEC1(1),
+(   23) !                                            KNIPAR(2:5)=KSEC1(6:9),
+(   24) !                                            KNIPAR(7)=KSEC1(23) ) et un
+(   25) !                                    indicateur de type de champ (KNIPAR(6)=
+(   26) !                                    KSEC1(18)):0->RAS; 2->min/max; 4->cumul,
+(   27) !                                    8->cumul depuis le debut
+(   28) !                                    
+(   29) !
+(   30) !     Original  : 06 juillet 2004, Denis Paradis DSI/DEV
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 3
+
+(   31) !     --------
+(   32) !
+(   33) !     Modifications
+(   34) !     -------------
+(   35) !       R. El Ouaraini: 03-Oct-2006, enlever le commentaire de l'initialisation de KNIPAR(3) pour
+(   36) !                  les types de niveaux :  hauteur, iso-tourb potent, isentrope et modele.
+(   37) !       R. El Khatib 24-Jul-2015 No use of the correspondence table if no external grib file
+(   38) !
+(   39) !*
+(   40) !
+(   41) !
+(   42) TYPE(FA_COM) :: FA
+(   43) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KNIPAR(8)
+(   44) !
+(   45) CHARACTER (LEN=*) CDPREF, CDSUFF
+(   46) !
+(   47) TYPE (FAGR1TAB) :: YDGR1TAB
+(   48) !
+(   49) INTEGER (KIND=JPLIKB) IRANG, INIMES, J, JMEM, ILENMIN
+(   50) !
+(   51) INTRINSIC LEN_TRIM
+(   52) !
+(   53) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   54) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   55) LOGICAL                  LLFATA
+(   56) LOGICAL                  LLNIVA
+(   57) TYPE (FAGR1TAB)          YDGR1DUM
+(   58) !
+(   59) 
+(   60) !**
+(   61) !     0.  -  INITIALISATIONS PREALABLES
+(   62) !-----------------------------------------------------------------------
+(   63) !
+(   64) !
+(   65) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   66) IF (LHOOK) CALL DR_HOOK('FAIPAG_MT',0,ZHOOK_HANDLE)
+(   67) KREP=0
+(   68) 
+(   69) CALL FANUMU_MT64                 &
+(   70) &               (FA, KNUMER,IRANG)
+(   71) !
+(   72) IF (IRANG.LE.0.OR.IRANG.GT.FA%JPNXFA) THEN
+(   73)   KREP=-66
+(   74)   GOTO 1001
+(   75) ENDIF
+(   76) !
+(   77) !  DEFAUTS:
+(   78) !
+(   79) ! Numero de version de la table de code parametres
+(   80) KNIPAR(1)=1
+(   81) ! Indicateur de parametre (255=> valeur manquante)
+(   82) KNIPAR(2)=255
+(   83) ! Indicateur de type de niveau (1=> surface)
+(   84) KNIPAR(3)=1
+(   85) ! Niveau 1, Niveau 2 et type de champs
+(   86) KNIPAR(4:6)=0
+(   87) !
+(   88) KNIPAR(7)=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 4
+
+(   89) !**
+(   90) !     1.  -  UTILISATION DE LA TABLE DE CORRESPONDANCE (SEULEMENT POUR UN FICHIER EXTERNE AU FORMAT GRIB)
+(   91) !--------------------------------------------------------------------------------------------------------
+(   92) !
+(   93) !
+(   94) IF ((ANY (YDGR1TAB%NCODPA == YDGR1DUM%NCODPA)).AND.FA%FICHIER(IRANG)%NCOGRIF(12)==0) THEN
+(   95)   JMEM = 0
+(   96)   DO J = 1,FA%NBPARC
+(   97)     ILENMIN=MIN(LEN_TRIM(CDSUFF),LEN_TRIM(FA%YGR1TAB(J)%CISUFF))
+(   98)     IF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.FA%YGR1TAB(J)%CIPREF(1:LEN_TRIM(FA%YGR1TAB(J)%CIPREF)) .AND. &
+(   99) &       CDSUFF(1:ILENMIN).EQ.FA%YGR1TAB(J)%CISUFF(1:ILENMIN)) THEN
+(  100)       JMEM = J
+(  101)       EXIT
+(  102)     ELSEIF (CDPREF(1:LEN_TRIM(CDPREF))//CDSUFF(1:LEN_TRIM(CDSUFF)).EQ. &
+(  103) &     FA%YGR1TAB(J)%CIPREF(1:LEN_TRIM(FA%YGR1TAB(J)%CIPREF))// &
+(  104) &     FA%YGR1TAB(J)%CISUFF(1:LEN_TRIM(FA%YGR1TAB(J)%CISUFF))) THEN
+(  105)       JMEM = J
+(  106)       EXIT
+(  107)     ENDIF
+(  108)   ENDDO
+(  109)   IF (FA%LFAMOP.AND.JMEM.EQ.0) THEN
+(  110)     WRITE (UNIT=FA%NULOUT,FMT=*)                                  &
+(  111) &           'FAIPAG: WARNING, pas de reference GRIB pour ',        &
+(  112) &           CDPREF(1:LEN_TRIM(CDPREF))//CDSUFF(1:LEN_TRIM(CDSUFF))
+(  113)     WRITE (UNIT=FA%NULOUT,FMT=*)'       Les defauts seront utilises'
+(  114)     GOTO 1001
+(  115)   ENDIF
+(  116)   IF (JMEM /= 0) THEN
+(  117)     YDGR1TAB = FA%YGR1TAB(JMEM)
+(  118)   ELSE
+(  119)     YDGR1TAB = YDGR1DUM
+(  120)   ENDIF
+(  121) ENDIF
+(  122) 
+(  123) IF (ALL (YDGR1TAB%NCODPA /= YDGR1DUM%NCODPA)) THEN
+(  124)   KNIPAR   = YDGR1TAB%NCODPA(1:8)
+(  125)   LLNIVA   = YDGR1TAB%LFNIVA
+(  126) ELSE  
+(  127)   LLNIVA=.FALSE.
+(  128) ENDIF
+(  129) 
+(  130) !**
+(  131) !     2.  -  INITIALISATION DU NIVEAU (AUTRE QUE 0)
+(  132) !--------------------------------------------------
+(  133) !
+(  134) !     2.1 -  Champs sur un niveau isobare
+(  135) !
+(  136) IF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'P') THEN
+(  137) !  La pression est sur 5 chiffres: on la ramene a l'hPa
+(  138) !     et on recree le niveau 1000 hPa
+(  139) !
+(  140) !  Si KNIVAU < 100, la pression fait moins d'un hPa et
+(  141) !  on utilise une extension du GRIB introduite par le CEP:
+(  142) !       KSEC1(7) = 210 (au lieu de 100)
+(  143) !    et KSEC1(8) = pression en Pa
+(  144) !
+(  145)   IF (KNIVAU .GE. 100) THEN
+(  146)     IF (KNIPAR (2) == 255) KNIPAR(3)=100
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 5
+
+(  147)     IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU/100
+(  148)   ELSEIF (KNIVAU==0) THEN
+(  149)     IF (KNIPAR (2) == 255) KNIPAR(3)=100
+(  150)     IF (.NOT. LLNIVA)      KNIPAR(4)=1000
+(  151)   ELSE
+(  152)     IF (KNIPAR (2) == 255) KNIPAR(3)=210
+(  153)     IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  154)   ENDIF
+(  155) !
+(  156) !     2.2 -  Champs sur un niveau hauteur
+(  157) !
+(  158) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'H') THEN
+(  159)   IF (KNIPAR (2) == 255) KNIPAR(3)=105
+(  160)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  161) !
+(  162) !     2.3 -  Champs sur un niveau iso-tourbillon-potentiel
+(  163) !
+(  164) !            ( unite SI = K m2 s-1 kg-1 = 10+6 PVU
+(  165) !              mais l'unite retenu est le milliPVU: 10-9 SI)
+(  166) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'V') THEN
+(  167)   IF (KNIPAR (2) == 255) KNIPAR(3)=117
+(  168) ! KNIVAU est exprime en 1/10 PVU
+(  169)   IF (.NOT. LLNIVA) THEN
+(  170)     KNIPAR(4)=KNIVAU*100
+(  171)     IF (KNIVAU==0) KNIPAR(4)=1000
+(  172)   ENDIF
+(  173) !
+(  174) !     2.4 -  Champs sur un niveau isentrope
+(  175) !
+(  176) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'T') THEN
+(  177)   IF (KNIPAR (2) == 255) KNIPAR(3)=107
+(  178)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  179) !
+(  180) !     2.5 -  Champs sur un niveau modele
+(  181) !
+(  182) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'S') THEN
+(  183)   IF (KNIPAR (2) == 255) KNIPAR(3)=109
+(  184)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  185) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'KT') THEN
+(  186)   IF (KNIPAR (2) == 255) KNIPAR(3)=115
+(  187)   IF (.NOT. LLNIVA) THEN
+(  188)     SELECT CASE (KNIVAU)
+(  189)       CASE (273)
+(  190)         KNIPAR(4)=27315
+(  191)       CASE (263)
+(  192)         KNIPAR(4)=26315
+(  193)       CASE DEFAULT
+(  194)         KNIPAR(4)=KNIVAU*100
+(  195)     END SELECT
+(  196)   ENDIF
+(  197) ENDIF
+(  198) !
+(  199) !**
+(  200) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  201) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  202) !-----------------------------------------------------------------------
+(  203) !
+(  204) 1001 CONTINUE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 6
+
+(  205) LLFATA=LLMOER (KREP,IRANG)
+(  206) !
+(  207) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  208)   INIMES=2
+(  209)   CLNSPR='FAIPAG'
+(  210) !
+(  211)   WRITE (UNIT=FA%NULOUT,FMT=*)'FAIPAG: KNIPAR(1:7) = ',KNIPAR(1:7)
+(  212)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  213)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', IRANG='',I4,  &
+(  214) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,         &
+(  215) &       '', CDSUFF='''''',A,'''''''')')                   &
+(  216) &     KREP, IRANG, CDPREF(1:LEN_TRIM(CDPREF)), KNIVAU,    &
+(  217) &     CDSUFF(1:LEN_TRIM(CDSUFF))
+(  218)   CALL FAIPAR_MT64                                        &
+(  219) &                 (FA, KNUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  220) &                  CLNSPR,CDPREF,.FALSE.)
+(  221) ENDIF
+(  222) !
+(  223) IF (LHOOK) CALL DR_HOOK('FAIPAG_MT',1,ZHOOK_HANDLE)
+(  224) 
+(  225) CONTAINS
+(  226) 
+(  227) #include "facom2.llmoer.h"
+(  228) 
+(  229) END SUBROUTINE FAIPAG_MT64
+(  230) 
+(  231) ! Oct-2012 P. Marguinaud 64b LFI
+(  232) SUBROUTINE FAIPAG64                                        &
+(  233) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  234) &            YDGR1TAB)
+(  235) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  236) &                  FA_COM_DEFAULT_INIT,  &
+(  237) &                  NEW_FA_DEFAULT,       &
+(  238) &                  FAGR1TAB
+(  239) USE LFI_PRECISION
+(  240) IMPLICIT NONE
+(  241) ! Arguments
+(  242) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  243) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  244) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  245) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  246) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  247) INTEGER (KIND=JPLIKB)  KNIPAR     (8)                         !   OUT
+(  248) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  249) 
+(  250) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  251) 
+(  252) CALL FAIPAG_MT64                                               &
+(  253) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  254) &            YDGR1TAB)
+(  255) 
+(  256) END SUBROUTINE FAIPAG64
+(  257) 
+(  258) SUBROUTINE FAIPAG                                          &
+(  259) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  260) &            YDGR1TAB)
+(  261) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  262) &                  FA_COM_DEFAULT_INIT,  &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 7
+
+(  263) &                  NEW_FA_DEFAULT,       &
+(  264) &                  FAGR1TAB
+(  265) USE LFI_PRECISION
+(  266) IMPLICIT NONE
+(  267) ! Arguments
+(  268) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  269) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  270) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  271) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  272) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  273) INTEGER (KIND=JPLIKM)  KNIPAR     (8)                         !   OUT
+(  274) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  275) 
+(  276) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  277) 
+(  278) CALL FAIPAG_MT                                              &
+(  279) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, YDGR1TAB)
+(  280) 
+(  281) END SUBROUTINE FAIPAG
+(  282) 
+(  283) SUBROUTINE FAIPAG_MT                                           &
+(  284) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  285) &            YDGR1TAB)
+(  286) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(  287) USE LFI_PRECISION
+(  288) IMPLICIT NONE
+(  289) ! Arguments
+(  290) TYPE (FA_COM)          FA                                     ! INOUT
+(  291) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  292) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  293) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  294) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  295) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  296) INTEGER (KIND=JPLIKM)  KNIPAR     (8)                         !   OUT
+(  297) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  298) ! Local integers
+(  299) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  300) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  301) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  302) INTEGER (KIND=JPLIKB)  INIPAR     (8)                         !   OUT
+(  303) ! Convert arguments
+(  304) 
+(  305) INUMER     = INT (    KNUMER, JPLIKB)
+(  306) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  307) 
+(  308) CALL FAIPAG_MT64                                            &
+(  309) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, INIPAR, YDGR1TAB)
+(  310) 
+(  311) KREP       = INT (      IREP, JPLIKM)
+(  312) KNIPAR     = INT (    INIPAR, JPLIKM)
+(  313) 
+(  314) END SUBROUTINE FAIPAG_MT
+(  315) 
+(  316) !INTF KREP            OUT                               
+(  317) !INTF KNUMER        IN                                  
+(  318) !INTF CDPREF        IN                                  
+(  319) !INTF KNIVAU        IN                                  
+(  320) !INTF CDSUFF        IN                                  
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 8
+
+(  321) !INTF KNIPAR          OUT DIMS=8                        
+(  322) !INTF YDGR1TAB      INOUT                               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 9
+
+(    1) # 1 "faipag.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIPAG_MT64                                              &
+(    4) &                     (FA,  KREP,  KNUMER,  CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      KNIPAR, YDGR1TAB)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL, FAGR1TAB, NUNDEF
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme du logiciel de Fichiers ARPEGE:
+(   13) !      Initialisation de quelques descripteurs de l'entete Gribex
+(   14) !      (section 1) relatifs au parametre, a partir du nom FA du champ.
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !    ( Tableau ) KNIPAR (Sortie) ==> quelques descripteurs de la section 1 de
+(   22) !                                    GRIBEX (KNIPAR(1)  =KSEC1(1),
+(   23) !                                            KNIPAR(2:5)=KSEC1(6:9),
+(   24) !                                            KNIPAR(7)=KSEC1(23) ) et un
+(   25) !                                    indicateur de type de champ (KNIPAR(6)=
+(   26) !                                    KSEC1(18)):0->RAS; 2->min/max; 4->cumul,
+(   27) !                                    8->cumul depuis le debut
+(   28) !                                    
+(   29) !
+(   30) !     Original  : 06 juillet 2004, Denis Paradis DSI/DEV
+(   31) !     --------
+(   32) !
+(   33) !     Modifications
+(   34) !     -------------
+(   35) !       R. El Ouaraini: 03-Oct-2006, enlever le commentaire de l'initialisation de KNIPAR(3) pour
+(   36) !                  les types de niveaux :  hauteur, iso-tourb potent, isentrope et modele.
+(   37) !       R. El Khatib 24-Jul-2015 No use of the correspondence table if no external grib file
+(   38) !
+(   39) !*
+(   40) !
+(   41) !
+(   42) TYPE(FA_COM) :: FA
+(   43) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KNIPAR(8)
+(   44) !
+(   45) CHARACTER (LEN=*) CDPREF, CDSUFF
+(   46) !
+(   47) TYPE (FAGR1TAB) :: YDGR1TAB
+(   48) !
+(   49) INTEGER (KIND=JPLIKB) IRANG, INIMES, J, JMEM, ILENMIN
+(   50) !
+(   51) INTRINSIC LEN_TRIM
+(   52) !
+(   53) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   54) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   55) LOGICAL                  LLFATA
+(   56) LOGICAL                  LLNIVA
+(   57) TYPE (FAGR1TAB)          YDGR1DUM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 10
+
+(   58) !
+(   59) # 60 "faipag.F90"
+(   60) !**
+(   61) !     0.  -  INITIALISATIONS PREALABLES
+(   62) !-----------------------------------------------------------------------
+(   63) !
+(   64) !
+(   65) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   66) IF (LHOOK) CALL DR_HOOK('FAIPAG_MT',0,ZHOOK_HANDLE)
+(   67) KREP=0
+(   68) # 69 "faipag.F90"
+(   69) CALL FANUMU_MT64                 &
+(   70) &               (FA, KNUMER,IRANG)
+(   71) !
+(   72) IF (IRANG.LE.0.OR.IRANG.GT.FA%JPNXFA) THEN
+(   73)   KREP=-66
+(   74)   GOTO 1001
+(   75) ENDIF
+(   76) !
+(   77) !  DEFAUTS:
+(   78) !
+(   79) ! Numero de version de la table de code parametres
+(   80) KNIPAR(1)=1
+(   81) ! Indicateur de parametre (255=> valeur manquante)
+(   82) KNIPAR(2)=255
+(   83) ! Indicateur de type de niveau (1=> surface)
+(   84) KNIPAR(3)=1
+(   85) ! Niveau 1, Niveau 2 et type de champs
+(   86) KNIPAR(4:6)=0
+(   87) !
+(   88) KNIPAR(7)=0
+(   89) !**
+(   90) !     1.  -  UTILISATION DE LA TABLE DE CORRESPONDANCE (SEULEMENT POUR UN FICHIER EXTERNE AU FORMAT GRIB)
+(   91) !--------------------------------------------------------------------------------------------------------
+(   92) !
+(   93) !
+(   94) IF ((ANY (YDGR1TAB%NCODPA == YDGR1DUM%NCODPA)).AND.FA%FICHIER(IRANG)%NCOGRIF(12)==0) THEN
+(   95)   JMEM = 0
+(   96)   DO J = 1,FA%NBPARC
+(   97)     ILENMIN=MIN(LEN_TRIM(CDSUFF),LEN_TRIM(FA%YGR1TAB(J)%CISUFF))
+(   98)     IF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.FA%YGR1TAB(J)%CIPREF(1:LEN_TRIM(FA%YGR1TAB(J)%CIPREF)) .AND. &
+(   99) &       CDSUFF(1:ILENMIN).EQ.FA%YGR1TAB(J)%CISUFF(1:ILENMIN)) THEN
+(  100)       JMEM = J
+(  101)       EXIT
+(  102)     ELSEIF (CDPREF(1:LEN_TRIM(CDPREF))//CDSUFF(1:LEN_TRIM(CDSUFF)).EQ. &
+(  103) &     FA%YGR1TAB(J)%CIPREF(1:LEN_TRIM(FA%YGR1TAB(J)%CIPREF))// &
+(  104) &     FA%YGR1TAB(J)%CISUFF(1:LEN_TRIM(FA%YGR1TAB(J)%CISUFF))) THEN
+(  105)       JMEM = J
+(  106)       EXIT
+(  107)     ENDIF
+(  108)   ENDDO
+(  109)   IF (FA%LFAMOP.AND.JMEM.EQ.0) THEN
+(  110)     WRITE (UNIT=FA%NULOUT,FMT=*)                                  &
+(  111) &           'FAIPAG: WARNING, pas de reference GRIB pour ',        &
+(  112) &           CDPREF(1:LEN_TRIM(CDPREF))//CDSUFF(1:LEN_TRIM(CDSUFF))
+(  113)     WRITE (UNIT=FA%NULOUT,FMT=*)'       Les defauts seront utilises'
+(  114)     GOTO 1001
+(  115)   ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 11
+
+(  116)   IF (JMEM /= 0) THEN
+(  117)     YDGR1TAB = FA%YGR1TAB(JMEM)
+(  118)   ELSE
+(  119)     YDGR1TAB = YDGR1DUM
+(  120)   ENDIF
+(  121) ENDIF
+(  122) # 123 "faipag.F90"
+(  123) IF (ALL (YDGR1TAB%NCODPA /= YDGR1DUM%NCODPA)) THEN
+(  124)   KNIPAR   = YDGR1TAB%NCODPA(1:8)
+(  125)   LLNIVA   = YDGR1TAB%LFNIVA
+(  126) ELSE  
+(  127)   LLNIVA=.FALSE.
+(  128) ENDIF
+(  129) # 130 "faipag.F90"
+(  130) !**
+(  131) !     2.  -  INITIALISATION DU NIVEAU (AUTRE QUE 0)
+(  132) !--------------------------------------------------
+(  133) !
+(  134) !     2.1 -  Champs sur un niveau isobare
+(  135) !
+(  136) IF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'P') THEN
+(  137) !  La pression est sur 5 chiffres: on la ramene a l'hPa
+(  138) !     et on recree le niveau 1000 hPa
+(  139) !
+(  140) !  Si KNIVAU < 100, la pression fait moins d'un hPa et
+(  141) !  on utilise une extension du GRIB introduite par le CEP:
+(  142) !       KSEC1(7) = 210 (au lieu de 100)
+(  143) !    et KSEC1(8) = pression en Pa
+(  144) !
+(  145)   IF (KNIVAU .GE. 100) THEN
+(  146)     IF (KNIPAR (2) == 255) KNIPAR(3)=100
+(  147)     IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU/100
+(  148)   ELSEIF (KNIVAU==0) THEN
+(  149)     IF (KNIPAR (2) == 255) KNIPAR(3)=100
+(  150)     IF (.NOT. LLNIVA)      KNIPAR(4)=1000
+(  151)   ELSE
+(  152)     IF (KNIPAR (2) == 255) KNIPAR(3)=210
+(  153)     IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  154)   ENDIF
+(  155) !
+(  156) !     2.2 -  Champs sur un niveau hauteur
+(  157) !
+(  158) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'H') THEN
+(  159)   IF (KNIPAR (2) == 255) KNIPAR(3)=105
+(  160)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  161) !
+(  162) !     2.3 -  Champs sur un niveau iso-tourbillon-potentiel
+(  163) !
+(  164) !            ( unite SI = K m2 s-1 kg-1 = 10+6 PVU
+(  165) !              mais l'unite retenu est le milliPVU: 10-9 SI)
+(  166) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'V') THEN
+(  167)   IF (KNIPAR (2) == 255) KNIPAR(3)=117
+(  168) ! KNIVAU est exprime en 1/10 PVU
+(  169)   IF (.NOT. LLNIVA) THEN
+(  170)     KNIPAR(4)=KNIVAU*100
+(  171)     IF (KNIVAU==0) KNIPAR(4)=1000
+(  172)   ENDIF
+(  173) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 12
+
+(  174) !     2.4 -  Champs sur un niveau isentrope
+(  175) !
+(  176) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'T') THEN
+(  177)   IF (KNIPAR (2) == 255) KNIPAR(3)=107
+(  178)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  179) !
+(  180) !     2.5 -  Champs sur un niveau modele
+(  181) !
+(  182) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'S') THEN
+(  183)   IF (KNIPAR (2) == 255) KNIPAR(3)=109
+(  184)   IF (.NOT. LLNIVA)      KNIPAR(4)=KNIVAU
+(  185) ELSEIF (CDPREF(1:LEN_TRIM(CDPREF)).EQ.'KT') THEN
+(  186)   IF (KNIPAR (2) == 255) KNIPAR(3)=115
+(  187)   IF (.NOT. LLNIVA) THEN
+(  188)     SELECT CASE (KNIVAU)
+(  189)       CASE (273)
+(  190)         KNIPAR(4)=27315
+(  191)       CASE (263)
+(  192)         KNIPAR(4)=26315
+(  193)       CASE DEFAULT
+(  194)         KNIPAR(4)=KNIVAU*100
+(  195)     END SELECT
+(  196)   ENDIF
+(  197) ENDIF
+(  198) !
+(  199) !**
+(  200) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  201) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  202) !-----------------------------------------------------------------------
+(  203) !
+(  204) 1001 CONTINUE
+(  205) LLFATA=LLMOER (KREP,IRANG)
+(  206) !
+(  207) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  208)   INIMES=2
+(  209)   CLNSPR='FAIPAG'
+(  210) !
+(  211)   WRITE (UNIT=FA%NULOUT,FMT=*)'FAIPAG: KNIPAR(1:7) = ',KNIPAR(1:7)
+(  212)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  213)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', IRANG='',I4,  &
+(  214) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,         &
+(  215) &       '', CDSUFF='''''',A,'''''''')')                   &
+(  216) &     KREP, IRANG, CDPREF(1:LEN_TRIM(CDPREF)), KNIVAU,    &
+(  217) &     CDSUFF(1:LEN_TRIM(CDSUFF))
+(  218)   CALL FAIPAR_MT64                                        &
+(  219) &                 (FA, KNUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  220) &                  CLNSPR,CDPREF,.FALSE.)
+(  221) ENDIF
+(  222) !
+(  223) IF (LHOOK) CALL DR_HOOK('FAIPAG_MT',1,ZHOOK_HANDLE)
+(  224) # 225 "faipag.F90"
+(  225) CONTAINS
+(  226) # 227 "faipag.F90"
+(  227) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 13
+
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 228 "faipag.F90"
+(  228) # 229 "faipag.F90"
+(  229) END SUBROUTINE FAIPAG_MT64
+(  230) # 231 "faipag.F90"
+(  231) ! Oct-2012 P. Marguinaud 64b LFI
+(  232) SUBROUTINE FAIPAG64                                        &
+(  233) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  234) &            YDGR1TAB)
+(  235) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  236) &                  FA_COM_DEFAULT_INIT,  &
+(  237) &                  NEW_FA_DEFAULT,       &
+(  238) &                  FAGR1TAB
+(  239) USE LFI_PRECISION
+(  240) IMPLICIT NONE
+(  241) ! Arguments
+(  242) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  243) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  244) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  245) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  246) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  247) INTEGER (KIND=JPLIKB)  KNIPAR     (8)                         !   OUT
+(  248) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  249) # 250 "faipag.F90"
+(  250) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  251) # 252 "faipag.F90"
+(  252) CALL FAIPAG_MT64                                               &
+(  253) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  254) &            YDGR1TAB)
+(  255) # 256 "faipag.F90"
+(  256) END SUBROUTINE FAIPAG64
+(  257) # 258 "faipag.F90"
+(  258) SUBROUTINE FAIPAG                                          &
+(  259) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  260) &            YDGR1TAB)
+(  261) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  262) &                  FA_COM_DEFAULT_INIT,  &
+(  263) &                  NEW_FA_DEFAULT,       &
+(  264) &                  FAGR1TAB
+(  265) USE LFI_PRECISION
+(  266) IMPLICIT NONE
+(  267) ! Arguments
+(  268) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  269) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  270) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  271) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  272) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  273) INTEGER (KIND=JPLIKM)  KNIPAR     (8)                         !   OUT
+(  274) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  275) # 276 "faipag.F90"
+(  276) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:38      page 14
+
+(  277) # 278 "faipag.F90"
+(  278) CALL FAIPAG_MT                                              &
+(  279) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, YDGR1TAB)
+(  280) # 281 "faipag.F90"
+(  281) END SUBROUTINE FAIPAG
+(  282) # 283 "faipag.F90"
+(  283) SUBROUTINE FAIPAG_MT                                           &
+(  284) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, KNIPAR, &
+(  285) &            YDGR1TAB)
+(  286) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(  287) USE LFI_PRECISION
+(  288) IMPLICIT NONE
+(  289) ! Arguments
+(  290) TYPE (FA_COM)          FA                                     ! INOUT
+(  291) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  292) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  293) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  294) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  295) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  296) INTEGER (KIND=JPLIKM)  KNIPAR     (8)                         !   OUT
+(  297) TYPE (FAGR1TAB)        YDGR1TAB                               ! INOUT
+(  298) ! Local integers
+(  299) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  300) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  301) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  302) INTEGER (KIND=JPLIKB)  INIPAR     (8)                         !   OUT
+(  303) ! Convert arguments
+(  304) # 305 "faipag.F90"
+(  305) INUMER     = INT (    KNUMER, JPLIKB)
+(  306) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  307) # 308 "faipag.F90"
+(  308) CALL FAIPAG_MT64                                            &
+(  309) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, INIPAR, YDGR1TAB)
+(  310) # 311 "faipag.F90"
+(  311) KREP       = INT (      IREP, JPLIKM)
+(  312) KNIPAR     = INT (    INIPAR, JPLIKM)
+(  313) # 314 "faipag.F90"
+(  314) END SUBROUTINE FAIPAG_MT
+(  315) # 316 "faipag.F90"
+(  316) !INTF KREP            OUT                               
+(  317) !INTF KNUMER        IN                                  
+(  318) !INTF CDPREF        IN                                  
+(  319) !INTF KNIVAU        IN                                  
+(  320) !INTF CDSUFF        IN                                  
+(  321) !INTF KNIPAR          OUT DIMS=8                        
+(  322) !INTF YDGR1TAB      INOUT                               

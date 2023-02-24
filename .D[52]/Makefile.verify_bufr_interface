@@ -1,0 +1,38 @@
+#-----------------------------------------------------------#
+#    makefile for building the helper                       #
+#    routines in verify_bufr_interface.c                    #
+#                                                           #
+#    Written by:  Jos de Kloe                               #
+#    created:     19-Feb-2009                               #
+#                                                           #
+# Modifications:                                            #
+# 23-Mar-2012 J. de Kloe fix building verify_bufr_interface #
+#                        object file at ecgate              #
+# 05-Feb-2014 J. de Kloe rename bufr_ to bufrdc_            #
+#                                                           #
+#-----------------------------------------------------------#
+
+#-------------------------------------------#
+# BUFR variables
+# ../../Systemsettings defines BUFR_VERSION
+include ../../Systemsettings
+BUFRLIBDIR     = ../${BUFR_INSTALL_DIR}/bufrdc_${BUFR_VERSION}
+BUFRCONFIGFILE = ../${BUFRLIBDIR}/config/config.linux_compiler
+#-------------------------------------------#
+
+# include a file defining the actual settings for ARCH, CNAME, R64 and
+# A64 that were used while building the BUFR library
+include ../${BUFR_INSTALL_DIR}/actual_compile_options.txt
+
+# include the correct config file, which contains all compile and 
+# build options (like FC, FFLAGS, CC, CFLAGS, etc.)
+include ../config/config.$(ARCH)$(CNAME)$(R64)$(A64)
+
+# include the correct options file, which contains the automatic
+# rules for building objects from .F and .c files using 
+# the $(FC) and $(CC) compilers
+include ../options/options_$(ARCH)
+
+verify_bufr_interface.o: verify_bufr_interface.c
+	$(CC) $(CFLAGS) -I${BUFRLIBDIR}/pbio/ -c verify_bufr_interface.c
+

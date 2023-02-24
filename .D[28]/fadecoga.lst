@@ -1,0 +1,296 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:27      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:27      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fadecoga.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) SUBROUTINE FADECOGA                                             &
+(    3) &           (PFDATA, KLENF, KBITS, KNBIT, KB1PAR, KB2PAR,       &
+(    4) &            PVERT, KLENV, KGRIB, KLENG, KWORD, KJLENV, KJLENF, &
+(    5) &            KCPACK, KSCALP, KERR, PMIN, PMAX, LDARPE)
+(    6) USE LFI_PRECISION
+(    7) IMPLICIT NONE
+(    8) ! Arguments
+(    9) INTEGER (KIND=JPLIKB)  KLENF                                  ! IN   
+(   10) REAL (KIND=JPDBLR)     PFDATA     (KLENF)                     !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KBITS                                  !   OUT
+(   12) INTEGER (KIND=JPLIKB)  KNBIT                                  ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KB1PAR     (19)                        !   OUT
+(   14) INTEGER (KIND=JPLIKB)  KB2PAR     (17)                        !   OUT
+(   15) INTEGER (KIND=JPLIKB)  KLENV                                  ! IN   
+(   16) REAL (KIND=JPDBLR)     PVERT      (KLENV)                     !   OUT
+(   17) INTEGER (KIND=JPLIKB)  KLENG                                  ! IN   
+(   18) INTEGER (KIND=JPLIKB)  KGRIB      (KLENG)                     ! IN   
+(   19) INTEGER (KIND=JPLIKB)  KWORD                                  !   OUT
+(   20) INTEGER (KIND=JPLIKB)  KJLENV                                 !   OUT
+(   21) INTEGER (KIND=JPLIKB)  KJLENF                                 !   OUT
+(   22) INTEGER (KIND=JPLIKB)  KCPACK                                 !   OUT
+(   23) INTEGER (KIND=JPLIKB)  KSCALP                                 !   OUT
+(   24) INTEGER (KIND=JPLIKB)  KERR                                   !   OUT
+(   25) REAL (KIND=JPDBLD)     PMIN                                   ! IN   
+(   26) REAL (KIND=JPDBLD)     PMAX                                   ! IN   
+(   27) LOGICAL                LDARPE                                 ! IN   
+(   28) ! Local integers
+(   29) INTEGER (KIND=JPLIKM)  ILENF                                  ! IN   
+(   30) INTEGER (KIND=JPLIKM)  IBITS                                  !   OUT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:27      page 3
+
+(   31) INTEGER (KIND=JPLIKM)  INBIT                                  ! IN   
+(   32) INTEGER (KIND=JPLIKM)  IB1PAR     (19)                        !   OUT
+(   33) INTEGER (KIND=JPLIKM)  IB2PAR     (17)                        !   OUT
+(   34) INTEGER (KIND=JPLIKM)  ILENV                                  ! IN   
+(   35) INTEGER (KIND=JPLIKM)  ILENG                                  ! IN   
+(   36) INTEGER (KIND=JPLIKM)  IWORD                                  !   OUT
+(   37) INTEGER (KIND=JPLIKM)  IJLENV                                 !   OUT
+(   38) INTEGER (KIND=JPLIKM)  IJLENF                                 !   OUT
+(   39) INTEGER (KIND=JPLIKM)  ICPACK                                 !   OUT
+(   40) INTEGER (KIND=JPLIKM)  ISCALP                                 !   OUT
+(   41) INTEGER (KIND=JPLIKM)  IERR                                   !   OUT
+(   42) INTEGER (KIND=JPLIKM)  j
+(   43) ! Local reals
+(   44) REAL (KIND=JPDBLD)     ZFDATA     (KLENF)                     !   OUT
+(   45) REAL (KIND=JPDBLD)     ZVERT      (KLENV)                     !   OUT
+(   46) ! Convert arguments
+(   47) 
+(   48) ILENF      = INT (     KLENF, JPLIKM)
+(   49) INBIT      = INT (     KNBIT, JPLIKM)
+(   50) ILENV      = INT (     KLENV, JPLIKM)
+(   51) ILENG      = INT (     KLENG, JPLIKM)
+(   52) 
+(   53) IF (JPDBLR == JPDBLD) THEN
+(   54) 
+(   55)   CALL DECOGA                                                     &
+(   56)   &           (PFDATA, ILENF, IBITS, INBIT, IB1PAR, IB2PAR,       &
+(   57)   &            PVERT, ILENV, KGRIB, ILENG, IWORD, IJLENV, IJLENF, &
+(   58)   &            ICPACK, ISCALP, IERR, PMIN, PMAX, LDARPE)
+(   59) 
+(   60) 
+(   61) ELSE
+(   62) 
+(   63)   ZFDATA(:)=0._JPDBLD ! avoids FPE in the conversion to real(4) below. REK
+(   64)   CALL DECOGA                                                     &
+(   65)   &           (ZFDATA, ILENF, IBITS, INBIT, IB1PAR, IB2PAR,       &
+(   66)   &            ZVERT, ILENV, KGRIB, ILENG, IWORD, IJLENV, IJLENF, &
+(   67)   &            ICPACK, ISCALP, IERR, PMIN, PMAX, LDARPE)
+(   68) 
+(   69)   PFDATA = REAL (ZFDATA, JPDBLR)
+(   70)   PVERT  = REAL ( ZVERT, JPDBLR)
+(   71) 
+(   72) ENDIF
+(   73) 
+(   74) 
+(   75) KBITS      = INT (     IBITS, JPLIKB)
+(   76) KB1PAR     = INT (    IB1PAR, JPLIKB)
+(   77) KB2PAR     = INT (    IB2PAR, JPLIKB)
+(   78) KWORD      = INT (     IWORD, JPLIKB)
+(   79) KJLENV     = INT (    IJLENV, JPLIKB)
+(   80) KJLENF     = INT (    IJLENF, JPLIKB)
+(   81) KCPACK     = INT (    ICPACK, JPLIKB)
+(   82) KSCALP     = INT (    ISCALP, JPLIKB)
+(   83) KERR       = INT (      IERR, JPLIKB)
+(   84) 
+(   85) END SUBROUTINE FADECOGA
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:27      page 4
+
+(    1) # 1 "fadecoga.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) SUBROUTINE FADECOGA                                             &
+(    3) &           (PFDATA, KLENF, KBITS, KNBIT, KB1PAR, KB2PAR,       &
+(    4) &            PVERT, KLENV, KGRIB, KLENG, KWORD, KJLENV, KJLENF, &
+(    5) &            KCPACK, KSCALP, KERR, PMIN, PMAX, LDARPE)
+(    6) USE LFI_PRECISION
+(    7) IMPLICIT NONE
+(    8) ! Arguments
+(    9) INTEGER (KIND=JPLIKB)  KLENF                                  ! IN   
+(   10) REAL (KIND=JPDBLR)     PFDATA     (KLENF)                     !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KBITS                                  !   OUT
+(   12) INTEGER (KIND=JPLIKB)  KNBIT                                  ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KB1PAR     (19)                        !   OUT
+(   14) INTEGER (KIND=JPLIKB)  KB2PAR     (17)                        !   OUT
+(   15) INTEGER (KIND=JPLIKB)  KLENV                                  ! IN   
+(   16) REAL (KIND=JPDBLR)     PVERT      (KLENV)                     !   OUT
+(   17) INTEGER (KIND=JPLIKB)  KLENG                                  ! IN   
+(   18) INTEGER (KIND=JPLIKB)  KGRIB      (KLENG)                     ! IN   
+(   19) INTEGER (KIND=JPLIKB)  KWORD                                  !   OUT
+(   20) INTEGER (KIND=JPLIKB)  KJLENV                                 !   OUT
+(   21) INTEGER (KIND=JPLIKB)  KJLENF                                 !   OUT
+(   22) INTEGER (KIND=JPLIKB)  KCPACK                                 !   OUT
+(   23) INTEGER (KIND=JPLIKB)  KSCALP                                 !   OUT
+(   24) INTEGER (KIND=JPLIKB)  KERR                                   !   OUT
+(   25) REAL (KIND=JPDBLD)     PMIN                                   ! IN   
+(   26) REAL (KIND=JPDBLD)     PMAX                                   ! IN   
+(   27) LOGICAL                LDARPE                                 ! IN   
+(   28) ! Local integers
+(   29) INTEGER (KIND=JPLIKM)  ILENF                                  ! IN   
+(   30) INTEGER (KIND=JPLIKM)  IBITS                                  !   OUT
+(   31) INTEGER (KIND=JPLIKM)  INBIT                                  ! IN   
+(   32) INTEGER (KIND=JPLIKM)  IB1PAR     (19)                        !   OUT
+(   33) INTEGER (KIND=JPLIKM)  IB2PAR     (17)                        !   OUT
+(   34) INTEGER (KIND=JPLIKM)  ILENV                                  ! IN   
+(   35) INTEGER (KIND=JPLIKM)  ILENG                                  ! IN   
+(   36) INTEGER (KIND=JPLIKM)  IWORD                                  !   OUT
+(   37) INTEGER (KIND=JPLIKM)  IJLENV                                 !   OUT
+(   38) INTEGER (KIND=JPLIKM)  IJLENF                                 !   OUT
+(   39) INTEGER (KIND=JPLIKM)  ICPACK                                 !   OUT
+(   40) INTEGER (KIND=JPLIKM)  ISCALP                                 !   OUT
+(   41) INTEGER (KIND=JPLIKM)  IERR                                   !   OUT
+(   42) INTEGER (KIND=JPLIKM)  j
+(   43) ! Local reals
+(   44) REAL (KIND=JPDBLD)     ZFDATA     (KLENF)                     !   OUT
+(   45) REAL (KIND=JPDBLD)     ZVERT      (KLENV)                     !   OUT
+(   46) ! Convert arguments
+(   47) # 48 "fadecoga.F90"
+(   48) ILENF      = INT (     KLENF, JPLIKM)
+(   49) INBIT      = INT (     KNBIT, JPLIKM)
+(   50) ILENV      = INT (     KLENV, JPLIKM)
+(   51) ILENG      = INT (     KLENG, JPLIKM)
+(   52) # 53 "fadecoga.F90"
+(   53) IF (JPDBLR == JPDBLD) THEN
+(   54) # 55 "fadecoga.F90"
+(   55)   CALL DECOGA                                                     &
+(   56)   &           (PFDATA, ILENF, IBITS, INBIT, IB1PAR, IB2PAR,       &
+(   57)   &            PVERT, ILENV, KGRIB, ILENG, IWORD, IJLENV, IJLENF, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:27      page 5
+
+(   58)   &            ICPACK, ISCALP, IERR, PMIN, PMAX, LDARPE)
+(   59) # 61 "fadecoga.F90"
+(   61) ELSE
+(   62) # 63 "fadecoga.F90"
+(   63)   ZFDATA(:)=0._JPDBLD ! avoids FPE in the conversion to real(4) below. REK
+(   64)   CALL DECOGA                                                     &
+(   65)   &           (ZFDATA, ILENF, IBITS, INBIT, IB1PAR, IB2PAR,       &
+(   66)   &            ZVERT, ILENV, KGRIB, ILENG, IWORD, IJLENV, IJLENF, &
+(   67)   &            ICPACK, ISCALP, IERR, PMIN, PMAX, LDARPE)
+(   68) # 69 "fadecoga.F90"
+(   69)   PFDATA = REAL (ZFDATA, JPDBLR)
+(   70)   PVERT  = REAL ( ZVERT, JPDBLR)
+(   71) # 72 "fadecoga.F90"
+(   72) ENDIF
+(   73) # 75 "fadecoga.F90"
+(   75) KBITS      = INT (     IBITS, JPLIKB)
+(   76) KB1PAR     = INT (    IB1PAR, JPLIKB)
+(   77) KB2PAR     = INT (    IB2PAR, JPLIKB)
+(   78) KWORD      = INT (     IWORD, JPLIKB)
+(   79) KJLENV     = INT (    IJLENV, JPLIKB)
+(   80) KJLENF     = INT (    IJLENF, JPLIKB)
+(   81) KCPACK     = INT (    ICPACK, JPLIKB)
+(   82) KSCALP     = INT (    ISCALP, JPLIKB)
+(   83) KERR       = INT (      IERR, JPLIKB)
+(   84) # 85 "fadecoga.F90"
+(   85) END SUBROUTINE FADECOGA

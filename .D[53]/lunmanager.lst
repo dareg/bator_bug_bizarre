@@ -1,0 +1,1215 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: lunmanager.F90
+
+(    1) MODULE LunManager
+(    2)   !  #[ Description
+(    3) 
+(    4)   !---------------------------------------------------
+(    5)   ! a library to manage the fileunits in fortran90 programs
+(    6)   ! -its purpose is to make it easier to prevent using double unit numbers 
+(    7)   !  without having to track all unitnumbers in all subprograms/units
+(    8)   !  yourself.
+(    9)   !---------------------------------------------------
+(   10)   !    Written by:  Jos de Kloe.
+(   11)   !    created:     05-12-2002 (code borrowed form my rfscat simulator)
+(   12)   !
+(   13)   ! Modifications:
+(   14)   !
+(   15)   ! 13-Feb-2007 J. de Kloe   added path removal in inspect_luns()
+(   16)   ! 09-Mar-2007 J. de Kloe   added function get_filename()
+(   17)   ! 21-Mar-2007 J. de Kloe   added inspect_luns_at_program_end()
+(   18)   ! 18-Apr-2007 J. de Kloe   changed allowed range of unit numbers
+(   19)   ! 22-May-2008 J. de Kloe   added a remark on the latest BUFR library
+(   20)   ! 03-Oct-2008 J. de Kloe   removed testing for unit -1 since that one
+(   21)   !                          gave inpredictable results for ifort
+(   22)   ! 27-Jul-2009 J. de Kloe   adapted inspect_luns to print a uniform message
+(   23)   !                          for the names of the stderr/stdin units
+(   24)   ! 29-Jun-2010 J. de Kloe   add optional exception fileunit to the
+(   25)   !                          inspect_luns_at_program_end subroutine
+(   26)   ! 26-Nov-2010 J. de Kloe   modify get_filename() to also report 
+(   27)   !                          STDOUT/STDIN/STDERR when needed
+(   28)   ! 27-Jun-2014 J. de Kloe   add an exception for ifort on 
+(   29)   !                          the ECMWF Cray machine
+(   30)   !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 3
+
+(   31)   !---------------------------------------------------
+(   32) 
+(   33)   !  #]
+(   34)   !  #[ Modules used
+(   35)   USE StringTools, only: Split_path_and_filename
+(   36)   !  #]
+(   37)   !  #[ Variables and parameters
+(   38)   IMPLICIT NONE
+(   39) 
+(   40)   ! some default unit numbers
+(   41)   integer, parameter :: fileunit_stderr = 0
+(   42)   integer, parameter :: stderr          = 0
+(   43)   integer, parameter :: fileunit_stdin  = 5
+(   44)   integer, parameter :: stdin           = 5
+(   45)   integer, parameter :: fileunit_stdout = 6
+(   46)   integer, parameter :: stdout          = 6
+(   47) 
+(   48)   ! definition of the possible fileunits
+(   49)   integer, parameter, private :: first_lun = 30
+(   50)   integer, parameter, private :: last_lun  = 49
+(   51)   logical, dimension(first_lun:last_lun), private :: lun_used     = .false.
+(   52)   logical, dimension(first_lun:last_lun), private :: lun_disabled = .false.
+(   53) 
+(   54)   ! local debug switch
+(   55)   logical, parameter :: debug = .false. ! .true.
+(   56) 
+(   57)   !remark: unit numbers must be positive and are usually between 1 and 99
+(   58)   !        Often used default numbers are:
+(   59)   !           0?= stderr, 5 = stdin, 6 = stdout
+(   60)   !           16= pbmesr_fileunit
+(   61)   !           21= used in bufr_000320 in btable.F/ctable.F/dtable.F
+(   62)   !               (this was not yet the case in bufr_000310)
+(   63)   !        these should not be used for normal files, 
+(   64)   !        therefore I choose the range 30-49
+(   65)   !update: the newer BUFR library versions (at least from 000351 upwards)
+(   66)   !        do not use fixed unit numbers anymore, but search at runtime 
+(   67)   !        for an unused unit number between 10 and 300 using the 
+(   68)   !        subroutine bufrdc/get_free_unit.F
+(   69)   !        Therefore no clashes are expected with the L2BP software
+(   70)   !        and our range 30-49 can just remain what it was.
+(   71)   !  #]
+(   72) CONTAINS ! routines to handle the data in this module
+(   73)   !--------------------------------
+(   74)   subroutine inspect_luns(hide_path)
+(   75)     !  #[
+(   76)     logical, optional,  intent(in)  :: hide_path
+(   77) 
+(   78)     ! loop over all possible lun's and see if they are available or not
+(   79)     ! (mainly used for testing some fortran90 features)
+(   80) 
+(   81)     integer :: this_lun
+(   82)     logical :: exists, is_open, nmd, do_hide_path
+(   83)     character(len=256) :: nam, name_to_print
+(   84)     character(len=256) :: path,filename
+(   85) 
+(   86)     ! init
+(   87)     do_hide_path = .false.
+(   88)     if (present(hide_path)) do_hide_path = hide_path
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 4
+
+(   89) 
+(   90)     print *,"start of inspect_luns"
+(   91)     ! WARNING: don't use negative unit numbers anymore (we used to test unit 
+(   92)     ! -1 here as well) because the results are inpredictable for some
+(   93)     ! compilers (i.e. newer ifort versions report file units -4 upto -1
+(   94)     ! as being open and writable. No idea why. Maybe this is an undocumented
+(   95)     ! new feature, but I found nothing about this in the documentation. 
+(   96)     ! JK, 03-Oct-2008)
+(   97)     DO this_lun = 0,99
+(   98)        inquire(unit=this_lun,exist=exists,opened=is_open,named=nmd,name=nam)
+(   99) 
+(  100)        IF (exists) THEN
+(  101)           IF (is_open) THEN
+(  102)              print *," lun ",this_lun," is open"
+(  103)              IF (nmd) THEN
+(  104)                 call Split_path_and_filename(nam,path,filename)
+(  105)                 
+(  106)                 name_to_print = nam
+(  107)                 select case(this_lun)
+(  108)                 case(stderr)
+(  109)                    ! if this one has a name it usually is "stderr"
+(  110)                    ! However, ifort uses the name "/var/pts/xx"
+(  111)                    ! in which xx is a 2 or 3 digit number.
+(  112)                    ! NOTE that ifort ALSO uses "stderr" in case stderr
+(  113)                    ! is redirected to stdout, while performing the test!
+(  114)                    if ( (nam(1:9) .eq. "/dev/pts/") .or. &
+(  115)                         (trim(nam) .eq. "stderr")) then
+(  116)                       name_to_print = "[name is as expected]"
+(  117)                    end if
+(  118)                 case(stdin)
+(  119)                    ! if this one has a name it usually is "stdin"
+(  120)                    ! However, ifort uses the name "/var/pts/xx"
+(  121)                    ! in which xx is a 2 or 3 digit number.
+(  122)                    if ( (nam(1:9) .eq. "/dev/pts/") .or. &
+(  123)                         (trim(nam) .eq. "stdin")) then
+(  124)                       name_to_print = "[name is as expected]"
+(  125)                    end if
+(  126)                 case(stdout)
+(  127)                    ! if this one has a name it usually is "stdout"
+(  128)                    ! However, ifort on the ECMWF CRAY machine uses
+(  129)                    ! the name "/proc/17449/fd/1"
+(  130)                    if ( (trim(nam) .eq. "stdout") .or. &
+(  131)                         (nam(1:6) .eq. "/proc/") ) then
+(  132)                       name_to_print = "[name is as expected]"
+(  133)                    end if
+(  134)                 case default
+(  135)                    if (do_hide_path) then
+(  136)                       ! discard the path, and only print the filename
+(  137)                       ! This is needed for this test, because most compilers
+(  138)                       ! give just the filename, but the ifort compiler 
+(  139)                       ! prepends the full path name to the nam variable!
+(  140)                       name_to_print = filename
+(  141)                    end if
+(  142)                 end select
+(  143) 
+(  144)                 print *," lun ",this_lun," has a name: ",trim(name_to_print)
+(  145)              END IF
+(  146) !          ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 5
+
+(  147) !             print *," lun ",this_lun," is NOT open"
+(  148)           END IF
+(  149)        ELSE
+(  150)           print *," lun ",this_lun," does NOT exist"          
+(  151)        END IF
+(  152) 
+(  153)     END DO
+(  154)     print *,"end of inspect_luns"
+(  155) 
+(  156)   end subroutine inspect_luns
+(  157)   !--------------------------------
+(  158) 
+(  159)   !  #]
+(  160)   subroutine inspect_luns_at_program_end(open_fileunit_found,message,&
+(  161)                                          hide_path,disregard_unit)
+(  162)     !  #[
+(  163)     ! loop over all possible lun's and see if any have been left open
+(  164)     logical,            intent(out) :: open_fileunit_found
+(  165)     character(len=256), intent(out) :: message
+(  166)     logical, optional,  intent(in)  :: hide_path
+(  167)     integer, optional,  intent(in)  :: disregard_unit
+(  168) 
+(  169)     ! local variables
+(  170)     integer :: this_lun, unit_to_disregard
+(  171)     logical :: exists, is_open, nmd, do_hide_path
+(  172)     character(len=256) :: nam, acc, fmt, act, properties
+(  173)     character(len=256) :: filename, pathname
+(  174)     character(len=3)   :: lun_txt
+(  175) 
+(  176)     ! init
+(  177)     do_hide_path = .false.
+(  178)     if (present(hide_path)) do_hide_path = hide_path
+(  179) 
+(  180)     unit_to_disregard = -999
+(  181)     if (present(disregard_unit)) unit_to_disregard = disregard_unit
+(  182) 
+(  183)     open_fileunit_found = .false.
+(  184)     message(:) = ' '
+(  185)     properties(:) = ' '
+(  186) 
+(  187)     ! WARNING: don't use negative unit numbers anymore (we used to test unit 
+(  188)     ! -1 here as well) because the results are inpredictable for some
+(  189)     ! compilers (i.e. newer ifort versions report file units -4 upto -1
+(  190)     ! as being open and writable. No idea why. Maybe this is an undocumented
+(  191)     ! new feature, but I found nothing about this in the documentation. 
+(  192)     ! JK, 03-Oct-2008)
+(  193)     lun_loop: DO this_lun = 0,99
+(  194)        ! disregard the optional unit_to_disregard
+(  195)        ! (typically used for a logfile that should remain open untill
+(  196)        ! the absolute end of the program)
+(  197)        if (this_lun .eq. unit_to_disregard) cycle lun_loop
+(  198) 
+(  199)        inquire(unit=this_lun,exist=exists,opened=is_open,named=nmd,&
+(  200)                name=nam,access=acc, formatted=fmt, action=act)
+(  201)        IF (exists) THEN
+(  202)           IF (is_open) THEN
+(  203)              IF ( (this_lun .ne. fileunit_stderr) .and. &
+(  204)                   (this_lun .ne. fileunit_stdin ) .and. &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 6
+
+(  205)                   (this_lun .ne. fileunit_stdout)        ) THEN
+(  206)                 IF (open_fileunit_found) THEN
+(  207)                    message = trim(message)//" (more open files found, "//&
+(  208)                         "properties of those are not printed)"
+(  209)                    exit lun_loop
+(  210)                 END IF
+(  211) 
+(  212)                 open_fileunit_found = .true.
+(  213)                 write(lun_txt,"(i3)",err=999) this_lun
+(  214) 
+(  215)                 message = trim(message)//"Fileunit "//trim(lun_txt)//&
+(  216)                      " is still open ! "
+(  217)                 IF (nmd) THEN
+(  218)                    if (do_hide_path) then
+(  219)                       ! split path and name.
+(  220)                       ! this is usefull for our test system, because some 
+(  221)                       ! compilers report only the filename with the inquire() 
+(  222)                       ! above, and others include the full path_name as well 
+(  223)                       ! (i.e. ifort) which breaks our testing
+(  224)                       ! when running on a different machine/user with ifort.
+(  225)                       call Split_path_and_filename(nam,pathname,filename)
+(  226)                       message = trim(message)//" File: "//trim(filename)
+(  227)                    else
+(  228)                       message = trim(message)//" File: "//trim(nam)
+(  229)                    end if
+(  230)                 END IF
+(  231)                 select case (trim(fmt))
+(  232)                 case ("YES")
+(  233)                    properties = trim(properties)//" FORMATTED"
+(  234)                 case ("NO")
+(  235)                    properties = trim(properties)//" UNFORMATTED"
+(  236)                 case ("UNKNOWN")
+(  237)                    properties = trim(properties)//" UNKNOWN FORMAT STATE"
+(  238)                 case default
+(  239)                    properties = trim(properties)//" UNDEFINED FORMAT STATE"
+(  240)                 end select
+(  241) 
+(  242)                 properties = trim(properties)//", "//trim(act)//" MODE"
+(  243) 
+(  244)                 IF (trim(acc) .eq. "DIRECT") THEN
+(  245)                    properties = trim(properties)//", DIRECT ACCESS"
+(  246)                 END IF
+(  247) 
+(  248)                 message = trim(message)//" Properties: "//trim(properties)
+(  249)              END IF
+(  250)           END IF
+(  251)        END IF
+(  252)     END DO lun_loop
+(  253) 
+(  254)     return
+(  255) 
+(  256) 999 message = "ERROR in inspect_luns_at_program_end: could not convert "//&
+(  257)          "fileunit number to a string ..."
+(  258)     return
+(  259) 
+(  260)   end subroutine inspect_luns_at_program_end
+(  261)   !--------------------------------
+(  262)   !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 7
+
+(  263)   function get_lun() result(fileunit)
+(  264)     !  #[
+(  265) 
+(  266)     integer :: fileunit ! result
+(  267) 
+(  268)     ! local parameters
+(  269)     integer :: this_lun
+(  270)     logical :: exists, is_open !, nmd
+(  271) 
+(  272)     this_lun = first_lun
+(  273)     find_free_lun_loop: DO
+(  274)       IF ( (.not. lun_used(    this_lun) ) .and. &
+(  275)            (.not. lun_disabled(this_lun) )        ) THEN
+(  276) 
+(  277)         ! for extra security, see if this unit exists, and is not yet open
+(  278)         inquire(unit=this_lun,exist=exists,opened=is_open)
+(  279)         IF (.not. exists) THEN
+(  280)            print *,"ERROR in get_lun(), a free unit number seems illegal"
+(  281)            print *,"probably the first_lun, last_lun parameters in the file"
+(  282)            print *,"lun_manager.f90 have illegal values..."
+(  283)            print *,"fileunit = ",this_lun
+(  284)            ! disable the use of this unit number, and search another one
+(  285)            CALL disable_lun(this_lun)
+(  286)         ELSE
+(  287)            IF (is_open) THEN
+(  288)               print *,"ERROR in get_lun(), a free unit number seems "
+(  289)               print *,"to be in use already. Probably by a program unit or"
+(  290)               print *,"library that does not use this module for unit handling"
+(  291)               ! disable the use of this unit number, and search another one
+(  292)               CALL disable_lun(this_lun)
+(  293)            ELSE
+(  294)               ! all seems OK, so return with the found unit number
+(  295)               exit find_free_lun_loop
+(  296)            END IF
+(  297)         END IF
+(  298) 
+(  299)       ELSE
+(  300)         this_lun = this_lun + 1
+(  301)       END IF
+(  302) 
+(  303)       IF (this_lun .gt. last_lun) THEN
+(  304)         print *,'ERROR: no more fileunits available in function get_lun !'
+(  305)         ! exit this routine gracefully, by reporting an error
+(  306)         fileunit=-1 
+(  307)         return
+(  308)         ! replace if needed by the next action to stop program execution
+(  309) !        print *,'aborting program .......'
+(  310) !        stop
+(  311)       END IF
+(  312)     END DO find_free_lun_loop
+(  313) 
+(  314)     lun_used(this_lun) = .true.
+(  315)     fileunit = this_lun
+(  316)     IF (debug) print *,"get_lun(): requested LUN: ",fileunit
+(  317) 
+(  318)     return
+(  319) 
+(  320)   end function get_lun
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 8
+
+(  321)   !--------------------------------
+(  322) 
+(  323)   !  #]
+(  324)   subroutine free_lun(fileunit)
+(  325)     !  #[
+(  326)     integer, intent(in) :: fileunit
+(  327) 
+(  328)     IF ((fileunit .ge. first_lun) .and. &
+(  329)         (fileunit .le. last_lun )        ) THEN
+(  330)       IF (lun_used(fileunit)) THEN
+(  331)         lun_used(fileunit) = .false.
+(  332)       ELSE
+(  333)         print *,'fileunit: ',fileunit,' was not in use !!!'
+(  334)         print *,'free_lun returns without freeing any fileunit'
+(  335)       END IF
+(  336)     ELSE
+(  337)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  338)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  339)       print *,'free_lun returns without freeing any fileunit'
+(  340)     END IF
+(  341) 
+(  342)     IF (debug) print *,"free_lun(): freed LUN: ",fileunit
+(  343) 
+(  344)     return
+(  345)   end subroutine free_lun
+(  346)   !--------------------------------
+(  347)   !  #]
+(  348)   subroutine print_used_lun
+(  349)     !  #[
+(  350)     integer :: i
+(  351) 
+(  352)     DO i = first_lun, last_lun
+(  353)       IF (lun_used(i)) THEN
+(  354)         print *,'fileunit: ',i,' is in use'
+(  355)       ELSE
+(  356)         IF (lun_disabled(i)) THEN
+(  357)           print *,'fileunit: ',i,' is disabled'
+(  358)         ELSE
+(  359)           print *,'fileunit: ',i,' is still available'
+(  360)         END IF
+(  361)       END IF
+(  362)     END DO
+(  363)     return
+(  364)   end subroutine print_used_lun
+(  365)   !--------------------------------
+(  366)   !  #]
+(  367)   subroutine disable_lun(fileunit)
+(  368)     !  #[
+(  369)     integer, intent(in) :: fileunit
+(  370) 
+(  371)     IF ((fileunit .ge. first_lun) .and. &
+(  372)         (fileunit .le. last_lun )        ) THEN
+(  373)       IF (lun_used(fileunit)) THEN
+(  374)         print *,'fileunit: ',fileunit,' is still in use !'
+(  375)         print *,'disabling it is only possible if it is not used !'
+(  376)         print *,'disable_lun returns without disabling any fileunit'
+(  377)       ELSE
+(  378)         IF (.NOT. lun_disabled(fileunit)) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 9
+
+(  379)           lun_disabled(fileunit) = .true.
+(  380) !          print *,'fileunit: ',fileunit,' has been disabled'
+(  381)         ELSE
+(  382)           print *,'fileunit: ',fileunit,' was already disabled !!!'
+(  383)           print *,'disable_lun returns without disabling any fileunit'
+(  384)         END IF
+(  385)       END IF
+(  386)     ELSE
+(  387)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  388)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  389)       print *,'disable_lun returns without disabling any fileunit'
+(  390)     END IF
+(  391) 
+(  392)     return
+(  393)   end subroutine disable_lun
+(  394)   !--------------------------------
+(  395)   !  #]
+(  396)   subroutine enable_lun(fileunit)
+(  397)     !  #[
+(  398) 
+(  399)     integer, intent(in) :: fileunit
+(  400) 
+(  401)     IF ((fileunit .ge. first_lun) .and. &
+(  402)         (fileunit .le. last_lun )        ) THEN
+(  403)       IF (lun_disabled(fileunit)) THEN
+(  404)         lun_disabled(fileunit) = .false.
+(  405) !        print *,'fileunit: ',fileunit,' has been enabled'
+(  406)       ELSE
+(  407)         print *,'fileunit: ',fileunit,' was already enabled !!!'
+(  408)         print *,'enable_lun returns without enabling any fileunit'
+(  409)       END IF
+(  410)     ELSE
+(  411)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  412)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  413)       print *,'enable_lun returns without enabling any fileunit'
+(  414)     END IF
+(  415) 
+(  416)     return
+(  417)   end subroutine enable_lun
+(  418)   !--------------------------------
+(  419) 
+(  420)     !  #]
+(  421)   subroutine print_disabled_lun
+(  422)     !  #[
+(  423)     integer :: i
+(  424) 
+(  425)     DO i = first_lun, last_lun
+(  426)       IF (lun_disabled(i)) THEN
+(  427)         print *,'fileunit: ',i,' is disabled'
+(  428)       ELSE
+(  429)         print *,'fileunit: ',i,' is enabled'
+(  430)       END IF
+(  431)     END DO
+(  432)     return
+(  433) 
+(  434)   end subroutine print_disabled_lun
+(  435)   !--------------------------------
+(  436)     !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 10
+
+(  437)   function inquire_lun_in_use(fileunit) result(in_use)
+(  438)     !  #[
+(  439)     ! inquires whether the given fileunit is connected to a file
+(  440)     ! or not. If in use, true is returned, otherwise false
+(  441) 
+(  442)     ! this is a test of this feature of fortran90,
+(  443)     ! not using the datastructure in this module
+(  444)     integer :: fileunit
+(  445)     logical :: in_use
+(  446) 
+(  447)     in_use = .false.
+(  448)     inquire(unit=fileunit, opened=in_use)
+(  449)     return
+(  450) 
+(  451)   end function inquire_lun_in_use
+(  452)     !  #]
+(  453)   function get_filename(fileunit) result(filename)
+(  454)     !  #[
+(  455)     integer            :: fileunit ! input
+(  456)     character(len=256) :: filename ! output
+(  457)     
+(  458)     ! local variables
+(  459)     logical            :: nmd
+(  460)     character(len=256) :: nam
+(  461)     
+(  462)     filename = "[unknown]"
+(  463)     inquire(unit=fileunit,named=nmd,name=nam)
+(  464)     IF (nmd) filename = nam
+(  465) 
+(  466)     if (fileunit .eq.fileunit_stderr) then
+(  467)        filename = "<STDERR>"
+(  468)        return
+(  469)     end if
+(  470) 
+(  471)     if (fileunit .eq.fileunit_stdin) then
+(  472)        filename = "<STDIN>"
+(  473)        return
+(  474)     end if
+(  475) 
+(  476)     if (fileunit .eq.fileunit_stdout) then
+(  477)        filename = "<STDOUT>"
+(  478)        return
+(  479)     end if
+(  480) 
+(  481)   end function get_filename
+(  482)   !  #]
+(  483)   !--------------------------------
+(  484) END Module LunManager
+(  485) 
+(  486) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 11
+
+(    1) # 1 "lunmanager.F90"
+(    1) MODULE LunManager
+(    2)   !  #[ Description
+(    3) # 4 "lunmanager.F90"
+(    4)   !---------------------------------------------------
+(    5)   ! a library to manage the fileunits in fortran90 programs
+(    6)   ! -its purpose is to make it easier to prevent using double unit numbers 
+(    7)   !  without having to track all unitnumbers in all subprograms/units
+(    8)   !  yourself.
+(    9)   !---------------------------------------------------
+(   10)   !    Written by:  Jos de Kloe.
+(   11)   !    created:     05-12-2002 (code borrowed form my rfscat simulator)
+(   12)   !
+(   13)   ! Modifications:
+(   14)   !
+(   15)   ! 13-Feb-2007 J. de Kloe   added path removal in inspect_luns()
+(   16)   ! 09-Mar-2007 J. de Kloe   added function get_filename()
+(   17)   ! 21-Mar-2007 J. de Kloe   added inspect_luns_at_program_end()
+(   18)   ! 18-Apr-2007 J. de Kloe   changed allowed range of unit numbers
+(   19)   ! 22-May-2008 J. de Kloe   added a remark on the latest BUFR library
+(   20)   ! 03-Oct-2008 J. de Kloe   removed testing for unit -1 since that one
+(   21)   !                          gave inpredictable results for ifort
+(   22)   ! 27-Jul-2009 J. de Kloe   adapted inspect_luns to print a uniform message
+(   23)   !                          for the names of the stderr/stdin units
+(   24)   ! 29-Jun-2010 J. de Kloe   add optional exception fileunit to the
+(   25)   !                          inspect_luns_at_program_end subroutine
+(   26)   ! 26-Nov-2010 J. de Kloe   modify get_filename() to also report 
+(   27)   !                          STDOUT/STDIN/STDERR when needed
+(   28)   ! 27-Jun-2014 J. de Kloe   add an exception for ifort on 
+(   29)   !                          the ECMWF Cray machine
+(   30)   !
+(   31)   !---------------------------------------------------
+(   32) # 33 "lunmanager.F90"
+(   33)   !  #]
+(   34)   !  #[ Modules used
+(   35)   USE StringTools, only: Split_path_and_filename
+(   36)   !  #]
+(   37)   !  #[ Variables and parameters
+(   38)   IMPLICIT NONE
+(   39) # 40 "lunmanager.F90"
+(   40)   ! some default unit numbers
+(   41)   integer, parameter :: fileunit_stderr = 0
+(   42)   integer, parameter :: stderr          = 0
+(   43)   integer, parameter :: fileunit_stdin  = 5
+(   44)   integer, parameter :: stdin           = 5
+(   45)   integer, parameter :: fileunit_stdout = 6
+(   46)   integer, parameter :: stdout          = 6
+(   47) # 48 "lunmanager.F90"
+(   48)   ! definition of the possible fileunits
+(   49)   integer, parameter, private :: first_lun = 30
+(   50)   integer, parameter, private :: last_lun  = 49
+(   51)   logical, dimension(first_lun:last_lun), private :: lun_used     = .false.
+(   52)   logical, dimension(first_lun:last_lun), private :: lun_disabled = .false.
+(   53) # 54 "lunmanager.F90"
+(   54)   ! local debug switch
+(   55)   logical, parameter :: debug = .false. ! .true.
+(   56) # 57 "lunmanager.F90"
+(   57)   !remark: unit numbers must be positive and are usually between 1 and 99
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 12
+
+(   58)   !        Often used default numbers are:
+(   59)   !           0?= stderr, 5 = stdin, 6 = stdout
+(   60)   !           16= pbmesr_fileunit
+(   61)   !           21= used in bufr_000320 in btable.F/ctable.F/dtable.F
+(   62)   !               (this was not yet the case in bufr_000310)
+(   63)   !        these should not be used for normal files, 
+(   64)   !        therefore I choose the range 30-49
+(   65)   !update: the newer BUFR library versions (at least from 000351 upwards)
+(   66)   !        do not use fixed unit numbers anymore, but search at runtime 
+(   67)   !        for an unused unit number between 10 and 300 using the 
+(   68)   !        subroutine bufrdc/get_free_unit.F
+(   69)   !        Therefore no clashes are expected with the L2BP software
+(   70)   !        and our range 30-49 can just remain what it was.
+(   71)   !  #]
+(   72) CONTAINS ! routines to handle the data in this module
+(   73)   !--------------------------------
+(   74)   subroutine inspect_luns(hide_path)
+(   75)     !  #[
+(   76)     logical, optional,  intent(in)  :: hide_path
+(   77) # 78 "lunmanager.F90"
+(   78)     ! loop over all possible lun's and see if they are available or not
+(   79)     ! (mainly used for testing some fortran90 features)
+(   80) # 81 "lunmanager.F90"
+(   81)     integer :: this_lun
+(   82)     logical :: exists, is_open, nmd, do_hide_path
+(   83)     character(len=256) :: nam, name_to_print
+(   84)     character(len=256) :: path,filename
+(   85) # 86 "lunmanager.F90"
+(   86)     ! init
+(   87)     do_hide_path = .false.
+(   88)     if (present(hide_path)) do_hide_path = hide_path
+(   89) # 90 "lunmanager.F90"
+(   90)     print *,"start of inspect_luns"
+(   91)     ! WARNING: don't use negative unit numbers anymore (we used to test unit 
+(   92)     ! -1 here as well) because the results are inpredictable for some
+(   93)     ! compilers (i.e. newer ifort versions report file units -4 upto -1
+(   94)     ! as being open and writable. No idea why. Maybe this is an undocumented
+(   95)     ! new feature, but I found nothing about this in the documentation. 
+(   96)     ! JK, 03-Oct-2008)
+(   97)     DO this_lun = 0,99
+(   98)        inquire(unit=this_lun,exist=exists,opened=is_open,named=nmd,name=nam)
+(   99) # 100 "lunmanager.F90"
+(  100)        IF (exists) THEN
+(  101)           IF (is_open) THEN
+(  102)              print *," lun ",this_lun," is open"
+(  103)              IF (nmd) THEN
+(  104)                 call Split_path_and_filename(nam,path,filename)
+(  105)                 
+(  106)                 name_to_print = nam
+(  107)                 select case(this_lun)
+(  108)                 case(stderr)
+(  109)                    ! if this one has a name it usually is "stderr"
+(  110)                    ! However, ifort uses the name "/var/pts/xx"
+(  111)                    ! in which xx is a 2 or 3 digit number.
+(  112)                    ! NOTE that ifort ALSO uses "stderr" in case stderr
+(  113)                    ! is redirected to stdout, while performing the test!
+(  114)                    if ( (nam(1:9) .eq. "/dev/pts/") .or. &
+(  115)                         (trim(nam) .eq. "stderr")) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 13
+
+(  116)                       name_to_print = "[name is as expected]"
+(  117)                    end if
+(  118)                 case(stdin)
+(  119)                    ! if this one has a name it usually is "stdin"
+(  120)                    ! However, ifort uses the name "/var/pts/xx"
+(  121)                    ! in which xx is a 2 or 3 digit number.
+(  122)                    if ( (nam(1:9) .eq. "/dev/pts/") .or. &
+(  123)                         (trim(nam) .eq. "stdin")) then
+(  124)                       name_to_print = "[name is as expected]"
+(  125)                    end if
+(  126)                 case(stdout)
+(  127)                    ! if this one has a name it usually is "stdout"
+(  128)                    ! However, ifort on the ECMWF CRAY machine uses
+(  129)                    ! the name "/proc/17449/fd/1"
+(  130)                    if ( (trim(nam) .eq. "stdout") .or. &
+(  131)                         (nam(1:6) .eq. "/proc/") ) then
+(  132)                       name_to_print = "[name is as expected]"
+(  133)                    end if
+(  134)                 case default
+(  135)                    if (do_hide_path) then
+(  136)                       ! discard the path, and only print the filename
+(  137)                       ! This is needed for this test, because most compilers
+(  138)                       ! give just the filename, but the ifort compiler 
+(  139)                       ! prepends the full path name to the nam variable!
+(  140)                       name_to_print = filename
+(  141)                    end if
+(  142)                 end select
+(  143) # 144 "lunmanager.F90"
+(  144)                 print *," lun ",this_lun," has a name: ",trim(name_to_print)
+(  145)              END IF
+(  146) !          ELSE
+(  147) !             print *," lun ",this_lun," is NOT open"
+(  148)           END IF
+(  149)        ELSE
+(  150)           print *," lun ",this_lun," does NOT exist"          
+(  151)        END IF
+(  152) # 153 "lunmanager.F90"
+(  153)     END DO
+(  154)     print *,"end of inspect_luns"
+(  155) # 156 "lunmanager.F90"
+(  156)   end subroutine inspect_luns
+(  157)   !--------------------------------
+(  158) # 159 "lunmanager.F90"
+(  159)   !  #]
+(  160)   subroutine inspect_luns_at_program_end(open_fileunit_found,message,&
+(  161)                                          hide_path,disregard_unit)
+(  162)     !  #[
+(  163)     ! loop over all possible lun's and see if any have been left open
+(  164)     logical,            intent(out) :: open_fileunit_found
+(  165)     character(len=256), intent(out) :: message
+(  166)     logical, optional,  intent(in)  :: hide_path
+(  167)     integer, optional,  intent(in)  :: disregard_unit
+(  168) # 169 "lunmanager.F90"
+(  169)     ! local variables
+(  170)     integer :: this_lun, unit_to_disregard
+(  171)     logical :: exists, is_open, nmd, do_hide_path
+(  172)     character(len=256) :: nam, acc, fmt, act, properties
+(  173)     character(len=256) :: filename, pathname
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 14
+
+(  174)     character(len=3)   :: lun_txt
+(  175) # 176 "lunmanager.F90"
+(  176)     ! init
+(  177)     do_hide_path = .false.
+(  178)     if (present(hide_path)) do_hide_path = hide_path
+(  179) # 180 "lunmanager.F90"
+(  180)     unit_to_disregard = -999
+(  181)     if (present(disregard_unit)) unit_to_disregard = disregard_unit
+(  182) # 183 "lunmanager.F90"
+(  183)     open_fileunit_found = .false.
+(  184)     message(:) = ' '
+(  185)     properties(:) = ' '
+(  186) # 187 "lunmanager.F90"
+(  187)     ! WARNING: don't use negative unit numbers anymore (we used to test unit 
+(  188)     ! -1 here as well) because the results are inpredictable for some
+(  189)     ! compilers (i.e. newer ifort versions report file units -4 upto -1
+(  190)     ! as being open and writable. No idea why. Maybe this is an undocumented
+(  191)     ! new feature, but I found nothing about this in the documentation. 
+(  192)     ! JK, 03-Oct-2008)
+(  193)     lun_loop: DO this_lun = 0,99
+(  194)        ! disregard the optional unit_to_disregard
+(  195)        ! (typically used for a logfile that should remain open untill
+(  196)        ! the absolute end of the program)
+(  197)        if (this_lun .eq. unit_to_disregard) cycle lun_loop
+(  198) # 199 "lunmanager.F90"
+(  199)        inquire(unit=this_lun,exist=exists,opened=is_open,named=nmd,&
+(  200)                name=nam,access=acc, formatted=fmt, action=act)
+(  201)        IF (exists) THEN
+(  202)           IF (is_open) THEN
+(  203)              IF ( (this_lun .ne. fileunit_stderr) .and. &
+(  204)                   (this_lun .ne. fileunit_stdin ) .and. &
+(  205)                   (this_lun .ne. fileunit_stdout)        ) THEN
+(  206)                 IF (open_fileunit_found) THEN
+(  207)                    message = trim(message)//" (more open files found, "//&
+(  208)                         "properties of those are not printed)"
+(  209)                    exit lun_loop
+(  210)                 END IF
+(  211) # 212 "lunmanager.F90"
+(  212)                 open_fileunit_found = .true.
+(  213)                 write(lun_txt,"(i3)",err=999) this_lun
+(  214) # 215 "lunmanager.F90"
+(  215)                 message = trim(message)//"Fileunit "//trim(lun_txt)//&
+(  216)                      " is still open ! "
+(  217)                 IF (nmd) THEN
+(  218)                    if (do_hide_path) then
+(  219)                       ! split path and name.
+(  220)                       ! this is usefull for our test system, because some 
+(  221)                       ! compilers report only the filename with the inquire() 
+(  222)                       ! above, and others include the full path_name as well 
+(  223)                       ! (i.e. ifort) which breaks our testing
+(  224)                       ! when running on a different machine/user with ifort.
+(  225)                       call Split_path_and_filename(nam,pathname,filename)
+(  226)                       message = trim(message)//" File: "//trim(filename)
+(  227)                    else
+(  228)                       message = trim(message)//" File: "//trim(nam)
+(  229)                    end if
+(  230)                 END IF
+(  231)                 select case (trim(fmt))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 15
+
+(  232)                 case ("YES")
+(  233)                    properties = trim(properties)//" FORMATTED"
+(  234)                 case ("NO")
+(  235)                    properties = trim(properties)//" UNFORMATTED"
+(  236)                 case ("UNKNOWN")
+(  237)                    properties = trim(properties)//" UNKNOWN FORMAT STATE"
+(  238)                 case default
+(  239)                    properties = trim(properties)//" UNDEFINED FORMAT STATE"
+(  240)                 end select
+(  241) # 242 "lunmanager.F90"
+(  242)                 properties = trim(properties)//", "//trim(act)//" MODE"
+(  243) # 244 "lunmanager.F90"
+(  244)                 IF (trim(acc) .eq. "DIRECT") THEN
+(  245)                    properties = trim(properties)//", DIRECT ACCESS"
+(  246)                 END IF
+(  247) # 248 "lunmanager.F90"
+(  248)                 message = trim(message)//" Properties: "//trim(properties)
+(  249)              END IF
+(  250)           END IF
+(  251)        END IF
+(  252)     END DO lun_loop
+(  253) # 254 "lunmanager.F90"
+(  254)     return
+(  255) # 256 "lunmanager.F90"
+(  256) 999 message = "ERROR in inspect_luns_at_program_end: could not convert "//&
+(  257)          "fileunit number to a string ..."
+(  258)     return
+(  259) # 260 "lunmanager.F90"
+(  260)   end subroutine inspect_luns_at_program_end
+(  261)   !--------------------------------
+(  262)   !  #]
+(  263)   function get_lun() result(fileunit)
+(  264)     !  #[
+(  265) # 266 "lunmanager.F90"
+(  266)     integer :: fileunit ! result
+(  267) # 268 "lunmanager.F90"
+(  268)     ! local parameters
+(  269)     integer :: this_lun
+(  270)     logical :: exists, is_open !, nmd
+(  271) # 272 "lunmanager.F90"
+(  272)     this_lun = first_lun
+(  273)     find_free_lun_loop: DO
+(  274)       IF ( (.not. lun_used(    this_lun) ) .and. &
+(  275)            (.not. lun_disabled(this_lun) )        ) THEN
+(  276) # 277 "lunmanager.F90"
+(  277)         ! for extra security, see if this unit exists, and is not yet open
+(  278)         inquire(unit=this_lun,exist=exists,opened=is_open)
+(  279)         IF (.not. exists) THEN
+(  280)            print *,"ERROR in get_lun(), a free unit number seems illegal"
+(  281)            print *,"probably the first_lun, last_lun parameters in the file"
+(  282)            print *,"lun_manager.f90 have illegal values..."
+(  283)            print *,"fileunit = ",this_lun
+(  284)            ! disable the use of this unit number, and search another one
+(  285)            CALL disable_lun(this_lun)
+(  286)         ELSE
+(  287)            IF (is_open) THEN
+(  288)               print *,"ERROR in get_lun(), a free unit number seems "
+(  289)               print *,"to be in use already. Probably by a program unit or"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 16
+
+(  290)               print *,"library that does not use this module for unit handling"
+(  291)               ! disable the use of this unit number, and search another one
+(  292)               CALL disable_lun(this_lun)
+(  293)            ELSE
+(  294)               ! all seems OK, so return with the found unit number
+(  295)               exit find_free_lun_loop
+(  296)            END IF
+(  297)         END IF
+(  298) # 299 "lunmanager.F90"
+(  299)       ELSE
+(  300)         this_lun = this_lun + 1
+(  301)       END IF
+(  302) # 303 "lunmanager.F90"
+(  303)       IF (this_lun .gt. last_lun) THEN
+(  304)         print *,'ERROR: no more fileunits available in function get_lun !'
+(  305)         ! exit this routine gracefully, by reporting an error
+(  306)         fileunit=-1 
+(  307)         return
+(  308)         ! replace if needed by the next action to stop program execution
+(  309) !        print *,'aborting program .......'
+(  310) !        stop
+(  311)       END IF
+(  312)     END DO find_free_lun_loop
+(  313) # 314 "lunmanager.F90"
+(  314)     lun_used(this_lun) = .true.
+(  315)     fileunit = this_lun
+(  316)     IF (debug) print *,"get_lun(): requested LUN: ",fileunit
+(  317) # 318 "lunmanager.F90"
+(  318)     return
+(  319) # 320 "lunmanager.F90"
+(  320)   end function get_lun
+(  321)   !--------------------------------
+(  322) # 323 "lunmanager.F90"
+(  323)   !  #]
+(  324)   subroutine free_lun(fileunit)
+(  325)     !  #[
+(  326)     integer, intent(in) :: fileunit
+(  327) # 328 "lunmanager.F90"
+(  328)     IF ((fileunit .ge. first_lun) .and. &
+(  329)         (fileunit .le. last_lun )        ) THEN
+(  330)       IF (lun_used(fileunit)) THEN
+(  331)         lun_used(fileunit) = .false.
+(  332)       ELSE
+(  333)         print *,'fileunit: ',fileunit,' was not in use !!!'
+(  334)         print *,'free_lun returns without freeing any fileunit'
+(  335)       END IF
+(  336)     ELSE
+(  337)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  338)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  339)       print *,'free_lun returns without freeing any fileunit'
+(  340)     END IF
+(  341) # 342 "lunmanager.F90"
+(  342)     IF (debug) print *,"free_lun(): freed LUN: ",fileunit
+(  343) # 344 "lunmanager.F90"
+(  344)     return
+(  345)   end subroutine free_lun
+(  346)   !--------------------------------
+(  347)   !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 17
+
+(  348)   subroutine print_used_lun
+(  349)     !  #[
+(  350)     integer :: i
+(  351) # 352 "lunmanager.F90"
+(  352)     DO i = first_lun, last_lun
+(  353)       IF (lun_used(i)) THEN
+(  354)         print *,'fileunit: ',i,' is in use'
+(  355)       ELSE
+(  356)         IF (lun_disabled(i)) THEN
+(  357)           print *,'fileunit: ',i,' is disabled'
+(  358)         ELSE
+(  359)           print *,'fileunit: ',i,' is still available'
+(  360)         END IF
+(  361)       END IF
+(  362)     END DO
+(  363)     return
+(  364)   end subroutine print_used_lun
+(  365)   !--------------------------------
+(  366)   !  #]
+(  367)   subroutine disable_lun(fileunit)
+(  368)     !  #[
+(  369)     integer, intent(in) :: fileunit
+(  370) # 371 "lunmanager.F90"
+(  371)     IF ((fileunit .ge. first_lun) .and. &
+(  372)         (fileunit .le. last_lun )        ) THEN
+(  373)       IF (lun_used(fileunit)) THEN
+(  374)         print *,'fileunit: ',fileunit,' is still in use !'
+(  375)         print *,'disabling it is only possible if it is not used !'
+(  376)         print *,'disable_lun returns without disabling any fileunit'
+(  377)       ELSE
+(  378)         IF (.NOT. lun_disabled(fileunit)) THEN
+(  379)           lun_disabled(fileunit) = .true.
+(  380) !          print *,'fileunit: ',fileunit,' has been disabled'
+(  381)         ELSE
+(  382)           print *,'fileunit: ',fileunit,' was already disabled !!!'
+(  383)           print *,'disable_lun returns without disabling any fileunit'
+(  384)         END IF
+(  385)       END IF
+(  386)     ELSE
+(  387)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  388)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  389)       print *,'disable_lun returns without disabling any fileunit'
+(  390)     END IF
+(  391) # 392 "lunmanager.F90"
+(  392)     return
+(  393)   end subroutine disable_lun
+(  394)   !--------------------------------
+(  395)   !  #]
+(  396)   subroutine enable_lun(fileunit)
+(  397)     !  #[
+(  398) # 399 "lunmanager.F90"
+(  399)     integer, intent(in) :: fileunit
+(  400) # 401 "lunmanager.F90"
+(  401)     IF ((fileunit .ge. first_lun) .and. &
+(  402)         (fileunit .le. last_lun )        ) THEN
+(  403)       IF (lun_disabled(fileunit)) THEN
+(  404)         lun_disabled(fileunit) = .false.
+(  405) !        print *,'fileunit: ',fileunit,' has been enabled'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 18
+
+(  406)       ELSE
+(  407)         print *,'fileunit: ',fileunit,' was already enabled !!!'
+(  408)         print *,'enable_lun returns without enabling any fileunit'
+(  409)       END IF
+(  410)     ELSE
+(  411)       print *,'fileunit: ',fileunit,' was not in the range that is handled'
+(  412)       print *,'by this module ! (',first_lun,' - ',last_lun,')'
+(  413)       print *,'enable_lun returns without enabling any fileunit'
+(  414)     END IF
+(  415) # 416 "lunmanager.F90"
+(  416)     return
+(  417)   end subroutine enable_lun
+(  418)   !--------------------------------
+(  419) # 420 "lunmanager.F90"
+(  420)     !  #]
+(  421)   subroutine print_disabled_lun
+(  422)     !  #[
+(  423)     integer :: i
+(  424) # 425 "lunmanager.F90"
+(  425)     DO i = first_lun, last_lun
+(  426)       IF (lun_disabled(i)) THEN
+(  427)         print *,'fileunit: ',i,' is disabled'
+(  428)       ELSE
+(  429)         print *,'fileunit: ',i,' is enabled'
+(  430)       END IF
+(  431)     END DO
+(  432)     return
+(  433) # 434 "lunmanager.F90"
+(  434)   end subroutine print_disabled_lun
+(  435)   !--------------------------------
+(  436)     !  #]
+(  437)   function inquire_lun_in_use(fileunit) result(in_use)
+(  438)     !  #[
+(  439)     ! inquires whether the given fileunit is connected to a file
+(  440)     ! or not. If in use, true is returned, otherwise false
+(  441) # 442 "lunmanager.F90"
+(  442)     ! this is a test of this feature of fortran90,
+(  443)     ! not using the datastructure in this module
+(  444)     integer :: fileunit
+(  445)     logical :: in_use
+(  446) # 447 "lunmanager.F90"
+(  447)     in_use = .false.
+(  448)     inquire(unit=fileunit, opened=in_use)
+(  449)     return
+(  450) # 451 "lunmanager.F90"
+(  451)   end function inquire_lun_in_use
+(  452)     !  #]
+(  453)   function get_filename(fileunit) result(filename)
+(  454)     !  #[
+(  455)     integer            :: fileunit ! input
+(  456)     character(len=256) :: filename ! output
+(  457)     
+(  458)     ! local variables
+(  459)     logical            :: nmd
+(  460)     character(len=256) :: nam
+(  461)     
+(  462)     filename = "[unknown]"
+(  463)     inquire(unit=fileunit,named=nmd,name=nam)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 19
+
+(  464)     IF (nmd) filename = nam
+(  465) # 466 "lunmanager.F90"
+(  466)     if (fileunit .eq.fileunit_stderr) then
+(  467)        filename = "<STDERR>"
+(  468)        return
+(  469)     end if
+(  470) # 471 "lunmanager.F90"
+(  471)     if (fileunit .eq.fileunit_stdin) then
+(  472)        filename = "<STDIN>"
+(  473)        return
+(  474)     end if
+(  475) # 476 "lunmanager.F90"
+(  476)     if (fileunit .eq.fileunit_stdout) then
+(  477)        filename = "<STDOUT>"
+(  478)        return
+(  479)     end if
+(  480) # 481 "lunmanager.F90"
+(  481)   end function get_filename
+(  482)   !  #]
+(  483)   !--------------------------------
+(  484) END Module LunManager

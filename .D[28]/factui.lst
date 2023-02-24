@@ -1,0 +1,515 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: factui.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACTUI_MT64                   &
+(    4) &                     (FA,  KREP, KRANGC )
+(    5) USE FA_MOD, ONLY : FA_COM, FREE_CADRE, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Sous-programme A USAGE INTERNE AU LOGICIEL. Fait la suppression
+(   12) !     d'un cadre ( vis-a-vis des tables du logiciel ) .
+(   13) !        En mode multi-taches, il doit y avoir verrouillage global
+(   14) !     de la zone d'appel au sous-programme.
+(   15) !**
+(   16) !        Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                    KRANGC (Entree) ==> Rang du cadre dans les tables.
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANGC
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) J, IPOSCA, INIMES, INUMER
+(   25) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   26) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   27) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   28) LOGICAL                  LLFATA
+(   29) 
+(   30) !**
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 3
+
+(   31) !     1.  -  CONTROLE PREALABLE DE COHERENCE.
+(   32) !-----------------------------------------------------------------------
+(   33) !
+(   34) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   35) IF (LHOOK) CALL DR_HOOK('FACTUI_MT',0,ZHOOK_HANDLE)
+(   36) CLACTI=''
+(   37) IF (KRANGC.LE.0.OR.KRANGC.GT.FA%JPNXCA) THEN
+(   38)   KREP=-66
+(   39)   GOTO 1001
+(   40) ENDIF
+(   41) !**
+(   42) !     2.  -  RECHERCHE DU CADRE DANS LA TABLE "FA%NCAIND".
+(   43) !-----------------------------------------------------------------------
+(   44) !
+(   45) DO J=1,FA%NCADEF
+(   46) !
+(   47) IF (FA%NCAIND(J).EQ.KRANGC) THEN
+(   48)   IPOSCA=J
+(   49)   GOTO 202
+(   50) ENDIF
+(   51) !
+(   52) ENDDO
+(   53) !
+(   54) KREP=-66
+(   55) GOTO 1001
+(   56) !
+(   57) 202 CONTINUE
+(   58) !
+(   59) IF (FA%CADRE(KRANGC)%NULCAD.NE.0) THEN
+(   60)   KREP=-67
+(   61)   GOTO 1001
+(   62) ENDIF
+(   63) !**
+(   64) !     3.  -  MISE A JOUR DES TABLES.
+(   65) !-----------------------------------------------------------------------
+(   66) !
+(   67) CALL FREE_CADRE (FA%CADRE(KRANGC))
+(   68) 
+(   69) FA%CADRE(KRANGC)%CNOMCA=' '
+(   70) FA%NCADEF=FA%NCADEF-1
+(   71) !
+(   72) DO J=IPOSCA,FA%NCADEF
+(   73) FA%NCAIND(J)=FA%NCAIND(J+1)
+(   74) ENDDO
+(   75) 
+(   76) !
+(   77) KREP=0
+(   78) !**
+(   79) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(   80) !            VIA LE sous-programme "FAIPAR" .
+(   81) !-----------------------------------------------------------------------
+(   82) !
+(   83) 1001 CONTINUE
+(   84) !
+(   85) LLFATA=KREP.EQ.-66.OR.(KREP.NE.0.AND.FA%NRFAGA.NE.2)
+(   86) !
+(   87) IF (FA%LFAMOP.OR.LLFATA) THEN
+(   88)   INIMES=2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 4
+
+(   89)   CLNSPR='FACTUI'
+(   90)   INUMER=JPNIIL
+(   91)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANGC='',I4)') &
+(   92) &     KREP,KRANGC
+(   93)   CALL FAIPAR_MT64                                      &
+(   94) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(   95) &               CLNSPR,CLACTI,.FALSE.)
+(   96) ENDIF
+(   97) !
+(   98) IF (LHOOK) CALL DR_HOOK('FACTUI_MT',1,ZHOOK_HANDLE)
+(   99) END SUBROUTINE FACTUI_MT64
+(  100) 
+(  101) 
+(  102) 
+(  103) ! Oct-2012 P. Marguinaud 64b LFI
+(  104) SUBROUTINE FACTUI64           &
+(  105) &           (KREP, KRANGC)
+(  106) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  107) &                   FA_COM_DEFAULT_INIT,  &
+(  108) &                   NEW_FA_DEFAULT
+(  109) USE LFI_PRECISION
+(  110) IMPLICIT NONE
+(  111) ! Arguments
+(  112) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  113) INTEGER (KIND=JPLIKB)  KRANGC                                 ! IN   
+(  114) 
+(  115) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  116) 
+(  117) CALL FACTUI_MT64             &
+(  118) &           (FA, KREP, KRANGC)
+(  119) 
+(  120) END SUBROUTINE FACTUI64
+(  121) 
+(  122) SUBROUTINE FACTUI             &
+(  123) &           (KREP, KRANGC)
+(  124) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  125) &                   FA_COM_DEFAULT_INIT,  &
+(  126) &                   NEW_FA_DEFAULT
+(  127) USE LFI_PRECISION
+(  128) IMPLICIT NONE
+(  129) ! Arguments
+(  130) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  131) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  132) 
+(  133) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  134) 
+(  135) CALL FACTUI_MT               &
+(  136) &           (FA, KREP, KRANGC)
+(  137) 
+(  138) END SUBROUTINE FACTUI
+(  139) 
+(  140) SUBROUTINE FACTUI_MT             &
+(  141) &           (FA, KREP, KRANGC)
+(  142) USE FA_MOD, ONLY : FA_COM
+(  143) USE LFI_PRECISION
+(  144) IMPLICIT NONE
+(  145) ! Arguments
+(  146) TYPE (FA_COM)          FA                                     ! INOUT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 5
+
+(  147) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  148) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  149) ! Local integers
+(  150) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  151) INTEGER (KIND=JPLIKB)  IRANGC                                 ! IN   
+(  152) ! Convert arguments
+(  153) 
+(  154) IRANGC     = INT (    KRANGC, JPLIKB)
+(  155) 
+(  156) CALL FACTUI_MT64             &
+(  157) &           (FA, IREP, IRANGC)
+(  158) 
+(  159) KREP       = INT (      IREP, JPLIKM)
+(  160) 
+(  161) END SUBROUTINE FACTUI_MT
+(  162) 
+(  163) !INTF KREP            OUT 
+(  164) !INTF KRANGC        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 6
+
+(    1) # 1 "factui.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACTUI_MT64                   &
+(    4) &                     (FA,  KREP, KRANGC )
+(    5) USE FA_MOD, ONLY : FA_COM, FREE_CADRE, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Sous-programme A USAGE INTERNE AU LOGICIEL. Fait la suppression
+(   12) !     d'un cadre ( vis-a-vis des tables du logiciel ) .
+(   13) !        En mode multi-taches, il doit y avoir verrouillage global
+(   14) !     de la zone d'appel au sous-programme.
+(   15) !**
+(   16) !        Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                    KRANGC (Entree) ==> Rang du cadre dans les tables.
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANGC
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) J, IPOSCA, INIMES, INUMER
+(   25) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   26) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   27) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   28) LOGICAL                  LLFATA
+(   29) # 30 "factui.F90"
+(   30) !**
+(   31) !     1.  -  CONTROLE PREALABLE DE COHERENCE.
+(   32) !-----------------------------------------------------------------------
+(   33) !
+(   34) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   35) IF (LHOOK) CALL DR_HOOK('FACTUI_MT',0,ZHOOK_HANDLE)
+(   36) CLACTI=''
+(   37) IF (KRANGC.LE.0.OR.KRANGC.GT.FA%JPNXCA) THEN
+(   38)   KREP=-66
+(   39)   GOTO 1001
+(   40) ENDIF
+(   41) !**
+(   42) !     2.  -  RECHERCHE DU CADRE DANS LA TABLE "FA%NCAIND".
+(   43) !-----------------------------------------------------------------------
+(   44) !
+(   45) DO J=1,FA%NCADEF
+(   46) !
+(   47) IF (FA%NCAIND(J).EQ.KRANGC) THEN
+(   48)   IPOSCA=J
+(   49)   GOTO 202
+(   50) ENDIF
+(   51) !
+(   52) ENDDO
+(   53) !
+(   54) KREP=-66
+(   55) GOTO 1001
+(   56) !
+(   57) 202 CONTINUE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 7
+
+(   58) !
+(   59) IF (FA%CADRE(KRANGC)%NULCAD.NE.0) THEN
+(   60)   KREP=-67
+(   61)   GOTO 1001
+(   62) ENDIF
+(   63) !**
+(   64) !     3.  -  MISE A JOUR DES TABLES.
+(   65) !-----------------------------------------------------------------------
+(   66) !
+(   67) CALL FREE_CADRE (FA%CADRE(KRANGC))
+(   68) # 69 "factui.F90"
+(   69) FA%CADRE(KRANGC)%CNOMCA=' '
+(   70) FA%NCADEF=FA%NCADEF-1
+(   71) !
+(   72) DO J=IPOSCA,FA%NCADEF
+(   73) FA%NCAIND(J)=FA%NCAIND(J+1)
+(   74) ENDDO
+(   75) # 76 "factui.F90"
+(   76) !
+(   77) KREP=0
+(   78) !**
+(   79) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(   80) !            VIA LE sous-programme "FAIPAR" .
+(   81) !-----------------------------------------------------------------------
+(   82) !
+(   83) 1001 CONTINUE
+(   84) !
+(   85) LLFATA=KREP.EQ.-66.OR.(KREP.NE.0.AND.FA%NRFAGA.NE.2)
+(   86) !
+(   87) IF (FA%LFAMOP.OR.LLFATA) THEN
+(   88)   INIMES=2
+(   89)   CLNSPR='FACTUI'
+(   90)   INUMER=JPNIIL
+(   91)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANGC='',I4)') &
+(   92) &     KREP,KRANGC
+(   93)   CALL FAIPAR_MT64                                      &
+(   94) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(   95) &               CLNSPR,CLACTI,.FALSE.)
+(   96) ENDIF
+(   97) !
+(   98) IF (LHOOK) CALL DR_HOOK('FACTUI_MT',1,ZHOOK_HANDLE)
+(   99) END SUBROUTINE FACTUI_MT64
+(  100) # 103 "factui.F90"
+(  103) ! Oct-2012 P. Marguinaud 64b LFI
+(  104) SUBROUTINE FACTUI64           &
+(  105) &           (KREP, KRANGC)
+(  106) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  107) &                   FA_COM_DEFAULT_INIT,  &
+(  108) &                   NEW_FA_DEFAULT
+(  109) USE LFI_PRECISION
+(  110) IMPLICIT NONE
+(  111) ! Arguments
+(  112) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  113) INTEGER (KIND=JPLIKB)  KRANGC                                 ! IN   
+(  114) # 115 "factui.F90"
+(  115) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  116) # 117 "factui.F90"
+(  117) CALL FACTUI_MT64             &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:13      page 8
+
+(  118) &           (FA, KREP, KRANGC)
+(  119) # 120 "factui.F90"
+(  120) END SUBROUTINE FACTUI64
+(  121) # 122 "factui.F90"
+(  122) SUBROUTINE FACTUI             &
+(  123) &           (KREP, KRANGC)
+(  124) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  125) &                   FA_COM_DEFAULT_INIT,  &
+(  126) &                   NEW_FA_DEFAULT
+(  127) USE LFI_PRECISION
+(  128) IMPLICIT NONE
+(  129) ! Arguments
+(  130) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  131) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  132) # 133 "factui.F90"
+(  133) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  134) # 135 "factui.F90"
+(  135) CALL FACTUI_MT               &
+(  136) &           (FA, KREP, KRANGC)
+(  137) # 138 "factui.F90"
+(  138) END SUBROUTINE FACTUI
+(  139) # 140 "factui.F90"
+(  140) SUBROUTINE FACTUI_MT             &
+(  141) &           (FA, KREP, KRANGC)
+(  142) USE FA_MOD, ONLY : FA_COM
+(  143) USE LFI_PRECISION
+(  144) IMPLICIT NONE
+(  145) ! Arguments
+(  146) TYPE (FA_COM)          FA                                     ! INOUT
+(  147) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  148) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  149) ! Local integers
+(  150) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  151) INTEGER (KIND=JPLIKB)  IRANGC                                 ! IN   
+(  152) ! Convert arguments
+(  153) # 154 "factui.F90"
+(  154) IRANGC     = INT (    KRANGC, JPLIKB)
+(  155) # 156 "factui.F90"
+(  156) CALL FACTUI_MT64             &
+(  157) &           (FA, IREP, IRANGC)
+(  158) # 159 "factui.F90"
+(  159) KREP       = INT (      IREP, JPLIKM)
+(  160) # 161 "factui.F90"
+(  161) END SUBROUTINE FACTUI_MT
+(  162) # 163 "factui.F90"
+(  163) !INTF KREP            OUT 
+(  164) !INTF KRANGC        IN    

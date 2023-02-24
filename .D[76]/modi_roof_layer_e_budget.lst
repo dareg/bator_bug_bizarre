@@ -1,0 +1,259 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:52      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:52      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_roof_layer_e_budget.F90
+
+(    1) !depfile:roof_layer_e_budget.F90
+(    2) MODULE MODI_ROOF_LAYER_E_BUDGET
+(    3) INTERFACE
+(    4)     SUBROUTINE ROOF_LAYER_E_BUDGET(TOP, T, B, PQSAT_ROOF, PAC_BLD, PTSTEP, PDN_ROOF,   &
+(    5)                                    PRHOA, PAC_ROOF, PAC_ROOF_WAT, PLW_RAD, PPS,        &
+(    6)                                    PDELT_ROOF, PTA, PQA, PEXNA, PEXNS, PABS_SW_ROOF,   &
+(    7)                                    PGSNOW_ROOF, PFLX_BLD_ROOF, PDQS_ROOF, PABS_LW_ROOF,&
+(    8)                                    PHFREE_ROOF, PLEFREE_ROOF, PIMB_ROOF,               &
+(    9)                                    PG_GREENROOF_ROOF, PRADHT_IN, PTS_FLOOR, PTI_WALL,  &
+(   10)                                    PRAD_ROOF_WALL, PRAD_ROOF_WIN, PRAD_ROOF_FLOOR,     &
+(   11)                                    PRAD_ROOF_MASS, PCONV_ROOF_BLD, PRR, PLOAD_IN_ROOF )
+(   12) USE MODD_TEB_OPTION_n, ONLY : TEB_OPTIONS_t
+(   13) USE MODD_TEB_n, ONLY : TEB_t
+(   14) USE MODD_BEM_n, ONLY : BEM_t
+(   15) TYPE(TEB_OPTIONS_t), INTENT(INOUT) :: TOP
+(   16) TYPE(TEB_t), INTENT(INOUT) :: T
+(   17) TYPE(BEM_t), INTENT(INOUT) :: B
+(   18) REAL, DIMENSION(:), INTENT(INOUT) :: PQSAT_ROOF     ! q_sat(Ts)
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PAC_BLD        ! aerodynamical resistance
+(   20) REAL,               INTENT(IN)    :: PTSTEP         ! time step
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PDN_ROOF       ! roof snow fraction
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA          ! air density
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PAC_ROOF       ! aerodynamical conductance
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PAC_ROOF_WAT   ! aerodynamical conductance (for water)
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PLW_RAD        ! atmospheric infrared radiation
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PPS            ! pressure at the surface
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PDELT_ROOF     ! fraction of water
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PTA            ! air temperature at roof level
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PQA            ! air specific humidity
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PEXNA          ! exner function
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:52      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS          ! surface exner function
+(   32) REAL, DIMENSION(:), INTENT(IN)    :: PABS_SW_ROOF   ! absorbed solar radiation
+(   33) REAL, DIMENSION(:), INTENT(IN)    :: PGSNOW_ROOF    ! roof snow conduction
+(   34) REAL, DIMENSION(:), INTENT(IN)    :: PG_GREENROOF_ROOF ! heat conduction flux
+(   35) REAL, DIMENSION(:), INTENT(OUT)   :: PFLX_BLD_ROOF  ! flux from bld to roof
+(   36) REAL, DIMENSION(:), INTENT(OUT)   :: PDQS_ROOF      ! heat storage inside the roofs
+(   37) REAL, DIMENSION(:), INTENT(OUT)   :: PABS_LW_ROOF   ! absorbed infra-red rad.
+(   38) REAL, DIMENSION(:), INTENT(OUT)   :: PHFREE_ROOF    ! sensible heat flux of the
+(   39) REAL, DIMENSION(:), INTENT(OUT)   :: PLEFREE_ROOF   ! latent heat flux of the
+(   40) REAL, DIMENSION(:), INTENT(OUT)   :: PIMB_ROOF      ! residual energy imbalance
+(   41) REAL, DIMENSION(:), INTENT(IN)    :: PRADHT_IN      ! Indoor radiant heat transfer coefficient
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PTS_FLOOR      ! surf. floor temp. (contact with bld air)
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PTI_WALL       ! indoor wall temp.
+(   44) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_WALL ! rad. fluxes from roof to wall [W m-2(roof)]
+(   45) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_WIN  ! rad. fluxes from roof to win [W m-2(roof)]
+(   46) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_FLOOR! rad. fluxes from roof to floor [W m-2(roof)]
+(   47) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_MASS ! rad. fluxes from roof to mass [W m-2(roof)]
+(   48) REAL, DIMENSION(:), INTENT(OUT)   :: PCONV_ROOF_BLD ! conv. fluxes from roof to bld [W m-2(roof)]
+(   49) REAL, DIMENSION(:), INTENT(IN)    :: PRR ! rain rate [kg m-2 s-1]
+(   50) REAL, DIMENSION(:), INTENT(IN)    :: PLOAD_IN_ROOF ! solar + int heat gain on roof W/m2 [roof]
+(   51) END SUBROUTINE ROOF_LAYER_E_BUDGET
+(   52) 
+(   53) END INTERFACE
+(   54) END MODULE MODI_ROOF_LAYER_E_BUDGET
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:52      page 4
+
+(    1) # 1 "modi_roof_layer_e_budget.F90"
+(    1) !depfile:roof_layer_e_budget.F90
+(    2) MODULE MODI_ROOF_LAYER_E_BUDGET
+(    3) INTERFACE
+(    4)     SUBROUTINE ROOF_LAYER_E_BUDGET(TOP, T, B, PQSAT_ROOF, PAC_BLD, PTSTEP, PDN_ROOF,   &
+(    5)                                    PRHOA, PAC_ROOF, PAC_ROOF_WAT, PLW_RAD, PPS,        &
+(    6)                                    PDELT_ROOF, PTA, PQA, PEXNA, PEXNS, PABS_SW_ROOF,   &
+(    7)                                    PGSNOW_ROOF, PFLX_BLD_ROOF, PDQS_ROOF, PABS_LW_ROOF,&
+(    8)                                    PHFREE_ROOF, PLEFREE_ROOF, PIMB_ROOF,               &
+(    9)                                    PG_GREENROOF_ROOF, PRADHT_IN, PTS_FLOOR, PTI_WALL,  &
+(   10)                                    PRAD_ROOF_WALL, PRAD_ROOF_WIN, PRAD_ROOF_FLOOR,     &
+(   11)                                    PRAD_ROOF_MASS, PCONV_ROOF_BLD, PRR, PLOAD_IN_ROOF )
+(   12) USE MODD_TEB_OPTION_n, ONLY : TEB_OPTIONS_t
+(   13) USE MODD_TEB_n, ONLY : TEB_t
+(   14) USE MODD_BEM_n, ONLY : BEM_t
+(   15) TYPE(TEB_OPTIONS_t), INTENT(INOUT) :: TOP
+(   16) TYPE(TEB_t), INTENT(INOUT) :: T
+(   17) TYPE(BEM_t), INTENT(INOUT) :: B
+(   18) REAL, DIMENSION(:), INTENT(INOUT) :: PQSAT_ROOF     ! q_sat(Ts)
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PAC_BLD        ! aerodynamical resistance
+(   20) REAL,               INTENT(IN)    :: PTSTEP         ! time step
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PDN_ROOF       ! roof snow fraction
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA          ! air density
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PAC_ROOF       ! aerodynamical conductance
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PAC_ROOF_WAT   ! aerodynamical conductance (for water)
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PLW_RAD        ! atmospheric infrared radiation
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PPS            ! pressure at the surface
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PDELT_ROOF     ! fraction of water
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PTA            ! air temperature at roof level
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PQA            ! air specific humidity
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PEXNA          ! exner function
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS          ! surface exner function
+(   32) REAL, DIMENSION(:), INTENT(IN)    :: PABS_SW_ROOF   ! absorbed solar radiation
+(   33) REAL, DIMENSION(:), INTENT(IN)    :: PGSNOW_ROOF    ! roof snow conduction
+(   34) REAL, DIMENSION(:), INTENT(IN)    :: PG_GREENROOF_ROOF ! heat conduction flux
+(   35) REAL, DIMENSION(:), INTENT(OUT)   :: PFLX_BLD_ROOF  ! flux from bld to roof
+(   36) REAL, DIMENSION(:), INTENT(OUT)   :: PDQS_ROOF      ! heat storage inside the roofs
+(   37) REAL, DIMENSION(:), INTENT(OUT)   :: PABS_LW_ROOF   ! absorbed infra-red rad.
+(   38) REAL, DIMENSION(:), INTENT(OUT)   :: PHFREE_ROOF    ! sensible heat flux of the
+(   39) REAL, DIMENSION(:), INTENT(OUT)   :: PLEFREE_ROOF   ! latent heat flux of the
+(   40) REAL, DIMENSION(:), INTENT(OUT)   :: PIMB_ROOF      ! residual energy imbalance
+(   41) REAL, DIMENSION(:), INTENT(IN)    :: PRADHT_IN      ! Indoor radiant heat transfer coefficient
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PTS_FLOOR      ! surf. floor temp. (contact with bld air)
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PTI_WALL       ! indoor wall temp.
+(   44) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_WALL ! rad. fluxes from roof to wall [W m-2(roof)]
+(   45) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_WIN  ! rad. fluxes from roof to win [W m-2(roof)]
+(   46) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_FLOOR! rad. fluxes from roof to floor [W m-2(roof)]
+(   47) REAL, DIMENSION(:), INTENT(OUT)   :: PRAD_ROOF_MASS ! rad. fluxes from roof to mass [W m-2(roof)]
+(   48) REAL, DIMENSION(:), INTENT(OUT)   :: PCONV_ROOF_BLD ! conv. fluxes from roof to bld [W m-2(roof)]
+(   49) REAL, DIMENSION(:), INTENT(IN)    :: PRR ! rain rate [kg m-2 s-1]
+(   50) REAL, DIMENSION(:), INTENT(IN)    :: PLOAD_IN_ROOF ! solar + int heat gain on roof W/m2 [roof]
+(   51) END SUBROUTINE ROOF_LAYER_E_BUDGET
+(   52) # 53 "modi_roof_layer_e_budget.F90"
+(   53) END INTERFACE
+(   54) END MODULE MODI_ROOF_LAYER_E_BUDGET

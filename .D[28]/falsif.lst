@@ -1,0 +1,673 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: falsif.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FALSIF_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, CDIDEN )
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Sous-programme renvoyant le NOM de l'Identificateur
+(   12) !     d'un fichier ARPEGE.
+(   13) !       ( Lecture Specifique de l'Identificateur de Fichier )
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   17) !                CDIDEN (Sortie) ==> Nom de l'identificateur.
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) IREP, ILIDEN, IRANG
+(   25) INTEGER (KIND=JPLIKB) J, ILONGN, INIMES, ILACTI
+(   26) !
+(   27) LOGICAL LLVERF, LLRLFI
+(   28) !
+(   29) CHARACTER CDIDEN*(*)
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 3
+
+(   31) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) LOGICAL                  LLFATA
+(   35) 
+(   36) !**
+(   37) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   38) !-----------------------------------------------------------------------
+(   39) !
+(   40) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   41) IF (LHOOK) CALL DR_HOOK('FALSIF_MT',0,ZHOOK_HANDLE)
+(   42) CLACTI=''
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) ILIDEN=INT (LEN (CDIDEN), JPLIKB)
+(   46) CALL FANUMU_MT64                 &
+(   47) &               (FA, KNUMER,IRANG)
+(   48) !
+(   49) IF (IRANG.EQ.0) THEN
+(   50)   IREP=-51
+(   51)   GOTO 1001
+(   52) ELSEIF (ILIDEN.LE.0) THEN
+(   53)   IREP=-65
+(   54)   GOTO 1001
+(   55) ELSE
+(   56)   IREP=0
+(   57) ENDIF
+(   58) !
+(   59) !         Verrouillage eventuel du fichier.
+(   60) !
+(   61) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   62) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   63) LLVERF=FA%LFAMUL
+(   64) !**
+(   65) !     2.  -  ON RENVOIE LE NOM D'IDENTIFICATEUR, APRES CONTROLE EVENTUEL
+(   66) !            D'UNE VARIABLE CARACTERE SUFISAMMENT LONGUE.
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) IF (ILIDEN.GE.FA%NCPCAD) THEN
+(   70)   CDIDEN=FA%FICHIER(IRANG)%CIDENT
+(   71) ELSE
+(   72) !
+(   73)   DO J=FA%NCPCAD,1,-1
+(   74) !
+(   75)   IF (FA%FICHIER(IRANG)%CIDENT(J:J).NE.' ') THEN
+(   76)     ILONGN=J
+(   77)     GOTO 202
+(   78)   ENDIF
+(   79) !
+(   80)   ENDDO
+(   81) !
+(   82)   IREP=-66
+(   83)   GOTO 1001
+(   84) !
+(   85) 202 CONTINUE
+(   86) !
+(   87)   IF (ILONGN.GT.ILIDEN) THEN
+(   88)     IREP=-69
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 4
+
+(   89)   ELSE
+(   90)     CDIDEN=FA%FICHIER(IRANG)%CIDENT(1:ILONGN)
+(   91)   ENDIF
+(   92) !
+(   93) ENDIF
+(   94) !**
+(   95) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   96) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   97) !-----------------------------------------------------------------------
+(   98) !
+(   99) 1001 CONTINUE
+(  100) KREP=IREP
+(  101) LLFATA=LLMOER (IREP,IRANG)
+(  102) !
+(  103) !        Deverrouillage eventuel du fichier.
+(  104) !
+(  105) IF (LLVERF) CALL LFIVER_MT64                                &
+(  106) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  107) !
+(  108) IF (LLFATA) THEN
+(  109)   INIMES=2
+(  110) ELSE
+(  111)   INIMES=IXNVMS(IRANG)
+(  112) ENDIF
+(  113) !
+(  114) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  115)   IF (LHOOK) CALL DR_HOOK('FALSIF_MT',1,ZHOOK_HANDLE)
+(  116)   RETURN
+(  117) ENDIF
+(  118) !
+(  119) CLNSPR='FALSIF'
+(  120) !
+(  121) IF (IREP.EQ.0.OR.IREP.EQ.-69) THEN
+(  122)   ILACTI=FA%NCPCAD
+(  123)   CLACTI=FA%FICHIER(IRANG)%CIDENT(1:ILACTI)
+(  124) ELSE
+(  125)   ILACTI=8
+(  126)   CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  127) ENDIF
+(  128) !
+(  129) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  130) &       '', CDIDEN='''''',A,'''''''')')                  &
+(  131) &   KREP,KNUMER,CLACTI(1:ILACTI)
+(  132) CALL FAIPAR_MT64                                     &
+(  133) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  134) &                CLNSPR,CLACTI(1:ILACTI),LLRLFI)
+(  135) !
+(  136) IF (LHOOK) CALL DR_HOOK('FALSIF_MT',1,ZHOOK_HANDLE)
+(  137) RETURN
+(  138) 
+(  139) CONTAINS
+(  140) 
+(  141) #include "facom2.llmoer.h"
+(  142) #include "facom2.ixnvms.h"
+(  143) 
+(  144) END SUBROUTINE FALSIF_MT64
+(  145) 
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 5
+
+(  147) 
+(  148) ! Oct-2012 P. Marguinaud 64b LFI
+(  149) SUBROUTINE FALSIF64              &
+(  150) &           (KREP, KNUMER, CDIDEN)
+(  151) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  152) &                   FA_COM_DEFAULT_INIT,  &
+(  153) &                   NEW_FA_DEFAULT
+(  154) USE LFI_PRECISION
+(  155) IMPLICIT NONE
+(  156) ! Arguments
+(  157) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  158) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  159) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  160) 
+(  161) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  162) 
+(  163) CALL FALSIF_MT64                     &
+(  164) &           (FA, KREP, KNUMER, CDIDEN)
+(  165) 
+(  166) END SUBROUTINE FALSIF64
+(  167) 
+(  168) SUBROUTINE FALSIF                &
+(  169) &           (KREP, KNUMER, CDIDEN)
+(  170) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  171) &                   FA_COM_DEFAULT_INIT,  &
+(  172) &                   NEW_FA_DEFAULT
+(  173) USE LFI_PRECISION
+(  174) IMPLICIT NONE
+(  175) ! Arguments
+(  176) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  177) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  178) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  179) 
+(  180) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  181) 
+(  182) CALL FALSIF_MT                       &
+(  183) &           (FA, KREP, KNUMER, CDIDEN)
+(  184) 
+(  185) END SUBROUTINE FALSIF
+(  186) 
+(  187) SUBROUTINE FALSIF_MT                 &
+(  188) &           (FA, KREP, KNUMER, CDIDEN)
+(  189) USE FA_MOD, ONLY : FA_COM
+(  190) USE LFI_PRECISION
+(  191) IMPLICIT NONE
+(  192) ! Arguments
+(  193) TYPE (FA_COM)          FA                                     ! INOUT
+(  194) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  195) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  196) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  197) ! Local integers
+(  198) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  199) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  200) ! Convert arguments
+(  201) 
+(  202) INUMER     = INT (    KNUMER, JPLIKB)
+(  203) 
+(  204) CALL FALSIF_MT64                     &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 6
+
+(  205) &           (FA, IREP, INUMER, CDIDEN)
+(  206) 
+(  207) KREP       = INT (      IREP, JPLIKM)
+(  208) 
+(  209) END SUBROUTINE FALSIF_MT
+(  210) 
+(  211) !INTF KREP            OUT 
+(  212) !INTF KNUMER        IN    
+(  213) !INTF CDIDEN          OUT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 7
+
+(    1) # 1 "falsif.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FALSIF_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, CDIDEN )
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Sous-programme renvoyant le NOM de l'Identificateur
+(   12) !     d'un fichier ARPEGE.
+(   13) !       ( Lecture Specifique de l'Identificateur de Fichier )
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   17) !                CDIDEN (Sortie) ==> Nom de l'identificateur.
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) IREP, ILIDEN, IRANG
+(   25) INTEGER (KIND=JPLIKB) J, ILONGN, INIMES, ILACTI
+(   26) !
+(   27) LOGICAL LLVERF, LLRLFI
+(   28) !
+(   29) CHARACTER CDIDEN*(*)
+(   30) !
+(   31) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) LOGICAL                  LLFATA
+(   35) # 36 "falsif.F90"
+(   36) !**
+(   37) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   38) !-----------------------------------------------------------------------
+(   39) !
+(   40) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   41) IF (LHOOK) CALL DR_HOOK('FALSIF_MT',0,ZHOOK_HANDLE)
+(   42) CLACTI=''
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) ILIDEN=INT (LEN (CDIDEN), JPLIKB)
+(   46) CALL FANUMU_MT64                 &
+(   47) &               (FA, KNUMER,IRANG)
+(   48) !
+(   49) IF (IRANG.EQ.0) THEN
+(   50)   IREP=-51
+(   51)   GOTO 1001
+(   52) ELSEIF (ILIDEN.LE.0) THEN
+(   53)   IREP=-65
+(   54)   GOTO 1001
+(   55) ELSE
+(   56)   IREP=0
+(   57) ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 8
+
+(   58) !
+(   59) !         Verrouillage eventuel du fichier.
+(   60) !
+(   61) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   62) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   63) LLVERF=FA%LFAMUL
+(   64) !**
+(   65) !     2.  -  ON RENVOIE LE NOM D'IDENTIFICATEUR, APRES CONTROLE EVENTUEL
+(   66) !            D'UNE VARIABLE CARACTERE SUFISAMMENT LONGUE.
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) IF (ILIDEN.GE.FA%NCPCAD) THEN
+(   70)   CDIDEN=FA%FICHIER(IRANG)%CIDENT
+(   71) ELSE
+(   72) !
+(   73)   DO J=FA%NCPCAD,1,-1
+(   74) !
+(   75)   IF (FA%FICHIER(IRANG)%CIDENT(J:J).NE.' ') THEN
+(   76)     ILONGN=J
+(   77)     GOTO 202
+(   78)   ENDIF
+(   79) !
+(   80)   ENDDO
+(   81) !
+(   82)   IREP=-66
+(   83)   GOTO 1001
+(   84) !
+(   85) 202 CONTINUE
+(   86) !
+(   87)   IF (ILONGN.GT.ILIDEN) THEN
+(   88)     IREP=-69
+(   89)   ELSE
+(   90)     CDIDEN=FA%FICHIER(IRANG)%CIDENT(1:ILONGN)
+(   91)   ENDIF
+(   92) !
+(   93) ENDIF
+(   94) !**
+(   95) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   96) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   97) !-----------------------------------------------------------------------
+(   98) !
+(   99) 1001 CONTINUE
+(  100) KREP=IREP
+(  101) LLFATA=LLMOER (IREP,IRANG)
+(  102) !
+(  103) !        Deverrouillage eventuel du fichier.
+(  104) !
+(  105) IF (LLVERF) CALL LFIVER_MT64                                &
+(  106) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  107) !
+(  108) IF (LLFATA) THEN
+(  109)   INIMES=2
+(  110) ELSE
+(  111)   INIMES=IXNVMS(IRANG)
+(  112) ENDIF
+(  113) !
+(  114) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  115)   IF (LHOOK) CALL DR_HOOK('FALSIF_MT',1,ZHOOK_HANDLE)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 9
+
+(  116)   RETURN
+(  117) ENDIF
+(  118) !
+(  119) CLNSPR='FALSIF'
+(  120) !
+(  121) IF (IREP.EQ.0.OR.IREP.EQ.-69) THEN
+(  122)   ILACTI=FA%NCPCAD
+(  123)   CLACTI=FA%FICHIER(IRANG)%CIDENT(1:ILACTI)
+(  124) ELSE
+(  125)   ILACTI=8
+(  126)   CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  127) ENDIF
+(  128) !
+(  129) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  130) &       '', CDIDEN='''''',A,'''''''')')                  &
+(  131) &   KREP,KNUMER,CLACTI(1:ILACTI)
+(  132) CALL FAIPAR_MT64                                     &
+(  133) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  134) &                CLNSPR,CLACTI(1:ILACTI),LLRLFI)
+(  135) !
+(  136) IF (LHOOK) CALL DR_HOOK('FALSIF_MT',1,ZHOOK_HANDLE)
+(  137) RETURN
+(  138) # 139 "falsif.F90"
+(  139) CONTAINS
+(  140) # 141 "falsif.F90"
+(  141) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 142 "falsif.F90"
+(  142) # 142 "falsif.F90"
+(  142) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 143 "falsif.F90"
+(  143) # 144 "falsif.F90"
+(  144) END SUBROUTINE FALSIF_MT64
+(  145) # 148 "falsif.F90"
+(  148) ! Oct-2012 P. Marguinaud 64b LFI
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 10
+
+(  149) SUBROUTINE FALSIF64              &
+(  150) &           (KREP, KNUMER, CDIDEN)
+(  151) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  152) &                   FA_COM_DEFAULT_INIT,  &
+(  153) &                   NEW_FA_DEFAULT
+(  154) USE LFI_PRECISION
+(  155) IMPLICIT NONE
+(  156) ! Arguments
+(  157) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  158) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  159) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  160) # 161 "falsif.F90"
+(  161) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  162) # 163 "falsif.F90"
+(  163) CALL FALSIF_MT64                     &
+(  164) &           (FA, KREP, KNUMER, CDIDEN)
+(  165) # 166 "falsif.F90"
+(  166) END SUBROUTINE FALSIF64
+(  167) # 168 "falsif.F90"
+(  168) SUBROUTINE FALSIF                &
+(  169) &           (KREP, KNUMER, CDIDEN)
+(  170) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  171) &                   FA_COM_DEFAULT_INIT,  &
+(  172) &                   NEW_FA_DEFAULT
+(  173) USE LFI_PRECISION
+(  174) IMPLICIT NONE
+(  175) ! Arguments
+(  176) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  177) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  178) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  179) # 180 "falsif.F90"
+(  180) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  181) # 182 "falsif.F90"
+(  182) CALL FALSIF_MT                       &
+(  183) &           (FA, KREP, KNUMER, CDIDEN)
+(  184) # 185 "falsif.F90"
+(  185) END SUBROUTINE FALSIF
+(  186) # 187 "falsif.F90"
+(  187) SUBROUTINE FALSIF_MT                 &
+(  188) &           (FA, KREP, KNUMER, CDIDEN)
+(  189) USE FA_MOD, ONLY : FA_COM
+(  190) USE LFI_PRECISION
+(  191) IMPLICIT NONE
+(  192) ! Arguments
+(  193) TYPE (FA_COM)          FA                                     ! INOUT
+(  194) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  195) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  196) CHARACTER (LEN=*)      CDIDEN                                 !   OUT
+(  197) ! Local integers
+(  198) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  199) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  200) ! Convert arguments
+(  201) # 202 "falsif.F90"
+(  202) INUMER     = INT (    KNUMER, JPLIKB)
+(  203) # 204 "falsif.F90"
+(  204) CALL FALSIF_MT64                     &
+(  205) &           (FA, IREP, INUMER, CDIDEN)
+(  206) # 207 "falsif.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:56      page 11
+
+(  207) KREP       = INT (      IREP, JPLIKM)
+(  208) # 209 "falsif.F90"
+(  209) END SUBROUTINE FALSIF_MT
+(  210) # 211 "falsif.F90"
+(  211) !INTF KREP            OUT 
+(  212) !INTF KNUMER        IN    
+(  213) !INTF CDIDEN          OUT 

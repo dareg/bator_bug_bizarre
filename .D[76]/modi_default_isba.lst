@@ -1,0 +1,249 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:55      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:55      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_default_isba.F90
+
+(    1) !depfile:default_isba.F90
+(    2) MODULE MODI_DEFAULT_ISBA
+(    3) INTERFACE
+(    4)       SUBROUTINE DEFAULT_ISBA(PTSTEP, POUT_TSTEP,                        &
+(    5)                               HRUNOFF, HSCOND,                           &
+(    6)                               HC1DRY, HSOILFRZ, HDIFSFCOND, HSNOWRES,    &
+(    7)                               HCPSURF, PCGMAX, PCDRAG, HKSAT, OSOC,      &
+(    8)                               HRAIN, HHORT, OGLACIER, OCANOPY_DRAG,      &
+(    9)                               OVEGUPD, OSPINUPCARBS, OSPINUPCARBW,       &
+(   10)                               PSPINMAXS, PSPINMAXW, PCO2_START, PCO2_END,&
+(   11)                               KNBYEARSPINS, KNBYEARSPINW,                &
+(   12)                               ONITRO_DILU, PCVHEATF                      )
+(   13) REAL,              INTENT(OUT) :: PTSTEP     ! time-step for run
+(   14) REAL,              INTENT(OUT) :: POUT_TSTEP ! time-step for writing
+(   15) CHARACTER(LEN=4),  INTENT(OUT) :: HSCOND   ! Thermal conductivity
+(   16) CHARACTER(LEN=4),  INTENT(OUT) :: HC1DRY   ! C1 formulation for dry soils
+(   17) CHARACTER(LEN=3),  INTENT(OUT) :: HSOILFRZ ! soil freezing-physics option
+(   18) CHARACTER(LEN=4),  INTENT(OUT) :: HDIFSFCOND ! Mulch effects
+(   19) CHARACTER(LEN=3), INTENT(OUT) :: HSNOWRES  ! Turbulent exchanges over snow
+(   20) CHARACTER(LEN=3), INTENT(OUT) :: HCPSURF   ! SPECIFIC HEAT
+(   21) REAL,              INTENT(OUT) :: PCGMAX   ! maximum soil heat capacity
+(   22) REAL,              INTENT(OUT) :: PCDRAG   ! drag coefficient in canopy
+(   23) CHARACTER(LEN=4),  INTENT(OUT) :: HRUNOFF  ! surface runoff formulation
+(   24) CHARACTER(LEN=3), INTENT(OUT) :: HKSAT     ! SOIL HYDRAULIC CONDUCTIVITY PROFILE OPTION
+(   25) LOGICAL, INTENT(OUT) ::          OSOC      ! SOIL ORGANIC CARBON PROFILE OPTION
+(   26) CHARACTER(LEN=3), INTENT(OUT) :: HRAIN     ! Rainfall spatial distribution
+(   27) CHARACTER(LEN=3), INTENT(OUT) :: HHORT     ! Horton runoff
+(   28) LOGICAL, INTENT(OUT)          :: OGLACIER  ! True = Over permanent snow and ice, 
+(   29) LOGICAL, INTENT(OUT)          :: OCANOPY_DRAG ! T: drag activated in SBL scheme within the canopy
+(   30) LOGICAL, INTENT(OUT)          :: OVEGUPD   ! T: update vegetation parameters 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:55      page 3
+
+(   31) LOGICAL, INTENT(OUT)          :: OSPINUPCARBS ! T: carbon spinup soil
+(   32) LOGICAL, INTENT(OUT)          :: OSPINUPCARBW ! T: carbon spinup wood
+(   33) REAL,    INTENT(OUT)          :: PSPINMAXS    ! max number of times CARBON_SOIL subroutine is called
+(   34) REAL,    INTENT(OUT)          :: PSPINMAXW    ! max number of times the wood is accelerated 
+(   35) REAL,    INTENT(OUT)          :: PCO2_START   ! Pre-industrial CO2 concentration
+(   36) REAL,    INTENT(OUT)          :: PCO2_END     ! Begin-transient CO2 concentration
+(   37) INTEGER, INTENT(OUT)          :: KNBYEARSPINS ! nbr years needed to reaches soil equilibrium
+(   38) INTEGER, INTENT(OUT)          :: KNBYEARSPINW ! nbr years needed to reaches wood equilibrium
+(   39) LOGICAL, INTENT(OUT)          :: ONITRO_DILU ! nitrogen dilution fct of CO2 (Calvet et al. 2008)
+(   40) REAL, INTENT(OUT) :: PCVHEATF
+(   41) END SUBROUTINE DEFAULT_ISBA
+(   42) 
+(   43) END INTERFACE
+(   44) END MODULE MODI_DEFAULT_ISBA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:55      page 4
+
+(    1) # 1 "modi_default_isba.F90"
+(    1) !depfile:default_isba.F90
+(    2) MODULE MODI_DEFAULT_ISBA
+(    3) INTERFACE
+(    4)       SUBROUTINE DEFAULT_ISBA(PTSTEP, POUT_TSTEP,                        &
+(    5)                               HRUNOFF, HSCOND,                           &
+(    6)                               HC1DRY, HSOILFRZ, HDIFSFCOND, HSNOWRES,    &
+(    7)                               HCPSURF, PCGMAX, PCDRAG, HKSAT, OSOC,      &
+(    8)                               HRAIN, HHORT, OGLACIER, OCANOPY_DRAG,      &
+(    9)                               OVEGUPD, OSPINUPCARBS, OSPINUPCARBW,       &
+(   10)                               PSPINMAXS, PSPINMAXW, PCO2_START, PCO2_END,&
+(   11)                               KNBYEARSPINS, KNBYEARSPINW,                &
+(   12)                               ONITRO_DILU, PCVHEATF                      )
+(   13) REAL,              INTENT(OUT) :: PTSTEP     ! time-step for run
+(   14) REAL,              INTENT(OUT) :: POUT_TSTEP ! time-step for writing
+(   15) CHARACTER(LEN=4),  INTENT(OUT) :: HSCOND   ! Thermal conductivity
+(   16) CHARACTER(LEN=4),  INTENT(OUT) :: HC1DRY   ! C1 formulation for dry soils
+(   17) CHARACTER(LEN=3),  INTENT(OUT) :: HSOILFRZ ! soil freezing-physics option
+(   18) CHARACTER(LEN=4),  INTENT(OUT) :: HDIFSFCOND ! Mulch effects
+(   19) CHARACTER(LEN=3), INTENT(OUT) :: HSNOWRES  ! Turbulent exchanges over snow
+(   20) CHARACTER(LEN=3), INTENT(OUT) :: HCPSURF   ! SPECIFIC HEAT
+(   21) REAL,              INTENT(OUT) :: PCGMAX   ! maximum soil heat capacity
+(   22) REAL,              INTENT(OUT) :: PCDRAG   ! drag coefficient in canopy
+(   23) CHARACTER(LEN=4),  INTENT(OUT) :: HRUNOFF  ! surface runoff formulation
+(   24) CHARACTER(LEN=3), INTENT(OUT) :: HKSAT     ! SOIL HYDRAULIC CONDUCTIVITY PROFILE OPTION
+(   25) LOGICAL, INTENT(OUT) ::          OSOC      ! SOIL ORGANIC CARBON PROFILE OPTION
+(   26) CHARACTER(LEN=3), INTENT(OUT) :: HRAIN     ! Rainfall spatial distribution
+(   27) CHARACTER(LEN=3), INTENT(OUT) :: HHORT     ! Horton runoff
+(   28) LOGICAL, INTENT(OUT)          :: OGLACIER  ! True = Over permanent snow and ice, 
+(   29) LOGICAL, INTENT(OUT)          :: OCANOPY_DRAG ! T: drag activated in SBL scheme within the canopy
+(   30) LOGICAL, INTENT(OUT)          :: OVEGUPD   ! T: update vegetation parameters 
+(   31) LOGICAL, INTENT(OUT)          :: OSPINUPCARBS ! T: carbon spinup soil
+(   32) LOGICAL, INTENT(OUT)          :: OSPINUPCARBW ! T: carbon spinup wood
+(   33) REAL,    INTENT(OUT)          :: PSPINMAXS    ! max number of times CARBON_SOIL subroutine is called
+(   34) REAL,    INTENT(OUT)          :: PSPINMAXW    ! max number of times the wood is accelerated 
+(   35) REAL,    INTENT(OUT)          :: PCO2_START   ! Pre-industrial CO2 concentration
+(   36) REAL,    INTENT(OUT)          :: PCO2_END     ! Begin-transient CO2 concentration
+(   37) INTEGER, INTENT(OUT)          :: KNBYEARSPINS ! nbr years needed to reaches soil equilibrium
+(   38) INTEGER, INTENT(OUT)          :: KNBYEARSPINW ! nbr years needed to reaches wood equilibrium
+(   39) LOGICAL, INTENT(OUT)          :: ONITRO_DILU ! nitrogen dilution fct of CO2 (Calvet et al. 2008)
+(   40) REAL, INTENT(OUT) :: PCVHEATF
+(   41) END SUBROUTINE DEFAULT_ISBA
+(   42) # 43 "modi_default_isba.F90"
+(   43) END INTERFACE
+(   44) END MODULE MODI_DEFAULT_ISBA

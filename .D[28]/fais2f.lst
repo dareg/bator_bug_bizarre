@@ -1,0 +1,519 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fais2f.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIS2F_MT64                  &
+(    4) &                     (FA,  KREP, KRANG )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Ce sous-programme initialise un tableau "reference" de
+(   12) !      l'en-tete GRIB, section 2.
+(   13) !      (routine appelee une seule fois pour un fichier Aladin donne)
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   17) !*
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANG
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) IRANGC, JM, JMAX, ILOW
+(   25) INTEGER (KIND=JPLIKB) IADD, INUMER, INIMES
+(   26) !
+(   27) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   28) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   29) LOGICAL                  LLFATA
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 3
+
+(   31) !**
+(   32) !     0.  -  INITIALISATIONS ET CONTROLES
+(   33) !-----------------------------------------------------------------------
+(   34) !
+(   35) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   36) IF (LHOOK) CALL DR_HOOK('FAIS2F_MT',0,ZHOOK_HANDLE)
+(   37) KREP=0
+(   38) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   39)   KREP=-66
+(   40)   GOTO 1001
+(   41) ENDIF
+(   42) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(   43) !**
+(   44) !     1.  -  INITIALISATION DU TABLEAU FA%NSC2ALF
+(   45) !-----------------------------------------------------------------------
+(   46) !
+(   47) !  Les valeurs de ce tableau representent les nb de pts
+(   48) ! le long de chaque "parallele" (ici, le nb de coeff spectraux
+(   49) ! pour un meme m (nb d'onde zonal), excepte le triangle et les axes non
+(   50) ! compactes). Il s'agit en effet de deguiser un champ spectral 
+(   51) ! Aladin en champ pts de grille (grille lat-lon) pour profiter
+(   52) ! du compactage, voire de la compression, GRIBEX.
+(   53) ! Le rangt des CSP est fait verticalement (par colonne de m=cst)
+(   54) ! et pour chaque couple (m,n) correspond 4 CSP.
+(   55) !
+(   56) JMAX = (FA%CADRE(IRANGC)%NOZPAR(6)-FA%CADRE(IRANGC)%NOZPAR(5)+1)/4 -1
+(   57) DO JM=1,JMAX
+(   58)   ILOW=2+2*JM+1
+(   59)   IADD=4* MAX(FA%FICHIER(KRANG)%NSTROF+1-JM,1_JPLIKB )
+(   60) !
+(   61)   FA%FICHIER(KRANG)%NSC2ALF(JM)=FA%CADRE(IRANGC)%NOMPAR(ILOW+1)-        &
+(   62) &                        (FA%CADRE(IRANGC)%NOMPAR(ILOW)+IADD)+1
+(   63) ENDDO
+(   64) !**
+(   65) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   66) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) 1001 CONTINUE
+(   70) LLFATA=LLMOER (KREP,KRANG)
+(   71) !
+(   72) IF (FA%LFAMOP.OR.LLFATA) THEN
+(   73)   INIMES=2
+(   74)   CLNSPR='FAIS2F'
+(   75)   INUMER=JPNIIL
+(   76) !
+(   77)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANG='',I4)') &
+(   78) &     KREP, KRANG
+(   79)   CALL FAIPAR_MT64                                      &
+(   80) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(   81) &                  CLNSPR,CLNSPR,.FALSE.)
+(   82) ENDIF
+(   83) !
+(   84) IF (LHOOK) CALL DR_HOOK('FAIS2F_MT',1,ZHOOK_HANDLE)
+(   85) 
+(   86) CONTAINS
+(   87) 
+(   88) #include "facom2.llmoer.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 4
+
+(   89) 
+(   90) END SUBROUTINE FAIS2F_MT64
+(   91) 
+(   92) 
+(   93) 
+(   94) ! Oct-2012 P. Marguinaud 64b LFI
+(   95) SUBROUTINE FAIS2F64           &
+(   96) &           (KREP, KRANG)
+(   97) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   98) &                   FA_COM_DEFAULT_INIT,  &
+(   99) &                   NEW_FA_DEFAULT
+(  100) USE LFI_PRECISION
+(  101) IMPLICIT NONE
+(  102) ! Arguments
+(  103) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  104) INTEGER (KIND=JPLIKB)  KRANG                                  ! IN   
+(  105) 
+(  106) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  107) 
+(  108) CALL FAIS2F_MT64            &
+(  109) &           (FA, KREP, KRANG)
+(  110) 
+(  111) END SUBROUTINE FAIS2F64
+(  112) 
+(  113) SUBROUTINE FAIS2F             &
+(  114) &           (KREP, KRANG)
+(  115) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  116) &                   FA_COM_DEFAULT_INIT,  &
+(  117) &                   NEW_FA_DEFAULT
+(  118) USE LFI_PRECISION
+(  119) IMPLICIT NONE
+(  120) ! Arguments
+(  121) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  122) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  123) 
+(  124) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  125) 
+(  126) CALL FAIS2F_MT              &
+(  127) &           (FA, KREP, KRANG)
+(  128) 
+(  129) END SUBROUTINE FAIS2F
+(  130) 
+(  131) SUBROUTINE FAIS2F_MT             &
+(  132) &           (FA, KREP, KRANG)
+(  133) USE FA_MOD, ONLY : FA_COM
+(  134) USE LFI_PRECISION
+(  135) IMPLICIT NONE
+(  136) ! Arguments
+(  137) TYPE (FA_COM)          FA                                     ! INOUT
+(  138) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  139) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  140) ! Local integers
+(  141) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  142) INTEGER (KIND=JPLIKB)  IRANG                                  ! IN   
+(  143) ! Convert arguments
+(  144) 
+(  145) IRANG      = INT (     KRANG, JPLIKB)
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 5
+
+(  147) CALL FAIS2F_MT64            &
+(  148) &           (FA, IREP, IRANG)
+(  149) 
+(  150) KREP       = INT (      IREP, JPLIKM)
+(  151) 
+(  152) END SUBROUTINE FAIS2F_MT
+(  153) 
+(  154) !INTF KREP            OUT 
+(  155) !INTF KRANG         IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 6
+
+(    1) # 1 "fais2f.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIS2F_MT64                  &
+(    4) &                     (FA,  KREP, KRANG )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Ce sous-programme initialise un tableau "reference" de
+(   12) !      l'en-tete GRIB, section 2.
+(   13) !      (routine appelee une seule fois pour un fichier Aladin donne)
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   17) !*
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANG
+(   23) !
+(   24) INTEGER (KIND=JPLIKB) IRANGC, JM, JMAX, ILOW
+(   25) INTEGER (KIND=JPLIKB) IADD, INUMER, INIMES
+(   26) !
+(   27) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   28) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   29) LOGICAL                  LLFATA
+(   30) # 31 "fais2f.F90"
+(   31) !**
+(   32) !     0.  -  INITIALISATIONS ET CONTROLES
+(   33) !-----------------------------------------------------------------------
+(   34) !
+(   35) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   36) IF (LHOOK) CALL DR_HOOK('FAIS2F_MT',0,ZHOOK_HANDLE)
+(   37) KREP=0
+(   38) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   39)   KREP=-66
+(   40)   GOTO 1001
+(   41) ENDIF
+(   42) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(   43) !**
+(   44) !     1.  -  INITIALISATION DU TABLEAU FA%NSC2ALF
+(   45) !-----------------------------------------------------------------------
+(   46) !
+(   47) !  Les valeurs de ce tableau representent les nb de pts
+(   48) ! le long de chaque "parallele" (ici, le nb de coeff spectraux
+(   49) ! pour un meme m (nb d'onde zonal), excepte le triangle et les axes non
+(   50) ! compactes). Il s'agit en effet de deguiser un champ spectral 
+(   51) ! Aladin en champ pts de grille (grille lat-lon) pour profiter
+(   52) ! du compactage, voire de la compression, GRIBEX.
+(   53) ! Le rangt des CSP est fait verticalement (par colonne de m=cst)
+(   54) ! et pour chaque couple (m,n) correspond 4 CSP.
+(   55) !
+(   56) JMAX = (FA%CADRE(IRANGC)%NOZPAR(6)-FA%CADRE(IRANGC)%NOZPAR(5)+1)/4 -1
+(   57) DO JM=1,JMAX
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 7
+
+(   58)   ILOW=2+2*JM+1
+(   59)   IADD=4* MAX(FA%FICHIER(KRANG)%NSTROF+1-JM,1_JPLIKB )
+(   60) !
+(   61)   FA%FICHIER(KRANG)%NSC2ALF(JM)=FA%CADRE(IRANGC)%NOMPAR(ILOW+1)-        &
+(   62) &                        (FA%CADRE(IRANGC)%NOMPAR(ILOW)+IADD)+1
+(   63) ENDDO
+(   64) !**
+(   65) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(   66) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(   67) !-----------------------------------------------------------------------
+(   68) !
+(   69) 1001 CONTINUE
+(   70) LLFATA=LLMOER (KREP,KRANG)
+(   71) !
+(   72) IF (FA%LFAMOP.OR.LLFATA) THEN
+(   73)   INIMES=2
+(   74)   CLNSPR='FAIS2F'
+(   75)   INUMER=JPNIIL
+(   76) !
+(   77)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANG='',I4)') &
+(   78) &     KREP, KRANG
+(   79)   CALL FAIPAR_MT64                                      &
+(   80) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(   81) &                  CLNSPR,CLNSPR,.FALSE.)
+(   82) ENDIF
+(   83) !
+(   84) IF (LHOOK) CALL DR_HOOK('FAIS2F_MT',1,ZHOOK_HANDLE)
+(   85) # 86 "fais2f.F90"
+(   86) CONTAINS
+(   87) # 88 "fais2f.F90"
+(   88) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 89 "fais2f.F90"
+(   89) # 90 "fais2f.F90"
+(   90) END SUBROUTINE FAIS2F_MT64
+(   91) # 94 "fais2f.F90"
+(   94) ! Oct-2012 P. Marguinaud 64b LFI
+(   95) SUBROUTINE FAIS2F64           &
+(   96) &           (KREP, KRANG)
+(   97) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   98) &                   FA_COM_DEFAULT_INIT,  &
+(   99) &                   NEW_FA_DEFAULT
+(  100) USE LFI_PRECISION
+(  101) IMPLICIT NONE
+(  102) ! Arguments
+(  103) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  104) INTEGER (KIND=JPLIKB)  KRANG                                  ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:41      page 8
+
+(  105) # 106 "fais2f.F90"
+(  106) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  107) # 108 "fais2f.F90"
+(  108) CALL FAIS2F_MT64            &
+(  109) &           (FA, KREP, KRANG)
+(  110) # 111 "fais2f.F90"
+(  111) END SUBROUTINE FAIS2F64
+(  112) # 113 "fais2f.F90"
+(  113) SUBROUTINE FAIS2F             &
+(  114) &           (KREP, KRANG)
+(  115) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  116) &                   FA_COM_DEFAULT_INIT,  &
+(  117) &                   NEW_FA_DEFAULT
+(  118) USE LFI_PRECISION
+(  119) IMPLICIT NONE
+(  120) ! Arguments
+(  121) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  122) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  123) # 124 "fais2f.F90"
+(  124) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  125) # 126 "fais2f.F90"
+(  126) CALL FAIS2F_MT              &
+(  127) &           (FA, KREP, KRANG)
+(  128) # 129 "fais2f.F90"
+(  129) END SUBROUTINE FAIS2F
+(  130) # 131 "fais2f.F90"
+(  131) SUBROUTINE FAIS2F_MT             &
+(  132) &           (FA, KREP, KRANG)
+(  133) USE FA_MOD, ONLY : FA_COM
+(  134) USE LFI_PRECISION
+(  135) IMPLICIT NONE
+(  136) ! Arguments
+(  137) TYPE (FA_COM)          FA                                     ! INOUT
+(  138) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  139) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  140) ! Local integers
+(  141) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  142) INTEGER (KIND=JPLIKB)  IRANG                                  ! IN   
+(  143) ! Convert arguments
+(  144) # 145 "fais2f.F90"
+(  145) IRANG      = INT (     KRANG, JPLIKB)
+(  146) # 147 "fais2f.F90"
+(  147) CALL FAIS2F_MT64            &
+(  148) &           (FA, IREP, IRANG)
+(  149) # 150 "fais2f.F90"
+(  150) KREP       = INT (      IREP, JPLIKM)
+(  151) # 152 "fais2f.F90"
+(  152) END SUBROUTINE FAIS2F_MT
+(  153) # 154 "fais2f.F90"
+(  154) !INTF KREP            OUT 
+(  155) !INTF KRANG         IN    

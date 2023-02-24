@@ -1,0 +1,1136 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: eggx_n.F90
+
+(    1) SUBROUTINE EGGX_N(PI,PRA,KROTEQ,PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,&
+(    2)      & PLON0,PLAT0,PRPK,KULOUT,KSOTRP,KGIVO,&
+(    3)      & PGELAM,PGELAT,PGM,PGNORX,PGNORY,KDLSA,&
+(    4)      & KDLSUR,KDGSA,KDGEN,KDLUN,KDLUX,KDGUN,KDGUX,&
+(    5)      & PDELX,PDELY,PLONC,PLATC)  
+(    6) 
+(    7) ! Version 2006.1016 by JD GRIL
+(    8) 
+(    9) !** *EGGX_N*  - the interface to both old and new geographic package of ALADIN
+(   10) 
+(   11) !     Purpose.
+(   12) !     --------
+(   13) !      To provide an interface to both new and old geographic setup
+(   14) !      routines MAKDO and EGGX.
+(   15) !      Convert between the old EGGX domain definition and the new 
+(   16) !      domain definition
+(   17) !      The old definition uses corners, number of grid points and EGGX
+(   18) !      projection definition parameters
+(   19) !      The new definition uses the centre of domain, number of grid points
+(   20) !      and the resolution in x and y.
+(   21) 
+(   22) !**   Interface.
+(   23) !     ----------
+(   24) !        *CALL* *EGGX_N
+(   25) 
+(   26) !     Explicit arguments :
+(   27) !     --------------------
+(   28) 
+(   29) !     INPUT:
+(   30) !      PI : pi (3.14ETC)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 3
+
+(   31) !      PRA  : radius of spherical planet
+(   32) !      KROTEQ : previous rotation parameter
+(   33) !               here it is a control of the direction of the conversion
+(   34) !               since the options KROTEQ>0 are already no more supported
+(   35) !      PLONR : geographic longitude of reference point of rotation
+(   36) !      PLATR : geographic latitude of reference point of rotation
+(   37) !      PLON0 : longitude of reference for the projection
+(   38) !      PLAT0 : latitude of reference for the projection
+(   39) !      PBETA : angle (in rd) between x-axis and rotated latitude circles
+(   40) !              at the reference longitude
+(   41) !              (usually, pbeta = 0. : gives pure projections)
+(   42) !      KSOTRP : isotropy parameter under projection
+(   43) !      KGIVO  : choice of reference point for projection
+(   44) !      KDLSA:KDLSUR : lower and upper first dimensions of arrays (X)
+(   45) !      KDGSA:KDGEN  : lower and upper second dimensions of arrays (Y)
+(   46) !      KDLUN:KDLUX  : lower and upper first dimensions of
+(   47) !                     the domain of interest, where arrays are initialized.
+(   48) !      KDGUN:KDGUX  : lower and upper second dimensions of
+(   49) !                     the domain of interest, where arrays are initialized.
+(   50) !      KULOUT : unit of control prints file
+(   51) 
+(   52) !     INPUT/OUTPUT (depending on KROTEQ):
+(   53) !      PLON1, PLAT1 : latitude of the south-west corner of useful domain
+(   54) !      PLON2, PLAT2 : latitude of the north-east corner of useful domain
+(   55) !      PLONC, PLATC : longitude and latitude of the centre of domain
+(   56) !      PDELX, PDELY : horizontal resolution in x and y direction
+(   57) !      PRPK  : projection parameter and definition in the old EGGX
+(   58) !              PRPK = 10. projection type self determined
+(   59) !                         by minimizing the variation of the map factor
+(   60) !              PRPK = 1.  polar stereographic projection
+(   61) !              0. < PRPK < 1.  lambert conformal projection with
+(   62) !                              cone parameter prpk
+(   63) !              PRPK = 0.  mercator conformal projection
+(   64) !              PRPK < 0.  no projection
+(   65) !             on output, PRPK contains the effective projection
+(   66) !             parameter that has been used
+(   67) 
+(   68) !     OUTPUT:
+(   69) !      PGELAM, PGELAT : longitude and latitude of the grid points
+(   70) !      PGM            : map factor at the grid points
+(   71) !      PGNORX, PGNORY : components of the vector pointing to the north pole
+(   72) !                       at the grid points locations
+(   73) 
+(   74) !     Implicit arguments :
+(   75) !     --------------------
+(   76) 
+(   77) !     Method.
+(   78) !     -------
+(   79) !      The parameter KROTEQ controls the direction in which the conversion
+(   80) !      is performed:
+(   81) !        KROTEQ<0: the new parameter set defining the domain and projection
+(   82) !                  (PLON0,PLAT0,PLONC,PLATC,PDELX,PDELY) is converted
+(   83) !                  to the old one by the call of MAKDO
+(   84) !                     KROTEQ = -1 Normal mode
+(   85) !                     KROTEQ = -2 Mercator Rotated-Tilted mode
+(   86) !        KROTEQ=0: the old parameter set defining the domain and projection
+(   87) !                  (PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,PLON0,PLAT0,
+(   88) !                  PRPK,KSOTRP,KGIVO) is converted to the new one by the
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 4
+
+(   89) !                  call of EGGX
+(   90) !      All geographic coordinates must be in radians.
+(   91) !      All latitudes in <-PI/2;PI/2>, all longitudes <-PI;+PI>.
+(   92) !********* future : All latitudes in <-PI/2;PI/2>, all longitudes <0;2*PI>
+(   93) 
+(   94) !     Externals.
+(   95) !     ----------
+(   96) !      EGGX : old geographic setup routine
+(   97) !      MAKDO: new geographic setup routine
+(   98) 
+(   99) !     Reference.
+(  100) !     ----------
+(  101) 
+(  102) !     Author.
+(  103) !     -------
+(  104) !       Jean-Daniel GRIL, 2000-2001
+(  105) 
+(  106) !     Modifications.
+(  107) !     --------------
+(  108) !       Modified in April 2001 by M.Janousek:
+(  109) !           all input/output angles are in radians
+(  110) !           add check of unsupported old EGGX domains
+(  111) !        C. Fischer & J.D. Gril 02-04-16 : Improve new EGGX calls
+(  112) !        M.Hamrud      01-Oct-2003 CY28 Cleaning
+(  113) !        O.Spaniel     Oct-2004 cleaning AL29
+(  114) !        JD Gril       17-Nov-2004 Mercator Rotated-Tilted case 
+(  115) !        JD Gril       18-Nov-2005 add KGIVO=0 and KGIVO=0
+(  116) !        JD Gril       03-Jui-2006 comment lines 328/329
+(  117) !        JD Gril       15-Sep-2006 correct both previous case
+(  118) !        JD Gril       16-Oct-2006 cleaning
+(  119) !      F. Vana  05-Mar-2015  Support for single precision
+(  120) !        P. Marguinaud 04-10-2016 Port to single precision
+(  121) !        R. El Khatib 22-Mar-2017 disable verbosity if KULOUT < 0
+(  122) !     ------------------------------------------------------------------
+(  123) 
+(  124) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(  125) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(  126) USE EGGPACK   ,ONLY : LOLA,XY,NBPTS,PGN,DELTA,ERROR,DOMI,PARAM_PROJ,MAKDO,&
+(  127)  & REF_DATAS,LATLON_TO_XY,XY_TO_LATLON
+(  128) USE EGGANGLES ,ONLY : ANGLE_DOMAIN
+(  129) 
+(  130) !     ------------------------------------------------------------------
+(  131) 
+(  132) IMPLICIT NONE
+(  133) INTEGER(KIND=JPIM),INTENT(INOUT) :: KROTEQ
+(  134) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(  135) INTEGER(KIND=JPIM),INTENT(INOUT) :: KSOTRP
+(  136) INTEGER(KIND=JPIM),INTENT(INOUT) :: KGIVO
+(  137) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSA
+(  138) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSUR
+(  139) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGSA
+(  140) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGEN
+(  141) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN
+(  142) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX
+(  143) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN
+(  144) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX
+(  145) REAL(KIND=JPRB)   ,INTENT(IN)    :: PI 
+(  146) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 5
+
+(  147) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONR 
+(  148) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATR 
+(  149) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PBETA 
+(  150) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON1 
+(  151) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1 
+(  152) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON2 
+(  153) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2 
+(  154) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON0 
+(  155) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT0 
+(  156) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PRPK 
+(  157) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  158) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAT(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  159) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  160) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  161) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  162) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELX 
+(  163) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELY 
+(  164) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONC 
+(  165) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATC 
+(  166) 
+(  167) !     ------------------------------------------------------------------
+(  168) 
+(  169) TYPE (LOLA)              :: YL_TLKRES, YL_TLCENT, YL_TLSW_LOLA, YL_TLNE_LOLA
+(  170) TYPE (LOLA), ALLOCATABLE :: YL_TLGRID_LOLA(:,:)
+(  171) TYPE (XY)                :: YL_TLSW_XY , YL_TLNE_XY, YL_TLCENT_XY
+(  172) TYPE (NBPTS)             :: YL_TLNB_PTS
+(  173) TYPE (PGN), ALLOCATABLE  :: YL_TLGRID_PGN(:,:)
+(  174) TYPE (DELTA)             :: YL_TLDEL
+(  175) TYPE (ERROR)             :: YL_TLERR
+(  176) TYPE (DOMI)              :: YL_TLGRID_INFO
+(  177) TYPE (PARAM_PROJ)        :: YL_TLMODDOM
+(  178) REAL(KIND=JPRB)          :: ZGRID_MF(KDLUX-KDLUN+1,KDGUX-KDGUN+1) 
+(  179) REAL(KIND=JPRB)          :: ZRTD
+(  180) REAL(KIND=JPRB)          :: ZPI, ZRA
+(  181) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  182) REAL(KIND=JPRB)          :: ZEPS
+(  183) LOGICAL                  :: LLMRT
+(  184) 
+(  185) !     ------------------------------------------------------------------
+(  186) 
+(  187) #include "eggx.h"
+(  188) 
+(  189) #include "abor1.intfb.h"
+(  190) 
+(  191) !     ------------------------------------------------------------------
+(  192) IF (LHOOK) CALL DR_HOOK('EGGX_N',0,ZHOOK_HANDLE)
+(  193) !     ------------------------------------------------------------------
+(  194) 
+(  195) ! The routine can be sometimes called before constants are initialized
+(  196) ! Check if it is the case and then set defaults
+(  197) IF (INT(PI*100._JPRB) == 314) THEN
+(  198)   ZPI=REAL(PI,JPRB)
+(  199)   ZRA=REAL(PRA,JPRB)
+(  200) ELSE
+(  201)   ZPI=ASIN(1.0_JPRB)*2.0_JPRB
+(  202)   ZRA=6371229._JPRB
+(  203) ENDIF
+(  204) ZEPS=EPSILON(1.0_JPRB)*100.0_JPRB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 6
+
+(  205) ZRTD   = 180.0_JPRB/ZPI
+(  206) PGELAM = 0.0_JPRB
+(  207) PGELAT = 0.0_JPRB
+(  208) PGM    = 0.0_JPRB
+(  209) PGNORX = 0.0_JPRB
+(  210) PGNORY = 0.0_JPRB
+(  211) 
+(  212) IF (KULOUT >= 0) WRITE(KULOUT,*) '********* INFO of Input data in EGGX_N **************'
+(  213) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON0 (rd) = ',PLON0,'PLON0 (dg) = ',PLON0*ZRTD
+(  214) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT0 (rd) = ',PLAT0,'PLAT0 (dg) = ',PLAT0*ZRTD 
+(  215) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLONC (rd) = ',PLONC,'PLONC (dg) = ',PLONC*ZRTD
+(  216) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLATC (rd) = ',PLATC,'PLATC (dg) = ',PLATC*ZRTD 
+(  217) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON1 (rd) = ',PLON1,'PLON1 (dg) = ',PLON1*ZRTD
+(  218) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT1 (rd) = ',PLAT1,'PLAT1 (dg) = ',PLAT1*ZRTD
+(  219) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON2 (rd) = ',PLON2,'PLON2 (dg) = ',PLON2*ZRTD
+(  220) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT2 (rd) = ',PLAT2,'PLAT2 (dg) = ',PLAT2*ZRTD 
+(  221) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELX      = ',PDELX
+(  222) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELY      = ',PDELY
+(  223) IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ     = ',KROTEQ
+(  224) IF (KULOUT >= 0) WRITE(KULOUT,*) '****************************************************'
+(  225) 
+(  226) IF (KROTEQ < 0) THEN
+(  227)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ < 0 : New Eggx domain'
+(  228)   ! the input parameters are in the new style of the domain definition
+(  229)   LLMRT = (KROTEQ == -2)
+(  230)   IF (.NOT.LLMRT) KROTEQ = -1
+(  231)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ = ',KROTEQ,'LLMRT = ',LLMRT
+(  232)   IF (LLMRT .AND. (ABS(PLAT0) >= ZEPS)) THEN
+(  233)     WRITE(ABS(KULOUT),*) 'EGGX_N: PLAT0=',PLAT0,&
+(  234)      & ' MUST BE EQUAL ZERO IF LLMRT IS TRUE!'
+(  235)     CALL ABOR1('EGGX_N: LLMRT & PLAT0 INCONSISTENT')
+(  236)   ENDIF
+(  237)   KSOTRP              = 0_JPIM
+(  238)   KGIVO               = 0_JPIM
+(  239)   PLONR               = 0.0_JPRB
+(  240)   PLATR               = 0.0_JPRB
+(  241)   PBETA               = 0.0_JPRB
+(  242)   YL_TLKRES%LON       = PLON0*ZRTD
+(  243)   YL_TLKRES%LAT       = PLAT0*ZRTD
+(  244)   YL_TLCENT%LON       = PLONC*ZRTD
+(  245)   YL_TLCENT%LAT       = PLATC*ZRTD
+(  246)   YL_TLKRES           = ANGLE_DOMAIN(YL_TLKRES,REAL(ZPI,JPRB),'-+','D')
+(  247)   YL_TLCENT           = ANGLE_DOMAIN(YL_TLCENT,REAL(ZPI,JPRB),'-+','D')
+(  248)   YL_TLDEL%ONX        = PDELX
+(  249)   YL_TLDEL%ONY        = PDELY
+(  250)   YL_TLNB_PTS%ONX     = KDLUX-KDLUN+1
+(  251)   YL_TLNB_PTS%ONY     = KDGUX-KDGUN+1
+(  252)   ALLOCATE(YL_TLGRID_LOLA(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  253)   ALLOCATE(YL_TLGRID_PGN(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  254)   CALL MAKDO(YL_TLKRES,YL_TLCENT,YL_TLDEL,YL_TLNB_PTS,YL_TLGRID_LOLA,&
+(  255)    & ZGRID_MF,YL_TLGRID_PGN,YL_TLGRID_INFO,YL_TLERR,.TRUE.,.TRUE.,&
+(  256)    & REAL(ZPI,JPRB),REAL(ZRA,JPRB),KULOUT,LLMRT)  
+(  257)   PLON1                           = YL_TLGRID_LOLA(1,1)%LON
+(  258)   PLAT1                           = YL_TLGRID_LOLA(1,1)%LAT
+(  259)   PLON2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LON
+(  260)   PLAT2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LAT
+(  261)   PLON0                           = YL_TLKRES%LON
+(  262)   PLAT0                           = YL_TLKRES%LAT 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 7
+
+(  263)   PLONC                           = YL_TLCENT%LON
+(  264)   PLATC                           = YL_TLCENT%LAT
+(  265)   PRPK                            = YL_TLGRID_INFO%INFO_PROJ%KL
+(  266)   PGELAM(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LON  
+(  267)   PGELAT(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LAT  
+(  268)   PGM(KDLUN:KDLUX,KDGUN:KDGUX)    = ZGRID_MF(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)
+(  269)   PGNORX(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONX  
+(  270)   PGNORY(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONY  
+(  271)   DEALLOCATE(YL_TLGRID_LOLA)
+(  272)   DEALLOCATE(YL_TLGRID_PGN)
+(  273) ELSE
+(  274)   ! KROTEQ>0 => the input is in the old style
+(  275)   ! Some old EGGX domains are no more supported in ALADIN
+(  276)   ! Check if that is not the case of this domain
+(  277)   IF (KROTEQ > 0) THEN
+(  278)     WRITE(ABS(KULOUT),*) 'EGGX_N: NROTEQ=',KROTEQ,&
+(  279)      & ' IS NOT VALID VALUE, IT MUST BE ZERO!'  
+(  280)     CALL ABOR1('EGGX_N: UNSUPPORTED NROTEQ')
+(  281)   ELSEIF (PBETA /= 0.0_JPRB .AND. PRPK == 0.0_JPRB) THEN
+(  282)     WRITE(ABS(KULOUT),*) 'EGGX_N: ROTATED DOMAIN IN MERCATOR PROJECTION NOT&
+(  283)      & SUPPORTED (EBETA HAS TO BE 0)'
+(  284)     CALL ABOR1('EGGX_N: UNSUPPORTED EBETA')
+(  285)   ELSEIF ( ABS(PRPK-ABS(SIN(PLAT0))) > 1.E-7 ) THEN
+(  286)     WRITE(ABS(KULOUT),*) 'EGGX_N: YOU SEEM TO HAVE A SECANT CASE OF PROJECTION'
+(  287)     WRITE(ABS(KULOUT),*) '       ERPK=',PRPK,'  SIN(ELAT0)=',SIN(PLAT0)
+(  288)     CALL ABOR1('EGGX_N: UNSUPPORTED SECANT PROJECTION')
+(  289)   ENDIF
+(  290)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ = 0 : Old Eggx domain'
+(  291)   ! Call EGGX to handle cases when corners may change
+(  292)   ! Fill in every case the arrays. Not needed in model
+(  293)   ! (call echien) but outside. So, either with old eggx,
+(  294)   ! either with makdo (see below)
+(  295)   IF(KSOTRP/=0 .OR. KGIVO/=0 .OR. PRPK==10._JPRB) THEN
+(  296)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'Call old EGGX to handle cases when corners may change'
+(  297)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'KSOTRP = ',KSOTRP,'  KGIVO = ',KGIVO,'  PRPK = ',PRPK
+(  298)     CALL EGGX(REAL(ZPI,JPRB),REAL(ZRA,JPRB),KROTEQ,PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,&
+(  299)      & PLON0,PLAT0,PRPK,KULOUT,KSOTRP,KGIVO,&
+(  300)      & PGELAM,PGELAT,PGM,PGNORX,PGNORY,KDLSA,KDLSUR,KDGSA,KDGEN,&
+(  301)      & KDLUN,KDLUX,KDGUN,KDGUX,PDELX,PDELY)  
+(  302)   ENDIF
+(  303)   ! Now calculate x,y coordinates of the corners, compute the centre
+(  304)   ! point and convert it to lat-lon by the EGGPACK functions
+(  305)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'COMPUTATION OF CENTER'
+(  306)   YL_TLKRES%LON    = PLON0*ZRTD
+(  307)   YL_TLKRES%LAT    = PLAT0*ZRTD
+(  308)   YL_TLKRES        = ANGLE_DOMAIN(YL_TLKRES,ZPI,'-+','D')
+(  309)   YL_TLMODDOM      = REF_DATAS(YL_TLKRES,ZRA)
+(  310)   YL_TLSW_LOLA%LON = PLON1
+(  311)   YL_TLSW_LOLA%LAT = PLAT1
+(  312)   YL_TLNE_LOLA%LON = PLON2
+(  313)   YL_TLNE_LOLA%LAT = PLAT2
+(  314)   YL_TLSW_LOLA     = ANGLE_DOMAIN(YL_TLSW_LOLA,ZPI,'-+','R')
+(  315)   YL_TLNE_LOLA     = ANGLE_DOMAIN(YL_TLNE_LOLA,ZPI,'-+','R')
+(  316)   YL_TLSW_XY       = LATLON_TO_XY(YL_TLSW_LOLA,YL_TLMODDOM,ZPI)
+(  317)   YL_TLNE_XY       = LATLON_TO_XY(YL_TLNE_LOLA,YL_TLMODDOM,ZPI)
+(  318)   YL_TLCENT_XY%X   = (YL_TLSW_XY%X+YL_TLNE_XY%X)*0.5_JPRB
+(  319)   YL_TLCENT_XY%Y   = (YL_TLSW_XY%Y+YL_TLNE_XY%Y)*0.5_JPRB
+(  320)   YL_TLCENT        = ANGLE_DOMAIN(XY_TO_LATLON(YL_TLCENT_XY,YL_TLMODDOM,ZPI),ZPI,'0+','R')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 8
+
+(  321)   PLONC            = YL_TLCENT%LON
+(  322)   PLATC            = YL_TLCENT%LAT 
+(  323)   ! If KSOTRP=0 and KGIVO=0 then the values of SW,NE,REF are fixed. They come from
+(  324)   ! - old eggx (rare) but can be computed by new eggx
+(  325)   ! - new eggx but with NCADFORM=0 (old "cadre")
+(  326)   ! In both cases we can use new eggx to recompute missing values, this way protects
+(  327)   ! us from old eggx possible bugs in case number 2 (new eggx + NCADFORM=0) 
+(  328)   ! We use Makdo to compute all arrays
+(  329)   IF(KSOTRP==0 .AND. KGIVO==0 .AND. PRPK/=10._JPRB) THEN
+(  330)     ! Computation of resolution to use Makdo
+(  331)     ! We test the case "point" or "linear" wide
+(  332)     ! Protect from divided by zero
+(  333)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'KSOTRP==0 .AND. KGIVO==0 .AND. PRPK/=10'
+(  334)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'COMPUTATION OF RESOLUTION AND USE OF MAKDO'
+(  335)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'because cadre is in old style but domain may be created'
+(  336)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'by new eggx (may be not supported by old eggx)'  
+(  337)     IF ((KDLUX-KDLUN) == 0) THEN
+(  338)       PDELX = 0.0_JPRB
+(  339)     ELSE
+(  340)       PDELX = ABS(YL_TLNE_XY%X-YL_TLSW_XY%X)/REAL(KDLUX-KDLUN,JPRB)
+(  341)     ENDIF
+(  342)     IF ((KDGUX-KDGUN) == 0) THEN
+(  343)       PDELY = 0.0_JPRB
+(  344)     ELSE
+(  345)       PDELY = ABS(YL_TLNE_XY%Y-YL_TLSW_XY%Y)/REAL(KDGUX-KDGUN,JPRB)
+(  346)     ENDIF
+(  347)     YL_TLCENT%LON       = PLONC*ZRTD
+(  348)     YL_TLCENT%LAT       = PLATC*ZRTD
+(  349)     YL_TLKRES           = ANGLE_DOMAIN(YL_TLKRES,ZPI,'-+','D')
+(  350)     YL_TLCENT           = ANGLE_DOMAIN(YL_TLCENT,ZPI,'-+','D')
+(  351)     YL_TLDEL%ONX        = PDELX
+(  352)     YL_TLDEL%ONY        = PDELY
+(  353)     YL_TLNB_PTS%ONX     = KDLUX-KDLUN+1
+(  354)     YL_TLNB_PTS%ONY     = KDGUX-KDGUN+1
+(  355)     ALLOCATE(YL_TLGRID_LOLA(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  356)     ALLOCATE(YL_TLGRID_PGN(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  357)     CALL MAKDO(YL_TLKRES,YL_TLCENT,YL_TLDEL,YL_TLNB_PTS,YL_TLGRID_LOLA,&
+(  358)      & ZGRID_MF,YL_TLGRID_PGN,YL_TLGRID_INFO,YL_TLERR,.TRUE.,.TRUE.,&
+(  359)      & REAL(ZPI,JPRB),REAL(ZRA,JPRB),KULOUT,.FALSE.)  
+(  360)     PLON1                           = YL_TLGRID_LOLA(1,1)%LON
+(  361)     PLAT1                           = YL_TLGRID_LOLA(1,1)%LAT
+(  362)     PLON2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LON
+(  363)     PLAT2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LAT
+(  364)     PLON0                           = YL_TLKRES%LON
+(  365)     PLAT0                           = YL_TLKRES%LAT 
+(  366)     PLONC                           = YL_TLCENT%LON
+(  367)     PLATC                           = YL_TLCENT%LAT
+(  368)     PRPK                            = YL_TLGRID_INFO%INFO_PROJ%KL
+(  369)     PGELAM(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LON  
+(  370)     PGELAT(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LAT  
+(  371)     PGM(KDLUN:KDLUX,KDGUN:KDGUX)    = ZGRID_MF(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)
+(  372)     PGNORX(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONX  
+(  373)     PGNORY(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONY  
+(  374)     DEALLOCATE(YL_TLGRID_LOLA)
+(  375)     DEALLOCATE(YL_TLGRID_PGN)
+(  376)   ENDIF
+(  377)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'SWX = ',YL_TLSW_XY%X,'NEX = ',YL_TLNE_XY%X,'CEX = ',YL_TLCENT_XY%X
+(  378)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'SWY = ',YL_TLSW_XY%Y,'NEY = ',YL_TLNE_XY%Y,'CEY = ',YL_TLCENT_XY%Y   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 9
+
+(  379) ENDIF
+(  380) 
+(  381) IF (KULOUT >= 0) WRITE(KULOUT,*) '********* INFO before Return out of EGGX_N *********'
+(  382) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON0 (rd) = ',PLON0,'PLON0 (dg) = ',PLON0*ZRTD
+(  383) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT0 (rd) = ',PLAT0,'PLAT0 (dg) = ',PLAT0*ZRTD 
+(  384) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLONC (rd) = ',PLONC,'PLONC (dg) = ',PLONC*ZRTD
+(  385) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLATC (rd) = ',PLATC,'PLATC (dg) = ',PLATC*ZRTD 
+(  386) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON1 (rd) = ',PLON1,'PLON1 (dg) = ',PLON1*ZRTD
+(  387) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT1 (rd) = ',PLAT1,'PLAT1 (dg) = ',PLAT1*ZRTD
+(  388) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUN,KDGUN):SW (rd) = ',PGELAM(KDLUN,KDGUN)
+(  389) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUN,KDGUN):SW (dg) = ',PGELAM(KDLUN,KDGUN)*ZRTD
+(  390) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUN,KDGUN):SW (rd) = ',PGELAT(KDLUN,KDGUN)
+(  391) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUN,KDGUN):SW (dg) = ',PGELAT(KDLUN,KDGUN)*ZRTD
+(  392) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON2 (rd) = ',PLON2,'PLON2 (dg) = ',PLON2*ZRTD
+(  393) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT2 (rd) = ',PLAT2,'PLAT2 (dg) = ',PLAT2*ZRTD
+(  394) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUX,KDGUX):NE (rd) = ',PGELAM(KDLUX,KDGUX)
+(  395) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUX,KDGUX):NE (dg) = ',PGELAM(KDLUX,KDGUX)*ZRTD
+(  396) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUX,KDGUX):NE (rd) = ',PGELAT(KDLUX,KDGUX)
+(  397) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUX,KDGUX):NE (dg) = ',PGELAT(KDLUX,KDGUX)*ZRTD
+(  398) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PRPK = ',PRPK
+(  399) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGM(KDLUN,KDGUN)    (SW) = ',PGM(KDLUN,KDGUN)
+(  400) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGNORX(KDLUN,KDGUN) (SW) = ',PGNORX(KDLUN,KDGUN)
+(  401) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGNORY(KDLUN,KDGUN) (SW) = ',PGNORY(KDLUN,KDGUN)
+(  402) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELX = ',PDELX
+(  403) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELY = ',PDELY
+(  404) IF (KULOUT >= 0) WRITE(KULOUT,*) '****************************************************'
+(  405) 
+(  406) !     ------------------------------------------------------------------
+(  407) IF (LHOOK) CALL DR_HOOK('EGGX_N',1,ZHOOK_HANDLE)
+(  408) END SUBROUTINE EGGX_N
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 10
+
+(    1) # 1 "eggx_n.F90"
+(    1) SUBROUTINE EGGX_N(PI,PRA,KROTEQ,PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,&
+(    2)      & PLON0,PLAT0,PRPK,KULOUT,KSOTRP,KGIVO,&
+(    3)      & PGELAM,PGELAT,PGM,PGNORX,PGNORY,KDLSA,&
+(    4)      & KDLSUR,KDGSA,KDGEN,KDLUN,KDLUX,KDGUN,KDGUX,&
+(    5)      & PDELX,PDELY,PLONC,PLATC)  
+(    6) # 7 "eggx_n.F90"
+(    7) ! Version 2006.1016 by JD GRIL
+(    8) # 9 "eggx_n.F90"
+(    9) !** *EGGX_N*  - the interface to both old and new geographic package of ALADIN
+(   10) # 11 "eggx_n.F90"
+(   11) !     Purpose.
+(   12) !     --------
+(   13) !      To provide an interface to both new and old geographic setup
+(   14) !      routines MAKDO and EGGX.
+(   15) !      Convert between the old EGGX domain definition and the new 
+(   16) !      domain definition
+(   17) !      The old definition uses corners, number of grid points and EGGX
+(   18) !      projection definition parameters
+(   19) !      The new definition uses the centre of domain, number of grid points
+(   20) !      and the resolution in x and y.
+(   21) # 22 "eggx_n.F90"
+(   22) !**   Interface.
+(   23) !     ----------
+(   24) !        *CALL* *EGGX_N
+(   25) # 26 "eggx_n.F90"
+(   26) !     Explicit arguments :
+(   27) !     --------------------
+(   28) # 29 "eggx_n.F90"
+(   29) !     INPUT:
+(   30) !      PI : pi (3.14ETC)
+(   31) !      PRA  : radius of spherical planet
+(   32) !      KROTEQ : previous rotation parameter
+(   33) !               here it is a control of the direction of the conversion
+(   34) !               since the options KROTEQ>0 are already no more supported
+(   35) !      PLONR : geographic longitude of reference point of rotation
+(   36) !      PLATR : geographic latitude of reference point of rotation
+(   37) !      PLON0 : longitude of reference for the projection
+(   38) !      PLAT0 : latitude of reference for the projection
+(   39) !      PBETA : angle (in rd) between x-axis and rotated latitude circles
+(   40) !              at the reference longitude
+(   41) !              (usually, pbeta = 0. : gives pure projections)
+(   42) !      KSOTRP : isotropy parameter under projection
+(   43) !      KGIVO  : choice of reference point for projection
+(   44) !      KDLSA:KDLSUR : lower and upper first dimensions of arrays (X)
+(   45) !      KDGSA:KDGEN  : lower and upper second dimensions of arrays (Y)
+(   46) !      KDLUN:KDLUX  : lower and upper first dimensions of
+(   47) !                     the domain of interest, where arrays are initialized.
+(   48) !      KDGUN:KDGUX  : lower and upper second dimensions of
+(   49) !                     the domain of interest, where arrays are initialized.
+(   50) !      KULOUT : unit of control prints file
+(   51) # 52 "eggx_n.F90"
+(   52) !     INPUT/OUTPUT (depending on KROTEQ):
+(   53) !      PLON1, PLAT1 : latitude of the south-west corner of useful domain
+(   54) !      PLON2, PLAT2 : latitude of the north-east corner of useful domain
+(   55) !      PLONC, PLATC : longitude and latitude of the centre of domain
+(   56) !      PDELX, PDELY : horizontal resolution in x and y direction
+(   57) !      PRPK  : projection parameter and definition in the old EGGX
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 11
+
+(   58) !              PRPK = 10. projection type self determined
+(   59) !                         by minimizing the variation of the map factor
+(   60) !              PRPK = 1.  polar stereographic projection
+(   61) !              0. < PRPK < 1.  lambert conformal projection with
+(   62) !                              cone parameter prpk
+(   63) !              PRPK = 0.  mercator conformal projection
+(   64) !              PRPK < 0.  no projection
+(   65) !             on output, PRPK contains the effective projection
+(   66) !             parameter that has been used
+(   67) # 68 "eggx_n.F90"
+(   68) !     OUTPUT:
+(   69) !      PGELAM, PGELAT : longitude and latitude of the grid points
+(   70) !      PGM            : map factor at the grid points
+(   71) !      PGNORX, PGNORY : components of the vector pointing to the north pole
+(   72) !                       at the grid points locations
+(   73) # 74 "eggx_n.F90"
+(   74) !     Implicit arguments :
+(   75) !     --------------------
+(   76) # 77 "eggx_n.F90"
+(   77) !     Method.
+(   78) !     -------
+(   79) !      The parameter KROTEQ controls the direction in which the conversion
+(   80) !      is performed:
+(   81) !        KROTEQ<0: the new parameter set defining the domain and projection
+(   82) !                  (PLON0,PLAT0,PLONC,PLATC,PDELX,PDELY) is converted
+(   83) !                  to the old one by the call of MAKDO
+(   84) !                     KROTEQ = -1 Normal mode
+(   85) !                     KROTEQ = -2 Mercator Rotated-Tilted mode
+(   86) !        KROTEQ=0: the old parameter set defining the domain and projection
+(   87) !                  (PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,PLON0,PLAT0,
+(   88) !                  PRPK,KSOTRP,KGIVO) is converted to the new one by the
+(   89) !                  call of EGGX
+(   90) !      All geographic coordinates must be in radians.
+(   91) !      All latitudes in <-PI/2;PI/2>, all longitudes <-PI;+PI>.
+(   92) !********* future : All latitudes in <-PI/2;PI/2>, all longitudes <0;2*PI>
+(   93) # 94 "eggx_n.F90"
+(   94) !     Externals.
+(   95) !     ----------
+(   96) !      EGGX : old geographic setup routine
+(   97) !      MAKDO: new geographic setup routine
+(   98) # 99 "eggx_n.F90"
+(   99) !     Reference.
+(  100) !     ----------
+(  101) # 102 "eggx_n.F90"
+(  102) !     Author.
+(  103) !     -------
+(  104) !       Jean-Daniel GRIL, 2000-2001
+(  105) # 106 "eggx_n.F90"
+(  106) !     Modifications.
+(  107) !     --------------
+(  108) !       Modified in April 2001 by M.Janousek:
+(  109) !           all input/output angles are in radians
+(  110) !           add check of unsupported old EGGX domains
+(  111) !        C. Fischer & J.D. Gril 02-04-16 : Improve new EGGX calls
+(  112) !        M.Hamrud      01-Oct-2003 CY28 Cleaning
+(  113) !        O.Spaniel     Oct-2004 cleaning AL29
+(  114) !        JD Gril       17-Nov-2004 Mercator Rotated-Tilted case 
+(  115) !        JD Gril       18-Nov-2005 add KGIVO=0 and KGIVO=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 12
+
+(  116) !        JD Gril       03-Jui-2006 comment lines 328/329
+(  117) !        JD Gril       15-Sep-2006 correct both previous case
+(  118) !        JD Gril       16-Oct-2006 cleaning
+(  119) !      F. Vana  05-Mar-2015  Support for single precision
+(  120) !        P. Marguinaud 04-10-2016 Port to single precision
+(  121) !        R. El Khatib 22-Mar-2017 disable verbosity if KULOUT < 0
+(  122) !     ------------------------------------------------------------------
+(  123) # 124 "eggx_n.F90"
+(  124) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(  125) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(  126) USE EGGPACK   ,ONLY : LOLA,XY,NBPTS,PGN,DELTA,ERROR,DOMI,PARAM_PROJ,MAKDO,&
+(  127)  & REF_DATAS,LATLON_TO_XY,XY_TO_LATLON
+(  128) USE EGGANGLES ,ONLY : ANGLE_DOMAIN
+(  129) # 130 "eggx_n.F90"
+(  130) !     ------------------------------------------------------------------
+(  131) # 132 "eggx_n.F90"
+(  132) IMPLICIT NONE
+(  133) INTEGER(KIND=JPIM),INTENT(INOUT) :: KROTEQ
+(  134) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(  135) INTEGER(KIND=JPIM),INTENT(INOUT) :: KSOTRP
+(  136) INTEGER(KIND=JPIM),INTENT(INOUT) :: KGIVO
+(  137) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSA
+(  138) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSUR
+(  139) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGSA
+(  140) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGEN
+(  141) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN
+(  142) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX
+(  143) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN
+(  144) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX
+(  145) REAL(KIND=JPRB)   ,INTENT(IN)    :: PI 
+(  146) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA 
+(  147) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONR 
+(  148) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATR 
+(  149) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PBETA 
+(  150) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON1 
+(  151) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1 
+(  152) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON2 
+(  153) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2 
+(  154) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON0 
+(  155) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT0 
+(  156) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PRPK 
+(  157) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  158) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAT(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  159) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  160) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  161) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(  162) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELX 
+(  163) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELY 
+(  164) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONC 
+(  165) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATC 
+(  166) # 167 "eggx_n.F90"
+(  167) !     ------------------------------------------------------------------
+(  168) # 169 "eggx_n.F90"
+(  169) TYPE (LOLA)              :: YL_TLKRES, YL_TLCENT, YL_TLSW_LOLA, YL_TLNE_LOLA
+(  170) TYPE (LOLA), ALLOCATABLE :: YL_TLGRID_LOLA(:,:)
+(  171) TYPE (XY)                :: YL_TLSW_XY , YL_TLNE_XY, YL_TLCENT_XY
+(  172) TYPE (NBPTS)             :: YL_TLNB_PTS
+(  173) TYPE (PGN), ALLOCATABLE  :: YL_TLGRID_PGN(:,:)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 13
+
+(  174) TYPE (DELTA)             :: YL_TLDEL
+(  175) TYPE (ERROR)             :: YL_TLERR
+(  176) TYPE (DOMI)              :: YL_TLGRID_INFO
+(  177) TYPE (PARAM_PROJ)        :: YL_TLMODDOM
+(  178) REAL(KIND=JPRB)          :: ZGRID_MF(KDLUX-KDLUN+1,KDGUX-KDGUN+1) 
+(  179) REAL(KIND=JPRB)          :: ZRTD
+(  180) REAL(KIND=JPRB)          :: ZPI, ZRA
+(  181) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  182) REAL(KIND=JPRB)          :: ZEPS
+(  183) LOGICAL                  :: LLMRT
+(  184) # 185 "eggx_n.F90"
+(  185) !     ------------------------------------------------------------------
+(  186) # 187 "eggx_n.F90"
+(  187) # 1 ".D[61]/eggx.h"
+(    1) INTERFACE
+(    2) SUBROUTINE EGGX (PRPI, PRA, KROTEQ, PLONR, PLATR, PBETA,&
+(    3)  & PLON1, PLAT1, PLON2, PLAT2, PLON0, PLAT0, PRPK, KULOUT,&
+(    4)  & KSOTRP, KGIV0,&
+(    5)  & PGELAM, PGELAT, PGM, PGNORX, PGNORY,&
+(    6)  & KDLSA, KDLSUR, KDGSA, KDGEN, KDLUN, KDLUX, KDGUN, KDGUX,&
+(    7)  & PDELX, PDELY)  
+(    8) !----------------------------------------------------------------------
+(    9) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   10) !---------------------------------------------------------------------
+(   11) IMPLICIT NONE
+(   12) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSA 
+(   13) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSUR 
+(   14) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGSA 
+(   15) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGEN 
+(   16) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPI
+(   17) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA
+(   18) INTEGER(KIND=JPIM),INTENT(IN)    :: KROTEQ 
+(   19) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONR 
+(   20) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATR 
+(   21) REAL(KIND=JPRB)   ,INTENT(IN)    :: PBETA 
+(   22) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON1 
+(   23) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1 
+(   24) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON2 
+(   25) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2 
+(   26) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON0 
+(   27) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT0 
+(   28) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PRPK
+(   29) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(   30) INTEGER(KIND=JPIM),INTENT(INOUT) :: KSOTRP
+(   31) INTEGER(KIND=JPIM),INTENT(IN)    :: KGIV0 
+(   32) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAM(KDLSA:KDLSUR,KDGSA:KDGEN)
+(   33) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAT(KDLSA:KDLSUR,KDGSA:KDGEN)
+(   34) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KDLSA:KDLSUR,KDGSA:KDGEN)
+(   35) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KDLSA:KDLSUR,KDGSA:KDGEN)
+(   36) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KDLSA:KDLSUR,KDGSA:KDGEN)
+(   37) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN
+(   38) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX
+(   39) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN
+(   40) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX
+(   41) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PDELX
+(   42) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PDELY
+(   43) !---------------------------------------------------------------------
+(   44) END SUBROUTINE EGGX
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 14
+
+(   45) END INTERFACE
+(   46) # 188 "eggx_n.F90"
+(  188) # 189 "eggx_n.F90"
+(  189) # 1 ".D[61]/abor1.intfb.h"
+(    1) INTERFACE
+(    2) # 3 ".D[61]/abor1.intfb.h"
+(    3) SUBROUTINE ABOR1(CDTEXT)
+(    4) CHARACTER(LEN=*), INTENT(IN) :: CDTEXT
+(    5) END SUBROUTINE ABOR1
+(    6) # 7 ".D[61]/abor1.intfb.h"
+(    7) SUBROUTINE ABOR1FL(CDFILE, KLINENUM, CDTEXT)
+(    8) USE PARKIND1  ,ONLY : JPIM
+(    9) CHARACTER(LEN=*), INTENT(IN) :: CDFILE,CDTEXT
+(   10) INTEGER(KIND=JPIM), INTENT(IN) :: KLINENUM
+(   11) END SUBROUTINE ABOR1FL
+(   12) # 13 ".D[61]/abor1.intfb.h"
+(   13) SUBROUTINE ABOR1_EXCEPTION_HANDLER()
+(   14) END SUBROUTINE ABOR1_EXCEPTION_HANDLER
+(   15) # 16 ".D[61]/abor1.intfb.h"
+(   16) END INTERFACE
+(   17) # 190 "eggx_n.F90"
+(  190) # 191 "eggx_n.F90"
+(  191) !     ------------------------------------------------------------------
+(  192) IF (LHOOK) CALL DR_HOOK('EGGX_N',0,ZHOOK_HANDLE)
+(  193) !     ------------------------------------------------------------------
+(  194) # 195 "eggx_n.F90"
+(  195) ! The routine can be sometimes called before constants are initialized
+(  196) ! Check if it is the case and then set defaults
+(  197) IF (INT(PI*100._JPRB) == 314) THEN
+(  198)   ZPI=REAL(PI,JPRB)
+(  199)   ZRA=REAL(PRA,JPRB)
+(  200) ELSE
+(  201)   ZPI=ASIN(1.0_JPRB)*2.0_JPRB
+(  202)   ZRA=6371229._JPRB
+(  203) ENDIF
+(  204) ZEPS=EPSILON(1.0_JPRB)*100.0_JPRB
+(  205) ZRTD   = 180.0_JPRB/ZPI
+(  206) PGELAM = 0.0_JPRB
+(  207) PGELAT = 0.0_JPRB
+(  208) PGM    = 0.0_JPRB
+(  209) PGNORX = 0.0_JPRB
+(  210) PGNORY = 0.0_JPRB
+(  211) # 212 "eggx_n.F90"
+(  212) IF (KULOUT >= 0) WRITE(KULOUT,*) '********* INFO of Input data in EGGX_N **************'
+(  213) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON0 (rd) = ',PLON0,'PLON0 (dg) = ',PLON0*ZRTD
+(  214) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT0 (rd) = ',PLAT0,'PLAT0 (dg) = ',PLAT0*ZRTD 
+(  215) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLONC (rd) = ',PLONC,'PLONC (dg) = ',PLONC*ZRTD
+(  216) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLATC (rd) = ',PLATC,'PLATC (dg) = ',PLATC*ZRTD 
+(  217) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON1 (rd) = ',PLON1,'PLON1 (dg) = ',PLON1*ZRTD
+(  218) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT1 (rd) = ',PLAT1,'PLAT1 (dg) = ',PLAT1*ZRTD
+(  219) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON2 (rd) = ',PLON2,'PLON2 (dg) = ',PLON2*ZRTD
+(  220) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT2 (rd) = ',PLAT2,'PLAT2 (dg) = ',PLAT2*ZRTD 
+(  221) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELX      = ',PDELX
+(  222) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELY      = ',PDELY
+(  223) IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ     = ',KROTEQ
+(  224) IF (KULOUT >= 0) WRITE(KULOUT,*) '****************************************************'
+(  225) # 226 "eggx_n.F90"
+(  226) IF (KROTEQ < 0) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 15
+
+(  227)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ < 0 : New Eggx domain'
+(  228)   ! the input parameters are in the new style of the domain definition
+(  229)   LLMRT = (KROTEQ == -2)
+(  230)   IF (.NOT.LLMRT) KROTEQ = -1
+(  231)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ = ',KROTEQ,'LLMRT = ',LLMRT
+(  232)   IF (LLMRT .AND. (ABS(PLAT0) >= ZEPS)) THEN
+(  233)     WRITE(ABS(KULOUT),*) 'EGGX_N: PLAT0=',PLAT0,&
+(  234)      & ' MUST BE EQUAL ZERO IF LLMRT IS TRUE!'
+(  235)     CALL ABOR1('EGGX_N: LLMRT & PLAT0 INCONSISTENT')
+(  236)   ENDIF
+(  237)   KSOTRP              = 0_JPIM
+(  238)   KGIVO               = 0_JPIM
+(  239)   PLONR               = 0.0_JPRB
+(  240)   PLATR               = 0.0_JPRB
+(  241)   PBETA               = 0.0_JPRB
+(  242)   YL_TLKRES%LON       = PLON0*ZRTD
+(  243)   YL_TLKRES%LAT       = PLAT0*ZRTD
+(  244)   YL_TLCENT%LON       = PLONC*ZRTD
+(  245)   YL_TLCENT%LAT       = PLATC*ZRTD
+(  246)   YL_TLKRES           = ANGLE_DOMAIN(YL_TLKRES,REAL(ZPI,JPRB),'-+','D')
+(  247)   YL_TLCENT           = ANGLE_DOMAIN(YL_TLCENT,REAL(ZPI,JPRB),'-+','D')
+(  248)   YL_TLDEL%ONX        = PDELX
+(  249)   YL_TLDEL%ONY        = PDELY
+(  250)   YL_TLNB_PTS%ONX     = KDLUX-KDLUN+1
+(  251)   YL_TLNB_PTS%ONY     = KDGUX-KDGUN+1
+(  252)   ALLOCATE(YL_TLGRID_LOLA(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  253)   ALLOCATE(YL_TLGRID_PGN(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  254)   CALL MAKDO(YL_TLKRES,YL_TLCENT,YL_TLDEL,YL_TLNB_PTS,YL_TLGRID_LOLA,&
+(  255)    & ZGRID_MF,YL_TLGRID_PGN,YL_TLGRID_INFO,YL_TLERR,.TRUE.,.TRUE.,&
+(  256)    & REAL(ZPI,JPRB),REAL(ZRA,JPRB),KULOUT,LLMRT)  
+(  257)   PLON1                           = YL_TLGRID_LOLA(1,1)%LON
+(  258)   PLAT1                           = YL_TLGRID_LOLA(1,1)%LAT
+(  259)   PLON2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LON
+(  260)   PLAT2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LAT
+(  261)   PLON0                           = YL_TLKRES%LON
+(  262)   PLAT0                           = YL_TLKRES%LAT 
+(  263)   PLONC                           = YL_TLCENT%LON
+(  264)   PLATC                           = YL_TLCENT%LAT
+(  265)   PRPK                            = YL_TLGRID_INFO%INFO_PROJ%KL
+(  266)   PGELAM(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LON  
+(  267)   PGELAT(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LAT  
+(  268)   PGM(KDLUN:KDLUX,KDGUN:KDGUX)    = ZGRID_MF(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)
+(  269)   PGNORX(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONX  
+(  270)   PGNORY(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONY  
+(  271)   DEALLOCATE(YL_TLGRID_LOLA)
+(  272)   DEALLOCATE(YL_TLGRID_PGN)
+(  273) ELSE
+(  274)   ! KROTEQ>0 => the input is in the old style
+(  275)   ! Some old EGGX domains are no more supported in ALADIN
+(  276)   ! Check if that is not the case of this domain
+(  277)   IF (KROTEQ > 0) THEN
+(  278)     WRITE(ABS(KULOUT),*) 'EGGX_N: NROTEQ=',KROTEQ,&
+(  279)      & ' IS NOT VALID VALUE, IT MUST BE ZERO!'  
+(  280)     CALL ABOR1('EGGX_N: UNSUPPORTED NROTEQ')
+(  281)   ELSEIF (PBETA /= 0.0_JPRB .AND. PRPK == 0.0_JPRB) THEN
+(  282)     WRITE(ABS(KULOUT),*) 'EGGX_N: ROTATED DOMAIN IN MERCATOR PROJECTION NOT&
+(  283)      & SUPPORTED (EBETA HAS TO BE 0)'
+(  284)     CALL ABOR1('EGGX_N: UNSUPPORTED EBETA')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 16
+
+(  285)   ELSEIF ( ABS(PRPK-ABS(SIN(PLAT0))) > 1.E-7 ) THEN
+(  286)     WRITE(ABS(KULOUT),*) 'EGGX_N: YOU SEEM TO HAVE A SECANT CASE OF PROJECTION'
+(  287)     WRITE(ABS(KULOUT),*) '       ERPK=',PRPK,'  SIN(ELAT0)=',SIN(PLAT0)
+(  288)     CALL ABOR1('EGGX_N: UNSUPPORTED SECANT PROJECTION')
+(  289)   ENDIF
+(  290)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'KROTEQ = 0 : Old Eggx domain'
+(  291)   ! Call EGGX to handle cases when corners may change
+(  292)   ! Fill in every case the arrays. Not needed in model
+(  293)   ! (call echien) but outside. So, either with old eggx,
+(  294)   ! either with makdo (see below)
+(  295)   IF(KSOTRP/=0 .OR. KGIVO/=0 .OR. PRPK==10._JPRB) THEN
+(  296)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'Call old EGGX to handle cases when corners may change'
+(  297)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'KSOTRP = ',KSOTRP,'  KGIVO = ',KGIVO,'  PRPK = ',PRPK
+(  298)     CALL EGGX(REAL(ZPI,JPRB),REAL(ZRA,JPRB),KROTEQ,PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,&
+(  299)      & PLON0,PLAT0,PRPK,KULOUT,KSOTRP,KGIVO,&
+(  300)      & PGELAM,PGELAT,PGM,PGNORX,PGNORY,KDLSA,KDLSUR,KDGSA,KDGEN,&
+(  301)      & KDLUN,KDLUX,KDGUN,KDGUX,PDELX,PDELY)  
+(  302)   ENDIF
+(  303)   ! Now calculate x,y coordinates of the corners, compute the centre
+(  304)   ! point and convert it to lat-lon by the EGGPACK functions
+(  305)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'COMPUTATION OF CENTER'
+(  306)   YL_TLKRES%LON    = PLON0*ZRTD
+(  307)   YL_TLKRES%LAT    = PLAT0*ZRTD
+(  308)   YL_TLKRES        = ANGLE_DOMAIN(YL_TLKRES,ZPI,'-+','D')
+(  309)   YL_TLMODDOM      = REF_DATAS(YL_TLKRES,ZRA)
+(  310)   YL_TLSW_LOLA%LON = PLON1
+(  311)   YL_TLSW_LOLA%LAT = PLAT1
+(  312)   YL_TLNE_LOLA%LON = PLON2
+(  313)   YL_TLNE_LOLA%LAT = PLAT2
+(  314)   YL_TLSW_LOLA     = ANGLE_DOMAIN(YL_TLSW_LOLA,ZPI,'-+','R')
+(  315)   YL_TLNE_LOLA     = ANGLE_DOMAIN(YL_TLNE_LOLA,ZPI,'-+','R')
+(  316)   YL_TLSW_XY       = LATLON_TO_XY(YL_TLSW_LOLA,YL_TLMODDOM,ZPI)
+(  317)   YL_TLNE_XY       = LATLON_TO_XY(YL_TLNE_LOLA,YL_TLMODDOM,ZPI)
+(  318)   YL_TLCENT_XY%X   = (YL_TLSW_XY%X+YL_TLNE_XY%X)*0.5_JPRB
+(  319)   YL_TLCENT_XY%Y   = (YL_TLSW_XY%Y+YL_TLNE_XY%Y)*0.5_JPRB
+(  320)   YL_TLCENT        = ANGLE_DOMAIN(XY_TO_LATLON(YL_TLCENT_XY,YL_TLMODDOM,ZPI),ZPI,'0+','R')
+(  321)   PLONC            = YL_TLCENT%LON
+(  322)   PLATC            = YL_TLCENT%LAT 
+(  323)   ! If KSOTRP=0 and KGIVO=0 then the values of SW,NE,REF are fixed. They come from
+(  324)   ! - old eggx (rare) but can be computed by new eggx
+(  325)   ! - new eggx but with NCADFORM=0 (old "cadre")
+(  326)   ! In both cases we can use new eggx to recompute missing values, this way protects
+(  327)   ! us from old eggx possible bugs in case number 2 (new eggx + NCADFORM=0) 
+(  328)   ! We use Makdo to compute all arrays
+(  329)   IF(KSOTRP==0 .AND. KGIVO==0 .AND. PRPK/=10._JPRB) THEN
+(  330)     ! Computation of resolution to use Makdo
+(  331)     ! We test the case "point" or "linear" wide
+(  332)     ! Protect from divided by zero
+(  333)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'KSOTRP==0 .AND. KGIVO==0 .AND. PRPK/=10'
+(  334)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'COMPUTATION OF RESOLUTION AND USE OF MAKDO'
+(  335)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'because cadre is in old style but domain may be created'
+(  336)     IF (KULOUT >= 0) WRITE(KULOUT,*) 'by new eggx (may be not supported by old eggx)'  
+(  337)     IF ((KDLUX-KDLUN) == 0) THEN
+(  338)       PDELX = 0.0_JPRB
+(  339)     ELSE
+(  340)       PDELX = ABS(YL_TLNE_XY%X-YL_TLSW_XY%X)/REAL(KDLUX-KDLUN,JPRB)
+(  341)     ENDIF
+(  342)     IF ((KDGUX-KDGUN) == 0) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 17
+
+(  343)       PDELY = 0.0_JPRB
+(  344)     ELSE
+(  345)       PDELY = ABS(YL_TLNE_XY%Y-YL_TLSW_XY%Y)/REAL(KDGUX-KDGUN,JPRB)
+(  346)     ENDIF
+(  347)     YL_TLCENT%LON       = PLONC*ZRTD
+(  348)     YL_TLCENT%LAT       = PLATC*ZRTD
+(  349)     YL_TLKRES           = ANGLE_DOMAIN(YL_TLKRES,ZPI,'-+','D')
+(  350)     YL_TLCENT           = ANGLE_DOMAIN(YL_TLCENT,ZPI,'-+','D')
+(  351)     YL_TLDEL%ONX        = PDELX
+(  352)     YL_TLDEL%ONY        = PDELY
+(  353)     YL_TLNB_PTS%ONX     = KDLUX-KDLUN+1
+(  354)     YL_TLNB_PTS%ONY     = KDGUX-KDGUN+1
+(  355)     ALLOCATE(YL_TLGRID_LOLA(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  356)     ALLOCATE(YL_TLGRID_PGN(KDLUX-KDLUN+1,KDGUX-KDGUN+1))
+(  357)     CALL MAKDO(YL_TLKRES,YL_TLCENT,YL_TLDEL,YL_TLNB_PTS,YL_TLGRID_LOLA,&
+(  358)      & ZGRID_MF,YL_TLGRID_PGN,YL_TLGRID_INFO,YL_TLERR,.TRUE.,.TRUE.,&
+(  359)      & REAL(ZPI,JPRB),REAL(ZRA,JPRB),KULOUT,.FALSE.)  
+(  360)     PLON1                           = YL_TLGRID_LOLA(1,1)%LON
+(  361)     PLAT1                           = YL_TLGRID_LOLA(1,1)%LAT
+(  362)     PLON2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LON
+(  363)     PLAT2                           = YL_TLGRID_LOLA(YL_TLNB_PTS%ONX,YL_TLNB_PTS%ONY)%LAT
+(  364)     PLON0                           = YL_TLKRES%LON
+(  365)     PLAT0                           = YL_TLKRES%LAT 
+(  366)     PLONC                           = YL_TLCENT%LON
+(  367)     PLATC                           = YL_TLCENT%LAT
+(  368)     PRPK                            = YL_TLGRID_INFO%INFO_PROJ%KL
+(  369)     PGELAM(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LON  
+(  370)     PGELAT(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_LOLA(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%LAT  
+(  371)     PGM(KDLUN:KDLUX,KDGUN:KDGUX)    = ZGRID_MF(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)
+(  372)     PGNORX(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONX  
+(  373)     PGNORY(KDLUN:KDLUX,KDGUN:KDGUX) = YL_TLGRID_PGN(1:YL_TLNB_PTS%ONX,1:YL_TLNB_PTS%ONY)%ONY  
+(  374)     DEALLOCATE(YL_TLGRID_LOLA)
+(  375)     DEALLOCATE(YL_TLGRID_PGN)
+(  376)   ENDIF
+(  377)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'SWX = ',YL_TLSW_XY%X,'NEX = ',YL_TLNE_XY%X,'CEX = ',YL_TLCENT_XY%X
+(  378)   IF (KULOUT >= 0) WRITE(KULOUT,*) 'SWY = ',YL_TLSW_XY%Y,'NEY = ',YL_TLNE_XY%Y,'CEY = ',YL_TLCENT_XY%Y   
+(  379) ENDIF
+(  380) # 381 "eggx_n.F90"
+(  381) IF (KULOUT >= 0) WRITE(KULOUT,*) '********* INFO before Return out of EGGX_N *********'
+(  382) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON0 (rd) = ',PLON0,'PLON0 (dg) = ',PLON0*ZRTD
+(  383) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT0 (rd) = ',PLAT0,'PLAT0 (dg) = ',PLAT0*ZRTD 
+(  384) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLONC (rd) = ',PLONC,'PLONC (dg) = ',PLONC*ZRTD
+(  385) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLATC (rd) = ',PLATC,'PLATC (dg) = ',PLATC*ZRTD 
+(  386) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON1 (rd) = ',PLON1,'PLON1 (dg) = ',PLON1*ZRTD
+(  387) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT1 (rd) = ',PLAT1,'PLAT1 (dg) = ',PLAT1*ZRTD
+(  388) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUN,KDGUN):SW (rd) = ',PGELAM(KDLUN,KDGUN)
+(  389) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUN,KDGUN):SW (dg) = ',PGELAM(KDLUN,KDGUN)*ZRTD
+(  390) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUN,KDGUN):SW (rd) = ',PGELAT(KDLUN,KDGUN)
+(  391) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUN,KDGUN):SW (dg) = ',PGELAT(KDLUN,KDGUN)*ZRTD
+(  392) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLON2 (rd) = ',PLON2,'PLON2 (dg) = ',PLON2*ZRTD
+(  393) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PLAT2 (rd) = ',PLAT2,'PLAT2 (dg) = ',PLAT2*ZRTD
+(  394) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUX,KDGUX):NE (rd) = ',PGELAM(KDLUX,KDGUX)
+(  395) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAM(KDLUX,KDGUX):NE (dg) = ',PGELAM(KDLUX,KDGUX)*ZRTD
+(  396) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUX,KDGUX):NE (rd) = ',PGELAT(KDLUX,KDGUX)
+(  397) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGELAT(KDLUX,KDGUX):NE (dg) = ',PGELAT(KDLUX,KDGUX)*ZRTD
+(  398) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PRPK = ',PRPK
+(  399) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGM(KDLUN,KDGUN)    (SW) = ',PGM(KDLUN,KDGUN)
+(  400) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGNORX(KDLUN,KDGUN) (SW) = ',PGNORX(KDLUN,KDGUN)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:57      page 18
+
+(  401) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PGNORY(KDLUN,KDGUN) (SW) = ',PGNORY(KDLUN,KDGUN)
+(  402) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELX = ',PDELX
+(  403) IF (KULOUT >= 0) WRITE(KULOUT,*) 'PDELY = ',PDELY
+(  404) IF (KULOUT >= 0) WRITE(KULOUT,*) '****************************************************'
+(  405) # 406 "eggx_n.F90"
+(  406) !     ------------------------------------------------------------------
+(  407) IF (LHOOK) CALL DR_HOOK('EGGX_N',1,ZHOOK_HANDLE)
+(  408) END SUBROUTINE EGGX_N

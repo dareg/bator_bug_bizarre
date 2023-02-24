@@ -1,0 +1,766 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Convert_varbcfile.F90
+
+(    1) program convert_varbcfile
+(    2) !- Convert VARBC.cycle file to version 6
+(    3) !- Predictor statistics are not imported for older versions, since they are not used on input in ifstraj
+(    4) !- Hans Hersbach ECMWF, 10 October 2014
+(    5)   implicit none
+(    6) 
+(    7)   integer              :: ioptval,getopt
+(    8)   character*120        :: carg
+(    9)   character            :: options*4,copt
+(   10) 
+(   11)   integer              :: iversion,kversion=6, nlin=0, nlout=14
+(   12)   integer              :: igroup,il,jl,ip,iu=21
+(   13)   character(len=128)   :: ifile="",ofile=""
+(   14) 
+(   15)   character*5000       :: cline,cheader(3)
+(   16)   character*50000      :: clong
+(   17) 
+(   18)   integer              :: nt,np,i,j,idate
+(   19)   integer, allocatable :: mpredxcnt(:,:),mnum(:,:)
+(   20)   real*8 , allocatable :: apredmean(:),apredxcov(:,:),amea(:),acov(:,:)
+(   21) 
+(   22)   integer              :: ngroups
+(   23) 
+(   24)   type varbc_group
+(   25)     character(len=5000), allocatable :: cline(:) 
+(   26)   end type varbc_group
+(   27) 
+(   28)   type (varbc_group),pointer :: vg        => NULL()
+(   29)   type (varbc_group),pointer :: vgroup(:) => NULL()
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 3
+
+(   31) ! 1. Crack options
+(   32) ! ----------------
+(   33)   data options/'i:o:'/
+(   34) 
+(   35)   do
+(   36)     ioptval=getopt(options,carg) ; if (ioptval<=0) exit
+(   37) 
+(   38)     copt=char(ioptval)
+(   39)     if (copt == 'i') ifile = trim(carg)
+(   40)     if (copt == 'o') ofile = trim(carg)
+(   41)   enddo
+(   42) 
+(   43)   if (ifile=="") then
+(   44)      write(*,*)'Usage: convert_varbcfile.x -i ifile -o ofile'
+(   45)      call abort()
+(   46)   endif
+(   47) 
+(   48) ! 2. Scan input file
+(   49) ! ------------------
+(   50) 
+(   51)   open(iu,file=trim(ifile))
+(   52) 
+(   53) !-Version, was not stored for version 0
+(   54)   read(iu,'(a)')cheader(1)
+(   55)   if (cheader(1)(1:11) == 'VARBC_cycle') then
+(   56)      read(cheader(1)(20:),'(I3)')iversion
+(   57)      write(cheader(1)(20:),'(I3.3)')kversion
+(   58)      read(iu,'(a)')cheader(2)
+(   59)   else
+(   60)      cheader(2)=cheader(1)
+(   61)      write(cheader(1),'("VARBC_cycle.version",I3.3)')kversion
+(   62)   endif
+(   63) 
+(   64) !-Header and number of groups
+(   65)   read(cheader(2)(7:14),*)idate
+(   66)   read(iu,'(a)')cheader(3)
+(   67)   read(cheader(3),*)ngroups
+(   68)   write(*,*)'Input version, date and # Groups: ',iversion,idate,ngroups
+(   69) 
+(   70)   allocate(vgroup(ngroups))
+(   71) 
+(   72) !-Determine number of lines in one varbc group
+(   73)   if(iversion==4) nlin =10
+(   74)   if(iversion==5) nlin =10
+(   75)   if(iversion==6) nlin =14
+(   76) 
+(   77) !-Read group info
+(   78)   do igroup=1,ngroups
+(   79)     vg => vgroup(igroup)
+(   80) 
+(   81)     allocate(vg%cline(nlout))
+(   82) 
+(   83)     jl=0
+(   84)     np=0
+(   85)     if (iversion>=4) then
+(   86)        do il=1, nlin
+(   87)           read(iu,'(a)')cline
+(   88)           if(il==1) call check_line("ix=",cline)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 4
+
+(   89)           jl=jl+1; vg%cline(jl)=trim(cline) 
+(   90) 
+(   91)           if(il==1 .and. iversion<6) jl=jl+1 ! reserve space for pdate
+(   92)           if (cline(:6) == "npred=" ) read(cline(7:),*)np
+(   93)        enddo
+(   94) 
+(   95)        if (np==0) then
+(   96)           write(*,*)'No line found with: npred= for ix=',igroup
+(   97)           call abort
+(   98)        endif
+(   99)     else
+(  100)        call read_oldtables (iu, igroup,iversion, np,vg%cline,nlout)
+(  101)     endif
+(  102) 
+(  103)   !-Create previous date and dummy predictor statistics
+(  104)     if (iversion<kversion) then
+(  105)         allocate (mnum(np,np), acov(np,np),amea(np))
+(  106)         mnum(:,:)=1
+(  107)         acov(:,:)=0.
+(  108)         amea(:)=0
+(  109)         write(vg%cline( 2),'(a6,i8)')"pdate=",idate
+(  110)         write(vg%cline(12),'(a,999(i0,x))')       'predxcnt=',mnum(:,:)
+(  111)         write(vg%cline(13),'(a,999(es10.3e2,x))') 'predmean=',amea(:)
+(  112)         write(vg%cline(14),'(a,999(es10.3e2,x))') 'predxcov=',acov(:,:)
+(  113)         deallocate (mnum,acov,amea)
+(  114)     endif
+(  115) 
+(  116)   enddo
+(  117) 
+(  118)   close(iu)
+(  119) 
+(  120) ! 3. write output file
+(  121) ! --------------------
+(  122) 
+(  123)   open(iu,file=trim(ofile))
+(  124)   write(iu,'(a)')trim(cheader(1))
+(  125)   write(iu,'(a)')trim(cheader(2))
+(  126)   write(iu,'(a)')trim(cheader(3))
+(  127)   do igroup=1,ngroups
+(  128)     vg => vgroup(igroup)
+(  129)     do il=1,nlout
+(  130)        write(iu,'(a)')trim(vg%cline(il))
+(  131)     enddo
+(  132)   enddo
+(  133)   close(iu)
+(  134) 
+(  135) 
+(  136) end program convert_varbcfile
+(  137) 
+(  138) !---------------------------------------------------------------------------------
+(  139) 
+(  140) subroutine check_line(cword,cline)
+(  141)   implicit none
+(  142)   character(len=*) :: cword,cline
+(  143) 
+(  144)   if (trim(cword)/=cline(:len_trim(cword))) then
+(  145)      write(*,*)"line: ",trim(cline)," does not start with: ",trim(cword)
+(  146)      call abort()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 5
+
+(  147)   endif
+(  148) end subroutine check_line
+(  149) 
+(  150) !---------------------------------------------------------------------------------
+(  151) 
+(  152) SUBROUTINE read_oldtables (kunit, kg, kversion, knparam,clines,klines)
+(  153) 
+(  154) ! Deal with VARBC.cycle file with versions < 4
+(  155) ! (radiance data only prior to version 3)
+(  156) ! This subroutine is based on CY41R2:ifs/module/varbc_setup.F90
+(  157) ! ------------------------------------------------
+(  158) 
+(  159)   INTEGER, INTENT(IN)           :: kunit
+(  160)   INTEGER, INTENT(IN)           :: kg,kversion,klines
+(  161)   CHARACTER(LEN=*), INTENT(OUT) :: clines(klines)
+(  162)   INTEGER, INTENT(OUT)          :: knparam
+(  163) 
+(  164)   INTEGER           :: iinfo(1:6), ig, icdtype
+(  165)   REAL, ALLOCATABLE :: zdummy(:)
+(  166) 
+(  167)   INTEGER, PARAMETER :: nhstbins   = 100  ! number of histogram bins
+(  168)                       !  (must change VarBC version number when changing nhstbins)
+(  169) 
+(  170)   INTEGER             :: nparam       ! number of bias parameters
+(  171)   INTEGER             :: ncount       ! data count
+(  172)   CHARACTER(LEN=8)    :: obsclass     ! observation class
+(  173)   CHARACTER(LEN=80)   :: groupkey     ! class-dependent group description
+(  174)   INTEGER, POINTER    :: npredcs(:)   ! list of predictors
+(  175)   REAL, POINTER       :: aparams(:)   ! bias parameters - latest estimate
+(  176)   INTEGER             :: ncstart      ! coldstart option
+(  177)   REAL, POINTER       :: aparam0(:)   ! background parameter values
+(  178)   INTEGER, POINTER    :: nhstfgdep(:) ! histogram of background departures
+(  179)   REAL                :: dfgdep       ! histogram range
+(  180) 
+(  181) 
+(  182)   IF (kversion == 0) THEN
+(  183) 
+(  184)     READ(kunit,*) iinfo(1:5)
+(  185)     obsclass = 'rad'   ! radiance data only
+(  186)     nparam   = iinfo(4)         
+(  187)     ncount   = iinfo(5)  
+(  188)     WRITE(groupkey,'(3(i0,x))') iinfo(1:3)
+(  189) 
+(  190)   ELSEIF (kversion <= 2) THEN
+(  191) 
+(  192)     READ(kunit,*) iinfo(1:6)
+(  193)     obsclass = 'rad'   ! radiance data only
+(  194)     nparam   = iinfo(5)         
+(  195)     ncount   = iinfo(6)
+(  196)   
+(  197)     IF (iinfo(3)==210) THEN
+(  198)       WRITE(groupkey,'(3(i0,x))') iinfo(1:2),iinfo(4)
+(  199)     ELSE
+(  200)       obsclass = 'none'     ! to be removed
+(  201)     ENDIF
+(  202) 
+(  203)   ELSEIF (kversion == 3) THEN
+(  204) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 6
+
+(  205)     READ(kunit,'(i6,x,i2,x,i7,x,i3,4x,a80)') ig,       &
+(  206)                  & nparam,  &
+(  207)                  & ncount,  & 
+(  208)                  & icdtype,           & 
+(  209)                  & groupkey
+(  210)     IF (kg /= ig) then
+(  211)        write(*,*)'Inconsistent group index.'
+(  212)        CALL ABORT
+(  213)     ENDIF
+(  214)     IF     (icdtype==210) THEN
+(  215)       obsclass = 'rad'      ! radiance data
+(  216)     ELSEIF (icdtype==215) THEN       
+(  217)       obsclass = 'allsky'   ! allsky radiance data
+(  218)     ELSEIF (icdtype==206) THEN       
+(  219)       obsclass = 'to3'      ! ozone data
+(  220)     ELSE
+(  221)       obsclass = 'none'     ! to be removed
+(  222)     ENDIF
+(  223) 
+(  224)   ELSE
+(  225) 
+(  226)     write(*,*)'Cannot read this version.'
+(  227)     CALL ABORT
+(  228) 
+(  229)   ENDIF
+(  230) 
+(  231)   knparam = nparam
+(  232)   ALLOCATE(npredcs(knparam))
+(  233)   ALLOCATE(aparams(knparam))
+(  234)   ALLOCATE(aparam0(knparam))
+(  235)   ALLOCATE(nhstfgdep(nhstbins))
+(  236) 
+(  237)   IF (kversion <= 2) THEN
+(  238) 
+(  239)     ALLOCATE(zdummy(knparam))
+(  240)     READ(kunit,*) npredcs, aparams, aparam0, zdummy 
+(  241)     nhstfgdep = 0  ! No histograms
+(  242)     DEALLOCATE(zdummy)
+(  243) 
+(  244)   ELSEIF (kversion == 3) THEN
+(  245) 
+(  246)     READ(kunit,*) npredcs
+(  247)     READ(kunit,*) aparam0
+(  248)     READ(kunit,*) aparams
+(  249)     READ(kunit,*) nhstfgdep
+(  250) 
+(  251)   ENDIF  
+(  252) 
+(  253) !-Convert in version=6 style
+(  254)    WRITE(clines( 1),'(a,i0)')              'ix='    , kg
+(  255)    WRITE(clines( 3),'(a,a)')               'class=' , TRIM(obsclass)
+(  256)    WRITE(clines( 4),'(a,a)')               'key='   , TRIM(groupkey)
+(  257)    WRITE(clines( 5),'(a,a)')               'label=' , TRIM(groupkey)
+(  258)    WRITE(clines( 6),'(a,i0)')              'ndata=' , ncount
+(  259)    WRITE(clines( 7),'(a,i0)')              'npred=' , nparam
+(  260)    WRITE(clines( 8),'(a,999(i0,x))')       'predcs=', npredcs
+(  261)    WRITE(clines( 9),'(a,999(es10.3e2,x))') 'param0=', aparam0
+(  262)    WRITE(clines(10),'(a,999(es10.3e2,x))') 'params=', aparams
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 7
+
+(  263)    WRITE(clines(11),'(a,999(i0,x))')       'hstgrm=', nhstfgdep
+(  264) 
+(  265)   deallocate(npredcs,aparams,aparam0,nhstfgdep)
+(  266) 
+(  267) END SUBROUTINE read_oldtables
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 8
+
+(    1) # 1 "Convert_varbcfile.F90"
+(    1) program convert_varbcfile
+(    2) !- Convert VARBC.cycle file to version 6
+(    3) !- Predictor statistics are not imported for older versions, since they are not used on input in ifstraj
+(    4) !- Hans Hersbach ECMWF, 10 October 2014
+(    5)   implicit none
+(    6) # 7 "Convert_varbcfile.F90"
+(    7)   integer              :: ioptval,getopt
+(    8)   character*120        :: carg
+(    9)   character            :: options*4,copt
+(   10) # 11 "Convert_varbcfile.F90"
+(   11)   integer              :: iversion,kversion=6, nlin=0, nlout=14
+(   12)   integer              :: igroup,il,jl,ip,iu=21
+(   13)   character(len=128)   :: ifile="",ofile=""
+(   14) # 15 "Convert_varbcfile.F90"
+(   15)   character*5000       :: cline,cheader(3)
+(   16)   character*50000      :: clong
+(   17) # 18 "Convert_varbcfile.F90"
+(   18)   integer              :: nt,np,i,j,idate
+(   19)   integer, allocatable :: mpredxcnt(:,:),mnum(:,:)
+(   20)   real*8 , allocatable :: apredmean(:),apredxcov(:,:),amea(:),acov(:,:)
+(   21) # 22 "Convert_varbcfile.F90"
+(   22)   integer              :: ngroups
+(   23) # 24 "Convert_varbcfile.F90"
+(   24)   type varbc_group
+(   25)     character(len=5000), allocatable :: cline(:) 
+(   26)   end type varbc_group
+(   27) # 28 "Convert_varbcfile.F90"
+(   28)   type (varbc_group),pointer :: vg        => NULL()
+(   29)   type (varbc_group),pointer :: vgroup(:) => NULL()
+(   30) # 31 "Convert_varbcfile.F90"
+(   31) ! 1. Crack options
+(   32) ! ----------------
+(   33)   data options/'i:o:'/
+(   34) # 35 "Convert_varbcfile.F90"
+(   35)   do
+(   36)     ioptval=getopt(options,carg) ; if (ioptval<=0) exit
+(   37) # 38 "Convert_varbcfile.F90"
+(   38)     copt=char(ioptval)
+(   39)     if (copt == 'i') ifile = trim(carg)
+(   40)     if (copt == 'o') ofile = trim(carg)
+(   41)   enddo
+(   42) # 43 "Convert_varbcfile.F90"
+(   43)   if (ifile=="") then
+(   44)      write(*,*)'Usage: convert_varbcfile.x -i ifile -o ofile'
+(   45)      call abort()
+(   46)   endif
+(   47) # 48 "Convert_varbcfile.F90"
+(   48) ! 2. Scan input file
+(   49) ! ------------------
+(   50) # 51 "Convert_varbcfile.F90"
+(   51)   open(iu,file=trim(ifile))
+(   52) # 53 "Convert_varbcfile.F90"
+(   53) !-Version, was not stored for version 0
+(   54)   read(iu,'(a)')cheader(1)
+(   55)   if (cheader(1)(1:11) == 'VARBC_cycle') then
+(   56)      read(cheader(1)(20:),'(I3)')iversion
+(   57)      write(cheader(1)(20:),'(I3.3)')kversion
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 9
+
+(   58)      read(iu,'(a)')cheader(2)
+(   59)   else
+(   60)      cheader(2)=cheader(1)
+(   61)      write(cheader(1),'("VARBC_cycle.version",I3.3)')kversion
+(   62)   endif
+(   63) # 64 "Convert_varbcfile.F90"
+(   64) !-Header and number of groups
+(   65)   read(cheader(2)(7:14),*)idate
+(   66)   read(iu,'(a)')cheader(3)
+(   67)   read(cheader(3),*)ngroups
+(   68)   write(*,*)'Input version, date and # Groups: ',iversion,idate,ngroups
+(   69) # 70 "Convert_varbcfile.F90"
+(   70)   allocate(vgroup(ngroups))
+(   71) # 72 "Convert_varbcfile.F90"
+(   72) !-Determine number of lines in one varbc group
+(   73)   if(iversion==4) nlin =10
+(   74)   if(iversion==5) nlin =10
+(   75)   if(iversion==6) nlin =14
+(   76) # 77 "Convert_varbcfile.F90"
+(   77) !-Read group info
+(   78)   do igroup=1,ngroups
+(   79)     vg => vgroup(igroup)
+(   80) # 81 "Convert_varbcfile.F90"
+(   81)     allocate(vg%cline(nlout))
+(   82) # 83 "Convert_varbcfile.F90"
+(   83)     jl=0
+(   84)     np=0
+(   85)     if (iversion>=4) then
+(   86)        do il=1, nlin
+(   87)           read(iu,'(a)')cline
+(   88)           if(il==1) call check_line("ix=",cline)
+(   89)           jl=jl+1; vg%cline(jl)=trim(cline) 
+(   90) # 91 "Convert_varbcfile.F90"
+(   91)           if(il==1 .and. iversion<6) jl=jl+1 ! reserve space for pdate
+(   92)           if (cline(:6) == "npred=" ) read(cline(7:),*)np
+(   93)        enddo
+(   94) # 95 "Convert_varbcfile.F90"
+(   95)        if (np==0) then
+(   96)           write(*,*)'No line found with: npred= for ix=',igroup
+(   97)           call abort
+(   98)        endif
+(   99)     else
+(  100)        call read_oldtables (iu, igroup,iversion, np,vg%cline,nlout)
+(  101)     endif
+(  102) # 103 "Convert_varbcfile.F90"
+(  103)   !-Create previous date and dummy predictor statistics
+(  104)     if (iversion<kversion) then
+(  105)         allocate (mnum(np,np), acov(np,np),amea(np))
+(  106)         mnum(:,:)=1
+(  107)         acov(:,:)=0.
+(  108)         amea(:)=0
+(  109)         write(vg%cline( 2),'(a6,i8)')"pdate=",idate
+(  110)         write(vg%cline(12),'(a,999(i0,x))')       'predxcnt=',mnum(:,:)
+(  111)         write(vg%cline(13),'(a,999(es10.3e2,x))') 'predmean=',amea(:)
+(  112)         write(vg%cline(14),'(a,999(es10.3e2,x))') 'predxcov=',acov(:,:)
+(  113)         deallocate (mnum,acov,amea)
+(  114)     endif
+(  115) # 116 "Convert_varbcfile.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 10
+
+(  116)   enddo
+(  117) # 118 "Convert_varbcfile.F90"
+(  118)   close(iu)
+(  119) # 120 "Convert_varbcfile.F90"
+(  120) ! 3. write output file
+(  121) ! --------------------
+(  122) # 123 "Convert_varbcfile.F90"
+(  123)   open(iu,file=trim(ofile))
+(  124)   write(iu,'(a)')trim(cheader(1))
+(  125)   write(iu,'(a)')trim(cheader(2))
+(  126)   write(iu,'(a)')trim(cheader(3))
+(  127)   do igroup=1,ngroups
+(  128)     vg => vgroup(igroup)
+(  129)     do il=1,nlout
+(  130)        write(iu,'(a)')trim(vg%cline(il))
+(  131)     enddo
+(  132)   enddo
+(  133)   close(iu)
+(  134) # 136 "Convert_varbcfile.F90"
+(  136) end program convert_varbcfile
+(  137) # 138 "Convert_varbcfile.F90"
+(  138) !---------------------------------------------------------------------------------
+(  139) # 140 "Convert_varbcfile.F90"
+(  140) subroutine check_line(cword,cline)
+(  141)   implicit none
+(  142)   character(len=*) :: cword,cline
+(  143) # 144 "Convert_varbcfile.F90"
+(  144)   if (trim(cword)/=cline(:len_trim(cword))) then
+(  145)      write(*,*)"line: ",trim(cline)," does not start with: ",trim(cword)
+(  146)      call abort()
+(  147)   endif
+(  148) end subroutine check_line
+(  149) # 150 "Convert_varbcfile.F90"
+(  150) !---------------------------------------------------------------------------------
+(  151) # 152 "Convert_varbcfile.F90"
+(  152) SUBROUTINE read_oldtables (kunit, kg, kversion, knparam,clines,klines)
+(  153) # 154 "Convert_varbcfile.F90"
+(  154) ! Deal with VARBC.cycle file with versions < 4
+(  155) ! (radiance data only prior to version 3)
+(  156) ! This subroutine is based on CY41R2:ifs/module/varbc_setup.F90
+(  157) ! ------------------------------------------------
+(  158) # 159 "Convert_varbcfile.F90"
+(  159)   INTEGER, INTENT(IN)           :: kunit
+(  160)   INTEGER, INTENT(IN)           :: kg,kversion,klines
+(  161)   CHARACTER(LEN=*), INTENT(OUT) :: clines(klines)
+(  162)   INTEGER, INTENT(OUT)          :: knparam
+(  163) # 164 "Convert_varbcfile.F90"
+(  164)   INTEGER           :: iinfo(1:6), ig, icdtype
+(  165)   REAL, ALLOCATABLE :: zdummy(:)
+(  166) # 167 "Convert_varbcfile.F90"
+(  167)   INTEGER, PARAMETER :: nhstbins   = 100  ! number of histogram bins
+(  168)                       !  (must change VarBC version number when changing nhstbins)
+(  169) # 170 "Convert_varbcfile.F90"
+(  170)   INTEGER             :: nparam       ! number of bias parameters
+(  171)   INTEGER             :: ncount       ! data count
+(  172)   CHARACTER(LEN=8)    :: obsclass     ! observation class
+(  173)   CHARACTER(LEN=80)   :: groupkey     ! class-dependent group description
+(  174)   INTEGER, POINTER    :: npredcs(:)   ! list of predictors
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 11
+
+(  175)   REAL, POINTER       :: aparams(:)   ! bias parameters - latest estimate
+(  176)   INTEGER             :: ncstart      ! coldstart option
+(  177)   REAL, POINTER       :: aparam0(:)   ! background parameter values
+(  178)   INTEGER, POINTER    :: nhstfgdep(:) ! histogram of background departures
+(  179)   REAL                :: dfgdep       ! histogram range
+(  180) # 182 "Convert_varbcfile.F90"
+(  182)   IF (kversion == 0) THEN
+(  183) # 184 "Convert_varbcfile.F90"
+(  184)     READ(kunit,*) iinfo(1:5)
+(  185)     obsclass = 'rad'   ! radiance data only
+(  186)     nparam   = iinfo(4)         
+(  187)     ncount   = iinfo(5)  
+(  188)     WRITE(groupkey,'(3(i0,x))') iinfo(1:3)
+(  189) # 190 "Convert_varbcfile.F90"
+(  190)   ELSEIF (kversion <= 2) THEN
+(  191) # 192 "Convert_varbcfile.F90"
+(  192)     READ(kunit,*) iinfo(1:6)
+(  193)     obsclass = 'rad'   ! radiance data only
+(  194)     nparam   = iinfo(5)         
+(  195)     ncount   = iinfo(6)
+(  196)   
+(  197)     IF (iinfo(3)==210) THEN
+(  198)       WRITE(groupkey,'(3(i0,x))') iinfo(1:2),iinfo(4)
+(  199)     ELSE
+(  200)       obsclass = 'none'     ! to be removed
+(  201)     ENDIF
+(  202) # 203 "Convert_varbcfile.F90"
+(  203)   ELSEIF (kversion == 3) THEN
+(  204) # 205 "Convert_varbcfile.F90"
+(  205)     READ(kunit,'(i6,x,i2,x,i7,x,i3,4x,a80)') ig,       &
+(  206)                  & nparam,  &
+(  207)                  & ncount,  & 
+(  208)                  & icdtype,           & 
+(  209)                  & groupkey
+(  210)     IF (kg /= ig) then
+(  211)        write(*,*)'Inconsistent group index.'
+(  212)        CALL ABORT
+(  213)     ENDIF
+(  214)     IF     (icdtype==210) THEN
+(  215)       obsclass = 'rad'      ! radiance data
+(  216)     ELSEIF (icdtype==215) THEN       
+(  217)       obsclass = 'allsky'   ! allsky radiance data
+(  218)     ELSEIF (icdtype==206) THEN       
+(  219)       obsclass = 'to3'      ! ozone data
+(  220)     ELSE
+(  221)       obsclass = 'none'     ! to be removed
+(  222)     ENDIF
+(  223) # 224 "Convert_varbcfile.F90"
+(  224)   ELSE
+(  225) # 226 "Convert_varbcfile.F90"
+(  226)     write(*,*)'Cannot read this version.'
+(  227)     CALL ABORT
+(  228) # 229 "Convert_varbcfile.F90"
+(  229)   ENDIF
+(  230) # 231 "Convert_varbcfile.F90"
+(  231)   knparam = nparam
+(  232)   ALLOCATE(npredcs(knparam))
+(  233)   ALLOCATE(aparams(knparam))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:54      page 12
+
+(  234)   ALLOCATE(aparam0(knparam))
+(  235)   ALLOCATE(nhstfgdep(nhstbins))
+(  236) # 237 "Convert_varbcfile.F90"
+(  237)   IF (kversion <= 2) THEN
+(  238) # 239 "Convert_varbcfile.F90"
+(  239)     ALLOCATE(zdummy(knparam))
+(  240)     READ(kunit,*) npredcs, aparams, aparam0, zdummy 
+(  241)     nhstfgdep = 0  ! No histograms
+(  242)     DEALLOCATE(zdummy)
+(  243) # 244 "Convert_varbcfile.F90"
+(  244)   ELSEIF (kversion == 3) THEN
+(  245) # 246 "Convert_varbcfile.F90"
+(  246)     READ(kunit,*) npredcs
+(  247)     READ(kunit,*) aparam0
+(  248)     READ(kunit,*) aparams
+(  249)     READ(kunit,*) nhstfgdep
+(  250) # 251 "Convert_varbcfile.F90"
+(  251)   ENDIF  
+(  252) # 253 "Convert_varbcfile.F90"
+(  253) !-Convert in version=6 style
+(  254)    WRITE(clines( 1),'(a,i0)')              'ix='    , kg
+(  255)    WRITE(clines( 3),'(a,a)')               'class=' , TRIM(obsclass)
+(  256)    WRITE(clines( 4),'(a,a)')               'key='   , TRIM(groupkey)
+(  257)    WRITE(clines( 5),'(a,a)')               'label=' , TRIM(groupkey)
+(  258)    WRITE(clines( 6),'(a,i0)')              'ndata=' , ncount
+(  259)    WRITE(clines( 7),'(a,i0)')              'npred=' , nparam
+(  260)    WRITE(clines( 8),'(a,999(i0,x))')       'predcs=', npredcs
+(  261)    WRITE(clines( 9),'(a,999(es10.3e2,x))') 'param0=', aparam0
+(  262)    WRITE(clines(10),'(a,999(es10.3e2,x))') 'params=', aparams
+(  263)    WRITE(clines(11),'(a,999(i0,x))')       'hstgrm=', nhstfgdep
+(  264) # 265 "Convert_varbcfile.F90"
+(  265)   deallocate(npredcs,aparams,aparam0,nhstfgdep)
+(  266) # 267 "Convert_varbcfile.F90"
+(  267) END SUBROUTINE read_oldtables

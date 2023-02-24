@@ -1,0 +1,14 @@
+!depfile:read_nam_pgd_orog_filter.F90
+MODULE MODI_READ_NAM_PGD_OROG_FILTER
+INTERFACE
+      SUBROUTINE READ_NAM_PGD_OROG_FILTER(HPROGRAM, KOPTFILTER, KZSFILTER, PCOFILTER, PTHFILTER)  
+USE PARKIND1  ,ONLY : JPRB
+CHARACTER(LEN=6),    INTENT(IN)    :: HPROGRAM    ! Type of program
+INTEGER,             INTENT(OUT)   :: KOPTFILTER  ! Filtering option
+INTEGER,             INTENT(OUT)   :: KZSFILTER   ! number of orographic spatial filter iterations                     
+REAL(KIND=JPRB),     INTENT(OUT)   :: PCOFILTER   ! Filtering coefficient
+REAL(KIND=JPRB),     INTENT(OUT)   :: PTHFILTER   ! Filtering threshold
+END SUBROUTINE READ_NAM_PGD_OROG_FILTER
+
+END INTERFACE
+END MODULE MODI_READ_NAM_PGD_OROG_FILTER

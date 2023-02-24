@@ -1,0 +1,281 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:38      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:38      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_urban_fluxes.F90
+
+(    1) !depfile:urban_fluxes.F90
+(    2) MODULE MODI_URBAN_FLUXES
+(    3) INTERFACE
+(    4)     SUBROUTINE URBAN_FLUXES(TOP, T, B, DMT, HIMPLICIT_WIND, PT_CANYON, PPEW_A_COEF, PPEW_B_COEF,      &
+(    5)                             PEXNS, PRHOA, PVMOD, PH_TRAFFIC, PLE_TRAFFIC, PAC_WL, PCD, PDF_RF,        &
+(    6)                             PDN_RF, PDF_RD, PDN_RD, PRNSN_RF, PHSN_RF, PLESN_RF, PGSN_RF,             &
+(    7)                             PRNSN_RD, PHSN_RD, PLESN_RD, PGSN_RD, PMELT_RF, PDQS_RF, PMELT_RD,        &
+(    8)                             PDQS_RD, PDQS_WL_A, PDQS_WL_B, PFLX_BLD_RF, PFLX_BLD_WL_A,                &
+(    9)                             PFLX_BLD_WL_B, PFLX_BLD_FL, PFLX_BLD_MA, PE_SHADING, PLEW_RF,             &
+(   10)                             PRN_GR, PH_GR, PLE_GR, PGFLUX_GR,                                         &
+(   11)                             PLEW_RD, PLE_WL_A, PLE_WL_B, PMELT_BLT, PUSTAR_TWN                        )
+(   12) USE MODD_TEB_OPTION_n, ONLY : TEB_OPTIONS_t
+(   13) USE MODD_TEB_n, ONLY : TEB_t
+(   14) USE MODD_BEM_n, ONLY : BEM_t
+(   15) USE MODD_DIAG_MISC_TEB_n, ONLY : DIAG_MISC_TEB_t
+(   16) TYPE(TEB_OPTIONS_t), INTENT(INOUT) :: TOP
+(   17) TYPE(TEB_t), INTENT(INOUT) :: T
+(   18) TYPE(BEM_t), INTENT(INOUT) :: B
+(   19) TYPE(DIAG_MISC_TEB_t), INTENT(INOUT) :: DMT
+(   20)  CHARACTER(LEN=*),     INTENT(IN)  :: HIMPLICIT_WIND   ! wind implicitation option
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PT_CANYON    ! canyon air temperature
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PPEW_A_COEF  ! implicit coefficients
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PPEW_B_COEF  ! for wind coupling
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS        ! surface exner function
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA        ! air density
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PVMOD        ! module of the horizontal wind
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PH_TRAFFIC    ! anthropogenic sensible
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PLE_TRAFFIC   ! anthropogenic latent
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PAC_WL     ! surface conductance
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PCD          ! drag coefficient
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:38      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PDF_RF     ! snow-free    roof fraction
+(   32) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RF     ! snow-covered roof fraction
+(   33) REAL, DIMENSION(:), INTENT(IN)    :: PDF_RD     ! snow-free    road fraction
+(   34) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RD     ! snow-covered road fraction
+(   35) REAL, DIMENSION(:), INTENT(IN)    :: PRNSN_RF ! net radiation over snow
+(   36) REAL, DIMENSION(:), INTENT(IN)    :: PHSN_RF  ! sensible heat flux over snow
+(   37) REAL, DIMENSION(:), INTENT(IN)    :: PLESN_RF ! latent heat flux over snow
+(   38) REAL, DIMENSION(:), INTENT(IN)    :: PGSN_RF  ! flux under the snow
+(   39) REAL, DIMENSION(:), INTENT(IN)    :: PRNSN_RD ! net radiation over snow
+(   40) REAL, DIMENSION(:), INTENT(IN)    :: PHSN_RD  ! sensible heat flux over snow
+(   41) REAL, DIMENSION(:), INTENT(IN)    :: PLESN_RD ! latent heat flux over snow
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PGSN_RD  ! flux under the snow
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PMELT_RF   ! snow melting on roof
+(   44) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_RF    ! storage inside roofs
+(   45) REAL, DIMENSION(:), INTENT(IN)    :: PMELT_RD   ! snow melting on road
+(   46) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_RD    ! storage inside roads
+(   47) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_WL_A  ! storage inside walls
+(   48) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_WL_B  ! storage inside walls
+(   49) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_RF! heat flx from bld to roof
+(   50) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_WL_A! heat flx from bld to wall A
+(   51) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_WL_B! heat flx from bld to wall B
+(   52) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_FL! heat flx from bld to floor
+(   53) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_MA! heat flx from bld to mass
+(   54) REAL, DIMENSION(:), INTENT(IN)    :: PE_SHADING   ! energy not ref., nor absorbed, nor
+(   55) REAL, DIMENSION(:), INTENT(IN)   :: PLEW_RF     ! latent heat flux over snow-free roof
+(   56) REAL, DIMENSION(:), INTENT(IN)   :: PLEW_RD     ! latent heat flux of snow-free road
+(   57) REAL, DIMENSION(:), INTENT(IN)    :: PRN_GR     ! net radiation over greenroof
+(   58) REAL, DIMENSION(:), INTENT(IN)    :: PH_GR      ! sensible heat flux over greenroof
+(   59) REAL, DIMENSION(:), INTENT(IN)    :: PLE_GR     ! latent heat flux over greenroof
+(   60) REAL, DIMENSION(:), INTENT(IN)    :: PGFLUX_GR  ! flux through the greenroof
+(   61) REAL, DIMENSION(:), INTENT(OUT)   :: PLE_WL_A   ! latent heat flux over wall
+(   62) REAL, DIMENSION(:), INTENT(OUT)   :: PLE_WL_B   ! latent heat flux over wall
+(   63) REAL, DIMENSION(:), INTENT(OUT)   :: PMELT_BLT    ! snow melting for town
+(   64) REAL, DIMENSION(:), INTENT(OUT)   :: PUSTAR_TWN  ! friction velocity over town
+(   65) END SUBROUTINE URBAN_FLUXES
+(   66) 
+(   67) END INTERFACE
+(   68) END MODULE MODI_URBAN_FLUXES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:38      page 4
+
+(    1) # 1 "modi_urban_fluxes.F90"
+(    1) !depfile:urban_fluxes.F90
+(    2) MODULE MODI_URBAN_FLUXES
+(    3) INTERFACE
+(    4)     SUBROUTINE URBAN_FLUXES(TOP, T, B, DMT, HIMPLICIT_WIND, PT_CANYON, PPEW_A_COEF, PPEW_B_COEF,      &
+(    5)                             PEXNS, PRHOA, PVMOD, PH_TRAFFIC, PLE_TRAFFIC, PAC_WL, PCD, PDF_RF,        &
+(    6)                             PDN_RF, PDF_RD, PDN_RD, PRNSN_RF, PHSN_RF, PLESN_RF, PGSN_RF,             &
+(    7)                             PRNSN_RD, PHSN_RD, PLESN_RD, PGSN_RD, PMELT_RF, PDQS_RF, PMELT_RD,        &
+(    8)                             PDQS_RD, PDQS_WL_A, PDQS_WL_B, PFLX_BLD_RF, PFLX_BLD_WL_A,                &
+(    9)                             PFLX_BLD_WL_B, PFLX_BLD_FL, PFLX_BLD_MA, PE_SHADING, PLEW_RF,             &
+(   10)                             PRN_GR, PH_GR, PLE_GR, PGFLUX_GR,                                         &
+(   11)                             PLEW_RD, PLE_WL_A, PLE_WL_B, PMELT_BLT, PUSTAR_TWN                        )
+(   12) USE MODD_TEB_OPTION_n, ONLY : TEB_OPTIONS_t
+(   13) USE MODD_TEB_n, ONLY : TEB_t
+(   14) USE MODD_BEM_n, ONLY : BEM_t
+(   15) USE MODD_DIAG_MISC_TEB_n, ONLY : DIAG_MISC_TEB_t
+(   16) TYPE(TEB_OPTIONS_t), INTENT(INOUT) :: TOP
+(   17) TYPE(TEB_t), INTENT(INOUT) :: T
+(   18) TYPE(BEM_t), INTENT(INOUT) :: B
+(   19) TYPE(DIAG_MISC_TEB_t), INTENT(INOUT) :: DMT
+(   20)  CHARACTER(LEN=*),     INTENT(IN)  :: HIMPLICIT_WIND   ! wind implicitation option
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PT_CANYON    ! canyon air temperature
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PPEW_A_COEF  ! implicit coefficients
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PPEW_B_COEF  ! for wind coupling
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS        ! surface exner function
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA        ! air density
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PVMOD        ! module of the horizontal wind
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PH_TRAFFIC    ! anthropogenic sensible
+(   28) REAL, DIMENSION(:), INTENT(IN)    :: PLE_TRAFFIC   ! anthropogenic latent
+(   29) REAL, DIMENSION(:), INTENT(IN)    :: PAC_WL     ! surface conductance
+(   30) REAL, DIMENSION(:), INTENT(IN)    :: PCD          ! drag coefficient
+(   31) REAL, DIMENSION(:), INTENT(IN)    :: PDF_RF     ! snow-free    roof fraction
+(   32) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RF     ! snow-covered roof fraction
+(   33) REAL, DIMENSION(:), INTENT(IN)    :: PDF_RD     ! snow-free    road fraction
+(   34) REAL, DIMENSION(:), INTENT(IN)    :: PDN_RD     ! snow-covered road fraction
+(   35) REAL, DIMENSION(:), INTENT(IN)    :: PRNSN_RF ! net radiation over snow
+(   36) REAL, DIMENSION(:), INTENT(IN)    :: PHSN_RF  ! sensible heat flux over snow
+(   37) REAL, DIMENSION(:), INTENT(IN)    :: PLESN_RF ! latent heat flux over snow
+(   38) REAL, DIMENSION(:), INTENT(IN)    :: PGSN_RF  ! flux under the snow
+(   39) REAL, DIMENSION(:), INTENT(IN)    :: PRNSN_RD ! net radiation over snow
+(   40) REAL, DIMENSION(:), INTENT(IN)    :: PHSN_RD  ! sensible heat flux over snow
+(   41) REAL, DIMENSION(:), INTENT(IN)    :: PLESN_RD ! latent heat flux over snow
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PGSN_RD  ! flux under the snow
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PMELT_RF   ! snow melting on roof
+(   44) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_RF    ! storage inside roofs
+(   45) REAL, DIMENSION(:), INTENT(IN)    :: PMELT_RD   ! snow melting on road
+(   46) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_RD    ! storage inside roads
+(   47) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_WL_A  ! storage inside walls
+(   48) REAL, DIMENSION(:), INTENT(IN)    :: PDQS_WL_B  ! storage inside walls
+(   49) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_RF! heat flx from bld to roof
+(   50) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_WL_A! heat flx from bld to wall A
+(   51) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_WL_B! heat flx from bld to wall B
+(   52) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_FL! heat flx from bld to floor
+(   53) REAL, DIMENSION(:), INTENT(IN)    :: PFLX_BLD_MA! heat flx from bld to mass
+(   54) REAL, DIMENSION(:), INTENT(IN)    :: PE_SHADING   ! energy not ref., nor absorbed, nor
+(   55) REAL, DIMENSION(:), INTENT(IN)   :: PLEW_RF     ! latent heat flux over snow-free roof
+(   56) REAL, DIMENSION(:), INTENT(IN)   :: PLEW_RD     ! latent heat flux of snow-free road
+(   57) REAL, DIMENSION(:), INTENT(IN)    :: PRN_GR     ! net radiation over greenroof
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:38      page 5
+
+(   58) REAL, DIMENSION(:), INTENT(IN)    :: PH_GR      ! sensible heat flux over greenroof
+(   59) REAL, DIMENSION(:), INTENT(IN)    :: PLE_GR     ! latent heat flux over greenroof
+(   60) REAL, DIMENSION(:), INTENT(IN)    :: PGFLUX_GR  ! flux through the greenroof
+(   61) REAL, DIMENSION(:), INTENT(OUT)   :: PLE_WL_A   ! latent heat flux over wall
+(   62) REAL, DIMENSION(:), INTENT(OUT)   :: PLE_WL_B   ! latent heat flux over wall
+(   63) REAL, DIMENSION(:), INTENT(OUT)   :: PMELT_BLT    ! snow melting for town
+(   64) REAL, DIMENSION(:), INTENT(OUT)   :: PUSTAR_TWN  ! friction velocity over town
+(   65) END SUBROUTINE URBAN_FLUXES
+(   66) # 67 "modi_urban_fluxes.F90"
+(   67) END INTERFACE
+(   68) END MODULE MODI_URBAN_FLUXES

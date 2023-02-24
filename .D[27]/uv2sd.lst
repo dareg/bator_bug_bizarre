@@ -1,0 +1,242 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:07      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:07      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: uv2sd.F90
+
+(    1)       SUBROUTINE UV2SD(U,V,S,D)
+(    2) 
+(    3)       USE PARKIND1, ONLY : JPRB
+(    4)       IMPLICIT NONE
+(    5) 
+(    6)       REAL(KIND=8) :: U,V,S,D
+(    7) 
+(    8)       REAL(KIND=JPRB),PARAMETER :: DEGCON=180.0_JPRB/                   &
+(    9)      &                                      3.14159265358979_JPRB
+(   10)       REAL(KIND=JPRB) :: ABSU,ABSV,ADCOR,ZEPS
+(   11) 
+(   12)       ABSU=ABS(U)
+(   13)       ABSV=ABS(V)
+(   14)       ZEPS=10.E-6_JPRB
+(   15)       IF (ABSU.GT.ZEPS) GO TO 130
+(   16)   110 CONTINUE
+(   17)       IF (ABSV.GT.ZEPS) GO TO 120
+(   18)       S=0.0_JPRB
+(   19)       D=0.0_JPRB
+(   20)       RETURN
+(   21)   120 CONTINUE
+(   22)       S=ABSV
+(   23)       D=360.0_JPRB
+(   24)       IF (V.LT.0.) D=180.0_JPRB
+(   25)       RETURN
+(   26)   130 CONTINUE
+(   27)       IF (ABSV.GT.ZEPS) GO TO 200
+(   28)       S=ABSU
+(   29)       D=270.0_JPRB
+(   30)       IF (U.LT.0.0_JPRB) D=90.0_JPRB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:07      page 3
+
+(   31)       RETURN
+(   32)   200 CONTINUE
+(   33)       ADCOR=180.0_JPRB
+(   34)       D=ATAN2(U,V)*DEGCON+ADCOR
+(   35)       S=U*U+V*V
+(   36)       S=SQRT(S)
+(   37)       ENDSUBROUTINE UV2SD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:07      page 4
+
+(    1) # 1 "uv2sd.F90"
+(    1)       SUBROUTINE UV2SD(U,V,S,D)
+(    2) # 3 "uv2sd.F90"
+(    3)       USE PARKIND1, ONLY : JPRB
+(    4)       IMPLICIT NONE
+(    5) # 6 "uv2sd.F90"
+(    6)       REAL(KIND=8) :: U,V,S,D
+(    7) # 8 "uv2sd.F90"
+(    8)       REAL(KIND=JPRB),PARAMETER :: DEGCON=180.0_JPRB/                   &
+(    9)      &                                      3.14159265358979_JPRB
+(   10)       REAL(KIND=JPRB) :: ABSU,ABSV,ADCOR,ZEPS
+(   11) # 12 "uv2sd.F90"
+(   12)       ABSU=ABS(U)
+(   13)       ABSV=ABS(V)
+(   14)       ZEPS=10.E-6_JPRB
+(   15)       IF (ABSU.GT.ZEPS) GO TO 130
+(   16)   110 CONTINUE
+(   17)       IF (ABSV.GT.ZEPS) GO TO 120
+(   18)       S=0.0_JPRB
+(   19)       D=0.0_JPRB
+(   20)       RETURN
+(   21)   120 CONTINUE
+(   22)       S=ABSV
+(   23)       D=360.0_JPRB
+(   24)       IF (V.LT.0.) D=180.0_JPRB
+(   25)       RETURN
+(   26)   130 CONTINUE
+(   27)       IF (ABSV.GT.ZEPS) GO TO 200
+(   28)       S=ABSU
+(   29)       D=270.0_JPRB
+(   30)       IF (U.LT.0.0_JPRB) D=90.0_JPRB
+(   31)       RETURN
+(   32)   200 CONTINUE
+(   33)       ADCOR=180.0_JPRB
+(   34)       D=ATAN2(U,V)*DEGCON+ADCOR
+(   35)       S=U*U+V*V
+(   36)       S=SQRT(S)
+(   37)       ENDSUBROUTINE UV2SD

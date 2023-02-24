@@ -1,0 +1,404 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: shear_prod2D.F90
+
+(    1) 
+(    2) subroutine shear_prod2D(def2)
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) use vars
+(   15) use real_size
+(   16) 
+(   17) implicit none
+(   18) 
+(   19) real(RR) def2(nx,ny,nzm)
+(   20) 
+(   21) real(RR) rdx0,rdx,rdx_up,rdx_dn
+(   22) real(RR) rdz,rdzw_up,rdzw_dn
+(   23) integer i,j,k,ib,ic,kb,kc
+(   24) 
+(   25) rdx0=1./dx 
+(   26) j=1
+(   27) 
+(   28) 
+(   29) do k=2,nzm-1  
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 3
+
+(   31)   kb=k-1
+(   32)   kc=k+1
+(   33)   rdz = 1./(dz*adz(k))
+(   34)   rdzw_up = 1./(dz*adzw(kc))
+(   35)   rdzw_dn = 1./(dz*adzw(k))
+(   36)   rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   37)   rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   38)   rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   39) 
+(   40)   do i=1,nx
+(   41)     ib=i-1
+(   42)     ic=i+1
+(   43)  
+(   44)       def2(i,j,k)=2.* ( &
+(   45)             ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   46)             ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   47)     + 0.5 * ( &
+(   48)             ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(   49)             ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 +   &
+(   50)             ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   51)               (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   52)             ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   53)               (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 + &
+(   54)             ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(   55)               (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(   56)             ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(   57)               (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 + &
+(   58)             ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up )**2 + &
+(   59)             ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn )**2 )
+(   60) 
+(   61)   end do
+(   62) end do ! k
+(   63) 
+(   64) 
+(   65) k=1
+(   66) kc=k+1
+(   67) 
+(   68) rdz = 1./(dz*adz(k))
+(   69) rdzw_up = 1./(dz*adzw(kc))
+(   70) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   71) rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   72)  
+(   73) do i=1,nx
+(   74)  ib=i-1
+(   75)  ic=i+1
+(   76) 
+(   77)       def2(i,j,k)=2.* ( &
+(   78)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   79)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   80)    + 0.5 * ( & 
+(   81)            ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 + &
+(   82)            ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 ) &
+(   83)           +( (v(i,j ,kc)-v0(kc)-v(i,j,k)+v0(k))*rdzw_up )**2 &
+(   84)    + 0.5 * ( &
+(   85)            ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   86)              (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   87)            ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   88)              (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 )
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 4
+
+(   89) end do 
+(   90)  
+(   91) k=nzm
+(   92) kc=k+1
+(   93) kb=k-1
+(   94) 
+(   95) rdz = 1./(dz*adz(k))
+(   96) rdzw_dn = 1./(dz*adzw(k))
+(   97) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   98) rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   99) 
+(  100) 
+(  101) do i=1,nx
+(  102)  ib=i-1
+(  103)  ic=i+1
+(  104) 
+(  105)       def2(i,j,k)=2.* ( &
+(  106)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  107)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  108)    + 0.5 * ( &
+(  109)            ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  110)            ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  111)          + ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn )**2 &
+(  112)    + 0.5 * ( &
+(  113)          ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(  114)            (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(  115)          ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(  116)            (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(  117) 
+(  118) end do 
+(  119) 
+(  120) end
+(  121) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 5
+
+(    1) # 1 "shear_prod2D.F90"
+(    1) # 2 "shear_prod2D.F90"
+(    2) subroutine shear_prod2D(def2)
+(    3) # 4 "shear_prod2D.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "shear_prod2D.F90"
+(   14) use vars
+(   15) use real_size
+(   16) # 17 "shear_prod2D.F90"
+(   17) implicit none
+(   18) # 19 "shear_prod2D.F90"
+(   19) real(RR) def2(nx,ny,nzm)
+(   20) # 21 "shear_prod2D.F90"
+(   21) real(RR) rdx0,rdx,rdx_up,rdx_dn
+(   22) real(RR) rdz,rdzw_up,rdzw_dn
+(   23) integer i,j,k,ib,ic,kb,kc
+(   24) # 25 "shear_prod2D.F90"
+(   25) rdx0=1./dx 
+(   26) j=1
+(   27) # 29 "shear_prod2D.F90"
+(   29) do k=2,nzm-1  
+(   30) # 31 "shear_prod2D.F90"
+(   31)   kb=k-1
+(   32)   kc=k+1
+(   33)   rdz = 1./(dz*adz(k))
+(   34)   rdzw_up = 1./(dz*adzw(kc))
+(   35)   rdzw_dn = 1./(dz*adzw(k))
+(   36)   rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   37)   rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   38)   rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   39) # 40 "shear_prod2D.F90"
+(   40)   do i=1,nx
+(   41)     ib=i-1
+(   42)     ic=i+1
+(   43)  
+(   44)       def2(i,j,k)=2.* ( &
+(   45)             ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   46)             ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   47)     + 0.5 * ( &
+(   48)             ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(   49)             ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 +   &
+(   50)             ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   51)               (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   52)             ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   53)               (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 + &
+(   54)             ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(   55)               (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(   56)             ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(   57)               (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 + &
+(   58)             ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up )**2 + &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 6
+
+(   59)             ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn )**2 )
+(   60) # 61 "shear_prod2D.F90"
+(   61)   end do
+(   62) end do ! k
+(   63) # 65 "shear_prod2D.F90"
+(   65) k=1
+(   66) kc=k+1
+(   67) # 68 "shear_prod2D.F90"
+(   68) rdz = 1./(dz*adz(k))
+(   69) rdzw_up = 1./(dz*adzw(kc))
+(   70) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   71) rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   72)  
+(   73) do i=1,nx
+(   74)  ib=i-1
+(   75)  ic=i+1
+(   76) # 77 "shear_prod2D.F90"
+(   77)       def2(i,j,k)=2.* ( &
+(   78)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   79)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   80)    + 0.5 * ( & 
+(   81)            ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 + &
+(   82)            ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 ) &
+(   83)           +( (v(i,j ,kc)-v0(kc)-v(i,j,k)+v0(k))*rdzw_up )**2 &
+(   84)    + 0.5 * ( &
+(   85)            ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   86)              (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   87)            ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   88)              (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 )
+(   89) end do 
+(   90)  
+(   91) k=nzm
+(   92) kc=k+1
+(   93) kb=k-1
+(   94) # 95 "shear_prod2D.F90"
+(   95) rdz = 1./(dz*adz(k))
+(   96) rdzw_dn = 1./(dz*adzw(k))
+(   97) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   98) rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   99) # 101 "shear_prod2D.F90"
+(  101) do i=1,nx
+(  102)  ib=i-1
+(  103)  ic=i+1
+(  104) # 105 "shear_prod2D.F90"
+(  105)       def2(i,j,k)=2.* ( &
+(  106)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  107)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  108)    + 0.5 * ( &
+(  109)            ( (v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  110)            ( (v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  111)          + ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn )**2 &
+(  112)    + 0.5 * ( &
+(  113)          ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(  114)            (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(  115)          ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(  116)            (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(  117) # 118 "shear_prod2D.F90"
+(  118) end do 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:12      page 7
+
+(  119) # 120 "shear_prod2D.F90"
+(  120) end

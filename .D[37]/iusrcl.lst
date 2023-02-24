@@ -1,0 +1,282 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:58      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:58      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: iusrcl.F
+
+(    1)       INTEGER FUNCTION IUSRCL()
+(    2)       USE PARKIND1, ONLY : JPRD, JPIM
+(    3)       INTEGER(KIND=JPIM) :: TIMENOWHIGH
+(    4) !RJ       REAL(KIND=JPRB) :: AMICCLK
+(    5) !
+(    6) !   MACHINE-DEPENDENT TIMING ROUTINE
+(    7) !
+(    8) !----------------------------------------------------------------------
+(    9) ! Author.
+(   10) ! -------
+(   11) !    Ute Gaertel, Wolfgang Joppich, Anton Schueller   *GMD*
+(   12) !
+(   13) ! Modifications.
+(   14) ! -------------
+(   15) !    Original : 93-01-15
+(   16) !    Modified : 93-03-15
+(   17) !    Modified : 93-08-25
+(   18) !      F. Vana  05-Mar-2015  Support for single precision
+(   19) !----------------------------------------------------------------------
+(   20) !
+(   21) !------CM 5
+(   22) !
+(   23) !CM5  integer cmmd_node_timer_clear,cmmd_node_timer_start,
+(   24) !CM5 *        cmmd_node_timer_stop,i,istat
+(   25) !CM5  double precision time,cmmd_node_timer_elapsed
+(   26) !CM5  data istat /0/
+(   27) !CM5  save istat
+(   28) !CM5
+(   29) !CM5  if (istat.eq.0) then
+(   30) !CM5    istat = 1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:58      page 3
+
+(   31) !CM5    i = cmmd_node_timer_clear(0)
+(   32) !CM5    i = cmmd_node_timer_start(0)
+(   33) !CM5  endif
+(   34) !CM5    i = cmmd_node_timer_stop(0)
+(   35) !CM5    time = cmmd_node_timer_elapsed(0)
+(   36) !CM5    iusrcl = nint(time*1.0d3)
+(   37) !CM5    i = cmmd_node_timer_start(0)
+(   38)       REAL(KIND=JPRD),EXTERNAL :: UTIL_WALLTIME
+(   39)       REAL(KIND=JPRD),EXTERNAL :: UTIL_CPUTIME
+(   40)       IUSRCL = 0
+(   41) !
+(   42) !------iPSC/2,  iPSC/860
+(   43) !
+(   44) !     IUSRCL = MCLOCK()
+(   45) !
+(   46) !------Parsytec GCel
+(   47) !
+(   48) !     IUSRCL = TIMENOWHIGH()
+(   49) !
+(   50) !------IBM RS 6000, Meiko, SGI
+(   51) !
+(   52) !CSB  IUSRCL = 1000 * SECOND()
+(   53) !cli  IUSRCL = 10 * MCLOCK()
+(   54) !     IUSRCL =      MCLOCK()
+(   55) #if defined(SGI) || defined(VPP)
+(   56)       IUSRCL = 1000 * UTIL_WALLTIME()
+(   57) !      IUSRCL = 1000 * util_cputime()
+(   58) #endif
+(   59) !
+(   60) !
+(   61) !------SUN
+(   62) !
+(   63) !3LI  IUSRCL = 1000
+(   64) !
+(   65) !
+(   66) !------nCUBE/2
+(   67) !
+(   68) !     IUSRCL = INT (AMICCLK()/1000)
+(   69) #ifdef CRAY
+(   70) #ifndef T3D
+(   71) !
+(   72) !------Cray C90
+(   73) !
+(   74)       IUSRCL = INT( RTC()*4.186E-6_JPRD )
+(   75) #else
+(   76) !------Cray T3D
+(   77) !
+(   78)       IUSRCL = INT( RTC()*6.667E-6_JPRD )
+(   79) !--      IUSRCL = 1000 * util_walltime()
+(   80) #endif
+(   81) #endif
+(   82) !
+(   83) 
+(   84) 
+(   85)       ENDFUNCTION IUSRCL
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:58      page 4
+
+(    1) # 1 "iusrcl.F"
+(    1)       INTEGER FUNCTION IUSRCL()
+(    2)       USE PARKIND1, ONLY : JPRD, JPIM
+(    3)       INTEGER(KIND=JPIM) :: TIMENOWHIGH
+(    4) !RJ       REAL(KIND=JPRB) :: AMICCLK
+(    5) !
+(    6) !   MACHINE-DEPENDENT TIMING ROUTINE
+(    7) !
+(    8) !----------------------------------------------------------------------
+(    9) ! Author.
+(   10) ! -------
+(   11) !    Ute Gaertel, Wolfgang Joppich, Anton Schueller   *GMD*
+(   12) !
+(   13) ! Modifications.
+(   14) ! -------------
+(   15) !    Original : 93-01-15
+(   16) !    Modified : 93-03-15
+(   17) !    Modified : 93-08-25
+(   18) !      F. Vana  05-Mar-2015  Support for single precision
+(   19) !----------------------------------------------------------------------
+(   20) !
+(   21) !------CM 5
+(   22) !
+(   23) !CM5  integer cmmd_node_timer_clear,cmmd_node_timer_start,
+(   24) !CM5 *        cmmd_node_timer_stop,i,istat
+(   25) !CM5  double precision time,cmmd_node_timer_elapsed
+(   26) !CM5  data istat /0/
+(   27) !CM5  save istat
+(   28) !CM5
+(   29) !CM5  if (istat.eq.0) then
+(   30) !CM5    istat = 1
+(   31) !CM5    i = cmmd_node_timer_clear(0)
+(   32) !CM5    i = cmmd_node_timer_start(0)
+(   33) !CM5  endif
+(   34) !CM5    i = cmmd_node_timer_stop(0)
+(   35) !CM5    time = cmmd_node_timer_elapsed(0)
+(   36) !CM5    iusrcl = nint(time*1.0d3)
+(   37) !CM5    i = cmmd_node_timer_start(0)
+(   38)       REAL(KIND=JPRD),EXTERNAL :: UTIL_WALLTIME
+(   39)       REAL(KIND=JPRD),EXTERNAL :: UTIL_CPUTIME
+(   40)       IUSRCL = 0
+(   41) !
+(   42) !------iPSC/2,  iPSC/860
+(   43) !
+(   44) !     IUSRCL = MCLOCK()
+(   45) !
+(   46) !------Parsytec GCel
+(   47) !
+(   48) !     IUSRCL = TIMENOWHIGH()
+(   49) !
+(   50) !------IBM RS 6000, Meiko, SGI
+(   51) !
+(   52) !CSB  IUSRCL = 1000 * SECOND()
+(   53) !cli  IUSRCL = 10 * MCLOCK()
+(   54) !     IUSRCL =      MCLOCK()
+(   55) # 59 "iusrcl.F"
+(   59) !
+(   60) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:58      page 5
+
+(   61) !------SUN
+(   62) !
+(   63) !3LI  IUSRCL = 1000
+(   64) !
+(   65) !
+(   66) !------nCUBE/2
+(   67) !
+(   68) !     IUSRCL = INT (AMICCLK()/1000)
+(   69) # 82 "iusrcl.F"
+(   82) !
+(   83) # 85 "iusrcl.F"
+(   85)       ENDFUNCTION IUSRCL

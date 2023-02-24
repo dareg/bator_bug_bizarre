@@ -1,0 +1,787 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fairno.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIRNO_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, CDSTTU )
+(    5) USE FA_MOD, ONLY : FA_COM, FREE_FICHIER, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !       Sous-programme de FERMETURE d'une unite logique "Fichier ARPEGE"
+(   12) !**
+(   13) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   14) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   15) !                CDSTTU (Entree) ==> "STATUS" eventuel pour "CLOSE".
+(   16) !
+(   17) !
+(   18) !
+(   19) TYPE(FA_COM) :: FA
+(   20) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   21) !
+(   22) INTEGER (KIND=JPLIKB) IREP, IRANG, J, IPOSNU
+(   23) INTEGER (KIND=JPLIKB) IRANGC, INIMES, ILNOMC
+(   24) !
+(   25) CHARACTER(LEN=*) CDSTTU
+(   26) CHARACTER(LEN=7) CLSTTU
+(   27) !
+(   28) LOGICAL LLSTTU, LLVERF, LLRLFI
+(   29) !
+(   30) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 3
+
+(   31) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   32) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   33) LOGICAL                  LLFATA
+(   34) 
+(   35) !**
+(   36) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, PUIS INITIALISATIONS.
+(   37) !-----------------------------------------------------------------------
+(   38) !
+(   39) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   40) IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',0,ZHOOK_HANDLE)
+(   41) CLACTI=''
+(   42) IREP=0
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) CALL FANUMU_MT64                 &
+(   46) &               (FA, KNUMER,IRANG)
+(   47) !
+(   48) !         Verrouillage global eventuel.
+(   49) !
+(   50) IF (FA%LFAMUL) CALL LFIVER_MT64                        &
+(   51) &                              (FA%LFI, FA%VRGLAS,'ON')
+(   52) !
+(   53) IF (IRANG.EQ.0) THEN
+(   54)   IREP=-51
+(   55)   GOTO 1001
+(   56) ELSEIF (INT (LEN (CDSTTU), JPLIKB).LE.0) THEN
+(   57)   IREP=-65
+(   58)   GOTO 1001
+(   59) ELSE
+(   60)   LLSTTU=CDSTTU.EQ.'KEEP'.OR.CDSTTU.EQ.'DELETE'
+(   61) !
+(   62)   IF (LLSTTU) THEN
+(   63)     CLSTTU=CDSTTU(1:MIN (INT (LEN (CDSTTU), JPLIKB),  &
+(   64) &                         INT (LEN (CLSTTU), JPLIKB)))
+(   65)   ELSE
+(   66)     CLSTTU='DEFAUT'
+(   67)   ENDIF
+(   68) !
+(   69) ENDIF
+(   70) !
+(   71) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   72) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   73) LLVERF=FA%LFAMUL
+(   74) !
+(   75) IF (FA%FICHIER(IRANG)%LCREAF.AND..NOT.LLSTTU) THEN
+(   76) !
+(   77) !         On force le relachement d'un fichier "parasite".
+(   78) !
+(   79)   LLSTTU=.TRUE.
+(   80)   CLSTTU='DELETE'
+(   81) ENDIF
+(   82) !**
+(   83) !     2.  -  FERMETURE DU FICHIER, AU SENS DU LOGICIEL LFI.
+(   84) !-----------------------------------------------------------------------
+(   85) !
+(   86) !**
+(   87) !     3.  -  "NETTOYAGE" DES TABLES AYANT PERMIS DE GERER LE FICHIER.
+(   88) !            ( au moins celles ayant un caractere "global" )
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 4
+
+(   89) !-----------------------------------------------------------------------
+(   90) !
+(   91) FA%FICHIER(IRANG)%NULOGI=JPNIIL
+(   92) !
+(   93) DO J=1,FA%NFIOUV
+(   94) !
+(   95) IF (FA%NULIND(J).EQ.IRANG) THEN
+(   96)   IPOSNU=J
+(   97)   GOTO 302
+(   98) ENDIF
+(   99) !
+(  100) ENDDO
+(  101) !
+(  102) IREP=-66
+(  103) GOTO 1001
+(  104) !
+(  105) 302 CONTINUE
+(  106) !
+(  107) FA%NFIOUV=FA%NFIOUV-1
+(  108) !
+(  109) DO J=IPOSNU,FA%NFIOUV
+(  110) FA%NULIND(J)=FA%NULIND(J+1)
+(  111) ENDDO
+(  112) !
+(  113) IF (FA%LFAMUL) THEN
+(  114)   CALL LFIVER_MT64                                &
+(  115) &                 (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  116)   CALL LFIVER_MT64                                &
+(  117) &                 (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'REL')
+(  118) ENDIF
+(  119) !
+(  120) LLVERF=.FALSE.
+(  121) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  122) FA%CADRE(IRANGC)%NULCAD=FA%CADRE(IRANGC)%NULCAD-1
+(  123) !
+(  124) !        Si le cadre auquel etait rattache le fichier n'a plus d'autre
+(  125) !     fichier rattache, et qu'on ne devait pas conserver ce cadre,
+(  126) !     on le supprime.
+(  127) !
+(  128) IF (FA%CADRE(IRANGC)%NULCAD.LE.0.AND. &
+(  129) &   (FA%CADRE(IRANGC)%NGARDE.EQ.0.OR.  &
+(  130) &   (FA%CADRE(IRANGC)%NGARDE.EQ.1.AND. &
+(  131) &     .NOT.FA%LIGARD)))                &
+(  132) &      CALL FACTUI_MT64                &
+(  133) &                     (FA, IREP,IRANGC)
+(  134) CALL FREE_FICHIER (FA%FICHIER(IRANG))
+(  135) !**
+(  136) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  137) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  138) !-----------------------------------------------------------------------
+(  139) !
+(  140) 1001 CONTINUE
+(  141) KREP=IREP
+(  142) LLFATA=LLMOER (IREP,IRANG)
+(  143) !
+(  144) !        Deverrouillage(s) eventuel(s).
+(  145) !
+(  146) IF (LLVERF) CALL LFIVER_MT64                                &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 5
+
+(  147) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  148) IF (FA%LFAMUL) CALL LFIVER_MT64                         &
+(  149) &                              (FA%LFI, FA%VRGLAS,'OFF')
+(  150) !
+(  151) IF (LLFATA) THEN
+(  152)   INIMES=2
+(  153) ELSE
+(  154)   INIMES=IXNVMS(IRANG)
+(  155) ENDIF
+(  156) !
+(  157) IF (INIMES.EQ.0)  THEN 
+(  158)   IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',1,ZHOOK_HANDLE)
+(  159)   RETURN
+(  160) ENDIF
+(  161) !
+(  162) CLNSPR='FAIRME'
+(  163) !
+(  164) IF (IREP.EQ.-65) THEN
+(  165)   ILNOMC=8
+(  166)   CLACTI(1:ILNOMC)=FA%CHAINC(:ILNOMC)
+(  167)  ELSE
+(  168)   ILNOMC=MIN ( INT (LEN (CLACTI), JPLIKB),  &
+(  169) &               INT (LEN (CDSTTU), JPLIKB) )
+(  170)   CLACTI(1:ILNOMC)=CDSTTU(1:ILNOMC)
+(  171) ENDIF
+(  172) !
+(  173) IF (INIMES.EQ.2) THEN
+(  174) !
+(  175)   ILNOMC=MIN (ILNOMC,FA%NCPCAD)
+(  176)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  177) &         '', CDSTTU='''''',A,'''''''')') KREP,KNUMER,     &
+(  178) &       CLACTI(1:ILNOMC)
+(  179)   CALL FAIPAR_MT64                                     &
+(  180) &                 (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  181) &               CLNSPR,CLACTI(1:ILNOMC),LLRLFI)
+(  182) !
+(  183) ENDIF
+(  184) !
+(  185) IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',1,ZHOOK_HANDLE)
+(  186) 
+(  187) CONTAINS
+(  188) 
+(  189) #include "facom2.llmoer.h"
+(  190) #include "facom2.ixnvms.h"
+(  191) 
+(  192) END SUBROUTINE FAIRNO_MT64
+(  193) 
+(  194) 
+(  195) 
+(  196) ! Oct-2012 P. Marguinaud 64b LFI
+(  197) SUBROUTINE FAIRNO64              &
+(  198) &           (KREP, KNUMER, CDSTTU)
+(  199) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  200) &                   FA_COM_DEFAULT_INIT,  &
+(  201) &                   NEW_FA_DEFAULT
+(  202) USE LFI_PRECISION
+(  203) IMPLICIT NONE
+(  204) ! Arguments
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 6
+
+(  205) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  206) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  207) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  208) 
+(  209) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  210) 
+(  211) CALL FAIRNO_MT64                     &
+(  212) &           (FA, KREP, KNUMER, CDSTTU)
+(  213) 
+(  214) END SUBROUTINE FAIRNO64
+(  215) 
+(  216) SUBROUTINE FAIRNO                &
+(  217) &           (KREP, KNUMER, CDSTTU)
+(  218) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  219) &                   FA_COM_DEFAULT_INIT,  &
+(  220) &                   NEW_FA_DEFAULT
+(  221) USE LFI_PRECISION
+(  222) IMPLICIT NONE
+(  223) ! Arguments
+(  224) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  225) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  226) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  227) 
+(  228) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  229) 
+(  230) CALL FAIRNO_MT                       &
+(  231) &           (FA, KREP, KNUMER, CDSTTU)
+(  232) 
+(  233) END SUBROUTINE FAIRNO
+(  234) 
+(  235) SUBROUTINE FAIRNO_MT                 &
+(  236) &           (FA, KREP, KNUMER, CDSTTU)
+(  237) USE FA_MOD, ONLY : FA_COM
+(  238) USE LFI_PRECISION
+(  239) IMPLICIT NONE
+(  240) ! Arguments
+(  241) TYPE (FA_COM)          FA                                     ! INOUT
+(  242) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  243) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  244) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  245) ! Local integers
+(  246) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  247) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  248) ! Convert arguments
+(  249) 
+(  250) INUMER     = INT (    KNUMER, JPLIKB)
+(  251) 
+(  252) CALL FAIRNO_MT64                     &
+(  253) &           (FA, IREP, INUMER, CDSTTU)
+(  254) 
+(  255) KREP       = INT (      IREP, JPLIKM)
+(  256) 
+(  257) END SUBROUTINE FAIRNO_MT
+(  258) 
+(  259) 
+(  260) 
+(  261) !INTF KREP            OUT 
+(  262) !INTF KNUMER        IN    
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 7
+
+(  263) !INTF CDSTTU        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 8
+
+(    1) # 1 "fairno.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAIRNO_MT64                           &
+(    4) &                     (FA,  KREP, KNUMER, CDSTTU )
+(    5) USE FA_MOD, ONLY : FA_COM, FREE_FICHIER, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !       Sous-programme de FERMETURE d'une unite logique "Fichier ARPEGE"
+(   12) !**
+(   13) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   14) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   15) !                CDSTTU (Entree) ==> "STATUS" eventuel pour "CLOSE".
+(   16) !
+(   17) !
+(   18) !
+(   19) TYPE(FA_COM) :: FA
+(   20) INTEGER (KIND=JPLIKB) KREP, KNUMER
+(   21) !
+(   22) INTEGER (KIND=JPLIKB) IREP, IRANG, J, IPOSNU
+(   23) INTEGER (KIND=JPLIKB) IRANGC, INIMES, ILNOMC
+(   24) !
+(   25) CHARACTER(LEN=*) CDSTTU
+(   26) CHARACTER(LEN=7) CLSTTU
+(   27) !
+(   28) LOGICAL LLSTTU, LLVERF, LLRLFI
+(   29) !
+(   30) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   31) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   32) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   33) LOGICAL                  LLFATA
+(   34) # 35 "fairno.F90"
+(   35) !**
+(   36) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, PUIS INITIALISATIONS.
+(   37) !-----------------------------------------------------------------------
+(   38) !
+(   39) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   40) IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',0,ZHOOK_HANDLE)
+(   41) CLACTI=''
+(   42) IREP=0
+(   43) LLVERF=.FALSE.
+(   44) LLRLFI=.FALSE.
+(   45) CALL FANUMU_MT64                 &
+(   46) &               (FA, KNUMER,IRANG)
+(   47) !
+(   48) !         Verrouillage global eventuel.
+(   49) !
+(   50) IF (FA%LFAMUL) CALL LFIVER_MT64                        &
+(   51) &                              (FA%LFI, FA%VRGLAS,'ON')
+(   52) !
+(   53) IF (IRANG.EQ.0) THEN
+(   54)   IREP=-51
+(   55)   GOTO 1001
+(   56) ELSEIF (INT (LEN (CDSTTU), JPLIKB).LE.0) THEN
+(   57)   IREP=-65
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 9
+
+(   58)   GOTO 1001
+(   59) ELSE
+(   60)   LLSTTU=CDSTTU.EQ.'KEEP'.OR.CDSTTU.EQ.'DELETE'
+(   61) !
+(   62)   IF (LLSTTU) THEN
+(   63)     CLSTTU=CDSTTU(1:MIN (INT (LEN (CDSTTU), JPLIKB),  &
+(   64) &                         INT (LEN (CLSTTU), JPLIKB)))
+(   65)   ELSE
+(   66)     CLSTTU='DEFAUT'
+(   67)   ENDIF
+(   68) !
+(   69) ENDIF
+(   70) !
+(   71) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   72) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   73) LLVERF=FA%LFAMUL
+(   74) !
+(   75) IF (FA%FICHIER(IRANG)%LCREAF.AND..NOT.LLSTTU) THEN
+(   76) !
+(   77) !         On force le relachement d'un fichier "parasite".
+(   78) !
+(   79)   LLSTTU=.TRUE.
+(   80)   CLSTTU='DELETE'
+(   81) ENDIF
+(   82) !**
+(   83) !     2.  -  FERMETURE DU FICHIER, AU SENS DU LOGICIEL LFI.
+(   84) !-----------------------------------------------------------------------
+(   85) !
+(   86) !**
+(   87) !     3.  -  "NETTOYAGE" DES TABLES AYANT PERMIS DE GERER LE FICHIER.
+(   88) !            ( au moins celles ayant un caractere "global" )
+(   89) !-----------------------------------------------------------------------
+(   90) !
+(   91) FA%FICHIER(IRANG)%NULOGI=JPNIIL
+(   92) !
+(   93) DO J=1,FA%NFIOUV
+(   94) !
+(   95) IF (FA%NULIND(J).EQ.IRANG) THEN
+(   96)   IPOSNU=J
+(   97)   GOTO 302
+(   98) ENDIF
+(   99) !
+(  100) ENDDO
+(  101) !
+(  102) IREP=-66
+(  103) GOTO 1001
+(  104) !
+(  105) 302 CONTINUE
+(  106) !
+(  107) FA%NFIOUV=FA%NFIOUV-1
+(  108) !
+(  109) DO J=IPOSNU,FA%NFIOUV
+(  110) FA%NULIND(J)=FA%NULIND(J+1)
+(  111) ENDDO
+(  112) !
+(  113) IF (FA%LFAMUL) THEN
+(  114)   CALL LFIVER_MT64                                &
+(  115) &                 (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 10
+
+(  116)   CALL LFIVER_MT64                                &
+(  117) &                 (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'REL')
+(  118) ENDIF
+(  119) !
+(  120) LLVERF=.FALSE.
+(  121) IRANGC=FA%FICHIER(IRANG)%NUCADR
+(  122) FA%CADRE(IRANGC)%NULCAD=FA%CADRE(IRANGC)%NULCAD-1
+(  123) !
+(  124) !        Si le cadre auquel etait rattache le fichier n'a plus d'autre
+(  125) !     fichier rattache, et qu'on ne devait pas conserver ce cadre,
+(  126) !     on le supprime.
+(  127) !
+(  128) IF (FA%CADRE(IRANGC)%NULCAD.LE.0.AND. &
+(  129) &   (FA%CADRE(IRANGC)%NGARDE.EQ.0.OR.  &
+(  130) &   (FA%CADRE(IRANGC)%NGARDE.EQ.1.AND. &
+(  131) &     .NOT.FA%LIGARD)))                &
+(  132) &      CALL FACTUI_MT64                &
+(  133) &                     (FA, IREP,IRANGC)
+(  134) CALL FREE_FICHIER (FA%FICHIER(IRANG))
+(  135) !**
+(  136) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  137) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  138) !-----------------------------------------------------------------------
+(  139) !
+(  140) 1001 CONTINUE
+(  141) KREP=IREP
+(  142) LLFATA=LLMOER (IREP,IRANG)
+(  143) !
+(  144) !        Deverrouillage(s) eventuel(s).
+(  145) !
+(  146) IF (LLVERF) CALL LFIVER_MT64                                &
+(  147) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  148) IF (FA%LFAMUL) CALL LFIVER_MT64                         &
+(  149) &                              (FA%LFI, FA%VRGLAS,'OFF')
+(  150) !
+(  151) IF (LLFATA) THEN
+(  152)   INIMES=2
+(  153) ELSE
+(  154)   INIMES=IXNVMS(IRANG)
+(  155) ENDIF
+(  156) !
+(  157) IF (INIMES.EQ.0)  THEN 
+(  158)   IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',1,ZHOOK_HANDLE)
+(  159)   RETURN
+(  160) ENDIF
+(  161) !
+(  162) CLNSPR='FAIRME'
+(  163) !
+(  164) IF (IREP.EQ.-65) THEN
+(  165)   ILNOMC=8
+(  166)   CLACTI(1:ILNOMC)=FA%CHAINC(:ILNOMC)
+(  167)  ELSE
+(  168)   ILNOMC=MIN ( INT (LEN (CLACTI), JPLIKB),  &
+(  169) &               INT (LEN (CDSTTU), JPLIKB) )
+(  170)   CLACTI(1:ILNOMC)=CDSTTU(1:ILNOMC)
+(  171) ENDIF
+(  172) !
+(  173) IF (INIMES.EQ.2) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 11
+
+(  174) !
+(  175)   ILNOMC=MIN (ILNOMC,FA%NCPCAD)
+(  176)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  177) &         '', CDSTTU='''''',A,'''''''')') KREP,KNUMER,     &
+(  178) &       CLACTI(1:ILNOMC)
+(  179)   CALL FAIPAR_MT64                                     &
+(  180) &                 (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  181) &               CLNSPR,CLACTI(1:ILNOMC),LLRLFI)
+(  182) !
+(  183) ENDIF
+(  184) !
+(  185) IF (LHOOK) CALL DR_HOOK('FAIRNO_MT',1,ZHOOK_HANDLE)
+(  186) # 187 "fairno.F90"
+(  187) CONTAINS
+(  188) # 189 "fairno.F90"
+(  189) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 190 "fairno.F90"
+(  190) # 190 "fairno.F90"
+(  190) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 191 "fairno.F90"
+(  191) # 192 "fairno.F90"
+(  192) END SUBROUTINE FAIRNO_MT64
+(  193) # 196 "fairno.F90"
+(  196) ! Oct-2012 P. Marguinaud 64b LFI
+(  197) SUBROUTINE FAIRNO64              &
+(  198) &           (KREP, KNUMER, CDSTTU)
+(  199) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  200) &                   FA_COM_DEFAULT_INIT,  &
+(  201) &                   NEW_FA_DEFAULT
+(  202) USE LFI_PRECISION
+(  203) IMPLICIT NONE
+(  204) ! Arguments
+(  205) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  206) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:52      page 12
+
+(  207) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  208) # 209 "fairno.F90"
+(  209) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  210) # 211 "fairno.F90"
+(  211) CALL FAIRNO_MT64                     &
+(  212) &           (FA, KREP, KNUMER, CDSTTU)
+(  213) # 214 "fairno.F90"
+(  214) END SUBROUTINE FAIRNO64
+(  215) # 216 "fairno.F90"
+(  216) SUBROUTINE FAIRNO                &
+(  217) &           (KREP, KNUMER, CDSTTU)
+(  218) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  219) &                   FA_COM_DEFAULT_INIT,  &
+(  220) &                   NEW_FA_DEFAULT
+(  221) USE LFI_PRECISION
+(  222) IMPLICIT NONE
+(  223) ! Arguments
+(  224) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  225) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  226) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  227) # 228 "fairno.F90"
+(  228) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  229) # 230 "fairno.F90"
+(  230) CALL FAIRNO_MT                       &
+(  231) &           (FA, KREP, KNUMER, CDSTTU)
+(  232) # 233 "fairno.F90"
+(  233) END SUBROUTINE FAIRNO
+(  234) # 235 "fairno.F90"
+(  235) SUBROUTINE FAIRNO_MT                 &
+(  236) &           (FA, KREP, KNUMER, CDSTTU)
+(  237) USE FA_MOD, ONLY : FA_COM
+(  238) USE LFI_PRECISION
+(  239) IMPLICIT NONE
+(  240) ! Arguments
+(  241) TYPE (FA_COM)          FA                                     ! INOUT
+(  242) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  243) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  244) CHARACTER (LEN=*)      CDSTTU                                 ! IN   
+(  245) ! Local integers
+(  246) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  247) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  248) ! Convert arguments
+(  249) # 250 "fairno.F90"
+(  250) INUMER     = INT (    KNUMER, JPLIKB)
+(  251) # 252 "fairno.F90"
+(  252) CALL FAIRNO_MT64                     &
+(  253) &           (FA, IREP, INUMER, CDSTTU)
+(  254) # 255 "fairno.F90"
+(  255) KREP       = INT (      IREP, JPLIKM)
+(  256) # 257 "fairno.F90"
+(  257) END SUBROUTINE FAIRNO_MT
+(  258) # 261 "fairno.F90"
+(  261) !INTF KREP            OUT 
+(  262) !INTF KNUMER        IN    
+(  263) !INTF CDSTTU        IN    

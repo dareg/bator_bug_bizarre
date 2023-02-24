@@ -1,0 +1,238 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:11      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:11      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_horibl_surf_init.F90
+
+(    1) !depfile:horibl_surf_init.F90
+(    2) MODULE MODI_HORIBL_SURF_INIT
+(    3) INTERFACE
+(    4)     SUBROUTINE HORIBL_SURF_INIT(PILA1,PILO1,PILA2,PILO2,KINLA,KINLO,KOLEN,&
+(    5)                            PXOUT,PYOUT,OINTERP,OGAUSS,OGLOBLON,OGLOBN,OGLOBS,&
+(    6)                            KO,KINLO_OUT,POLA,POLO,PILO1_OUT,&
+(    7)                            PILO2_OUT,PLA,PILATARRAY )  
+(    8) REAL,                      INTENT(IN)  :: PILA1   ! Lat. (y) of first input point KDGSA
+(    9) REAL,                      INTENT(IN)  :: PILO1   ! Lon. (x) of first input point 
+(   10) REAL,                      INTENT(IN)  :: PILA2   ! Lat. (y) of last input point KDGEN
+(   11) REAL,                      INTENT(IN)  :: PILO2   ! Lon. (x) of last input point
+(   12) INTEGER,                   INTENT(IN)  :: KINLA   ! Number of parallels
+(   13) INTEGER, DIMENSION(:), INTENT(IN)  :: KINLO   ! Number of point along a parallel
+(   14) INTEGER,                   INTENT(IN)  :: KOLEN   ! size of output array
+(   15) REAL,    DIMENSION(:), INTENT(IN)  :: PXOUT   ! X (lon.) of output points
+(   16) REAL,    DIMENSION(:), INTENT(IN)  :: PYOUT   ! Y (lat.) of output points
+(   17) LOGICAL, DIMENSION(:), INTENT(IN)  :: OINTERP ! .true. where physical value is needed
+(   18) LOGICAL, INTENT(IN) :: OGAUSS
+(   19) LOGICAL, INTENT(OUT)  :: OGLOBLON  ! True if the map is circular
+(   20) LOGICAL, INTENT(OUT)  :: OGLOBN    ! True if the map has the north pole
+(   21) LOGICAL, INTENT(OUT)  :: OGLOBS    ! True if the map has the south pole
+(   22) INTEGER, DIMENSION(:,:), INTENT(OUT) :: KO
+(   23) INTEGER, DIMENSION(:), INTENT(OUT) :: KINLO_OUT     ! Extended KINLO
+(   24) REAL, INTENT(OUT) :: PILO1_OUT     ! Longitude of the first data point
+(   25) REAL, INTENT(OUT) :: PILO2_OUT     ! Longitude of the last data point
+(   26) REAL, DIMENSION(:), INTENT(OUT) :: POLA     ! Latitude of the output point
+(   27) REAL, DIMENSION(:), INTENT(OUT) :: POLO     ! Longitude of the output point
+(   28) REAL, DIMENSION(:,:), INTENT(OUT) :: PLA
+(   29) REAL,    DIMENSION(:), INTENT(IN), OPTIONAL  :: PILATARRAY! latitudes array
+(   30) END SUBROUTINE HORIBL_SURF_INIT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:11      page 3
+
+(   31) 
+(   32) END INTERFACE
+(   33) END MODULE MODI_HORIBL_SURF_INIT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:11      page 4
+
+(    1) # 1 "modi_horibl_surf_init.F90"
+(    1) !depfile:horibl_surf_init.F90
+(    2) MODULE MODI_HORIBL_SURF_INIT
+(    3) INTERFACE
+(    4)     SUBROUTINE HORIBL_SURF_INIT(PILA1,PILO1,PILA2,PILO2,KINLA,KINLO,KOLEN,&
+(    5)                            PXOUT,PYOUT,OINTERP,OGAUSS,OGLOBLON,OGLOBN,OGLOBS,&
+(    6)                            KO,KINLO_OUT,POLA,POLO,PILO1_OUT,&
+(    7)                            PILO2_OUT,PLA,PILATARRAY )  
+(    8) REAL,                      INTENT(IN)  :: PILA1   ! Lat. (y) of first input point KDGSA
+(    9) REAL,                      INTENT(IN)  :: PILO1   ! Lon. (x) of first input point 
+(   10) REAL,                      INTENT(IN)  :: PILA2   ! Lat. (y) of last input point KDGEN
+(   11) REAL,                      INTENT(IN)  :: PILO2   ! Lon. (x) of last input point
+(   12) INTEGER,                   INTENT(IN)  :: KINLA   ! Number of parallels
+(   13) INTEGER, DIMENSION(:), INTENT(IN)  :: KINLO   ! Number of point along a parallel
+(   14) INTEGER,                   INTENT(IN)  :: KOLEN   ! size of output array
+(   15) REAL,    DIMENSION(:), INTENT(IN)  :: PXOUT   ! X (lon.) of output points
+(   16) REAL,    DIMENSION(:), INTENT(IN)  :: PYOUT   ! Y (lat.) of output points
+(   17) LOGICAL, DIMENSION(:), INTENT(IN)  :: OINTERP ! .true. where physical value is needed
+(   18) LOGICAL, INTENT(IN) :: OGAUSS
+(   19) LOGICAL, INTENT(OUT)  :: OGLOBLON  ! True if the map is circular
+(   20) LOGICAL, INTENT(OUT)  :: OGLOBN    ! True if the map has the north pole
+(   21) LOGICAL, INTENT(OUT)  :: OGLOBS    ! True if the map has the south pole
+(   22) INTEGER, DIMENSION(:,:), INTENT(OUT) :: KO
+(   23) INTEGER, DIMENSION(:), INTENT(OUT) :: KINLO_OUT     ! Extended KINLO
+(   24) REAL, INTENT(OUT) :: PILO1_OUT     ! Longitude of the first data point
+(   25) REAL, INTENT(OUT) :: PILO2_OUT     ! Longitude of the last data point
+(   26) REAL, DIMENSION(:), INTENT(OUT) :: POLA     ! Latitude of the output point
+(   27) REAL, DIMENSION(:), INTENT(OUT) :: POLO     ! Longitude of the output point
+(   28) REAL, DIMENSION(:,:), INTENT(OUT) :: PLA
+(   29) REAL,    DIMENSION(:), INTENT(IN), OPTIONAL  :: PILATARRAY! latitudes array
+(   30) END SUBROUTINE HORIBL_SURF_INIT
+(   31) # 32 "modi_horibl_surf_init.F90"
+(   32) END INTERFACE
+(   33) END MODULE MODI_HORIBL_SURF_INIT

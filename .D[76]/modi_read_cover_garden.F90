@@ -1,0 +1,12 @@
+!depfile:read_cover_garden.F90
+MODULE MODI_READ_COVER_GARDEN 
+INTERFACE
+      SUBROUTINE READ_COVER_GARDEN (&
+                                    HPROGRAM,OGARDEN,HDIR)
+ CHARACTER(LEN=6),  INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+LOGICAL,           INTENT(OUT) :: OGARDEN   ! T: Definition of urban green areas
+ CHARACTER(LEN=1), INTENT(IN), OPTIONAL :: HDIR
+END SUBROUTINE READ_COVER_GARDEN
+
+END INTERFACE
+END MODULE MODI_READ_COVER_GARDEN 

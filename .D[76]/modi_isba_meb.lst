@@ -1,0 +1,405 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_isba_meb.F90
+
+(    1) !depfile:isba_meb.F90
+(    2) MODULE MODI_ISBA_MEB
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_MEB(IO, KK, PK, PEK, DK, DEK, DMK, G, AG,               &
+(    5)                           TPTIME, OMEB, OSHADE, HIMPLICIT_WIND, PTSTEP,       &
+(    6)                           PSOILHCAPZ, PSOILCONDZ, PFROZEN1, PPS, PZENITH,     &
+(    7)                           PANGL_ILLUM,PSCA_SW, PSW_RAD, PVMOD, PVDIR, PRR,    &
+(    8)                           PSR,PRHOA, PTA, PQA,PDIRCOSZW, PSLOPE_DIR,PEXNS,    &
+(    9)                           PEXNA, PPET_A_COEF, PPET_B_COEF,PPEQ_A_COEF,        &
+(   10)                           PPEQ_B_COEF, PPEW_A_COEF, PPEW_B_COEF, AT, PZREF,   &
+(   11)                           PUREF, PZ0G_WITHOUT_SNOW, PZ0_MEBV, PZ0H_MEBV,      &
+(   12)                           PZ0EFF_MEBV, PZ0_MEBN, PZ0H_MEBN, PZ0EFF_MEBN,      &
+(   13)                           PALBNIR_TVEG, PALBVIS_TVEG, PALBNIR_TSOIL,          &
+(   14)                           PALBVIS_TSOIL,PABC,PIACAN,PPOI,PCSP,                &
+(   15)                           PRESP_BIOMASS_INST,PPALPHAN,PF2,PLW_RAD,            &
+(   16)                           PGRNDFLUX,PFLSN_COR,PUSTAR,PEMIST,PHU_AGG,PAC_AGG,  &
+(   17)                           PDELHEATV_SFC, PDELHEATG_SFC, PDELHEATG,PDELHEATN,  &
+(   18)                           PDELHEATN_SFC, PRESTOREN, PTDEEP_A, PDEEP_FLUX,     &
+(   19)                           PRISNOW,PSNOW_THRUFAL,PSNOW_THRUFAL_SOIL,PEVAPCOR,  &
+(   20)                           PSUBVCOR, PLITCOR, PSNOWSFCH, PQSNOW, KTAB_SYT,     &
+(   21)                           P_DIR_SW, P_SCA_SW, PIMPWET, PIMPDRY) 
+(   22) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(   23) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   24) USE MODD_SFX_GRID_n, ONLY : GRID_t
+(   25) USE MODD_AGRI_n, ONLY : AGRI_t
+(   26) USE MODD_DIAG_n, ONLY : DIAG_t
+(   27) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   28) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   29) USE MODD_TYPE_DATE_SURF, ONLY : DATE_TIME
+(   30) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 3
+
+(   31) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   32) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   33) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   34) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   35) TYPE(GRID_t), INTENT(INOUT) :: G
+(   36) TYPE(AGRI_t), INTENT(INOUT) :: AG
+(   37) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   38) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   39) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   40) TYPE(DATE_TIME),      INTENT(IN)    :: TPTIME        ! current date and time
+(   41) LOGICAL,              INTENT(IN)    :: OMEB          ! True = patch with multi-energy balance 
+(   42) LOGICAL, DIMENSION(:),INTENT(INOUT) :: OSHADE        ! where vegetation evolution occurs
+(   43) CHARACTER(LEN=*),     INTENT(IN)    :: HIMPLICIT_WIND! wind implicitation option
+(   44) REAL,                 INTENT(IN)    :: PTSTEP                                           ! 'NEW' = Taylor serie, order 1
+(   45) REAL, DIMENSION(:),   INTENT(IN)    :: PPS           ! Pressure [Pa]
+(   46) REAL, DIMENSION(:),   INTENT(IN)    :: PZENITH       ! solar zenith angle
+(   47) REAL, DIMENSION(:),   INTENT(IN)    :: PANGL_ILLUM !BC
+(   48) REAL, DIMENSION(:),   INTENT(IN)    :: PSW_RAD       ! solar (shortwave) incoming radiation [W/m2]
+(   49) REAL, DIMENSION(:),   INTENT(IN)    :: PLW_RAD       ! thermal (longwave) incoming radiation [W/m2]
+(   50) REAL, DIMENSION(:),   INTENT(IN)    :: PSCA_SW       ! solar diffuse incoming radiation [W/m2]
+(   51) REAL, DIMENSION(:),   INTENT(IN)    :: PEXNA         ! Exner function: forcing level (-)
+(   52) REAL, DIMENSION(:),   INTENT(IN)    :: PEXNS         ! Exner function: surface (-)
+(   53) REAL, DIMENSION(:),   INTENT(IN)    :: PRR           ! Rain rate (kg/m2/s)
+(   54) REAL, DIMENSION(:),   INTENT(IN)    :: PSR           ! Snow rate (kg/m2/s)
+(   55) REAL, DIMENSION(:),   INTENT(IN)    :: PRHOA         ! air density (kg/m3)
+(   56) REAL, DIMENSION(:),   INTENT(IN)    :: PVMOD         ! modulus of the wind
+(   57) REAL, DIMENSION(:), INTENT(IN)      :: PVDIR         ! wind direction
+(   58) REAL, DIMENSION(:),   INTENT(IN)    :: PTA           ! Temperature of atmosphere (K)
+(   59) REAL, DIMENSION(:),   INTENT(IN)    :: PQA           ! specific humidity of atmosphere (kg/kg)
+(   60) REAL, DIMENSION(:),   INTENT(IN)    :: PZREF         ! normal distance of the first
+(   61) REAL, DIMENSION(:),   INTENT(IN)    :: PUREF         ! reference height of the wind (m)
+(   62) REAL, DIMENSION(:),   INTENT(IN)    :: PDIRCOSZW     ! Director Cosinus along the z
+(   63) REAL, DIMENSION(:),   INTENT(IN)    ::  PSLOPE_DIR   ! Slope direction
+(   64) REAL, DIMENSION(:,:), INTENT(IN)    :: PSOILHCAPZ    ! ISBA-DF Soil heat capacity 
+(   65) REAL, DIMENSION(:,:), INTENT(IN)    :: PSOILCONDZ    ! ISBA-DF Soil conductivity  
+(   66) REAL, DIMENSION(:),   INTENT(IN)    :: PFROZEN1      ! surface frozen fraction (-)
+(   67) REAL, DIMENSION(:),   INTENT(IN)    :: PPALPHAN      ! snow/canopy transition coefficient
+(   68) REAL, DIMENSION(:),   INTENT(IN)    :: PALBNIR_TVEG  ! albedo of vegetation in NIR 
+(   69) REAL, DIMENSION(:),   INTENT(IN)    :: PALBVIS_TVEG  ! albedo of vegetation in VIS 
+(   70) REAL, DIMENSION(:),   INTENT(IN)    :: PALBNIR_TSOIL ! albedo of bare soil in NIR 
+(   71) REAL, DIMENSION(:),   INTENT(IN)    :: PALBVIS_TSOIL ! albedo of bare soil in VIS 
+(   72) REAL, DIMENSION(:),   INTENT(IN)    :: PF2           ! Soil water stress factor for transpiration (-)
+(   73) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0G_WITHOUT_SNOW ! roughness length for momentum at snow-free canopy floor (m)
+(   74) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0_MEBV      ! roughness length for momentum over MEB vegetation part of patch (m)
+(   75) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0H_MEBV     ! roughness length for heat over MEB vegetation part of path (m)
+(   76) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0EFF_MEBV   ! roughness length for momentum over MEB vegetation part of patch (m)
+(   77) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0_MEBN      ! roughness length for momentum over MEB snow part of patch (m)
+(   78) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0H_MEBN     ! roughness length for heat over MEB snow part of path (m)
+(   79) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0EFF_MEBN   ! roughness length for momentum over MEB snow part of patch (m)
+(   80) REAL, DIMENSION(:,:), INTENT(IN )   :: P_DIR_SW, P_SCA_SW ! direct and diffuse spectral irradiance (W/m2/um)
+(   81) REAL, DIMENSION(:),   INTENT(IN)    :: PPET_A_COEF, PPET_B_COEF, &
+(   82)                                        PPEQ_A_COEF, PPEQ_B_COEF, &
+(   83)                                        PPEW_A_COEF, PPEW_B_COEF  
+(   84) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   85) REAL, DIMENSION(:),   INTENT(IN)    :: PTDEEP_A          ! Deep soil temperature boundary condition 
+(   86) REAL, DIMENSION(:),   INTENT(IN) :: PCSP       ! atmospheric CO2 concentration
+(   87) REAL, DIMENSION(:,:),   INTENT(IN) :: PIMPWET
+(   88) REAL, DIMENSION(:,:),   INTENT(IN) :: PIMPDRY
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 4
+
+(   89) REAL, DIMENSION(:),   INTENT(IN) :: PPOI       ! Gaussian weights (as above)
+(   90) INTEGER , DIMENSION(:), INTENT(IN)  :: KTAB_SYT    ! Array of index defining opposite points for Sytron
+(   91) REAL, DIMENSION(:),   INTENT(INOUT) :: PABC          ! Ags: abscissa needed for integration
+(   92) REAL, DIMENSION(:,:), INTENT(OUT)   :: PIACAN        ! PAR in the canopy at different gauss levels
+(   93) REAL, DIMENSION(:),   INTENT(OUT)   :: PUSTAR        ! friction velocity
+(   94) REAL, DIMENSION(:),   INTENT(OUT)   :: PGRNDFLUX     ! snow/soil-biomass interface flux (W/m2)
+(   95) REAL, DIMENSION(:),   INTENT(OUT)   :: PFLSN_COR     ! soil/snow interface correction flux to conserve energy (W/m2)
+(   96) REAL, DIMENSION(:),   INTENT(OUT)   :: PEMIST        ! total effective surface emissivity...LWUP = EMIST*TS_RAD**4 (-)
+(   97) REAL, DIMENSION(:),   INTENT(OUT)   :: PAC_AGG       ! aggregated aerodynamic conductance
+(   98) REAL, DIMENSION(:),   INTENT(OUT)   :: PHU_AGG       ! aggregated relative humidity
+(   99) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATV_SFC ! change in heat storage of the vegetation canopy layer over the curren
+(  100) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATG_SFC ! change in heat storage of the ground sfc layer over the current time 
+(  101) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATG     ! change in heat storage of the entire soil column over the current tim
+(  102) REAL, DIMENSION(:),   INTENT(OUT)   :: PRESTOREN     ! conductive heat flux between the surface and sub-surface soil layers 
+(  103) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATN     ! change in heat storage of the entire snow column over the current tim
+(  104) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATN_SFC ! change in heat storage of the surface snow layer over the current tim
+(  105) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEEP_FLUX    ! Heat flux at bottom of ISBA (W/m2)
+(  106) REAL, DIMENSION(:),   INTENT(OUT)   :: PRISNOW       ! Richarson number over ground-based snowpack (-)
+(  107) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_THRUFAL ! rate that liquid water leaves (explicit) snow pack: 
+(  108) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_THRUFAL_SOIL !liquid water leaving the snowpack directly to the 
+(  109) REAL, DIMENSION(:),   INTENT(OUT)   :: PEVAPCOR      !  evaporation correction as last traces of snow
+(  110) REAL, DIMENSION(:),   INTENT(OUT)   :: PSUBVCOR      ! A possible snow mass correction (to be potentially    
+(  111) REAL, DIMENSION(:),   INTENT(OUT)   :: PLITCOR       ! A possible ice mass correction in litter layer (to be potentially    
+(  112) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSFCH     ! snow surface layer pseudo-heating term owing to
+(  113) REAL, DIMENSION(:),   INTENT(OUT)   :: PQSNOW        ! snow surface specific humidity (kg/kg)
+(  114) REAL, DIMENSION(:,:), INTENT(OUT)   :: PRESP_BIOMASS_INST ! instantaneous biomass respiration (kgCO2/kgair m/s)
+(  115) END SUBROUTINE ISBA_MEB
+(  116) 
+(  117) END INTERFACE
+(  118) END MODULE MODI_ISBA_MEB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 5
+
+(    1) # 1 "modi_isba_meb.F90"
+(    1) !depfile:isba_meb.F90
+(    2) MODULE MODI_ISBA_MEB
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_MEB(IO, KK, PK, PEK, DK, DEK, DMK, G, AG,               &
+(    5)                           TPTIME, OMEB, OSHADE, HIMPLICIT_WIND, PTSTEP,       &
+(    6)                           PSOILHCAPZ, PSOILCONDZ, PFROZEN1, PPS, PZENITH,     &
+(    7)                           PANGL_ILLUM,PSCA_SW, PSW_RAD, PVMOD, PVDIR, PRR,    &
+(    8)                           PSR,PRHOA, PTA, PQA,PDIRCOSZW, PSLOPE_DIR,PEXNS,    &
+(    9)                           PEXNA, PPET_A_COEF, PPET_B_COEF,PPEQ_A_COEF,        &
+(   10)                           PPEQ_B_COEF, PPEW_A_COEF, PPEW_B_COEF, AT, PZREF,   &
+(   11)                           PUREF, PZ0G_WITHOUT_SNOW, PZ0_MEBV, PZ0H_MEBV,      &
+(   12)                           PZ0EFF_MEBV, PZ0_MEBN, PZ0H_MEBN, PZ0EFF_MEBN,      &
+(   13)                           PALBNIR_TVEG, PALBVIS_TVEG, PALBNIR_TSOIL,          &
+(   14)                           PALBVIS_TSOIL,PABC,PIACAN,PPOI,PCSP,                &
+(   15)                           PRESP_BIOMASS_INST,PPALPHAN,PF2,PLW_RAD,            &
+(   16)                           PGRNDFLUX,PFLSN_COR,PUSTAR,PEMIST,PHU_AGG,PAC_AGG,  &
+(   17)                           PDELHEATV_SFC, PDELHEATG_SFC, PDELHEATG,PDELHEATN,  &
+(   18)                           PDELHEATN_SFC, PRESTOREN, PTDEEP_A, PDEEP_FLUX,     &
+(   19)                           PRISNOW,PSNOW_THRUFAL,PSNOW_THRUFAL_SOIL,PEVAPCOR,  &
+(   20)                           PSUBVCOR, PLITCOR, PSNOWSFCH, PQSNOW, KTAB_SYT,     &
+(   21)                           P_DIR_SW, P_SCA_SW, PIMPWET, PIMPDRY) 
+(   22) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(   23) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   24) USE MODD_SFX_GRID_n, ONLY : GRID_t
+(   25) USE MODD_AGRI_n, ONLY : AGRI_t
+(   26) USE MODD_DIAG_n, ONLY : DIAG_t
+(   27) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   28) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   29) USE MODD_TYPE_DATE_SURF, ONLY : DATE_TIME
+(   30) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   31) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   32) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   33) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   34) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   35) TYPE(GRID_t), INTENT(INOUT) :: G
+(   36) TYPE(AGRI_t), INTENT(INOUT) :: AG
+(   37) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   38) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   39) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   40) TYPE(DATE_TIME),      INTENT(IN)    :: TPTIME        ! current date and time
+(   41) LOGICAL,              INTENT(IN)    :: OMEB          ! True = patch with multi-energy balance 
+(   42) LOGICAL, DIMENSION(:),INTENT(INOUT) :: OSHADE        ! where vegetation evolution occurs
+(   43) CHARACTER(LEN=*),     INTENT(IN)    :: HIMPLICIT_WIND! wind implicitation option
+(   44) REAL,                 INTENT(IN)    :: PTSTEP                                           ! 'NEW' = Taylor serie, order 1
+(   45) REAL, DIMENSION(:),   INTENT(IN)    :: PPS           ! Pressure [Pa]
+(   46) REAL, DIMENSION(:),   INTENT(IN)    :: PZENITH       ! solar zenith angle
+(   47) REAL, DIMENSION(:),   INTENT(IN)    :: PANGL_ILLUM !BC
+(   48) REAL, DIMENSION(:),   INTENT(IN)    :: PSW_RAD       ! solar (shortwave) incoming radiation [W/m2]
+(   49) REAL, DIMENSION(:),   INTENT(IN)    :: PLW_RAD       ! thermal (longwave) incoming radiation [W/m2]
+(   50) REAL, DIMENSION(:),   INTENT(IN)    :: PSCA_SW       ! solar diffuse incoming radiation [W/m2]
+(   51) REAL, DIMENSION(:),   INTENT(IN)    :: PEXNA         ! Exner function: forcing level (-)
+(   52) REAL, DIMENSION(:),   INTENT(IN)    :: PEXNS         ! Exner function: surface (-)
+(   53) REAL, DIMENSION(:),   INTENT(IN)    :: PRR           ! Rain rate (kg/m2/s)
+(   54) REAL, DIMENSION(:),   INTENT(IN)    :: PSR           ! Snow rate (kg/m2/s)
+(   55) REAL, DIMENSION(:),   INTENT(IN)    :: PRHOA         ! air density (kg/m3)
+(   56) REAL, DIMENSION(:),   INTENT(IN)    :: PVMOD         ! modulus of the wind
+(   57) REAL, DIMENSION(:), INTENT(IN)      :: PVDIR         ! wind direction
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 6
+
+(   58) REAL, DIMENSION(:),   INTENT(IN)    :: PTA           ! Temperature of atmosphere (K)
+(   59) REAL, DIMENSION(:),   INTENT(IN)    :: PQA           ! specific humidity of atmosphere (kg/kg)
+(   60) REAL, DIMENSION(:),   INTENT(IN)    :: PZREF         ! normal distance of the first
+(   61) REAL, DIMENSION(:),   INTENT(IN)    :: PUREF         ! reference height of the wind (m)
+(   62) REAL, DIMENSION(:),   INTENT(IN)    :: PDIRCOSZW     ! Director Cosinus along the z
+(   63) REAL, DIMENSION(:),   INTENT(IN)    ::  PSLOPE_DIR   ! Slope direction
+(   64) REAL, DIMENSION(:,:), INTENT(IN)    :: PSOILHCAPZ    ! ISBA-DF Soil heat capacity 
+(   65) REAL, DIMENSION(:,:), INTENT(IN)    :: PSOILCONDZ    ! ISBA-DF Soil conductivity  
+(   66) REAL, DIMENSION(:),   INTENT(IN)    :: PFROZEN1      ! surface frozen fraction (-)
+(   67) REAL, DIMENSION(:),   INTENT(IN)    :: PPALPHAN      ! snow/canopy transition coefficient
+(   68) REAL, DIMENSION(:),   INTENT(IN)    :: PALBNIR_TVEG  ! albedo of vegetation in NIR 
+(   69) REAL, DIMENSION(:),   INTENT(IN)    :: PALBVIS_TVEG  ! albedo of vegetation in VIS 
+(   70) REAL, DIMENSION(:),   INTENT(IN)    :: PALBNIR_TSOIL ! albedo of bare soil in NIR 
+(   71) REAL, DIMENSION(:),   INTENT(IN)    :: PALBVIS_TSOIL ! albedo of bare soil in VIS 
+(   72) REAL, DIMENSION(:),   INTENT(IN)    :: PF2           ! Soil water stress factor for transpiration (-)
+(   73) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0G_WITHOUT_SNOW ! roughness length for momentum at snow-free canopy floor (m)
+(   74) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0_MEBV      ! roughness length for momentum over MEB vegetation part of patch (m)
+(   75) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0H_MEBV     ! roughness length for heat over MEB vegetation part of path (m)
+(   76) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0EFF_MEBV   ! roughness length for momentum over MEB vegetation part of patch (m)
+(   77) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0_MEBN      ! roughness length for momentum over MEB snow part of patch (m)
+(   78) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0H_MEBN     ! roughness length for heat over MEB snow part of path (m)
+(   79) REAL, DIMENSION(:),   INTENT(IN)    :: PZ0EFF_MEBN   ! roughness length for momentum over MEB snow part of patch (m)
+(   80) REAL, DIMENSION(:,:), INTENT(IN )   :: P_DIR_SW, P_SCA_SW ! direct and diffuse spectral irradiance (W/m2/um)
+(   81) REAL, DIMENSION(:),   INTENT(IN)    :: PPET_A_COEF, PPET_B_COEF, &
+(   82)                                        PPEQ_A_COEF, PPEQ_B_COEF, &
+(   83)                                        PPEW_A_COEF, PPEW_B_COEF  
+(   84) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   85) REAL, DIMENSION(:),   INTENT(IN)    :: PTDEEP_A          ! Deep soil temperature boundary condition 
+(   86) REAL, DIMENSION(:),   INTENT(IN) :: PCSP       ! atmospheric CO2 concentration
+(   87) REAL, DIMENSION(:,:),   INTENT(IN) :: PIMPWET
+(   88) REAL, DIMENSION(:,:),   INTENT(IN) :: PIMPDRY
+(   89) REAL, DIMENSION(:),   INTENT(IN) :: PPOI       ! Gaussian weights (as above)
+(   90) INTEGER , DIMENSION(:), INTENT(IN)  :: KTAB_SYT    ! Array of index defining opposite points for Sytron
+(   91) REAL, DIMENSION(:),   INTENT(INOUT) :: PABC          ! Ags: abscissa needed for integration
+(   92) REAL, DIMENSION(:,:), INTENT(OUT)   :: PIACAN        ! PAR in the canopy at different gauss levels
+(   93) REAL, DIMENSION(:),   INTENT(OUT)   :: PUSTAR        ! friction velocity
+(   94) REAL, DIMENSION(:),   INTENT(OUT)   :: PGRNDFLUX     ! snow/soil-biomass interface flux (W/m2)
+(   95) REAL, DIMENSION(:),   INTENT(OUT)   :: PFLSN_COR     ! soil/snow interface correction flux to conserve energy (W/m2)
+(   96) REAL, DIMENSION(:),   INTENT(OUT)   :: PEMIST        ! total effective surface emissivity...LWUP = EMIST*TS_RAD**4 (-)
+(   97) REAL, DIMENSION(:),   INTENT(OUT)   :: PAC_AGG       ! aggregated aerodynamic conductance
+(   98) REAL, DIMENSION(:),   INTENT(OUT)   :: PHU_AGG       ! aggregated relative humidity
+(   99) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATV_SFC ! change in heat storage of the vegetation canopy layer over the current time step (W/m2)
+(  100) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATG_SFC ! change in heat storage of the ground sfc layer over the current time step (W/m2)
+(  101) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATG     ! change in heat storage of the entire soil column over the current time step (W/m2)
+(  102) REAL, DIMENSION(:),   INTENT(OUT)   :: PRESTOREN     ! conductive heat flux between the surface and sub-surface soil layers 
+(  103) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATN     ! change in heat storage of the entire snow column over the current time step (W/m2)
+(  104) REAL, DIMENSION(:),   INTENT(OUT)   :: PDELHEATN_SFC ! change in heat storage of the surface snow layer over the current time step (W/m2)
+(  105) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEEP_FLUX    ! Heat flux at bottom of ISBA (W/m2)
+(  106) REAL, DIMENSION(:),   INTENT(OUT)   :: PRISNOW       ! Richarson number over ground-based snowpack (-)
+(  107) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_THRUFAL ! rate that liquid water leaves (explicit) snow pack: 
+(  108) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_THRUFAL_SOIL !liquid water leaving the snowpack directly to the 
+(  109) REAL, DIMENSION(:),   INTENT(OUT)   :: PEVAPCOR      !  evaporation correction as last traces of snow
+(  110) REAL, DIMENSION(:),   INTENT(OUT)   :: PSUBVCOR      ! A possible snow mass correction (to be potentially    
+(  111) REAL, DIMENSION(:),   INTENT(OUT)   :: PLITCOR       ! A possible ice mass correction in litter layer (to be potentially    
+(  112) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSFCH     ! snow surface layer pseudo-heating term owing to
+(  113) REAL, DIMENSION(:),   INTENT(OUT)   :: PQSNOW        ! snow surface specific humidity (kg/kg)
+(  114) REAL, DIMENSION(:,:), INTENT(OUT)   :: PRESP_BIOMASS_INST ! instantaneous biomass respiration (kgCO2/kgair m/s)
+(  115) END SUBROUTINE ISBA_MEB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:30      page 7
+
+(  116) # 117 "modi_isba_meb.F90"
+(  117) END INTERFACE
+(  118) END MODULE MODI_ISBA_MEB

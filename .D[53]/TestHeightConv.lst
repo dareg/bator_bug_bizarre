@@ -1,0 +1,240 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: TestHeightConv.F90
+
+(    1) program TestHeightConv
+(    2) 
+(    3)   ! A test program for the module height_conv
+(    4)   ! written by: M. Rennie
+(    5)   !
+(    6)   ! Modifications:
+(    7)   !     05-Dec-2011  M. Rennie      First version
+(    8) 
+(    9) 
+(   10)   Use height_conv, only: geop_to_geom, geom_to_geop
+(   11)   Use Numerics, only: r8_
+(   12) 
+(   13)   implicit none
+(   14) 
+(   15)   !variables
+(   16)   real(r8_) :: lat
+(   17)   real(r8_) :: z(6) = (/-100.,5.0E3,12309.22333,20.E3,30.E3,88689.337/) !metres
+(   18)   integer   :: num, i
+(   19)   real(r8_) :: geom_hgt, geop_hgt
+(   20)   
+(   21)   lat=6.36319_r8_  !latitude degrees
+(   22)   num=size(z)
+(   23) 
+(   24)   do i=1,num
+(   25)     !geopotential to geometric
+(   26)     print *, 'geop hgt:',z(i)
+(   27)     geom_hgt=geop_to_geom(z(i),lat)
+(   28)     print *, 'geom hgt:',geom_hgt
+(   29)    
+(   30)     !Reverse the calculation, geometric to geopotential
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 3
+
+(   31)     geop_hgt=geom_to_geop(geom_hgt,lat)
+(   32)     print *, 'geop hgt again:',geop_hgt
+(   33)     print *, ' '
+(   34)   end do
+(   35) 
+(   36) 
+(   37) end program TestHeightConv
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 4
+
+(    1) # 1 "TestHeightConv.F90"
+(    1) program TestHeightConv
+(    2) # 3 "TestHeightConv.F90"
+(    3)   ! A test program for the module height_conv
+(    4)   ! written by: M. Rennie
+(    5)   !
+(    6)   ! Modifications:
+(    7)   !     05-Dec-2011  M. Rennie      First version
+(    8) # 10 "TestHeightConv.F90"
+(   10)   Use height_conv, only: geop_to_geom, geom_to_geop
+(   11)   Use Numerics, only: r8_
+(   12) # 13 "TestHeightConv.F90"
+(   13)   implicit none
+(   14) # 15 "TestHeightConv.F90"
+(   15)   !variables
+(   16)   real(r8_) :: lat
+(   17)   real(r8_) :: z(6) = (/-100.,5.0E3,12309.22333,20.E3,30.E3,88689.337/) !metres
+(   18)   integer   :: num, i
+(   19)   real(r8_) :: geom_hgt, geop_hgt
+(   20)   
+(   21)   lat=6.36319_r8_  !latitude degrees
+(   22)   num=size(z)
+(   23) # 24 "TestHeightConv.F90"
+(   24)   do i=1,num
+(   25)     !geopotential to geometric
+(   26)     print *, 'geop hgt:',z(i)
+(   27)     geom_hgt=geop_to_geom(z(i),lat)
+(   28)     print *, 'geom hgt:',geom_hgt
+(   29)    
+(   30)     !Reverse the calculation, geometric to geopotential
+(   31)     geop_hgt=geom_to_geop(geom_hgt,lat)
+(   32)     print *, 'geop hgt again:',geop_hgt
+(   33)     print *, ' '
+(   34)   end do
+(   35) # 37 "TestHeightConv.F90"
+(   37) end program TestHeightConv

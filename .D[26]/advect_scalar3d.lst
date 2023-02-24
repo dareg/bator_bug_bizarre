@@ -1,0 +1,809 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: advect_scalar3d.F90
+
+(    1) 
+(    2) subroutine advect_scalar3D (f, u, v, w, rho, rhow, flux)
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) !     positively definite monotonic advection with non-oscillatory option
+(   15) 
+(   16) use grid
+(   17) use real_size
+(   18) implicit none
+(   19) 
+(   20) 
+(   21) real(RR) f(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)
+(   22) real(RR) u(dimx1_u:dimx2_u, dimy1_u:dimy2_u, nzm)
+(   23) real(RR) v(dimx1_v:dimx2_v, dimy1_v:dimy2_v, nzm)
+(   24) real(RR) w(dimx1_w:dimx2_w, dimy1_w:dimy2_w, nz )
+(   25) real(RR) rho(nzm)
+(   26) real(RR) rhow(nz)
+(   27) real(RR) flux(nz)
+(   28) 
+(   29) real(RR) mx (0:nxp1,0:nyp1,nzm)
+(   30) real(RR) mn (0:nxp1,0:nyp1,nzm)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 3
+
+(   31) real(RR) uuu(-1:nxp3,-1:nyp2,nzm)
+(   32) real(RR) vvv(-1:nxp2,-1:nyp3,nzm)
+(   33) real(RR) www(-1:nxp2,-1:nyp2,nz)
+(   34) 
+(   35) real(RR) eps, dd
+(   36) real(RR) iadz(nzm),irho(nzm),irhow(nzm)
+(   37) integer i,j,k,ic,ib,jc,jb,kc,kb
+(   38) logical nonos
+(   39) 
+(   40) real(RR) x1, x2, a, b, a1, a2, y
+(   41) real(RR) andiff,across,pp,pn
+(   42) andiff(x1,x2,a,b)=(abs(a)-a*a*b)*0.5*(x2-x1)
+(   43) across(x1,a1,a2)=0.03125*a1*a2*x1
+(   44) pp(y)= max(0.,y)
+(   45) pn(y)=-min(0.,y)
+(   46) 
+(   47) nonos = .true.
+(   48) eps = 1.e-10
+(   49) 
+(   50) www(:,:,nz)=0.
+(   51) 
+(   52) if(dowallx) then
+(   53) 
+(   54)   if(mod(rank,nsubdomains_x).eq.0) then
+(   55)     do k=1,nzm
+(   56)      do j=dimy1_u,dimy2_u
+(   57)        do i=dimx1_u,1
+(   58)          u(i,j,k) = 0.
+(   59)        end do
+(   60)      end do
+(   61)     end do
+(   62)   end if
+(   63)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+(   64)     do k=1,nzm
+(   65)      do j=dimy1_u,dimy2_u
+(   66)        do i=nx+1,dimx2_u
+(   67)          u(i,j,k) = 0.
+(   68)        end do
+(   69)      end do
+(   70)     end do
+(   71)   end if
+(   72) 
+(   73) end if
+(   74) 
+(   75) if(dowally) then
+(   76) 
+(   77)   if(rank.lt.nsubdomains_x) then
+(   78)     do k=1,nzm
+(   79)      do j=dimy1_v,1
+(   80)        do i=dimx1_v,dimx2_v
+(   81)          v(i,j,k) = 0.
+(   82)        end do
+(   83)      end do
+(   84)     end do
+(   85)   end if
+(   86)   if(rank.gt.nsubdomains-nsubdomains_x-1) then
+(   87)     do k=1,nzm
+(   88)      do j=ny+1,dimy2_v
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 4
+
+(   89)        do i=dimx1_v,dimx2_v
+(   90)          v(i,j,k) = 0.
+(   91)        end do
+(   92)      end do
+(   93)     end do
+(   94)   end if
+(   95) 
+(   96) end if
+(   97) 
+(   98) !-----------------------------------------
+(   99) 
+(  100) if(nonos) then
+(  101) 
+(  102)  do k=1,nzm
+(  103)   kc=min(nzm,k+1)
+(  104)   kb=max(1,k-1)
+(  105)   do j=0,nyp1
+(  106)    jb=j-1
+(  107)    jc=j+1
+(  108)    do i=0,nxp1
+(  109)     ib=i-1
+(  110)     ic=i+1
+(  111)     mx(i,j,k)=max(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  112)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k))
+(  113)     mn(i,j,k)=min(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  114)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k))
+(  115)    end do
+(  116)   end do
+(  117)  end do
+(  118) 
+(  119) end if  ! nonos
+(  120) 
+(  121)  do k=1,nzm
+(  122)   do j=-1,nyp2
+(  123)    do i=-1,nxp3
+(  124)     uuu(i,j,k)=max(0.,u(i,j,k))*f(i-1,j,k)+min(0.,u(i,j,k))*f(i,j,k)
+(  125)    end do
+(  126)   end do
+(  127)  end do
+(  128) 
+(  129)  do k=1,nzm
+(  130)   do j=-1,nyp3
+(  131)    do i=-1,nxp2
+(  132)     vvv(i,j,k)=max(0.,v(i,j,k))*f(i,j-1,k)+min(0.,v(i,j,k))*f(i,j,k)
+(  133)    end do
+(  134)   end do
+(  135)  end do
+(  136) 
+(  137)  do k=1,nzm
+(  138)   kb=max(1,k-1)
+(  139)   do j=-1,nyp2
+(  140)    do i=-1,nxp2
+(  141)     www(i,j,k)=max(0.,w(i,j,k))*f(i,j,kb)+min(0.,w(i,j,k))*f(i,j,k)
+(  142)    end do
+(  143)   end do
+(  144) !  flux(k) = 0.
+(  145)   do j=1,ny
+(  146)    do i=1,nx
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 5
+
+(  147)     flux(k) = flux(k) + www(i,j,k)
+(  148)    end do
+(  149)   end do
+(  150)  end do
+(  151) 
+(  152) 
+(  153)  do k=1,nzm
+(  154)   irho(k) = 1./rho(k)
+(  155)   iadz(k) = 1./adz(k)
+(  156)   do j=-1,nyp2
+(  157)    do i=-1,nxp2
+(  158)       f(i,j,k)=f(i,j,k) -(uuu(i+1,j,k)-uuu(i,j,k)+vvv(i,j+1,k)-vvv(i,j,k) &
+(  159)                         +(www(i,j,k+1)-www(i,j,k))*iadz(k))*irho(k)            
+(  160)    end do
+(  161)   end do
+(  162)  end do 
+(  163) 
+(  164) 
+(  165)  do k=1,nzm
+(  166)   kc=min(nzm,k+1)
+(  167)   kb=max(1,k-1)
+(  168)   dd=2./(kc-kb)/adz(k)
+(  169)   do j=0,nyp1
+(  170)    jb=j-1
+(  171)    jc=j+1
+(  172)    do i=0,nxp2
+(  173)     ib=i-1
+(  174)     uuu(i,j,k)=andiff(f(ib,j,k),f(i,j,k),u(i,j,k),irho(k)) &
+(  175)               -(across(f(ib,jc,k)+f(i,jc,k)-f(ib,jb,k)-f(i,jb,k), &
+(  176)                    u(i,j,k), v(ib,j,k)+v(ib,jc,k)+v(i,jc,k)+v(i,j,k)) &
+(  177)               +across(dd*(f(ib,j,kc)+f(i,j,kc)-f(ib,j,kb)-f(i,j,kb)), &
+(  178)                    u(i,j,k), w(ib,j,k)+w(ib,j,kc)+w(i,j,k)+w(i,j,kc))) *irho(k)
+(  179)    end do
+(  180)   end do
+(  181)  end do
+(  182)           
+(  183)  do k=1,nzm
+(  184)   kc=min(nzm,k+1)
+(  185)   kb=max(1,k-1)
+(  186)   dd=2./(kc-kb)/adz(k)
+(  187)   do j=0,nyp2
+(  188)    jb=j-1
+(  189)    do i=0,nxp1
+(  190)     ib=i-1
+(  191)     ic=i+1
+(  192)     vvv(i,j,k)=andiff(f(i,jb,k),f(i,j,k),v(i,j,k),irho(k)) &
+(  193)               -(across(f(ic,jb,k)+f(ic,j,k)-f(ib,jb,k)-f(ib,j,k), &
+(  194)                    v(i,j,k), u(i,jb,k)+u(i,j,k)+u(ic,j,k)+u(ic,jb,k)) &
+(  195)                +across(dd*(f(i,jb,kc)+f(i,j,kc)-f(i,jb,kb)-f(i,j,kb)), & 
+(  196)                    v(i,j,k), w(i,jb,k)+w(i,j,k)+w(i,j,kc)+w(i,jb,kc))) *irho(k)
+(  197)    end do
+(  198)   end do
+(  199)  end do
+(  200) 
+(  201)  do k=1,nzm
+(  202)   kb=max(1,k-1)
+(  203)   irhow(k)=1./(rhow(k)*adz(k))
+(  204)   do j=0,nyp1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 6
+
+(  205)    jb=j-1
+(  206)    jc=j+1
+(  207)    do i=0,nxp1
+(  208)     ib=i-1
+(  209)     ic=i+1
+(  210)     www(i,j,k)=andiff(f(i,j,kb),f(i,j,k),w(i,j,k),irhow(k)) &
+(  211)              -(across(f(ic,j,kb)+f(ic,j,k)-f(ib,j,kb)-f(ib,j,k), &
+(  212)                  w(i,j,k), u(i,j,kb)+u(i,j,k)+u(ic,j,k)+u(ic,j,kb)) &
+(  213)               +across(f(i,jc,k)+f(i,jc,kb)-f(i,jb,k)-f(i,jb,kb), &
+(  214)                  w(i,j,k), v(i,j,kb)+v(i,jc,kb)+v(i,jc,k)+v(i,j,k))) *irho(k)
+(  215)    end do
+(  216)   end do
+(  217)  end do
+(  218) 
+(  219) www(:,:,1) = 0.
+(  220) 
+(  221) !---------- non-osscilatory option ---------------
+(  222) 
+(  223) if(nonos) then
+(  224) 
+(  225)  do k=1,nzm
+(  226)   kc=min(nzm,k+1)
+(  227)   kb=max(1,k-1)
+(  228)   do j=0,nyp1
+(  229)    jb=j-1
+(  230)    jc=j+1
+(  231)    do i=0,nxp1
+(  232)     ib=i-1
+(  233)     ic=i+1
+(  234)     mx(i,j,k)=max(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  235)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k),mx(i,j,k))
+(  236)     mn(i,j,k)=min(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  237)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k),mn(i,j,k))
+(  238)    end do
+(  239)   end do
+(  240)  end do
+(  241) 
+(  242)  do k=1,nzm
+(  243)   kc=min(nzm,k+1)
+(  244)   do j=0,nyp1
+(  245)    jc=j+1
+(  246)    do i=0,nxp1
+(  247)     ic=i+1
+(  248)      mx(i,j,k)=rho(k)*(mx(i,j,k)-f(i,j,k))/ &
+(  249)                        (pn(uuu(ic,j,k)) + pp(uuu(i,j,k))+ &
+(  250)                         pn(vvv(i,jc,k)) + pp(vvv(i,j,k))+ &
+(  251)                iadz(k)*(pn(www(i,j,kc)) + pp(www(i,j,k)))+eps)
+(  252)      mn(i,j,k)=rho(k)*(f(i,j,k)-mn(i,j,k))/ &
+(  253)                        (pp(uuu(ic,j,k)) + pn(uuu(i,j,k))+ &
+(  254)                         pp(vvv(i,jc,k)) + pn(vvv(i,j,k))+ &
+(  255)                iadz(k)*(pp(www(i,j,kc)) + pn(www(i,j,k)))+eps)
+(  256)    end do
+(  257)   end do
+(  258)  end do
+(  259) 
+(  260)  do k=1,nzm
+(  261)   do j=1,ny
+(  262)    do i=1,nxp1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 7
+
+(  263)     ib=i-1
+(  264)     uuu(i,j,k)=pp(uuu(i,j,k))*min(1.,mx(i,j,k), mn(ib,j,k)) &
+(  265)              - pn(uuu(i,j,k))*min(1.,mx(ib,j,k),mn(i,j,k))
+(  266)    end do
+(  267)   end do
+(  268)  end do
+(  269) 
+(  270)  do k=1,nzm
+(  271)   do j=1,nyp1
+(  272)    jb=j-1
+(  273)    do i=1,nx
+(  274)     vvv(i,j,k)=pp(vvv(i,j,k))*min(1.,mx(i,j,k), mn(i,jb,k)) &
+(  275)              - pn(vvv(i,j,k))*min(1.,mx(i,jb,k),mn(i,j,k))
+(  276)    end do
+(  277)   end do
+(  278)  end do
+(  279) 
+(  280)  do k=1,nzm
+(  281)   kb=max(1,k-1)
+(  282)   do j=1,ny
+(  283)    do i=1,nx
+(  284)     www(i,j,k)=pp(www(i,j,k))*min(1.,mx(i,j,k), mn(i,j,kb)) &
+(  285)              - pn(www(i,j,k))*min(1.,mx(i,j,kb),mn(i,j,k))
+(  286)     flux(k) = flux(k) + www(i,j,k)
+(  287)    end do
+(  288)   end do
+(  289)  end do
+(  290) 
+(  291) 
+(  292) endif ! nonos
+(  293) 
+(  294) 
+(  295) do k=1,nzm
+(  296)  kc=k+1
+(  297)  do j=1,ny
+(  298)   do i=1,nx
+(  299)    f(i,j,k)=max(0.,f(i,j,k) -(uuu(i+1,j,k)-uuu(i,j,k)+vvv(i,j+1,k)-vvv(i,j,k) &
+(  300)                      +(www(i,j,k+1)-www(i,j,k))*iadz(k))*irho(k))
+(  301)   end do
+(  302)  end do
+(  303) end do 
+(  304) 
+(  305) end subroutine advect_scalar3D
+(  306) 
+(  307) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 8
+
+(    1) # 1 "advect_scalar3d.F90"
+(    1) # 2 "advect_scalar3d.F90"
+(    2) subroutine advect_scalar3D (f, u, v, w, rho, rhow, flux)
+(    3) # 4 "advect_scalar3d.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "advect_scalar3d.F90"
+(   14) !     positively definite monotonic advection with non-oscillatory option
+(   15) # 16 "advect_scalar3d.F90"
+(   16) use grid
+(   17) use real_size
+(   18) implicit none
+(   19) # 21 "advect_scalar3d.F90"
+(   21) real(RR) f(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)
+(   22) real(RR) u(dimx1_u:dimx2_u, dimy1_u:dimy2_u, nzm)
+(   23) real(RR) v(dimx1_v:dimx2_v, dimy1_v:dimy2_v, nzm)
+(   24) real(RR) w(dimx1_w:dimx2_w, dimy1_w:dimy2_w, nz )
+(   25) real(RR) rho(nzm)
+(   26) real(RR) rhow(nz)
+(   27) real(RR) flux(nz)
+(   28) # 29 "advect_scalar3d.F90"
+(   29) real(RR) mx (0:nxp1,0:nyp1,nzm)
+(   30) real(RR) mn (0:nxp1,0:nyp1,nzm)
+(   31) real(RR) uuu(-1:nxp3,-1:nyp2,nzm)
+(   32) real(RR) vvv(-1:nxp2,-1:nyp3,nzm)
+(   33) real(RR) www(-1:nxp2,-1:nyp2,nz)
+(   34) # 35 "advect_scalar3d.F90"
+(   35) real(RR) eps, dd
+(   36) real(RR) iadz(nzm),irho(nzm),irhow(nzm)
+(   37) integer i,j,k,ic,ib,jc,jb,kc,kb
+(   38) logical nonos
+(   39) # 40 "advect_scalar3d.F90"
+(   40) real(RR) x1, x2, a, b, a1, a2, y
+(   41) real(RR) andiff,across,pp,pn
+(   42) andiff(x1,x2,a,b)=(abs(a)-a*a*b)*0.5*(x2-x1)
+(   43) across(x1,a1,a2)=0.03125*a1*a2*x1
+(   44) pp(y)= max(0.,y)
+(   45) pn(y)=-min(0.,y)
+(   46) # 47 "advect_scalar3d.F90"
+(   47) nonos = .true.
+(   48) eps = 1.e-10
+(   49) # 50 "advect_scalar3d.F90"
+(   50) www(:,:,nz)=0.
+(   51) # 52 "advect_scalar3d.F90"
+(   52) if(dowallx) then
+(   53) # 54 "advect_scalar3d.F90"
+(   54)   if(mod(rank,nsubdomains_x).eq.0) then
+(   55)     do k=1,nzm
+(   56)      do j=dimy1_u,dimy2_u
+(   57)        do i=dimx1_u,1
+(   58)          u(i,j,k) = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 9
+
+(   59)        end do
+(   60)      end do
+(   61)     end do
+(   62)   end if
+(   63)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+(   64)     do k=1,nzm
+(   65)      do j=dimy1_u,dimy2_u
+(   66)        do i=nx+1,dimx2_u
+(   67)          u(i,j,k) = 0.
+(   68)        end do
+(   69)      end do
+(   70)     end do
+(   71)   end if
+(   72) # 73 "advect_scalar3d.F90"
+(   73) end if
+(   74) # 75 "advect_scalar3d.F90"
+(   75) if(dowally) then
+(   76) # 77 "advect_scalar3d.F90"
+(   77)   if(rank.lt.nsubdomains_x) then
+(   78)     do k=1,nzm
+(   79)      do j=dimy1_v,1
+(   80)        do i=dimx1_v,dimx2_v
+(   81)          v(i,j,k) = 0.
+(   82)        end do
+(   83)      end do
+(   84)     end do
+(   85)   end if
+(   86)   if(rank.gt.nsubdomains-nsubdomains_x-1) then
+(   87)     do k=1,nzm
+(   88)      do j=ny+1,dimy2_v
+(   89)        do i=dimx1_v,dimx2_v
+(   90)          v(i,j,k) = 0.
+(   91)        end do
+(   92)      end do
+(   93)     end do
+(   94)   end if
+(   95) # 96 "advect_scalar3d.F90"
+(   96) end if
+(   97) # 98 "advect_scalar3d.F90"
+(   98) !-----------------------------------------
+(   99) # 100 "advect_scalar3d.F90"
+(  100) if(nonos) then
+(  101) # 102 "advect_scalar3d.F90"
+(  102)  do k=1,nzm
+(  103)   kc=min(nzm,k+1)
+(  104)   kb=max(1,k-1)
+(  105)   do j=0,nyp1
+(  106)    jb=j-1
+(  107)    jc=j+1
+(  108)    do i=0,nxp1
+(  109)     ib=i-1
+(  110)     ic=i+1
+(  111)     mx(i,j,k)=max(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  112)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k))
+(  113)     mn(i,j,k)=min(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  114)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k))
+(  115)    end do
+(  116)   end do
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 10
+
+(  117)  end do
+(  118) # 119 "advect_scalar3d.F90"
+(  119) end if  ! nonos
+(  120) # 121 "advect_scalar3d.F90"
+(  121)  do k=1,nzm
+(  122)   do j=-1,nyp2
+(  123)    do i=-1,nxp3
+(  124)     uuu(i,j,k)=max(0.,u(i,j,k))*f(i-1,j,k)+min(0.,u(i,j,k))*f(i,j,k)
+(  125)    end do
+(  126)   end do
+(  127)  end do
+(  128) # 129 "advect_scalar3d.F90"
+(  129)  do k=1,nzm
+(  130)   do j=-1,nyp3
+(  131)    do i=-1,nxp2
+(  132)     vvv(i,j,k)=max(0.,v(i,j,k))*f(i,j-1,k)+min(0.,v(i,j,k))*f(i,j,k)
+(  133)    end do
+(  134)   end do
+(  135)  end do
+(  136) # 137 "advect_scalar3d.F90"
+(  137)  do k=1,nzm
+(  138)   kb=max(1,k-1)
+(  139)   do j=-1,nyp2
+(  140)    do i=-1,nxp2
+(  141)     www(i,j,k)=max(0.,w(i,j,k))*f(i,j,kb)+min(0.,w(i,j,k))*f(i,j,k)
+(  142)    end do
+(  143)   end do
+(  144) !  flux(k) = 0.
+(  145)   do j=1,ny
+(  146)    do i=1,nx
+(  147)     flux(k) = flux(k) + www(i,j,k)
+(  148)    end do
+(  149)   end do
+(  150)  end do
+(  151) # 153 "advect_scalar3d.F90"
+(  153)  do k=1,nzm
+(  154)   irho(k) = 1./rho(k)
+(  155)   iadz(k) = 1./adz(k)
+(  156)   do j=-1,nyp2
+(  157)    do i=-1,nxp2
+(  158)       f(i,j,k)=f(i,j,k) -(uuu(i+1,j,k)-uuu(i,j,k)+vvv(i,j+1,k)-vvv(i,j,k) &
+(  159)                         +(www(i,j,k+1)-www(i,j,k))*iadz(k))*irho(k)            
+(  160)    end do
+(  161)   end do
+(  162)  end do 
+(  163) # 165 "advect_scalar3d.F90"
+(  165)  do k=1,nzm
+(  166)   kc=min(nzm,k+1)
+(  167)   kb=max(1,k-1)
+(  168)   dd=2./(kc-kb)/adz(k)
+(  169)   do j=0,nyp1
+(  170)    jb=j-1
+(  171)    jc=j+1
+(  172)    do i=0,nxp2
+(  173)     ib=i-1
+(  174)     uuu(i,j,k)=andiff(f(ib,j,k),f(i,j,k),u(i,j,k),irho(k)) &
+(  175)               -(across(f(ib,jc,k)+f(i,jc,k)-f(ib,jb,k)-f(i,jb,k), &
+(  176)                    u(i,j,k), v(ib,j,k)+v(ib,jc,k)+v(i,jc,k)+v(i,j,k)) &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 11
+
+(  177)               +across(dd*(f(ib,j,kc)+f(i,j,kc)-f(ib,j,kb)-f(i,j,kb)), &
+(  178)                    u(i,j,k), w(ib,j,k)+w(ib,j,kc)+w(i,j,k)+w(i,j,kc))) *irho(k)
+(  179)    end do
+(  180)   end do
+(  181)  end do
+(  182)           
+(  183)  do k=1,nzm
+(  184)   kc=min(nzm,k+1)
+(  185)   kb=max(1,k-1)
+(  186)   dd=2./(kc-kb)/adz(k)
+(  187)   do j=0,nyp2
+(  188)    jb=j-1
+(  189)    do i=0,nxp1
+(  190)     ib=i-1
+(  191)     ic=i+1
+(  192)     vvv(i,j,k)=andiff(f(i,jb,k),f(i,j,k),v(i,j,k),irho(k)) &
+(  193)               -(across(f(ic,jb,k)+f(ic,j,k)-f(ib,jb,k)-f(ib,j,k), &
+(  194)                    v(i,j,k), u(i,jb,k)+u(i,j,k)+u(ic,j,k)+u(ic,jb,k)) &
+(  195)                +across(dd*(f(i,jb,kc)+f(i,j,kc)-f(i,jb,kb)-f(i,j,kb)), & 
+(  196)                    v(i,j,k), w(i,jb,k)+w(i,j,k)+w(i,j,kc)+w(i,jb,kc))) *irho(k)
+(  197)    end do
+(  198)   end do
+(  199)  end do
+(  200) # 201 "advect_scalar3d.F90"
+(  201)  do k=1,nzm
+(  202)   kb=max(1,k-1)
+(  203)   irhow(k)=1./(rhow(k)*adz(k))
+(  204)   do j=0,nyp1
+(  205)    jb=j-1
+(  206)    jc=j+1
+(  207)    do i=0,nxp1
+(  208)     ib=i-1
+(  209)     ic=i+1
+(  210)     www(i,j,k)=andiff(f(i,j,kb),f(i,j,k),w(i,j,k),irhow(k)) &
+(  211)              -(across(f(ic,j,kb)+f(ic,j,k)-f(ib,j,kb)-f(ib,j,k), &
+(  212)                  w(i,j,k), u(i,j,kb)+u(i,j,k)+u(ic,j,k)+u(ic,j,kb)) &
+(  213)               +across(f(i,jc,k)+f(i,jc,kb)-f(i,jb,k)-f(i,jb,kb), &
+(  214)                  w(i,j,k), v(i,j,kb)+v(i,jc,kb)+v(i,jc,k)+v(i,j,k))) *irho(k)
+(  215)    end do
+(  216)   end do
+(  217)  end do
+(  218) # 219 "advect_scalar3d.F90"
+(  219) www(:,:,1) = 0.
+(  220) # 221 "advect_scalar3d.F90"
+(  221) !---------- non-osscilatory option ---------------
+(  222) # 223 "advect_scalar3d.F90"
+(  223) if(nonos) then
+(  224) # 225 "advect_scalar3d.F90"
+(  225)  do k=1,nzm
+(  226)   kc=min(nzm,k+1)
+(  227)   kb=max(1,k-1)
+(  228)   do j=0,nyp1
+(  229)    jb=j-1
+(  230)    jc=j+1
+(  231)    do i=0,nxp1
+(  232)     ib=i-1
+(  233)     ic=i+1
+(  234)     mx(i,j,k)=max(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 12
+
+(  235)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k),mx(i,j,k))
+(  236)     mn(i,j,k)=min(f(ib,j,k),f(ic,j,k),f(i,jb,k), &
+(  237)                   f(i,jc,k),f(i,j,kb),f(i,j,kc),f(i,j,k),mn(i,j,k))
+(  238)    end do
+(  239)   end do
+(  240)  end do
+(  241) # 242 "advect_scalar3d.F90"
+(  242)  do k=1,nzm
+(  243)   kc=min(nzm,k+1)
+(  244)   do j=0,nyp1
+(  245)    jc=j+1
+(  246)    do i=0,nxp1
+(  247)     ic=i+1
+(  248)      mx(i,j,k)=rho(k)*(mx(i,j,k)-f(i,j,k))/ &
+(  249)                        (pn(uuu(ic,j,k)) + pp(uuu(i,j,k))+ &
+(  250)                         pn(vvv(i,jc,k)) + pp(vvv(i,j,k))+ &
+(  251)                iadz(k)*(pn(www(i,j,kc)) + pp(www(i,j,k)))+eps)
+(  252)      mn(i,j,k)=rho(k)*(f(i,j,k)-mn(i,j,k))/ &
+(  253)                        (pp(uuu(ic,j,k)) + pn(uuu(i,j,k))+ &
+(  254)                         pp(vvv(i,jc,k)) + pn(vvv(i,j,k))+ &
+(  255)                iadz(k)*(pp(www(i,j,kc)) + pn(www(i,j,k)))+eps)
+(  256)    end do
+(  257)   end do
+(  258)  end do
+(  259) # 260 "advect_scalar3d.F90"
+(  260)  do k=1,nzm
+(  261)   do j=1,ny
+(  262)    do i=1,nxp1
+(  263)     ib=i-1
+(  264)     uuu(i,j,k)=pp(uuu(i,j,k))*min(1.,mx(i,j,k), mn(ib,j,k)) &
+(  265)              - pn(uuu(i,j,k))*min(1.,mx(ib,j,k),mn(i,j,k))
+(  266)    end do
+(  267)   end do
+(  268)  end do
+(  269) # 270 "advect_scalar3d.F90"
+(  270)  do k=1,nzm
+(  271)   do j=1,nyp1
+(  272)    jb=j-1
+(  273)    do i=1,nx
+(  274)     vvv(i,j,k)=pp(vvv(i,j,k))*min(1.,mx(i,j,k), mn(i,jb,k)) &
+(  275)              - pn(vvv(i,j,k))*min(1.,mx(i,jb,k),mn(i,j,k))
+(  276)    end do
+(  277)   end do
+(  278)  end do
+(  279) # 280 "advect_scalar3d.F90"
+(  280)  do k=1,nzm
+(  281)   kb=max(1,k-1)
+(  282)   do j=1,ny
+(  283)    do i=1,nx
+(  284)     www(i,j,k)=pp(www(i,j,k))*min(1.,mx(i,j,k), mn(i,j,kb)) &
+(  285)              - pn(www(i,j,k))*min(1.,mx(i,j,kb),mn(i,j,k))
+(  286)     flux(k) = flux(k) + www(i,j,k)
+(  287)    end do
+(  288)   end do
+(  289)  end do
+(  290) # 292 "advect_scalar3d.F90"
+(  292) endif ! nonos
+(  293) # 295 "advect_scalar3d.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:00      page 13
+
+(  295) do k=1,nzm
+(  296)  kc=k+1
+(  297)  do j=1,ny
+(  298)   do i=1,nx
+(  299)    f(i,j,k)=max(0.,f(i,j,k) -(uuu(i+1,j,k)-uuu(i,j,k)+vvv(i,j+1,k)-vvv(i,j,k) &
+(  300)                      +(www(i,j,k+1)-www(i,j,k))*iadz(k))*irho(k))
+(  301)   end do
+(  302)  end do
+(  303) end do 
+(  304) # 305 "advect_scalar3d.F90"
+(  305) end subroutine advect_scalar3D

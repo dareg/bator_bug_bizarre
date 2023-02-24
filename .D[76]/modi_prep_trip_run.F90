@@ -1,0 +1,19 @@
+!depfile:prep_trip_run.F90
+MODULE MODI_PREP_TRIP_RUN 
+INTERFACE
+      SUBROUTINE PREP_TRIP_RUN (TP, TPG, &
+                                KYEAR,KMONTH,KDAY,PTIME,KLON,KLAT)
+USE MODD_TRIP, ONLY : TRIP_t
+USE MODD_TRIP_GRID, ONLY : TRIP_GRID_t
+TYPE(TRIP_t), INTENT(INOUT) :: TP
+TYPE(TRIP_GRID_t), INTENT(INOUT) :: TPG
+INTEGER,          INTENT(IN) :: KYEAR   !date UTC
+INTEGER,          INTENT(IN) :: KMONTH  !date UTC
+INTEGER,          INTENT(IN) :: KDAY    !date UTC
+REAL,             INTENT(IN) :: PTIME   !date UTC
+INTEGER,          INTENT(OUT):: KLON    ! number of points in longitude
+INTEGER,          INTENT(OUT):: KLAT    ! number of points in latitude
+END SUBROUTINE PREP_TRIP_RUN
+
+END INTERFACE
+END MODULE MODI_PREP_TRIP_RUN 

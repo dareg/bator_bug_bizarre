@@ -1,0 +1,243 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:47      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:47      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Hex2bufr.F90
+
+(    1)       PROGRAM hex2bufr
+(    2) #ifdef NAG
+(    3)       use f90_unix_env,  only: iargc, getarg
+(    4)       use f90_unix_proc, only: exit
+(    5) #endif
+(    6)       implicit none
+(    7)       integer, allocatable :: msg(:)
+(    8)       integer n, io, rc
+(    9)       integer numargs
+(   10) #ifndef NAG
+(   11)       integer iargc
+(   12) #endif
+(   13)       character(len=256) filename, arg
+(   14) 
+(   15)       numargs = iargc()
+(   16)       if (numargs /= 2) then
+(   17)          write(0,*)'Usage: hex2bufr hexfile bufsize'
+(   18)          call exit(1)
+(   19)       endif
+(   20) 
+(   21)       CALL getarg(1, arg)
+(   22)       filename = trim(adjustl(arg))
+(   23) 
+(   24)       CALL getarg(2, arg)
+(   25)       read(arg,*) n
+(   26) 
+(   27)       allocate(msg(max(1,n)))
+(   28)       msg(:) = 0
+(   29) 
+(   30)       open(1,file=trim(filename),status='old')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:47      page 3
+
+(   31)       read(1,'(z8)') msg(1:n)
+(   32)       close(1)
+(   33) 
+(   34) #ifdef LITTLE
+(   35)       call swap4bytes(msg(1), n) ! from libodb.a
+(   36) #endif      
+(   37) 
+(   38)       call pbopen(io,trim(filename)//'.bufr','w',rc)
+(   39)       call pbwrite(io, msg(1), n * 4, rc)
+(   40)       call pbclose(io, rc)
+(   41) 
+(   42)       deallocate(msg)
+(   43)       END PROGRAM hex2bufr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:47      page 4
+
+(    1) # 1 "Hex2bufr.F90"
+(    1)       PROGRAM hex2bufr
+(    2) # 6 "Hex2bufr.F90"
+(    6)       implicit none
+(    7)       integer, allocatable :: msg(:)
+(    8)       integer n, io, rc
+(    9)       integer numargs
+(   10) # 11 "Hex2bufr.F90"
+(   11)       integer iargc
+(   12) # 13 "Hex2bufr.F90"
+(   13)       character(len=256) filename, arg
+(   14) # 15 "Hex2bufr.F90"
+(   15)       numargs = iargc()
+(   16)       if (numargs /= 2) then
+(   17)          write(0,*)'Usage: hex2bufr hexfile bufsize'
+(   18)          call exit(1)
+(   19)       endif
+(   20) # 21 "Hex2bufr.F90"
+(   21)       CALL getarg(1, arg)
+(   22)       filename = trim(adjustl(arg))
+(   23) # 24 "Hex2bufr.F90"
+(   24)       CALL getarg(2, arg)
+(   25)       read(arg,*) n
+(   26) # 27 "Hex2bufr.F90"
+(   27)       allocate(msg(max(1,n)))
+(   28)       msg(:) = 0
+(   29) # 30 "Hex2bufr.F90"
+(   30)       open(1,file=trim(filename),status='old')
+(   31)       read(1,'(z8)') msg(1:n)
+(   32)       close(1)
+(   33) # 35 "Hex2bufr.F90"
+(   35)       call swap4bytes(msg(1), n) ! from libodb.a
+(   36) # 38 "Hex2bufr.F90"
+(   38)       call pbopen(io,trim(filename)//'.bufr','w',rc)
+(   39)       call pbwrite(io, msg(1), n * 4, rc)
+(   40)       call pbclose(io, rc)
+(   41) # 42 "Hex2bufr.F90"
+(   42)       deallocate(msg)
+(   43)       END PROGRAM hex2bufr

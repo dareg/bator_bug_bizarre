@@ -1,0 +1,165 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:40      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:40      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_modi_glt_updhsn_r.F90
+
+(    1) !depfile:modi_glt_updhsn_r.F90
+(    2) MODULE MODI_glt_updhsn_r
+(    3) INTERFACE
+(    4) SUBROUTINE glt_updhsn_r( gsmelt,pdhmelt,tpmxl,tptfl,tpsit,tpsil,tpdia ,&
+(    5)         ncdlssh,nl,nleviti,np,nsalflx,nt,dtt,rn_htopoc)
+(    6)   USE modd_types_glt
+(    7)   INTEGER,INTENT(IN) :: ncdlssh,nsalflx,nleviti,nl,nt,np
+(    8)   REAL,INTENT(IN) ::dtt,rn_htopoc
+(    9)   LOGICAL, DIMENSION(nt,np), INTENT(in) ::  &
+(   10)         gsmelt
+(   11)   REAL, DIMENSION(nl,nt,np), INTENT(in) ::  &
+(   12)         pdhmelt
+(   13)   TYPE(t_mxl), DIMENSION(np), INTENT(in) ::  &
+(   14)         tpmxl
+(   15)   TYPE(t_tfl), DIMENSION(np), INTENT(inout) ::  &
+(   16)         tptfl
+(   17)   TYPE(t_sit), DIMENSION(nt,np), INTENT(inout) ::  &
+(   18)         tpsit
+(   19)   TYPE(t_vtp), DIMENSION(nl,nt,np), INTENT(inout) ::  &
+(   20)         tpsil
+(   21)   TYPE(t_dia), DIMENSION(np), INTENT(inout) ::  &
+(   22)         tpdia
+(   23) END SUBROUTINE glt_updhsn_r
+(   24) 
+(   25) END INTERFACE
+(   26) END MODULE MODI_glt_updhsn_r
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:32:40      page 3
+
+(    1) # 1 "modi_modi_glt_updhsn_r.F90"
+(    1) !depfile:modi_glt_updhsn_r.F90
+(    2) MODULE MODI_glt_updhsn_r
+(    3) INTERFACE
+(    4) SUBROUTINE glt_updhsn_r( gsmelt,pdhmelt,tpmxl,tptfl,tpsit,tpsil,tpdia ,&
+(    5)         ncdlssh,nl,nleviti,np,nsalflx,nt,dtt,rn_htopoc)
+(    6)   USE modd_types_glt
+(    7)   INTEGER,INTENT(IN) :: ncdlssh,nsalflx,nleviti,nl,nt,np
+(    8)   REAL,INTENT(IN) ::dtt,rn_htopoc
+(    9)   LOGICAL, DIMENSION(nt,np), INTENT(in) ::  &
+(   10)         gsmelt
+(   11)   REAL, DIMENSION(nl,nt,np), INTENT(in) ::  &
+(   12)         pdhmelt
+(   13)   TYPE(t_mxl), DIMENSION(np), INTENT(in) ::  &
+(   14)         tpmxl
+(   15)   TYPE(t_tfl), DIMENSION(np), INTENT(inout) ::  &
+(   16)         tptfl
+(   17)   TYPE(t_sit), DIMENSION(nt,np), INTENT(inout) ::  &
+(   18)         tpsit
+(   19)   TYPE(t_vtp), DIMENSION(nl,nt,np), INTENT(inout) ::  &
+(   20)         tpsil
+(   21)   TYPE(t_dia), DIMENSION(np), INTENT(inout) ::  &
+(   22)         tpdia
+(   23) END SUBROUTINE glt_updhsn_r
+(   24) # 25 "modi_modi_glt_updhsn_r.F90"
+(   25) END INTERFACE
+(   26) END MODULE MODI_glt_updhsn_r

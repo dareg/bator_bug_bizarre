@@ -1,0 +1,275 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_prep_hor_snow_field.F90
+
+(    1) !depfile:prep_hor_snow_field.F90
+(    2) MODULE MODI_PREP_HOR_SNOW_FIELD 
+(    3) INTERFACE
+(    4) SUBROUTINE PREP_HOR_SNOW_FIELD (DTCO, G, U, GCP, HPROGRAM,      &
+(    5)                                 HFILE,HFILETYPE,                &
+(    6)                                 HFILEPGD,HFILEPGDTYPE,          &
+(    7)                                 KLUOUT,OUNIF,HSNSURF,KPATCH,    &
+(    8)                                 KTEB_PATCH, &
+(    9)                                 KL,TNPSNOW, TPTIME,             &
+(   10)                                 PUNIF_WSNOW, PUNIF_RSNOW,       &
+(   11)                                 PUNIF_TSNOW, PUNIF_LWCSNOW,     &
+(   12)                                 PUNIF_ASNOW, OSNOW_IDEAL,       &
+(   13)                                 PUNIF_SG1SNOW, PUNIF_SG2SNOW,   &
+(   14)                                 PUNIF_HISTSNOW,PUNIF_AGESNOW,   &
+(   15)                                 YDCTL, PUNIF_IMPURSNOW,  &
+(   16)                                 PVEGTYPE_PATCH, PPATCH,         &
+(   17)                                 KSIZE_P, KR_P, PDEPTH)
+(   18) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   19) USE MODD_SFX_GRID_n, ONLY : GRID_t
+(   20) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   21) USE MODD_GRID_CONF_PROJ_n, ONLY : GRID_CONF_PROJ_t
+(   22) USE MODD_TYPE_SNOW
+(   23) USE MODD_TYPE_DATE_SURF, ONLY : DATE_TIME
+(   24) USE MODE_PREP_CTL, ONLY : PREP_CTL, PREP_CTL_INT_PART2, PREP_CTL_INT_PART4
+(   25) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   26) TYPE(GRID_t), INTENT(INOUT) :: G
+(   27) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   28) TYPE(GRID_CONF_PROJ_t),INTENT(INOUT) :: GCP
+(   29) TYPE (PREP_CTL),    INTENT (INOUT) :: YDCTL
+(   30)  CHARACTER(LEN=6),   INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 3
+
+(   31)  CHARACTER(LEN=28),  INTENT(IN)  :: HFILE     ! file name
+(   32)  CHARACTER(LEN=6),   INTENT(IN)  :: HFILETYPE ! file type
+(   33)  CHARACTER(LEN=28),  INTENT(IN)  :: HFILEPGD     ! file name
+(   34)  CHARACTER(LEN=6),   INTENT(IN)  :: HFILEPGDTYPE ! file type
+(   35) INTEGER,            INTENT(IN)  :: KLUOUT    ! logical unit of output listing
+(   36) LOGICAL,            INTENT(IN)  :: OUNIF     ! flag for prescribed uniform field
+(   37)  CHARACTER(LEN=10)               :: HSNSURF   ! type of field
+(   38) INTEGER,            INTENT(IN)  :: KPATCH    ! patch number for output scheme
+(   39) INTEGER,            INTENT(IN) :: KTEB_PATCH
+(   40) TYPE(NSURF_SNOW), INTENT(INOUT) :: TNPSNOW    ! snow fields
+(   41) INTEGER,            INTENT(IN)  :: KL        ! number of points
+(   42) TYPE(DATE_TIME),    INTENT(IN)  :: TPTIME    ! date and time
+(   43) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_WSNOW ! prescribed snow content (kg/m2)
+(   44) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_RSNOW ! prescribed density (kg/m3)
+(   45) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_TSNOW ! prescribed temperature (K)
+(   46) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_LWCSNOW ! prescribed snow liquid water content (kg/m3)
+(   47) REAL,               INTENT(IN)  :: PUNIF_ASNOW ! prescribed albedo (-)
+(   48) LOGICAL,            INTENT(INOUT)  :: OSNOW_IDEAL
+(   49) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_SG1SNOW ! 
+(   50) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_SG2SNOW ! 
+(   51) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_HISTSNOW ! 
+(   52) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_AGESNOW ! 
+(   53) REAL, DIMENSION(:,:), INTENT(IN)  :: PUNIF_IMPURSNOW !
+(   54) REAL,DIMENSION(:,:,:),  INTENT(IN) :: PVEGTYPE_PATCH ! fraction of each vegtype per patch
+(   55) REAL,DIMENSION(:,:),  INTENT(IN) :: PPATCH ! fraction of each patch
+(   56) INTEGER, DIMENSION(:), INTENT(IN) :: KSIZE_P
+(   57) INTEGER,DIMENSION(:,:),  INTENT(IN) :: KR_P
+(   58) REAL,DIMENSION(:,:,:),INTENT(IN), OPTIONAL :: PDEPTH ! thickness of each snow layer
+(   59) END SUBROUTINE PREP_HOR_SNOW_FIELD
+(   60) 
+(   61) END INTERFACE
+(   62) END MODULE MODI_PREP_HOR_SNOW_FIELD 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 4
+
+(    1) # 1 "modi_prep_hor_snow_field.F90"
+(    1) !depfile:prep_hor_snow_field.F90
+(    2) MODULE MODI_PREP_HOR_SNOW_FIELD 
+(    3) INTERFACE
+(    4) SUBROUTINE PREP_HOR_SNOW_FIELD (DTCO, G, U, GCP, HPROGRAM,      &
+(    5)                                 HFILE,HFILETYPE,                &
+(    6)                                 HFILEPGD,HFILEPGDTYPE,          &
+(    7)                                 KLUOUT,OUNIF,HSNSURF,KPATCH,    &
+(    8)                                 KTEB_PATCH, &
+(    9)                                 KL,TNPSNOW, TPTIME,             &
+(   10)                                 PUNIF_WSNOW, PUNIF_RSNOW,       &
+(   11)                                 PUNIF_TSNOW, PUNIF_LWCSNOW,     &
+(   12)                                 PUNIF_ASNOW, OSNOW_IDEAL,       &
+(   13)                                 PUNIF_SG1SNOW, PUNIF_SG2SNOW,   &
+(   14)                                 PUNIF_HISTSNOW,PUNIF_AGESNOW,   &
+(   15)                                 YDCTL, PUNIF_IMPURSNOW,  &
+(   16)                                 PVEGTYPE_PATCH, PPATCH,         &
+(   17)                                 KSIZE_P, KR_P, PDEPTH)
+(   18) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   19) USE MODD_SFX_GRID_n, ONLY : GRID_t
+(   20) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   21) USE MODD_GRID_CONF_PROJ_n, ONLY : GRID_CONF_PROJ_t
+(   22) USE MODD_TYPE_SNOW
+(   23) USE MODD_TYPE_DATE_SURF, ONLY : DATE_TIME
+(   24) USE MODE_PREP_CTL, ONLY : PREP_CTL, PREP_CTL_INT_PART2, PREP_CTL_INT_PART4
+(   25) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   26) TYPE(GRID_t), INTENT(INOUT) :: G
+(   27) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   28) TYPE(GRID_CONF_PROJ_t),INTENT(INOUT) :: GCP
+(   29) TYPE (PREP_CTL),    INTENT (INOUT) :: YDCTL
+(   30)  CHARACTER(LEN=6),   INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   31)  CHARACTER(LEN=28),  INTENT(IN)  :: HFILE     ! file name
+(   32)  CHARACTER(LEN=6),   INTENT(IN)  :: HFILETYPE ! file type
+(   33)  CHARACTER(LEN=28),  INTENT(IN)  :: HFILEPGD     ! file name
+(   34)  CHARACTER(LEN=6),   INTENT(IN)  :: HFILEPGDTYPE ! file type
+(   35) INTEGER,            INTENT(IN)  :: KLUOUT    ! logical unit of output listing
+(   36) LOGICAL,            INTENT(IN)  :: OUNIF     ! flag for prescribed uniform field
+(   37)  CHARACTER(LEN=10)               :: HSNSURF   ! type of field
+(   38) INTEGER,            INTENT(IN)  :: KPATCH    ! patch number for output scheme
+(   39) INTEGER,            INTENT(IN) :: KTEB_PATCH
+(   40) TYPE(NSURF_SNOW), INTENT(INOUT) :: TNPSNOW    ! snow fields
+(   41) INTEGER,            INTENT(IN)  :: KL        ! number of points
+(   42) TYPE(DATE_TIME),    INTENT(IN)  :: TPTIME    ! date and time
+(   43) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_WSNOW ! prescribed snow content (kg/m2)
+(   44) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_RSNOW ! prescribed density (kg/m3)
+(   45) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_TSNOW ! prescribed temperature (K)
+(   46) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_LWCSNOW ! prescribed snow liquid water content (kg/m3)
+(   47) REAL,               INTENT(IN)  :: PUNIF_ASNOW ! prescribed albedo (-)
+(   48) LOGICAL,            INTENT(INOUT)  :: OSNOW_IDEAL
+(   49) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_SG1SNOW ! 
+(   50) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_SG2SNOW ! 
+(   51) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_HISTSNOW ! 
+(   52) REAL, DIMENSION(:), INTENT(IN)  :: PUNIF_AGESNOW ! 
+(   53) REAL, DIMENSION(:,:), INTENT(IN)  :: PUNIF_IMPURSNOW !
+(   54) REAL,DIMENSION(:,:,:),  INTENT(IN) :: PVEGTYPE_PATCH ! fraction of each vegtype per patch
+(   55) REAL,DIMENSION(:,:),  INTENT(IN) :: PPATCH ! fraction of each patch
+(   56) INTEGER, DIMENSION(:), INTENT(IN) :: KSIZE_P
+(   57) INTEGER,DIMENSION(:,:),  INTENT(IN) :: KR_P
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 5
+
+(   58) REAL,DIMENSION(:,:,:),INTENT(IN), OPTIONAL :: PDEPTH ! thickness of each snow layer
+(   59) END SUBROUTINE PREP_HOR_SNOW_FIELD
+(   60) # 61 "modi_prep_hor_snow_field.F90"
+(   61) END INTERFACE
+(   62) END MODULE MODI_PREP_HOR_SNOW_FIELD 

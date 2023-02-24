@@ -1,0 +1,511 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fanmsg.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) ! R. El Khatib 30-Mar-2012 KULOUT
+(    4) SUBROUTINE FANMSG_MT64                    &
+(    5) &                     (FA,  KNIVAU, KULOUT)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Ce sous-programme se charge de mettre le Niveau Global d'
+(   13) !     impression des Messages du logiciel de Fichiers ARPEGE (*FA%NIMSGA*)
+(   14) !     a la valeur KNIVAU, de meme que la variable correspondante du
+(   15) !     du logiciel LFI. Par defaut, FA%NIMSGA vaut 1.
+(   16) !**
+(   17) !        Argument : KNIVAU (Entree) ==> Niveau Global d'Impression
+(   18) !                                       des Messages.
+(   19) !                                       Valeurs possibles:
+(   20) !
+(   21) !     0 : N'emettre que les messages d'erreurs reellement importants .
+(   22) !     1 : N'emettre qu'un minimum de messages "globaux", et les messages
+(   23) !         lies a un fichier ouvert qui sont de niveau au plus egal au
+(   24) !         niveau de la messagerie pour ce fichier (Mode par defaut) .
+(   25) !     2 : Emettre tous les messages possibles, meme s'ils ne correspon-
+(   26) !         dent pas a un fichier ouvert avec le niveau de Messagerie 2 .
+(   27) !
+(   28) !                   KULOUT : logical unit number for printing
+(   29) !
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 3
+
+(   31) !
+(   32) TYPE(FA_COM) :: FA
+(   33) INTEGER (KIND=JPLIKB) KNIVAU
+(   34) INTEGER (KIND=JPLIKB) KULOUT
+(   35) !
+(   36) INTEGER (KIND=JPLIKB) IREP, INIMES, INUMER
+(   37) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   38) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   39) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   40) LOGICAL                  LLFATA
+(   41) 
+(   42) !
+(   43) !
+(   44) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   45) 
+(   46) IF (LHOOK) CALL DR_HOOK('FANMSG_MT',0,ZHOOK_HANDLE)
+(   47) CLACTI=''
+(   48) 
+(   49) IF (FA%FANMSG_LLPREA) THEN
+(   50)   CALL FARINE_MT64              &
+(   51) &                 (FA, 2_JPLIKB )
+(   52)   FA%FANMSG_LLPREA=.FALSE.
+(   53) ENDIF
+(   54) !
+(   55) IF (KNIVAU.GE.0.AND.KNIVAU.LE.2) THEN
+(   56)   INIMES=MAX (FA%NIMSGA,KNIVAU)
+(   57)   FA%NIMSGA=KNIVAU
+(   58)   CALL LFINMG_MT64                       &
+(   59) &                 (FA%LFI, KNIVAU,KULOUT)
+(   60)   IREP=0
+(   61) ELSE
+(   62)   INIMES=FA%NIMSGA
+(   63)   IREP=-52
+(   64) ENDIF
+(   65) !
+(   66) LLFATA=IREP.NE.0.AND.FA%NRFAGA.NE.2
+(   67) !
+(   68) IF (LLFATA) THEN
+(   69)   INIMES=2
+(   70) ELSEIF (IREP.NE.0) THEN
+(   71)   INIMES=0
+(   72) ELSEIF (INIMES.NE.2) THEN
+(   73)   IF (LHOOK) CALL DR_HOOK('FANMSG_MT',1,ZHOOK_HANDLE)
+(   74)   RETURN
+(   75) ENDIF
+(   76) !
+(   77) INUMER=JPNIIL
+(   78) CLNSPR='FANMSG'
+(   79) !
+(   80) IF (MAX (INIMES,FA%NIMSGA).EQ.2) THEN
+(   81)   WRITE (UNIT=CLMESS,                                  &
+(   82) &         FMT='(''KNIVAU='',I5,'', CODE INTERNE='',I4)' &
+(   83) &         ) KNIVAU,IREP
+(   84)   IF (INIMES.NE.2) CALL FAIPAR_MT64                          &
+(   85) &                                  (FA, INUMER,FA%NIMSGA,IREP, &
+(   86) &                                .FALSE.,CLMESS,               &
+(   87) &                                CLNSPR,CLACTI,.FALSE.)
+(   88) ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 4
+
+(   89) !
+(   90) CALL FAIPAR_MT64                                     &
+(   91) &               (FA, INUMER,INIMES,IREP,LLFATA,CLMESS, &
+(   92) &             CLNSPR,CLACTI,                           &
+(   93) &             .FALSE.)
+(   94) !
+(   95) IF (LHOOK) CALL DR_HOOK('FANMSG_MT',1,ZHOOK_HANDLE)
+(   96) END SUBROUTINE FANMSG_MT64
+(   97) 
+(   98) 
+(   99) ! Oct-2012 P. Marguinaud 64b LFI
+(  100) SUBROUTINE FANMSG64           &
+(  101) &           (KNIVAU, KULOUT)
+(  102) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  103) &                   FA_COM_DEFAULT_INIT,  &
+(  104) &                   NEW_FA_DEFAULT
+(  105) USE LFI_PRECISION
+(  106) IMPLICIT NONE
+(  107) ! Arguments
+(  108) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  109) INTEGER (KIND=JPLIKB)  KULOUT                                 ! IN   
+(  110) 
+(  111) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  112) 
+(  113) CALL FANMSG_MT64               &
+(  114) &           (FA, KNIVAU, KULOUT)
+(  115) 
+(  116) END SUBROUTINE FANMSG64
+(  117) 
+(  118) SUBROUTINE FANMSG             &
+(  119) &           (KNIVAU, KULOUT)
+(  120) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  121) &                   FA_COM_DEFAULT_INIT,  &
+(  122) &                   NEW_FA_DEFAULT
+(  123) USE LFI_PRECISION
+(  124) IMPLICIT NONE
+(  125) ! Arguments
+(  126) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  127) INTEGER (KIND=JPLIKM)  KULOUT                                 ! IN   
+(  128) 
+(  129) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  130) 
+(  131) CALL FANMSG_MT                 &
+(  132) &           (FA, KNIVAU, KULOUT)
+(  133) 
+(  134) END SUBROUTINE FANMSG
+(  135) 
+(  136) SUBROUTINE FANMSG_MT             &
+(  137) &           (FA, KNIVAU, KULOUT)
+(  138) USE FA_MOD, ONLY : FA_COM
+(  139) USE LFI_PRECISION
+(  140) IMPLICIT NONE
+(  141) ! Arguments
+(  142) TYPE (FA_COM)          FA                                     ! INOUT
+(  143) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  144) INTEGER (KIND=JPLIKM)  KULOUT                                 ! IN   
+(  145) ! Local integers
+(  146) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 5
+
+(  147) INTEGER (KIND=JPLIKB)  IULOUT                                 ! IN   
+(  148) ! Convert arguments
+(  149) 
+(  150) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  151) IULOUT     = INT (    KULOUT, JPLIKB)
+(  152) 
+(  153) CALL FANMSG_MT64               &
+(  154) &           (FA, INIVAU, IULOUT)
+(  155) 
+(  156) 
+(  157) END SUBROUTINE FANMSG_MT
+(  158) 
+(  159) !INTF KNIVAU        IN    
+(  160) !INTF KULOUT        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 6
+
+(    1) # 1 "fanmsg.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) ! R. El Khatib 30-Mar-2012 KULOUT
+(    4) SUBROUTINE FANMSG_MT64                    &
+(    5) &                     (FA,  KNIVAU, KULOUT)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Ce sous-programme se charge de mettre le Niveau Global d'
+(   13) !     impression des Messages du logiciel de Fichiers ARPEGE (*FA%NIMSGA*)
+(   14) !     a la valeur KNIVAU, de meme que la variable correspondante du
+(   15) !     du logiciel LFI. Par defaut, FA%NIMSGA vaut 1.
+(   16) !**
+(   17) !        Argument : KNIVAU (Entree) ==> Niveau Global d'Impression
+(   18) !                                       des Messages.
+(   19) !                                       Valeurs possibles:
+(   20) !
+(   21) !     0 : N'emettre que les messages d'erreurs reellement importants .
+(   22) !     1 : N'emettre qu'un minimum de messages "globaux", et les messages
+(   23) !         lies a un fichier ouvert qui sont de niveau au plus egal au
+(   24) !         niveau de la messagerie pour ce fichier (Mode par defaut) .
+(   25) !     2 : Emettre tous les messages possibles, meme s'ils ne correspon-
+(   26) !         dent pas a un fichier ouvert avec le niveau de Messagerie 2 .
+(   27) !
+(   28) !                   KULOUT : logical unit number for printing
+(   29) !
+(   30) !
+(   31) !
+(   32) TYPE(FA_COM) :: FA
+(   33) INTEGER (KIND=JPLIKB) KNIVAU
+(   34) INTEGER (KIND=JPLIKB) KULOUT
+(   35) !
+(   36) INTEGER (KIND=JPLIKB) IREP, INIMES, INUMER
+(   37) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   38) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   39) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   40) LOGICAL                  LLFATA
+(   41) # 42 "fanmsg.F90"
+(   42) !
+(   43) !
+(   44) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   45) # 46 "fanmsg.F90"
+(   46) IF (LHOOK) CALL DR_HOOK('FANMSG_MT',0,ZHOOK_HANDLE)
+(   47) CLACTI=''
+(   48) # 49 "fanmsg.F90"
+(   49) IF (FA%FANMSG_LLPREA) THEN
+(   50)   CALL FARINE_MT64              &
+(   51) &                 (FA, 2_JPLIKB )
+(   52)   FA%FANMSG_LLPREA=.FALSE.
+(   53) ENDIF
+(   54) !
+(   55) IF (KNIVAU.GE.0.AND.KNIVAU.LE.2) THEN
+(   56)   INIMES=MAX (FA%NIMSGA,KNIVAU)
+(   57)   FA%NIMSGA=KNIVAU
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 7
+
+(   58)   CALL LFINMG_MT64                       &
+(   59) &                 (FA%LFI, KNIVAU,KULOUT)
+(   60)   IREP=0
+(   61) ELSE
+(   62)   INIMES=FA%NIMSGA
+(   63)   IREP=-52
+(   64) ENDIF
+(   65) !
+(   66) LLFATA=IREP.NE.0.AND.FA%NRFAGA.NE.2
+(   67) !
+(   68) IF (LLFATA) THEN
+(   69)   INIMES=2
+(   70) ELSEIF (IREP.NE.0) THEN
+(   71)   INIMES=0
+(   72) ELSEIF (INIMES.NE.2) THEN
+(   73)   IF (LHOOK) CALL DR_HOOK('FANMSG_MT',1,ZHOOK_HANDLE)
+(   74)   RETURN
+(   75) ENDIF
+(   76) !
+(   77) INUMER=JPNIIL
+(   78) CLNSPR='FANMSG'
+(   79) !
+(   80) IF (MAX (INIMES,FA%NIMSGA).EQ.2) THEN
+(   81)   WRITE (UNIT=CLMESS,                                  &
+(   82) &         FMT='(''KNIVAU='',I5,'', CODE INTERNE='',I4)' &
+(   83) &         ) KNIVAU,IREP
+(   84)   IF (INIMES.NE.2) CALL FAIPAR_MT64                          &
+(   85) &                                  (FA, INUMER,FA%NIMSGA,IREP, &
+(   86) &                                .FALSE.,CLMESS,               &
+(   87) &                                CLNSPR,CLACTI,.FALSE.)
+(   88) ENDIF
+(   89) !
+(   90) CALL FAIPAR_MT64                                     &
+(   91) &               (FA, INUMER,INIMES,IREP,LLFATA,CLMESS, &
+(   92) &             CLNSPR,CLACTI,                           &
+(   93) &             .FALSE.)
+(   94) !
+(   95) IF (LHOOK) CALL DR_HOOK('FANMSG_MT',1,ZHOOK_HANDLE)
+(   96) END SUBROUTINE FANMSG_MT64
+(   97) # 99 "fanmsg.F90"
+(   99) ! Oct-2012 P. Marguinaud 64b LFI
+(  100) SUBROUTINE FANMSG64           &
+(  101) &           (KNIVAU, KULOUT)
+(  102) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  103) &                   FA_COM_DEFAULT_INIT,  &
+(  104) &                   NEW_FA_DEFAULT
+(  105) USE LFI_PRECISION
+(  106) IMPLICIT NONE
+(  107) ! Arguments
+(  108) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  109) INTEGER (KIND=JPLIKB)  KULOUT                                 ! IN   
+(  110) # 111 "fanmsg.F90"
+(  111) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  112) # 113 "fanmsg.F90"
+(  113) CALL FANMSG_MT64               &
+(  114) &           (FA, KNIVAU, KULOUT)
+(  115) # 116 "fanmsg.F90"
+(  116) END SUBROUTINE FANMSG64
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:20      page 8
+
+(  117) # 118 "fanmsg.F90"
+(  118) SUBROUTINE FANMSG             &
+(  119) &           (KNIVAU, KULOUT)
+(  120) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  121) &                   FA_COM_DEFAULT_INIT,  &
+(  122) &                   NEW_FA_DEFAULT
+(  123) USE LFI_PRECISION
+(  124) IMPLICIT NONE
+(  125) ! Arguments
+(  126) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  127) INTEGER (KIND=JPLIKM)  KULOUT                                 ! IN   
+(  128) # 129 "fanmsg.F90"
+(  129) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  130) # 131 "fanmsg.F90"
+(  131) CALL FANMSG_MT                 &
+(  132) &           (FA, KNIVAU, KULOUT)
+(  133) # 134 "fanmsg.F90"
+(  134) END SUBROUTINE FANMSG
+(  135) # 136 "fanmsg.F90"
+(  136) SUBROUTINE FANMSG_MT             &
+(  137) &           (FA, KNIVAU, KULOUT)
+(  138) USE FA_MOD, ONLY : FA_COM
+(  139) USE LFI_PRECISION
+(  140) IMPLICIT NONE
+(  141) ! Arguments
+(  142) TYPE (FA_COM)          FA                                     ! INOUT
+(  143) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  144) INTEGER (KIND=JPLIKM)  KULOUT                                 ! IN   
+(  145) ! Local integers
+(  146) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  147) INTEGER (KIND=JPLIKB)  IULOUT                                 ! IN   
+(  148) ! Convert arguments
+(  149) # 150 "fanmsg.F90"
+(  150) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  151) IULOUT     = INT (    KULOUT, JPLIKB)
+(  152) # 153 "fanmsg.F90"
+(  153) CALL FANMSG_MT64               &
+(  154) &           (FA, INIVAU, IULOUT)
+(  155) # 157 "fanmsg.F90"
+(  157) END SUBROUTINE FANMSG_MT
+(  158) # 159 "fanmsg.F90"
+(  159) !INTF KNIVAU        IN    
+(  160) !INTF KULOUT        IN    

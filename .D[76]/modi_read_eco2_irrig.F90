@@ -1,0 +1,13 @@
+!depfile:read_eco2_irrig.F90
+MODULE MODI_READ_ECO2_IRRIG 
+INTERFACE
+      SUBROUTINE READ_ECO2_IRRIG (&
+                                   DTCO, &
+                                  HPROGRAM)
+USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+ CHARACTER(LEN=6),     INTENT(IN)    :: HPROGRAM  ! program calling surf. schemes
+END SUBROUTINE READ_ECO2_IRRIG
+
+END INTERFACE
+END MODULE MODI_READ_ECO2_IRRIG 

@@ -1,0 +1,162 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:35      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:35      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_get_sfx_land.F90
+
+(    1) !depfile:get_sfx_land.F90
+(    2) MODULE MODI_GET_SFX_LAND 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_SFX_LAND (IO, S, U, &
+(    5)                                OCPL_GW,OCPL_FLOOD,OCPL_CALVING,  &
+(    6)                                PRUNOFF,PDRAIN,PCALVING,PSRCFLOOD )  
+(    7) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(    8) USE MODD_ISBA_n, ONLY : ISBA_S_t
+(    9) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   10) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   11) TYPE(ISBA_S_t), INTENT(INOUT) :: S
+(   12) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   13) LOGICAL,            INTENT(IN)  :: OCPL_GW     ! groundwater/surface key
+(   14) LOGICAL,            INTENT(IN)  :: OCPL_FLOOD   ! flood key
+(   15) LOGICAL,            INTENT(IN)  :: OCPL_CALVING ! calving key
+(   16) REAL, DIMENSION(:), INTENT(OUT) :: PRUNOFF    ! Cumulated Surface runoff             (kg/m2)
+(   17) REAL, DIMENSION(:), INTENT(OUT) :: PDRAIN     ! Cumulated Deep drainage              (kg/m2)
+(   18) REAL, DIMENSION(:), INTENT(OUT) :: PCALVING   ! Cumulated Calving flux               (kg/m2)
+(   19) REAL, DIMENSION(:), INTENT(OUT) :: PSRCFLOOD  ! Cumulated freshwater flux            (kg/m2)
+(   20) END SUBROUTINE GET_SFX_LAND
+(   21) 
+(   22) END INTERFACE
+(   23) END MODULE MODI_GET_SFX_LAND 
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:35      page 3
+
+(    1) # 1 "modi_get_sfx_land.F90"
+(    1) !depfile:get_sfx_land.F90
+(    2) MODULE MODI_GET_SFX_LAND 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_SFX_LAND (IO, S, U, &
+(    5)                                OCPL_GW,OCPL_FLOOD,OCPL_CALVING,  &
+(    6)                                PRUNOFF,PDRAIN,PCALVING,PSRCFLOOD )  
+(    7) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(    8) USE MODD_ISBA_n, ONLY : ISBA_S_t
+(    9) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   10) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   11) TYPE(ISBA_S_t), INTENT(INOUT) :: S
+(   12) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   13) LOGICAL,            INTENT(IN)  :: OCPL_GW     ! groundwater/surface key
+(   14) LOGICAL,            INTENT(IN)  :: OCPL_FLOOD   ! flood key
+(   15) LOGICAL,            INTENT(IN)  :: OCPL_CALVING ! calving key
+(   16) REAL, DIMENSION(:), INTENT(OUT) :: PRUNOFF    ! Cumulated Surface runoff             (kg/m2)
+(   17) REAL, DIMENSION(:), INTENT(OUT) :: PDRAIN     ! Cumulated Deep drainage              (kg/m2)
+(   18) REAL, DIMENSION(:), INTENT(OUT) :: PCALVING   ! Cumulated Calving flux               (kg/m2)
+(   19) REAL, DIMENSION(:), INTENT(OUT) :: PSRCFLOOD  ! Cumulated freshwater flux            (kg/m2)
+(   20) END SUBROUTINE GET_SFX_LAND
+(   21) # 22 "modi_get_sfx_land.F90"
+(   22) END INTERFACE
+(   23) END MODULE MODI_GET_SFX_LAND 

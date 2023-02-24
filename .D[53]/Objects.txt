@@ -1,0 +1,23 @@
+# include the ee_cfi library in case we wish to use it
+# this defines the EELIBWRAPPERWITHPATH variable
+include ../library_definition
+
+DEP_SUPPORT = ../support/
+OBJECTS_SUPPORT = \
+   $(DEP_SUPPORT)c_support.o \
+   $(DEP_SUPPORT)datetimemod.o \
+   $(DEP_SUPPORT)errorhandler.o \
+   $(DEP_SUPPORT)f90_c_support.o \
+   $(DEP_SUPPORT)lunmanager.o \
+   $(DEP_SUPPORT)numerics.o \
+   $(DEP_SUPPORT)aeolusconstants.o \
+   $(DEP_SUPPORT)arraytools.o \
+   $(DEP_SUPPORT)interp1.o \
+   $(DEP_SUPPORT)compiler_features.o \
+   $(DEP_SUPPORT)stringtools.o \
+   $(DEP_SUPPORT)logging.o \
+   $(DEP_SUPPORT)profileinterpolate.o \
+   $(DEP_SUPPORT)latlon_handling.o \
+   $(DEP_SUPPORT)tempfile_handling.o \
+   $(DEP_SUPPORT)height_conv.o \
+   $(EELIBWRAPPERWITHPATH)

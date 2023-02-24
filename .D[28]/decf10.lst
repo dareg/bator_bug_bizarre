@@ -1,0 +1,674 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: decf10.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Interface to thread-safe FA
+(    3) FUNCTION DECF10               &
+(    4) &                           (KGRIB,  KLENG, KDECAL,  &
+(    5) &                           KFAORI, KFAMOD, KNBIMO)
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !     Fonction "DECF10"
+(   12) !
+(   13) !     But.
+(   14) !     ---
+(   15) !
+(   16) !     Effectuer dans un message GRIB au niveau d'edition 1 le decalage
+(   17) !     (en valeur) du descripteur "facteur d'echelle decimal".
+(   18) !
+(   19) !
+(   20) !**   Interface.
+(   21) !     ----------
+(   22) !
+(   23) !
+(   24) !      Arguments d'appel:
+(   25) !
+(   26) !     KGRIB  (Entree+ ===> Tableau receptacle pour le message GRIB
+(   27) !             Sortie)
+(   28) !     KLENG  (Entree) ===> Longueur utile (mots) de KGRIB
+(   29) !     KDECAL (Entree) ===> DECALage (additif) a effectuer sur la valeur
+(   30) !                          courante du facteur d'echelle decimal.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 3
+
+(   31) !     KFAORI (Sortie) ===> FActeur decimal d'ORIgine
+(   32) !     KFAMOD (Sortie) ===> FActeur decimal MODifie
+(   33) !     KNBIMO (Entree) ===> Nombre de BIts par mot (entier)
+(   34) !
+(   35) !     Le code-retour de la fonction est:
+(   36) !
+(   37) !      0 si tout s'est bien passe
+(   38) !     -1 si KGRIB ne commence pas par un entete GRIB
+(   39) !     -2 si l'edition du GRIB ne convient pas
+(   40) !     >0 code-retour (erreur) INXBIT
+(   41) !
+(   42) !
+(   43) !     Methode.
+(   44) !     --------
+(   45) !
+(   46) !     Verifie le niveau d'edition du message GRIB, decode le facteur
+(   47) !     d'echelle decimal courant, y ajoute KDECAL, et remplace la valeur
+(   48) !     par insertion dans le message.
+(   49) !
+(   50) !
+(   51) !     Sous-programmes/fonctions externes utilises.
+(   52) !     --------------------------------------------
+(   53) !
+(   54) !     INXBIT - INsertion d'une chaine binaire
+(   55) !
+(   56) !     Reference.
+(   57) !     ----------
+(   58) !
+(   59) !     Aucune.
+(   60) !
+(   61) !
+(   62) !     Commentaires.
+(   63) !     -------------
+(   64) !
+(   65) !     Cettte fonction a ete developpee dans le cadre du pretraitement de
+(   66) !     modeles etrangers arrivant sous forme de fichiers, pour DIAPASON
+(   67) !     et SYNERGIE. Mais elle n'en depend pas vraiment, et peut donc
+(   68) !     etre reutilisee dans un autre contexte.
+(   69) !
+(   70) !     Dans sa mouture initiale, seule l'edition 1 de GRIB est geree.
+(   71) !
+(   72) !     On utilise une primitive de bas niveau de la bibliotheque
+(   73) !     "emos" du CEPMMT.
+(   74) !
+(   75) !     La convention de codage du signe du facteur d'echelle est
+(   76) !     explicitement geree par la fonction courante.
+(   77) !
+(   78) !
+(   79) !     Auteur.
+(   80) !     -------
+(   81) !
+(   82) !     J. Clochard, Meteo France, DSI/OP/D - Juin 2001.
+(   83) !
+(   84) !
+(   85) !     Modifications.
+(   86) !     --------------
+(   87) !
+(   88) !     Aucune.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 4
+
+(   89) !
+(   90) !
+(   91) !
+(   92) !     Constantes symboliques.
+(   93) !
+(   94) !     Signification des PARAMETER "locaux" au sous-programme :
+(   95) !
+(   96) !     JPDGRB => Nombre d'octets a decoder pour controler le message GRIB
+(   97) !     JPGRIB => Nombre d'octets a decoder pour controler l'entete GRIB
+(   98) !
+(   99) INTEGER (KIND=JPLIKB) DECF10
+(  100) !
+(  101) INTEGER JPDGRB, JPGRIB
+(  102) !
+(  103) PARAMETER ( JPDGRB = 8, JPGRIB = 4 )
+(  104) !
+(  105) !     Arguments d'appel.
+(  106) !
+(  107) INTEGER (KIND=JPLIKB) KLENG, KDECAL, KFAORI, KFAMOD, KNBIMO
+(  108) !
+(  109) INTEGER KGRIB (KLENG)
+(  110) !
+(  111) !     Variables locales.
+(  112) !
+(  113) INTEGER IAUXIL, IREPON, J, IDECAL, ILODES, IPIVOT, IFACOD, IFAC10
+(  114) !
+(  115) INTEGER IDGRIB (JPDGRB)
+(  116) INTEGER ILENG, INBIMO
+(  117) !
+(  118) !     Caracteres G, R, I, B en code CCITT IA-5
+(  119) !
+(  120) INTEGER, PARAMETER :: IBLOCD (JPGRIB) = (/ 71, 82, 73, 66 /)
+(  121) !
+(  122) CHARACTER(LEN=1) CLOPER
+(  123) !**
+(  124) !     1.  -  INITIALISATIONS ET CONTROLES.
+(  125) !-----------------------------------------------------------------------
+(  126) !
+(  127) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  128) IF (LHOOK) CALL DR_HOOK('DECF10',0,ZHOOK_HANDLE)
+(  129) IREPON = 0
+(  130) KFAORI = -9999
+(  131) KFAMOD = KFAORI
+(  132) ILENG  = INT (KLENG,  JPLIKM)
+(  133) INBIMO = INT (KNBIMO, JPLIKM)
+(  134) !
+(  135) IF ( KDECAL .EQ. 0 ) THEN
+(  136) !
+(  137)   GO TO 900
+(  138) !
+(  139) ENDIF
+(  140) !
+(  141) !     Deocdage des premiers octets du message GRIB.
+(  142) !
+(  143) CLOPER = 'D'
+(  144) IDECAL = 0
+(  145) IAUXIL = JPDGRB
+(  146) ILODES = 8
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 5
+
+(  147) !
+(  148) CALL INXBIT( KGRIB,  ILENG, IDECAL, IDGRIB, IAUXIL, INBIMO, &
+(  149) &             ILODES, CLOPER, IREPON )
+(  150) !
+(  151) IF ( IREPON .NE. 0 ) THEN
+(  152) !
+(  153)   GO TO 900
+(  154) !
+(  155) ENDIF
+(  156) !
+(  157) !     KGRIB commence-t-il bien par les 4 lettres GRIB ?
+(  158) !
+(  159) DO J = 1, JPGRIB
+(  160) !
+(  161)   IF( IDGRIB(J) .NE. IBLOCD(J) ) THEN
+(  162) !
+(  163)     IREPON = -1
+(  164) !
+(  165)     GO TO 900
+(  166) !
+(  167)   ENDIF
+(  168) !
+(  169) ENDDO
+(  170) !
+(  171) !     Controle du niveau d'edition de GRIB.
+(  172) !
+(  173) IF( IDGRIB(JPDGRB) .NE. 1 ) THEN
+(  174) !
+(  175)   IREPON = -2
+(  176) !
+(  177)   GO TO 900
+(  178) !
+(  179) ENDIF
+(  180) !
+(  181) IDECAL = (8+26)*8
+(  182) IAUXIL = 1
+(  183) ILODES = 16
+(  184) IPIVOT = 2**15
+(  185) !**
+(  186) !     2.  -  DECODAGE DU FACTEUR D'ECHELLE DECIMAL COURANT.
+(  187) !-----------------------------------------------------------------------
+(  188) !
+(  189) !
+(  190) CALL INXBIT( KGRIB,  ILENG, IDECAL, IFACOD, IAUXIL, INBIMO, &
+(  191) &             ILODES, CLOPER, IREPON )
+(  192) IDECAL = IDECAL-ILODES*IAUXIL
+(  193) !
+(  194) IF ( IREPON .NE. 0 ) THEN
+(  195) !
+(  196)   GO TO 900
+(  197) !
+(  198) ELSEIF ( IFACOD .LE. IPIVOT ) THEN
+(  199) !
+(  200)   IFAC10 = IFACOD
+(  201) !
+(  202) ELSE
+(  203) !
+(  204)   IFAC10 = IPIVOT-IFACOD
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 6
+
+(  205) !
+(  206) ENDIF
+(  207) !
+(  208) KFAORI = INT (IFAC10, JPLIKB)
+(  209) !**
+(  210) !     3.  -  MODIFICATION DU FACTEUR D'ECHELLE DECIMAL COURANT.
+(  211) !-----------------------------------------------------------------------
+(  212) !
+(  213) !
+(  214) IFAC10 = IFAC10+ INT (KDECAL, JPLIKM)
+(  215) KFAMOD = INT (IFAC10, JPLIKB)
+(  216) CLOPER = 'C'
+(  217) !
+(  218) IF ( IFAC10 .GE. 0 ) THEN
+(  219) !
+(  220)   IFACOD = IFAC10
+(  221) !
+(  222) ELSE
+(  223) !
+(  224)   IFACOD = IPIVOT-IFAC10
+(  225) !
+(  226) ENDIF
+(  227) !
+(  228) CALL INXBIT( KGRIB,  ILENG, IDECAL, IFACOD, IAUXIL, INBIMO, &
+(  229) &             ILODES, CLOPER, IREPON )
+(  230) !**
+(  231) !     9.  -  MESSAGERIE EVENTUELLE, RETOUR A L'APPLICATIF APPELANT.
+(  232) !-----------------------------------------------------------------------
+(  233) !
+(  234) 900 CONTINUE
+(  235) !
+(  236) DECF10 = INT (IREPON, JPLIKB)
+(  237) !
+(  238) IF (LHOOK) CALL DR_HOOK('DECF10',1,ZHOOK_HANDLE)
+(  239) END FUNCTION DECF10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 7
+
+(    1) # 1 "decf10.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Interface to thread-safe FA
+(    3) FUNCTION DECF10               &
+(    4) &                           (KGRIB,  KLENG, KDECAL,  &
+(    5) &                           KFAORI, KFAMOD, KNBIMO)
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !     Fonction "DECF10"
+(   12) !
+(   13) !     But.
+(   14) !     ---
+(   15) !
+(   16) !     Effectuer dans un message GRIB au niveau d'edition 1 le decalage
+(   17) !     (en valeur) du descripteur "facteur d'echelle decimal".
+(   18) !
+(   19) !
+(   20) !**   Interface.
+(   21) !     ----------
+(   22) !
+(   23) !
+(   24) !      Arguments d'appel:
+(   25) !
+(   26) !     KGRIB  (Entree+ ===> Tableau receptacle pour le message GRIB
+(   27) !             Sortie)
+(   28) !     KLENG  (Entree) ===> Longueur utile (mots) de KGRIB
+(   29) !     KDECAL (Entree) ===> DECALage (additif) a effectuer sur la valeur
+(   30) !                          courante du facteur d'echelle decimal.
+(   31) !     KFAORI (Sortie) ===> FActeur decimal d'ORIgine
+(   32) !     KFAMOD (Sortie) ===> FActeur decimal MODifie
+(   33) !     KNBIMO (Entree) ===> Nombre de BIts par mot (entier)
+(   34) !
+(   35) !     Le code-retour de la fonction est:
+(   36) !
+(   37) !      0 si tout s'est bien passe
+(   38) !     -1 si KGRIB ne commence pas par un entete GRIB
+(   39) !     -2 si l'edition du GRIB ne convient pas
+(   40) !     >0 code-retour (erreur) INXBIT
+(   41) !
+(   42) !
+(   43) !     Methode.
+(   44) !     --------
+(   45) !
+(   46) !     Verifie le niveau d'edition du message GRIB, decode le facteur
+(   47) !     d'echelle decimal courant, y ajoute KDECAL, et remplace la valeur
+(   48) !     par insertion dans le message.
+(   49) !
+(   50) !
+(   51) !     Sous-programmes/fonctions externes utilises.
+(   52) !     --------------------------------------------
+(   53) !
+(   54) !     INXBIT - INsertion d'une chaine binaire
+(   55) !
+(   56) !     Reference.
+(   57) !     ----------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 8
+
+(   58) !
+(   59) !     Aucune.
+(   60) !
+(   61) !
+(   62) !     Commentaires.
+(   63) !     -------------
+(   64) !
+(   65) !     Cettte fonction a ete developpee dans le cadre du pretraitement de
+(   66) !     modeles etrangers arrivant sous forme de fichiers, pour DIAPASON
+(   67) !     et SYNERGIE. Mais elle n'en depend pas vraiment, et peut donc
+(   68) !     etre reutilisee dans un autre contexte.
+(   69) !
+(   70) !     Dans sa mouture initiale, seule l'edition 1 de GRIB est geree.
+(   71) !
+(   72) !     On utilise une primitive de bas niveau de la bibliotheque
+(   73) !     "emos" du CEPMMT.
+(   74) !
+(   75) !     La convention de codage du signe du facteur d'echelle est
+(   76) !     explicitement geree par la fonction courante.
+(   77) !
+(   78) !
+(   79) !     Auteur.
+(   80) !     -------
+(   81) !
+(   82) !     J. Clochard, Meteo France, DSI/OP/D - Juin 2001.
+(   83) !
+(   84) !
+(   85) !     Modifications.
+(   86) !     --------------
+(   87) !
+(   88) !     Aucune.
+(   89) !
+(   90) !
+(   91) !
+(   92) !     Constantes symboliques.
+(   93) !
+(   94) !     Signification des PARAMETER "locaux" au sous-programme :
+(   95) !
+(   96) !     JPDGRB => Nombre d'octets a decoder pour controler le message GRIB
+(   97) !     JPGRIB => Nombre d'octets a decoder pour controler l'entete GRIB
+(   98) !
+(   99) INTEGER (KIND=JPLIKB) DECF10
+(  100) !
+(  101) INTEGER JPDGRB, JPGRIB
+(  102) !
+(  103) PARAMETER ( JPDGRB = 8, JPGRIB = 4 )
+(  104) !
+(  105) !     Arguments d'appel.
+(  106) !
+(  107) INTEGER (KIND=JPLIKB) KLENG, KDECAL, KFAORI, KFAMOD, KNBIMO
+(  108) !
+(  109) INTEGER KGRIB (KLENG)
+(  110) !
+(  111) !     Variables locales.
+(  112) !
+(  113) INTEGER IAUXIL, IREPON, J, IDECAL, ILODES, IPIVOT, IFACOD, IFAC10
+(  114) !
+(  115) INTEGER IDGRIB (JPDGRB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 9
+
+(  116) INTEGER ILENG, INBIMO
+(  117) !
+(  118) !     Caracteres G, R, I, B en code CCITT IA-5
+(  119) !
+(  120) INTEGER, PARAMETER :: IBLOCD (JPGRIB) = (/ 71, 82, 73, 66 /)
+(  121) !
+(  122) CHARACTER(LEN=1) CLOPER
+(  123) !**
+(  124) !     1.  -  INITIALISATIONS ET CONTROLES.
+(  125) !-----------------------------------------------------------------------
+(  126) !
+(  127) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  128) IF (LHOOK) CALL DR_HOOK('DECF10',0,ZHOOK_HANDLE)
+(  129) IREPON = 0
+(  130) KFAORI = -9999
+(  131) KFAMOD = KFAORI
+(  132) ILENG  = INT (KLENG,  JPLIKM)
+(  133) INBIMO = INT (KNBIMO, JPLIKM)
+(  134) !
+(  135) IF ( KDECAL .EQ. 0 ) THEN
+(  136) !
+(  137)   GO TO 900
+(  138) !
+(  139) ENDIF
+(  140) !
+(  141) !     Deocdage des premiers octets du message GRIB.
+(  142) !
+(  143) CLOPER = 'D'
+(  144) IDECAL = 0
+(  145) IAUXIL = JPDGRB
+(  146) ILODES = 8
+(  147) !
+(  148) CALL INXBIT( KGRIB,  ILENG, IDECAL, IDGRIB, IAUXIL, INBIMO, &
+(  149) &             ILODES, CLOPER, IREPON )
+(  150) !
+(  151) IF ( IREPON .NE. 0 ) THEN
+(  152) !
+(  153)   GO TO 900
+(  154) !
+(  155) ENDIF
+(  156) !
+(  157) !     KGRIB commence-t-il bien par les 4 lettres GRIB ?
+(  158) !
+(  159) DO J = 1, JPGRIB
+(  160) !
+(  161)   IF( IDGRIB(J) .NE. IBLOCD(J) ) THEN
+(  162) !
+(  163)     IREPON = -1
+(  164) !
+(  165)     GO TO 900
+(  166) !
+(  167)   ENDIF
+(  168) !
+(  169) ENDDO
+(  170) !
+(  171) !     Controle du niveau d'edition de GRIB.
+(  172) !
+(  173) IF( IDGRIB(JPDGRB) .NE. 1 ) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 10
+
+(  174) !
+(  175)   IREPON = -2
+(  176) !
+(  177)   GO TO 900
+(  178) !
+(  179) ENDIF
+(  180) !
+(  181) IDECAL = (8+26)*8
+(  182) IAUXIL = 1
+(  183) ILODES = 16
+(  184) IPIVOT = 2**15
+(  185) !**
+(  186) !     2.  -  DECODAGE DU FACTEUR D'ECHELLE DECIMAL COURANT.
+(  187) !-----------------------------------------------------------------------
+(  188) !
+(  189) !
+(  190) CALL INXBIT( KGRIB,  ILENG, IDECAL, IFACOD, IAUXIL, INBIMO, &
+(  191) &             ILODES, CLOPER, IREPON )
+(  192) IDECAL = IDECAL-ILODES*IAUXIL
+(  193) !
+(  194) IF ( IREPON .NE. 0 ) THEN
+(  195) !
+(  196)   GO TO 900
+(  197) !
+(  198) ELSEIF ( IFACOD .LE. IPIVOT ) THEN
+(  199) !
+(  200)   IFAC10 = IFACOD
+(  201) !
+(  202) ELSE
+(  203) !
+(  204)   IFAC10 = IPIVOT-IFACOD
+(  205) !
+(  206) ENDIF
+(  207) !
+(  208) KFAORI = INT (IFAC10, JPLIKB)
+(  209) !**
+(  210) !     3.  -  MODIFICATION DU FACTEUR D'ECHELLE DECIMAL COURANT.
+(  211) !-----------------------------------------------------------------------
+(  212) !
+(  213) !
+(  214) IFAC10 = IFAC10+ INT (KDECAL, JPLIKM)
+(  215) KFAMOD = INT (IFAC10, JPLIKB)
+(  216) CLOPER = 'C'
+(  217) !
+(  218) IF ( IFAC10 .GE. 0 ) THEN
+(  219) !
+(  220)   IFACOD = IFAC10
+(  221) !
+(  222) ELSE
+(  223) !
+(  224)   IFACOD = IPIVOT-IFAC10
+(  225) !
+(  226) ENDIF
+(  227) !
+(  228) CALL INXBIT( KGRIB,  ILENG, IDECAL, IFACOD, IAUXIL, INBIMO, &
+(  229) &             ILODES, CLOPER, IREPON )
+(  230) !**
+(  231) !     9.  -  MESSAGERIE EVENTUELLE, RETOUR A L'APPLICATIF APPELANT.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:38      page 11
+
+(  232) !-----------------------------------------------------------------------
+(  233) !
+(  234) 900 CONTINUE
+(  235) !
+(  236) DECF10 = INT (IREPON, JPLIKB)
+(  237) !
+(  238) IF (LHOOK) CALL DR_HOOK('DECF10',1,ZHOOK_HANDLE)
+(  239) END FUNCTION DECF10

@@ -1,0 +1,541 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: diffuse_scalar3D.F90
+
+(    1) subroutine diffuse_scalar3D (field,field0,fluxb,fluxt,tkh,rho,rhow,flux)
+(    2) 
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) 
+(   13) use grid
+(   14) use real_size
+(   15) implicit none
+(   16) ! input
+(   17) real(RR) field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)   ! scalar
+(   18) real(RR) field0(nzm)
+(   19) real(RR) tkh(0:nxp1,1-YES3D:nyp1,nzm)   ! eddy conductivity
+(   20) real(RR) fluxb(nx,ny)       ! bottom flux
+(   21) real(RR) fluxt(nx,ny)       ! top flux
+(   22) real(RR) rho(nzm)
+(   23) real(RR) rhow(nz)
+(   24) real(RR) flux(nz)
+(   25) ! local        
+(   26) real(RR) flx(0:nx,0:ny,0:nzm)
+(   27) real(RR) dfdt(nx,ny,nz)
+(   28) real(RR) rdx2,rdy2,rdz2,rdz,rdx5,rdy5,rdz5,tmp
+(   29) real(RR) dxy,dxz,dyx,dyz,dzx,dzy,tkx,tky,tkz,rhoi
+(   30) integer i,j,k,ib,ic,jb,jc,kc,kb
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 3
+
+(   31) 
+(   32) 
+(   33) if(.not.dosgs) return
+(   34) 
+(   35) rdx2=1./(dx*dx)
+(   36) rdy2=1./(dy*dy)
+(   37) rdz2=1./(dz*dz)
+(   38) rdz=1./dz
+(   39) dxy=dx/dy
+(   40) dxz=dx/dz
+(   41) dyx=dy/dx
+(   42) dyz=dy/dz
+(   43) dzx=dz/dx
+(   44) dzy=dz/dy
+(   45) 
+(   46) dfdt(:,:,:)=0.
+(   47) 
+(   48) !-----------------------------------------
+(   49) if(dowallx) then
+(   50) 
+(   51)   if(mod(rank,nsubdomains_x).eq.0) then
+(   52)     do k=1,nzm
+(   53)      do j=1,ny
+(   54)          field(0,j,k) = field(1,j,k)
+(   55)      end do
+(   56)     end do
+(   57)   end if
+(   58)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+(   59)     do k=1,nzm
+(   60)      do j=1,ny
+(   61)          field(nx+1,j,k) = field(nx,j,k)
+(   62)      end do
+(   63)     end do
+(   64)   end if
+(   65) 
+(   66) end if
+(   67) 
+(   68) if(dowally) then
+(   69) 
+(   70)   if(rank.lt.nsubdomains_x) then
+(   71)     do k=1,nzm
+(   72)        do i=1,nx
+(   73)          field(i,1-YES3D,k) = field(i,1,k)
+(   74)        end do
+(   75)     end do
+(   76)   end if
+(   77)   if(rank.gt.nsubdomains-nsubdomains_x-1) then
+(   78)     do k=1,nzm
+(   79)        do i=1,ny
+(   80)          field(i,ny+YES3D,k) = field(i,ny,k)
+(   81)        end do
+(   82)     end do
+(   83)   end if
+(   84) 
+(   85) end if
+(   86) 
+(   87) 
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 4
+
+(   89) if(dowally) then
+(   90) 
+(   91)  call task_rank_to_index(rank, ib, jb)
+(   92)  if(jb.eq.0) then
+(   93)    do k=1,nzm
+(   94)      do i=1,nx
+(   95)        field(i,1-YES3D,k) = field(i,1,k)
+(   96)      end do
+(   97)    end do
+(   98)  end if
+(   99)  if(jb.eq.nsubdomains_y-1) then
+(  100)    do k=1,nzm
+(  101)      do i=1,nx
+(  102)        field(i,ny+YES3D,k) = field(i,ny,k)
+(  103)      end do
+(  104)    end do
+(  105)  end if
+(  106) 
+(  107) end if
+(  108) 
+(  109) !-----------------------------------------
+(  110) 
+(  111) 
+(  112) !  Horizontal diffusion:
+(  113) 
+(  114) 
+(  115) do k=1,nzm
+(  116) 
+(  117)  rdx5=0.5*rdx2  * grdf_x(k)
+(  118)  rdy5=0.5*rdy2  * grdf_y(k)
+(  119) 
+(  120)  do j=1,ny
+(  121)   do i=0,nx
+(  122)     ic=i+1
+(  123)     tkx=rdx5*(tkh(i,j,k)+tkh(ic,j,k))
+(  124)     flx(i,j,k)=-tkx*(field(ic,j,k)-field(i,j,k))
+(  125)   end do 
+(  126)   do i=1,nx
+(  127)     ib=i-1
+(  128)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(ib,j,k))
+(  129)   end do 
+(  130)  end do 
+(  131) 
+(  132)  do j=0,ny
+(  133)   jc=j+1
+(  134)   do i=1,nx
+(  135)    tky=rdy5*(tkh(i,j,k)+tkh(i,jc,k))
+(  136)    flx(i,j,k)=-tky*(field(i,jc,k)-field(i,j,k))
+(  137)   end do 
+(  138)  end do
+(  139)  do j=1,ny
+(  140)   jb=j-1
+(  141)   do i=1,nx
+(  142)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(i,jb,k))
+(  143)   end do 
+(  144)  end do 
+(  145)  
+(  146) end do ! k
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 5
+
+(  147) 
+(  148) 
+(  149) !  Vertical diffusion:
+(  150) 
+(  151) !flux(1) = 0.
+(  152) tmp=1./adzw(nz)
+(  153) do j=1,ny
+(  154)  do i=1,nx
+(  155)    flx(i,j,0)=fluxb(i,j)*rdz*rhow(1)
+(  156)    flx(i,j,nzm)=fluxt(i,j)*rdz*tmp*rhow(nz)
+(  157)    flux(1) = flux(1) + flx(i,j,0)
+(  158)  end do
+(  159) end do
+(  160) 
+(  161) 
+(  162) do k=1,nzm-1
+(  163)  kc=k+1
+(  164) ! flux(kc)=0. 
+(  165)  rhoi = rhow(kc)/adzw(kc)
+(  166)  rdz5=0.5*rdz2 * grdf_z(k)
+(  167)  do j=1,ny
+(  168)   do i=1,nx
+(  169)     tkz=rdz5*(tkh(i,j,k)+tkh(i,j,kc))
+(  170)     flx(i,j,k)=-tkz*(field(i,j,kc)-field(i,j,k))*rhoi
+(  171)     flux(kc) = flux(kc) + flx(i,j,k)
+(  172)   end do 
+(  173)  end do
+(  174) end do
+(  175) 
+(  176) do k=1,nzm
+(  177)  kb=k-1
+(  178)  rhoi = 1./(adz(k)*rho(k))
+(  179)  do j=1,ny
+(  180)   do i=1,nx
+(  181)    dfdt(i,j,k)=dtn*(dfdt(i,j,k)-(flx(i,j,k)-flx(i,j,kb))*rhoi)
+(  182)    field(i,j,k)=field(i,j,k)+dfdt(i,j,k)
+(  183)   end do 
+(  184)  end do 
+(  185) end do 
+(  186) 
+(  187) end subroutine diffuse_scalar3D
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 6
+
+(    1) # 1 "diffuse_scalar3D.F90"
+(    1) subroutine diffuse_scalar3D (field,field0,fluxb,fluxt,tkh,rho,rhow,flux)
+(    2) # 3 "diffuse_scalar3D.F90"
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) # 13 "diffuse_scalar3D.F90"
+(   13) use grid
+(   14) use real_size
+(   15) implicit none
+(   16) ! input
+(   17) real(RR) field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)   ! scalar
+(   18) real(RR) field0(nzm)
+(   19) real(RR) tkh(0:nxp1,1-YES3D:nyp1,nzm)   ! eddy conductivity
+(   20) real(RR) fluxb(nx,ny)       ! bottom flux
+(   21) real(RR) fluxt(nx,ny)       ! top flux
+(   22) real(RR) rho(nzm)
+(   23) real(RR) rhow(nz)
+(   24) real(RR) flux(nz)
+(   25) ! local        
+(   26) real(RR) flx(0:nx,0:ny,0:nzm)
+(   27) real(RR) dfdt(nx,ny,nz)
+(   28) real(RR) rdx2,rdy2,rdz2,rdz,rdx5,rdy5,rdz5,tmp
+(   29) real(RR) dxy,dxz,dyx,dyz,dzx,dzy,tkx,tky,tkz,rhoi
+(   30) integer i,j,k,ib,ic,jb,jc,kc,kb
+(   31) # 33 "diffuse_scalar3D.F90"
+(   33) if(.not.dosgs) return
+(   34) # 35 "diffuse_scalar3D.F90"
+(   35) rdx2=1./(dx*dx)
+(   36) rdy2=1./(dy*dy)
+(   37) rdz2=1./(dz*dz)
+(   38) rdz=1./dz
+(   39) dxy=dx/dy
+(   40) dxz=dx/dz
+(   41) dyx=dy/dx
+(   42) dyz=dy/dz
+(   43) dzx=dz/dx
+(   44) dzy=dz/dy
+(   45) # 46 "diffuse_scalar3D.F90"
+(   46) dfdt(:,:,:)=0.
+(   47) # 48 "diffuse_scalar3D.F90"
+(   48) !-----------------------------------------
+(   49) if(dowallx) then
+(   50) # 51 "diffuse_scalar3D.F90"
+(   51)   if(mod(rank,nsubdomains_x).eq.0) then
+(   52)     do k=1,nzm
+(   53)      do j=1,ny
+(   54)          field(0,j,k) = field(1,j,k)
+(   55)      end do
+(   56)     end do
+(   57)   end if
+(   58)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 7
+
+(   59)     do k=1,nzm
+(   60)      do j=1,ny
+(   61)          field(nx+1,j,k) = field(nx,j,k)
+(   62)      end do
+(   63)     end do
+(   64)   end if
+(   65) # 66 "diffuse_scalar3D.F90"
+(   66) end if
+(   67) # 68 "diffuse_scalar3D.F90"
+(   68) if(dowally) then
+(   69) # 70 "diffuse_scalar3D.F90"
+(   70)   if(rank.lt.nsubdomains_x) then
+(   71)     do k=1,nzm
+(   72)        do i=1,nx
+(   73)          field(i,1-YES3D,k) = field(i,1,k)
+(   74)        end do
+(   75)     end do
+(   76)   end if
+(   77)   if(rank.gt.nsubdomains-nsubdomains_x-1) then
+(   78)     do k=1,nzm
+(   79)        do i=1,ny
+(   80)          field(i,ny+YES3D,k) = field(i,ny,k)
+(   81)        end do
+(   82)     end do
+(   83)   end if
+(   84) # 85 "diffuse_scalar3D.F90"
+(   85) end if
+(   86) # 89 "diffuse_scalar3D.F90"
+(   89) if(dowally) then
+(   90) # 91 "diffuse_scalar3D.F90"
+(   91)  call task_rank_to_index(rank, ib, jb)
+(   92)  if(jb.eq.0) then
+(   93)    do k=1,nzm
+(   94)      do i=1,nx
+(   95)        field(i,1-YES3D,k) = field(i,1,k)
+(   96)      end do
+(   97)    end do
+(   98)  end if
+(   99)  if(jb.eq.nsubdomains_y-1) then
+(  100)    do k=1,nzm
+(  101)      do i=1,nx
+(  102)        field(i,ny+YES3D,k) = field(i,ny,k)
+(  103)      end do
+(  104)    end do
+(  105)  end if
+(  106) # 107 "diffuse_scalar3D.F90"
+(  107) end if
+(  108) # 109 "diffuse_scalar3D.F90"
+(  109) !-----------------------------------------
+(  110) # 112 "diffuse_scalar3D.F90"
+(  112) !  Horizontal diffusion:
+(  113) # 115 "diffuse_scalar3D.F90"
+(  115) do k=1,nzm
+(  116) # 117 "diffuse_scalar3D.F90"
+(  117)  rdx5=0.5*rdx2  * grdf_x(k)
+(  118)  rdy5=0.5*rdy2  * grdf_y(k)
+(  119) # 120 "diffuse_scalar3D.F90"
+(  120)  do j=1,ny
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 8
+
+(  121)   do i=0,nx
+(  122)     ic=i+1
+(  123)     tkx=rdx5*(tkh(i,j,k)+tkh(ic,j,k))
+(  124)     flx(i,j,k)=-tkx*(field(ic,j,k)-field(i,j,k))
+(  125)   end do 
+(  126)   do i=1,nx
+(  127)     ib=i-1
+(  128)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(ib,j,k))
+(  129)   end do 
+(  130)  end do 
+(  131) # 132 "diffuse_scalar3D.F90"
+(  132)  do j=0,ny
+(  133)   jc=j+1
+(  134)   do i=1,nx
+(  135)    tky=rdy5*(tkh(i,j,k)+tkh(i,jc,k))
+(  136)    flx(i,j,k)=-tky*(field(i,jc,k)-field(i,j,k))
+(  137)   end do 
+(  138)  end do
+(  139)  do j=1,ny
+(  140)   jb=j-1
+(  141)   do i=1,nx
+(  142)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(i,jb,k))
+(  143)   end do 
+(  144)  end do 
+(  145)  
+(  146) end do ! k
+(  147) # 149 "diffuse_scalar3D.F90"
+(  149) !  Vertical diffusion:
+(  150) # 151 "diffuse_scalar3D.F90"
+(  151) !flux(1) = 0.
+(  152) tmp=1./adzw(nz)
+(  153) do j=1,ny
+(  154)  do i=1,nx
+(  155)    flx(i,j,0)=fluxb(i,j)*rdz*rhow(1)
+(  156)    flx(i,j,nzm)=fluxt(i,j)*rdz*tmp*rhow(nz)
+(  157)    flux(1) = flux(1) + flx(i,j,0)
+(  158)  end do
+(  159) end do
+(  160) # 162 "diffuse_scalar3D.F90"
+(  162) do k=1,nzm-1
+(  163)  kc=k+1
+(  164) ! flux(kc)=0. 
+(  165)  rhoi = rhow(kc)/adzw(kc)
+(  166)  rdz5=0.5*rdz2 * grdf_z(k)
+(  167)  do j=1,ny
+(  168)   do i=1,nx
+(  169)     tkz=rdz5*(tkh(i,j,k)+tkh(i,j,kc))
+(  170)     flx(i,j,k)=-tkz*(field(i,j,kc)-field(i,j,k))*rhoi
+(  171)     flux(kc) = flux(kc) + flx(i,j,k)
+(  172)   end do 
+(  173)  end do
+(  174) end do
+(  175) # 176 "diffuse_scalar3D.F90"
+(  176) do k=1,nzm
+(  177)  kb=k-1
+(  178)  rhoi = 1./(adz(k)*rho(k))
+(  179)  do j=1,ny
+(  180)   do i=1,nx
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:44      page 9
+
+(  181)    dfdt(i,j,k)=dtn*(dfdt(i,j,k)-(flx(i,j,k)-flx(i,j,kb))*rhoi)
+(  182)    field(i,j,k)=field(i,j,k)+dfdt(i,j,k)
+(  183)   end do 
+(  184)  end do 
+(  185) end do 
+(  186) # 187 "diffuse_scalar3D.F90"
+(  187) end subroutine diffuse_scalar3D

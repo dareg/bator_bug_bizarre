@@ -1,0 +1,17 @@
+!depfile:oi_bc_soil_moisture.F90
+MODULE MODI_OI_BC_SOIL_MOISTURE 
+INTERFACE
+SUBROUTINE OI_BC_SOIL_MOISTURE (KNBPT,&
+!---------------------------------------------------------------------------------
+! - INPUT  1D
+   PSM_O,PSAB,&
+! - OUTPUT 1D .
+   PWS_O)    
+INTEGER, INTENT(IN)   :: KNBPT
+REAL    ,INTENT(IN)    :: PSM_O(KNBPT) 
+REAL    ,INTENT(IN)    :: PSAB(KNBPT)
+REAL    ,INTENT(OUT)   :: PWS_O(KNBPT) 
+END SUBROUTINE OI_BC_SOIL_MOISTURE
+
+END INTERFACE
+END MODULE MODI_OI_BC_SOIL_MOISTURE 

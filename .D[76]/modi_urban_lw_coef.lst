@@ -1,0 +1,261 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_urban_lw_coef.F90
+
+(    1) !depfile:urban_lw_coef.F90
+(    2) MODULE MODI_URBAN_LW_COEF
+(    3) INTERFACE
+(    4)     SUBROUTINE URBAN_LW_COEF(B, T, PLW_RAD, PEMIS_G, PTS_SR, PTS_G,                &
+(    5)                              PLW_WA_TO_WB, PLW_WA_TO_R, PLW_WB_TO_R,             &
+(    6)                              PLW_WA_TO_NR,PLW_WB_TO_NR,                          &
+(    7)                              PLW_WA_TO_G, PLW_WB_TO_G,                           &
+(    8)                              PLW_WA_TO_WIN, PLW_WB_TO_WIN,                       &
+(    9)                              PLW_R_TO_WA, PLW_R_TO_WB, PLW_R_TO_WIN,             &
+(   10)                              PLW_G_TO_WA, PLW_G_TO_WB, PLW_G_TO_WIN,             &
+(   11)                              PLW_S_TO_WA, PLW_S_TO_WB, PLW_S_TO_R,               &
+(   12)                              PLW_S_TO_NR, PLW_S_TO_G, PLW_S_TO_WIN,              &
+(   13)                              PLW_WIN_TO_WA, PLW_WIN_TO_WB, PLW_WIN_TO_R,         &
+(   14)                              PLW_WIN_TO_NR, PLW_WIN_TO_G,                        &
+(   15)                              PLW_NR_TO_WA, PLW_NR_TO_WB, PLW_NR_TO_WIN           )
+(   16) USE MODD_BEM_n, ONLY : BEM_t
+(   17) USE MODD_TEB_n, ONLY : TEB_t
+(   18) TYPE(BEM_t), INTENT(INOUT) :: B
+(   19) TYPE(TEB_t), INTENT(INOUT) :: T
+(   20) REAL, DIMENSION(:), INTENT(IN)  :: PLW_RAD  ! incoming LW radiation
+(   21) REAL, DIMENSION(:), INTENT(IN)  :: PEMIS_G  ! GARDEN area emissivity
+(   22) REAL, DIMENSION(:), INTENT(IN)  :: PTS_G    ! garden surface temperature
+(   23) REAL, DIMENSION(:), INTENT(IN)  :: PTS_SR   ! snow surface temperature
+(   24) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_WB! L.W. interactions wall->opposite wall
+(   25) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_R  ! L.W. interactions wall->road for road balance 
+(   26) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_R  ! L.W. interactions wall->road for road balance 
+(   27) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_NR ! L.W. interactions wall->snow for snow balance
+(   28) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_NR ! L.W. interactions wall->snow for snow balance
+(   29) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_G  ! L.W. interactions wall->GARDEN areas for garden balance
+(   30) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_G  ! L.W. interactions wall->GARDEN areas for garden balance
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_WIN! L.W. interactions wall->win for window balance
+(   32) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_WIN! L.W. interactions wall->win for window balance
+(   33) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WA ! L.W. interactions road->wall for wall balance
+(   34) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WB ! L.W. interactions road->wall for wall balance
+(   35) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WIN  ! L.W. interactions road->win for win balance
+(   36) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WA ! L.W. interactions GARDEN areas->wall for wall balance
+(   37) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WB ! L.W. interactions GARDEN areas->wall for wall balance
+(   38) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WIN  ! L.W. interactions GARDEN areas->road for window balance
+(   39) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WA ! L.W. interactions sky->wall for wall balance
+(   40) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WB ! L.W. interactions sky->wall for wall balance
+(   41) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_R  ! L.W. interactions sky->road for raod balance
+(   42) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_NR ! L.W. interactions sky->snow for snow balance 
+(   43) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_G  ! L.W. interactions sky->GARDEN areas for garden balance
+(   44) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WIN ! L.W. interactions sky->win for window balance
+(   45) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_WA ! L.W. interactions win->wall for wall balance
+(   46) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_WB ! L.W. interactions win->wall for wall balance
+(   47) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_R  ! L.W. interactions win->road for road balance
+(   48) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_NR ! L.W. interactions win->GARDEN areas for snow balance
+(   49) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_G  ! L.W. interactions win->GARDEN areas for garden balance
+(   50) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WA! L.W. interactions snow(road)->wall for wall balance
+(   51) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WB! L.W. interactions snow(road)->wall for wall balance
+(   52) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WIN ! L.W. interactions snow(road)->WIN areas for window balance
+(   53) END SUBROUTINE URBAN_LW_COEF
+(   54) 
+(   55) END INTERFACE
+(   56) END MODULE MODI_URBAN_LW_COEF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:38      page 4
+
+(    1) # 1 "modi_urban_lw_coef.F90"
+(    1) !depfile:urban_lw_coef.F90
+(    2) MODULE MODI_URBAN_LW_COEF
+(    3) INTERFACE
+(    4)     SUBROUTINE URBAN_LW_COEF(B, T, PLW_RAD, PEMIS_G, PTS_SR, PTS_G,                &
+(    5)                              PLW_WA_TO_WB, PLW_WA_TO_R, PLW_WB_TO_R,             &
+(    6)                              PLW_WA_TO_NR,PLW_WB_TO_NR,                          &
+(    7)                              PLW_WA_TO_G, PLW_WB_TO_G,                           &
+(    8)                              PLW_WA_TO_WIN, PLW_WB_TO_WIN,                       &
+(    9)                              PLW_R_TO_WA, PLW_R_TO_WB, PLW_R_TO_WIN,             &
+(   10)                              PLW_G_TO_WA, PLW_G_TO_WB, PLW_G_TO_WIN,             &
+(   11)                              PLW_S_TO_WA, PLW_S_TO_WB, PLW_S_TO_R,               &
+(   12)                              PLW_S_TO_NR, PLW_S_TO_G, PLW_S_TO_WIN,              &
+(   13)                              PLW_WIN_TO_WA, PLW_WIN_TO_WB, PLW_WIN_TO_R,         &
+(   14)                              PLW_WIN_TO_NR, PLW_WIN_TO_G,                        &
+(   15)                              PLW_NR_TO_WA, PLW_NR_TO_WB, PLW_NR_TO_WIN           )
+(   16) USE MODD_BEM_n, ONLY : BEM_t
+(   17) USE MODD_TEB_n, ONLY : TEB_t
+(   18) TYPE(BEM_t), INTENT(INOUT) :: B
+(   19) TYPE(TEB_t), INTENT(INOUT) :: T
+(   20) REAL, DIMENSION(:), INTENT(IN)  :: PLW_RAD  ! incoming LW radiation
+(   21) REAL, DIMENSION(:), INTENT(IN)  :: PEMIS_G  ! GARDEN area emissivity
+(   22) REAL, DIMENSION(:), INTENT(IN)  :: PTS_G    ! garden surface temperature
+(   23) REAL, DIMENSION(:), INTENT(IN)  :: PTS_SR   ! snow surface temperature
+(   24) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_WB! L.W. interactions wall->opposite wall
+(   25) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_R  ! L.W. interactions wall->road for road balance 
+(   26) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_R  ! L.W. interactions wall->road for road balance 
+(   27) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_NR ! L.W. interactions wall->snow for snow balance
+(   28) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_NR ! L.W. interactions wall->snow for snow balance
+(   29) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_G  ! L.W. interactions wall->GARDEN areas for garden balance
+(   30) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_G  ! L.W. interactions wall->GARDEN areas for garden balance
+(   31) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WA_TO_WIN! L.W. interactions wall->win for window balance
+(   32) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WB_TO_WIN! L.W. interactions wall->win for window balance
+(   33) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WA ! L.W. interactions road->wall for wall balance
+(   34) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WB ! L.W. interactions road->wall for wall balance
+(   35) REAL, DIMENSION(:), INTENT(OUT) :: PLW_R_TO_WIN  ! L.W. interactions road->win for win balance
+(   36) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WA ! L.W. interactions GARDEN areas->wall for wall balance
+(   37) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WB ! L.W. interactions GARDEN areas->wall for wall balance
+(   38) REAL, DIMENSION(:), INTENT(OUT) :: PLW_G_TO_WIN  ! L.W. interactions GARDEN areas->road for window balance
+(   39) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WA ! L.W. interactions sky->wall for wall balance
+(   40) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WB ! L.W. interactions sky->wall for wall balance
+(   41) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_R  ! L.W. interactions sky->road for raod balance
+(   42) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_NR ! L.W. interactions sky->snow for snow balance 
+(   43) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_G  ! L.W. interactions sky->GARDEN areas for garden balance
+(   44) REAL, DIMENSION(:), INTENT(OUT) :: PLW_S_TO_WIN ! L.W. interactions sky->win for window balance
+(   45) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_WA ! L.W. interactions win->wall for wall balance
+(   46) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_WB ! L.W. interactions win->wall for wall balance
+(   47) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_R  ! L.W. interactions win->road for road balance
+(   48) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_NR ! L.W. interactions win->GARDEN areas for snow balance
+(   49) REAL, DIMENSION(:), INTENT(OUT) :: PLW_WIN_TO_G  ! L.W. interactions win->GARDEN areas for garden balance
+(   50) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WA! L.W. interactions snow(road)->wall for wall balance
+(   51) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WB! L.W. interactions snow(road)->wall for wall balance
+(   52) REAL, DIMENSION(:), INTENT(OUT) :: PLW_NR_TO_WIN ! L.W. interactions snow(road)->WIN areas for window balance
+(   53) END SUBROUTINE URBAN_LW_COEF
+(   54) # 55 "modi_urban_lw_coef.F90"
+(   55) END INTERFACE
+(   56) END MODULE MODI_URBAN_LW_COEF

@@ -1,0 +1,255 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:55      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:55      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_isba_snow_agr.F90
+
+(    1) !depfile:isba_snow_agr.F90
+(    2) MODULE MODI_ISBA_SNOW_AGR
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_SNOW_AGR(KK, PK, PEK, DMK, DK, DEK, &
+(    5)                                OMEB, OMEB_LITTER, PEXNS, PEXNA, PTA, PQA,  &
+(    6)                                PZREF, PUREF, PDIRCOSZW, PVMOD, PRR, PSR,   &
+(    7)                                AT, PEMIS, PALB, PUSTAR, PLES3L, PLEL3L,    &
+(    8)                                PEVAP3L, PQS3L, PALB3L, PGSFCSNOW,          &
+(    9)                                PZGRNDFLUX, PFLSN_COR, PEMIST, PPALPHAN )
+(   10) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   11) USE MODD_DIAG_n, ONLY : DIAG_t
+(   12) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   13) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   14) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   15) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   16) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   17) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   18) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   19) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   20) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   21) LOGICAL,              INTENT(IN)  :: OMEB       ! True = patch with multi-energy balance 
+(   22) LOGICAL, INTENT(IN)               :: OMEB_LITTER !True = litter option activated
+(   23) REAL, DIMENSION(:), INTENT(IN)  :: PEXNS     ! Exner function at the surface
+(   24) REAL, DIMENSION(:), INTENT(IN)  :: PEXNA     ! Exner function
+(   25) REAL, DIMENSION(:), INTENT(IN)  :: PTA       ! air temperature
+(   26) REAL, DIMENSION(:), INTENT(IN)  :: PQA       ! air specific humidity
+(   27) REAL, DIMENSION(:), INTENT(IN)  :: PZREF     ! reference height of the first atmospheric level
+(   28) REAL, DIMENSION(:), INTENT(IN)  :: PUREF     ! reference height of the wind
+(   29) REAL, DIMENSION(:), INTENT(IN)  :: PDIRCOSZW ! Cosinus of the angle between the normal to the surface and the vertical
+(   30) REAL, DIMENSION(:), INTENT(IN)  :: PVMOD     ! module of the horizontal wind
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:55      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(IN)  :: PRR       ! Rain rate (in kg/m2/s)
+(   32) REAL, DIMENSION(:), INTENT(IN)  :: PSR       ! Snow rate (in kg/m2/s)
+(   33) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT      ! atmospheric turbulence parameters
+(   34) REAL, DIMENSION(:), INTENT(IN)  :: PALB       ! albedo 
+(   35) REAL, DIMENSION(:), INTENT(IN)  :: PEMIS      ! emissivity
+(   36) REAL, DIMENSION(:), INTENT(IN)  :: PPALPHAN   ! fraction of the the explicit veg.
+(   37) REAL, DIMENSION(:),   INTENT(IN) :: PALB3L      ! Snow albedo
+(   38) REAL, DIMENSION(:),   INTENT(IN) :: PQS3L       ! Surface humidity
+(   39) REAL, DIMENSION(:), INTENT(IN)    :: PZGRNDFLUX ! snow/soil-biomass interface flux (W/m2)
+(   40) REAL, DIMENSION(:), INTENT(IN)    :: PFLSN_COR  ! snow/soil-biomass correction flux (W/m2)
+(   41) REAL, DIMENSION(:), INTENT(INOUT) :: PGSFCSNOW  ! heat flux from snow sfc to sub sfc layers (W/m2)
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PLES3L     ! sublimation from ISBA-ES(3L)
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PLEL3L     ! evaporation heat flux of water in the snow (W/m2)
+(   44) REAL, DIMENSION(:), INTENT(INOUT) :: PEVAP3L    ! evaporation flux over snow from ISBA-ES (kg/m2/s)
+(   45) REAL, DIMENSION(:), INTENT(INOUT) :: PEMIST   ! total surface emissivity
+(   46) REAL, DIMENSION(:), INTENT(INOUT) :: PUSTAR   ! friction velocity
+(   47) END SUBROUTINE ISBA_SNOW_AGR
+(   48) 
+(   49) END INTERFACE
+(   50) END MODULE MODI_ISBA_SNOW_AGR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:55      page 4
+
+(    1) # 1 "modi_isba_snow_agr.F90"
+(    1) !depfile:isba_snow_agr.F90
+(    2) MODULE MODI_ISBA_SNOW_AGR
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_SNOW_AGR(KK, PK, PEK, DMK, DK, DEK, &
+(    5)                                OMEB, OMEB_LITTER, PEXNS, PEXNA, PTA, PQA,  &
+(    6)                                PZREF, PUREF, PDIRCOSZW, PVMOD, PRR, PSR,   &
+(    7)                                AT, PEMIS, PALB, PUSTAR, PLES3L, PLEL3L,    &
+(    8)                                PEVAP3L, PQS3L, PALB3L, PGSFCSNOW,          &
+(    9)                                PZGRNDFLUX, PFLSN_COR, PEMIST, PPALPHAN )
+(   10) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   11) USE MODD_DIAG_n, ONLY : DIAG_t
+(   12) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   13) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   14) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   15) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   16) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   17) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   18) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   19) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   20) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   21) LOGICAL,              INTENT(IN)  :: OMEB       ! True = patch with multi-energy balance 
+(   22) LOGICAL, INTENT(IN)               :: OMEB_LITTER !True = litter option activated
+(   23) REAL, DIMENSION(:), INTENT(IN)  :: PEXNS     ! Exner function at the surface
+(   24) REAL, DIMENSION(:), INTENT(IN)  :: PEXNA     ! Exner function
+(   25) REAL, DIMENSION(:), INTENT(IN)  :: PTA       ! air temperature
+(   26) REAL, DIMENSION(:), INTENT(IN)  :: PQA       ! air specific humidity
+(   27) REAL, DIMENSION(:), INTENT(IN)  :: PZREF     ! reference height of the first atmospheric level
+(   28) REAL, DIMENSION(:), INTENT(IN)  :: PUREF     ! reference height of the wind
+(   29) REAL, DIMENSION(:), INTENT(IN)  :: PDIRCOSZW ! Cosinus of the angle between the normal to the surface and the vertical
+(   30) REAL, DIMENSION(:), INTENT(IN)  :: PVMOD     ! module of the horizontal wind
+(   31) REAL, DIMENSION(:), INTENT(IN)  :: PRR       ! Rain rate (in kg/m2/s)
+(   32) REAL, DIMENSION(:), INTENT(IN)  :: PSR       ! Snow rate (in kg/m2/s)
+(   33) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT      ! atmospheric turbulence parameters
+(   34) REAL, DIMENSION(:), INTENT(IN)  :: PALB       ! albedo 
+(   35) REAL, DIMENSION(:), INTENT(IN)  :: PEMIS      ! emissivity
+(   36) REAL, DIMENSION(:), INTENT(IN)  :: PPALPHAN   ! fraction of the the explicit veg.
+(   37) REAL, DIMENSION(:),   INTENT(IN) :: PALB3L      ! Snow albedo
+(   38) REAL, DIMENSION(:),   INTENT(IN) :: PQS3L       ! Surface humidity
+(   39) REAL, DIMENSION(:), INTENT(IN)    :: PZGRNDFLUX ! snow/soil-biomass interface flux (W/m2)
+(   40) REAL, DIMENSION(:), INTENT(IN)    :: PFLSN_COR  ! snow/soil-biomass correction flux (W/m2)
+(   41) REAL, DIMENSION(:), INTENT(INOUT) :: PGSFCSNOW  ! heat flux from snow sfc to sub sfc layers (W/m2)
+(   42) REAL, DIMENSION(:), INTENT(IN)    :: PLES3L     ! sublimation from ISBA-ES(3L)
+(   43) REAL, DIMENSION(:), INTENT(IN)    :: PLEL3L     ! evaporation heat flux of water in the snow (W/m2)
+(   44) REAL, DIMENSION(:), INTENT(INOUT) :: PEVAP3L    ! evaporation flux over snow from ISBA-ES (kg/m2/s)
+(   45) REAL, DIMENSION(:), INTENT(INOUT) :: PEMIST   ! total surface emissivity
+(   46) REAL, DIMENSION(:), INTENT(INOUT) :: PUSTAR   ! friction velocity
+(   47) END SUBROUTINE ISBA_SNOW_AGR
+(   48) # 49 "modi_isba_snow_agr.F90"
+(   49) END INTERFACE
+(   50) END MODULE MODI_ISBA_SNOW_AGR

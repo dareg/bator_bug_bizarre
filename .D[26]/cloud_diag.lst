@@ -1,0 +1,496 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: cloud_diag.F90
+
+(    1) 
+(    2) subroutine cloud_diag
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) !  Condensation of cloud water/cloud ice.
+(   15) 
+(   16) use vars
+(   17) use microphysics
+(   18) use micro_params
+(   19) use params
+(   20) use real_size
+(   21) 
+(   22) implicit none
+(   23) 
+(   24) integer i,j,k, kb, kc
+(   25) real(RR) dtabs, tabs1, an, bn, ap, bp, om, ag, omp
+(   26) real(RR) fac1,fac2  
+(   27) real(RR) fff,dfff,qsatt,dqsat
+(   28) real(RR) lstarn,dlstarn,lstarp,dlstarp
+(   29) integer niter
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 3
+
+(   31) an = 1./(tbgmax-tbgmin)
+(   32) bn = tbgmin * an
+(   33) ap = 1./(tprmax-tprmin)
+(   34) bp = tprmin * ap
+(   35) fac1 = fac_cond+(1+bp)*fac_fus
+(   36) fac2 = fac_fus*ap
+(   37) ag = 1./(tgrmax-tgrmin)
+(   38) 
+(   39) ! call t_startf ('cloud') ! commented by Phani
+(   40) 
+(   41) associate(q=>micro_field(:,:,:,1),qp=>micro_field(:,:,:,2))
+(   42) 
+(   43) do k = 1, nzm
+(   44)  do j = 1, ny
+(   45)   do i = 1, nx
+(   46) 
+(   47)     q(i,j,k)=max(0.,q(i,j,k))
+(   48) 
+(   49) 
+(   50) ! Initail guess for temperature assuming no cloud water/ice:
+(   51) 
+(   52) 
+(   53)     tabs(i,j,k) = t(i,j,k)-gamaz(k)
+(   54)     tabs1=(tabs(i,j,k)+fac1*qp(i,j,k))/(1.+fac2*qp(i,j,k))
+(   55) 
+(   56) ! Warm cloud:
+(   57) 
+(   58)     if(tabs1.ge.tbgmax) then
+(   59) 
+(   60)       tabs1=tabs(i,j,k)+fac_cond*qp(i,j,k)
+(   61)       qsatt = qsatw_crm(tabs1,pres(k))
+(   62) 
+(   63) ! Ice cloud:
+(   64) 
+(   65)     elseif(tabs1.le.tbgmin) then
+(   66) 
+(   67)       tabs1=tabs(i,j,k)+fac_sub*qp(i,j,k)
+(   68)       qsatt = qsati_crm(tabs1,pres(k))
+(   69) 
+(   70) ! Mixed-phase cloud:
+(   71) 
+(   72)     else
+(   73) 
+(   74)       om = an*tabs1-bn
+(   75)       qsatt = om*qsatw_crm(tabs1,pres(k))+(1.-om)*qsati_crm(tabs1,pres(k))
+(   76) 
+(   77)     endif
+(   78) 
+(   79) 
+(   80) !  Test if condensation is possible:
+(   81) 
+(   82) 
+(   83)     if(q(i,j,k).gt.qsatt) then
+(   84) 
+(   85)       niter=0
+(   86)       dtabs = 100.
+(   87)       do while(abs(dtabs).gt.0.01.and.niter.lt.10)
+(   88)        if(tabs1.ge.tbgmax) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 4
+
+(   89)         om=1.
+(   90)         lstarn=fac_cond
+(   91)         dlstarn=0.
+(   92)         qsatt=qsatw_crm(tabs1,pres(k))
+(   93)         dqsat=dtqsatw_crm(tabs1,pres(k))
+(   94)        else if(tabs1.le.tbgmin) then
+(   95)         om=0.
+(   96)         lstarn=fac_sub
+(   97)         dlstarn=0.
+(   98)         qsatt=qsati_crm(tabs1,pres(k))
+(   99)         dqsat=dtqsati_crm(tabs1,pres(k))
+(  100)        else
+(  101)         om=an*tabs1-bn
+(  102)         lstarn=fac_cond+(1.-om)*fac_fus
+(  103)         dlstarn=an*fac_fus
+(  104)         qsatt=om*qsatw_crm(tabs1,pres(k))+(1.-om)*qsati_crm(tabs1,pres(k))
+(  105)         dqsat=om*dtqsatw_crm(tabs1,pres(k))+(1.-om)*dtqsati_crm(tabs1,pres(k))
+(  106)        endif
+(  107)        if(tabs1.ge.tprmax) then
+(  108)         omp=1.
+(  109)         lstarp=fac_cond
+(  110)         dlstarp=0.
+(  111)        else if(tabs1.le.tprmin) then
+(  112)         omp=0.
+(  113)         lstarp=fac_sub
+(  114)         dlstarp=0.
+(  115)        else
+(  116)         omp=ap*tabs1-bp
+(  117)         lstarp=fac_cond+(1.-omp)*fac_fus
+(  118)         dlstarp=ap*fac_fus
+(  119)        endif
+(  120)        fff = tabs(i,j,k)-tabs1+lstarn*(q(i,j,k)-qsatt)+lstarp*qp(i,j,k)
+(  121)        dfff=dlstarn*(q(i,j,k)-qsatt)+dlstarp*qp(i,j,k)-lstarn*dqsat-1.
+(  122)        dtabs=-fff/dfff
+(  123)        niter=niter+1
+(  124)        tabs1=tabs1+dtabs
+(  125)       end do   
+(  126) 
+(  127)       qsatt = qsatt + dqsat * dtabs
+(  128)       qn(i,j,k) = max(0.,q(i,j,k)-qsatt)
+(  129) 
+(  130)     else
+(  131) 
+(  132)       qn(i,j,k) = 0.
+(  133) 
+(  134)     endif
+(  135) 
+(  136)     tabs(i,j,k) = tabs1
+(  137)     qp(i,j,k) = max(0.,qp(i,j,k)) ! just in case
+(  138) 
+(  139)   end do
+(  140)  end do
+(  141) end do
+(  142) 
+(  143) end associate
+(  144) 
+(  145) ! call t_stopf ('cloud') ! commented by Phani
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 5
+
+(  147) end subroutine cloud_diag
+(  148) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 6
+
+(    1) # 1 "cloud_diag.F90"
+(    1) # 2 "cloud_diag.F90"
+(    2) subroutine cloud_diag
+(    3) # 4 "cloud_diag.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "cloud_diag.F90"
+(   14) !  Condensation of cloud water/cloud ice.
+(   15) # 16 "cloud_diag.F90"
+(   16) use vars
+(   17) use microphysics
+(   18) use micro_params
+(   19) use params
+(   20) use real_size
+(   21) # 22 "cloud_diag.F90"
+(   22) implicit none
+(   23) # 24 "cloud_diag.F90"
+(   24) integer i,j,k, kb, kc
+(   25) real(RR) dtabs, tabs1, an, bn, ap, bp, om, ag, omp
+(   26) real(RR) fac1,fac2  
+(   27) real(RR) fff,dfff,qsatt,dqsat
+(   28) real(RR) lstarn,dlstarn,lstarp,dlstarp
+(   29) integer niter
+(   30) # 31 "cloud_diag.F90"
+(   31) an = 1./(tbgmax-tbgmin)
+(   32) bn = tbgmin * an
+(   33) ap = 1./(tprmax-tprmin)
+(   34) bp = tprmin * ap
+(   35) fac1 = fac_cond+(1+bp)*fac_fus
+(   36) fac2 = fac_fus*ap
+(   37) ag = 1./(tgrmax-tgrmin)
+(   38) # 39 "cloud_diag.F90"
+(   39) ! call t_startf ('cloud') ! commented by Phani
+(   40) # 41 "cloud_diag.F90"
+(   41) associate(q=>micro_field(:,:,:,1),qp=>micro_field(:,:,:,2))
+(   42) # 43 "cloud_diag.F90"
+(   43) do k = 1, nzm
+(   44)  do j = 1, ny
+(   45)   do i = 1, nx
+(   46) # 47 "cloud_diag.F90"
+(   47)     q(i,j,k)=max(0.,q(i,j,k))
+(   48) # 50 "cloud_diag.F90"
+(   50) ! Initail guess for temperature assuming no cloud water/ice:
+(   51) # 53 "cloud_diag.F90"
+(   53)     tabs(i,j,k) = t(i,j,k)-gamaz(k)
+(   54)     tabs1=(tabs(i,j,k)+fac1*qp(i,j,k))/(1.+fac2*qp(i,j,k))
+(   55) # 56 "cloud_diag.F90"
+(   56) ! Warm cloud:
+(   57) # 58 "cloud_diag.F90"
+(   58)     if(tabs1.ge.tbgmax) then
+(   59) # 60 "cloud_diag.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 7
+
+(   60)       tabs1=tabs(i,j,k)+fac_cond*qp(i,j,k)
+(   61)       qsatt = qsatw_crm(tabs1,pres(k))
+(   62) # 63 "cloud_diag.F90"
+(   63) ! Ice cloud:
+(   64) # 65 "cloud_diag.F90"
+(   65)     elseif(tabs1.le.tbgmin) then
+(   66) # 67 "cloud_diag.F90"
+(   67)       tabs1=tabs(i,j,k)+fac_sub*qp(i,j,k)
+(   68)       qsatt = qsati_crm(tabs1,pres(k))
+(   69) # 70 "cloud_diag.F90"
+(   70) ! Mixed-phase cloud:
+(   71) # 72 "cloud_diag.F90"
+(   72)     else
+(   73) # 74 "cloud_diag.F90"
+(   74)       om = an*tabs1-bn
+(   75)       qsatt = om*qsatw_crm(tabs1,pres(k))+(1.-om)*qsati_crm(tabs1,pres(k))
+(   76) # 77 "cloud_diag.F90"
+(   77)     endif
+(   78) # 80 "cloud_diag.F90"
+(   80) !  Test if condensation is possible:
+(   81) # 83 "cloud_diag.F90"
+(   83)     if(q(i,j,k).gt.qsatt) then
+(   84) # 85 "cloud_diag.F90"
+(   85)       niter=0
+(   86)       dtabs = 100.
+(   87)       do while(abs(dtabs).gt.0.01.and.niter.lt.10)
+(   88)        if(tabs1.ge.tbgmax) then
+(   89)         om=1.
+(   90)         lstarn=fac_cond
+(   91)         dlstarn=0.
+(   92)         qsatt=qsatw_crm(tabs1,pres(k))
+(   93)         dqsat=dtqsatw_crm(tabs1,pres(k))
+(   94)        else if(tabs1.le.tbgmin) then
+(   95)         om=0.
+(   96)         lstarn=fac_sub
+(   97)         dlstarn=0.
+(   98)         qsatt=qsati_crm(tabs1,pres(k))
+(   99)         dqsat=dtqsati_crm(tabs1,pres(k))
+(  100)        else
+(  101)         om=an*tabs1-bn
+(  102)         lstarn=fac_cond+(1.-om)*fac_fus
+(  103)         dlstarn=an*fac_fus
+(  104)         qsatt=om*qsatw_crm(tabs1,pres(k))+(1.-om)*qsati_crm(tabs1,pres(k))
+(  105)         dqsat=om*dtqsatw_crm(tabs1,pres(k))+(1.-om)*dtqsati_crm(tabs1,pres(k))
+(  106)        endif
+(  107)        if(tabs1.ge.tprmax) then
+(  108)         omp=1.
+(  109)         lstarp=fac_cond
+(  110)         dlstarp=0.
+(  111)        else if(tabs1.le.tprmin) then
+(  112)         omp=0.
+(  113)         lstarp=fac_sub
+(  114)         dlstarp=0.
+(  115)        else
+(  116)         omp=ap*tabs1-bp
+(  117)         lstarp=fac_cond+(1.-omp)*fac_fus
+(  118)         dlstarp=ap*fac_fus
+(  119)        endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:34      page 8
+
+(  120)        fff = tabs(i,j,k)-tabs1+lstarn*(q(i,j,k)-qsatt)+lstarp*qp(i,j,k)
+(  121)        dfff=dlstarn*(q(i,j,k)-qsatt)+dlstarp*qp(i,j,k)-lstarn*dqsat-1.
+(  122)        dtabs=-fff/dfff
+(  123)        niter=niter+1
+(  124)        tabs1=tabs1+dtabs
+(  125)       end do   
+(  126) # 127 "cloud_diag.F90"
+(  127)       qsatt = qsatt + dqsat * dtabs
+(  128)       qn(i,j,k) = max(0.,q(i,j,k)-qsatt)
+(  129) # 130 "cloud_diag.F90"
+(  130)     else
+(  131) # 132 "cloud_diag.F90"
+(  132)       qn(i,j,k) = 0.
+(  133) # 134 "cloud_diag.F90"
+(  134)     endif
+(  135) # 136 "cloud_diag.F90"
+(  136)     tabs(i,j,k) = tabs1
+(  137)     qp(i,j,k) = max(0.,qp(i,j,k)) ! just in case
+(  138) # 139 "cloud_diag.F90"
+(  139)   end do
+(  140)  end do
+(  141) end do
+(  142) # 143 "cloud_diag.F90"
+(  143) end associate
+(  144) # 145 "cloud_diag.F90"
+(  145) ! call t_stopf ('cloud') ! commented by Phani
+(  146) # 147 "cloud_diag.F90"
+(  147) end subroutine cloud_diag

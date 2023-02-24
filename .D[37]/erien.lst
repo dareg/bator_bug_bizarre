@@ -1,0 +1,899 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: erien.F90
+
+(    1) SUBROUTINE ERIEN(CDNAMC,KTYPTR,LDMAP,&
+(    2)  & KTRONC,KDGL,KNXLON,KNLOPA,PSINLA,&
+(    3)  & KFLEV,PREF,PVALH,PVBH,&
+(    4)  & PEPS,KULOUT)  
+(    5) 
+(    6) !**** *ERIEN*  - Read Input ENvironment - LAM case.
+(    7) 
+(    8) !     Purpose.
+(    9) !     --------
+(   10) !           It extracts geometry information from ALADIN file.
+(   11) 
+(   12) !**   Interface.
+(   13) !     ----------
+(   14) !        *CALL* *ERIEN(...)
+(   15) 
+(   16) !        Explicit arguments :
+(   17) !        --------------------
+(   18) !        Input - Output :
+(   19) !        ----------------------------
+(   20) 
+(   21) !        CDNAMC        ...   Name of the cadre
+(   22) 
+(   23) !        Determination of reference geometry:
+(   24) 
+(   25) !        KTYPTR        ...   Truncation NMSMAX
+(   26) !        LDMAP         ...   .TRUE. : Map projection calculated by EGGPACK
+(   27) !                      ...   .FALSE.: Biperiodic experiment file, EGGPACK
+(   28) !                                     routine not called
+(   29) !        KTRONC        ...   Truncation NSMAX
+(   30) !        KDGL          ...   Number of latitudes without poles
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 3
+
+(   31) !        KNXLON        ...   Max. number of longitudes at a parallel
+(   32) !        KNLOPA        ...   Limited Area characteristics
+(   33) !        PSINLA        ...   Horizontal geometry characteristics
+(   34) !        KFLEV         ...   Number of vertical levels
+(   35) !        PREF          ...   Reference pressure
+(   36) !        PVALH         ...   "A" coefficients of vertical system
+(   37) !        PVBH          ...   "B" coefficients of vertical system
+(   38) 
+(   39) !   -----------------------------------------------------------------
+(   40) !        Input :
+(   41) !        -------
+(   42) 
+(   43) !        PEPS          ...   Precision of the tests on real variables
+(   44) !        KULOUT        ...   Output file unit
+(   45) !   -----------------------------------------------------------------
+(   46) 
+(   47) !        Implicit arguments :
+(   48) !        --------------------
+(   49) !        YOMCST
+(   50) 
+(   51) !     Method.
+(   52) !     -------
+(   53) !        See documentation
+(   54) 
+(   55) !     Externals.
+(   56) !     ----------
+(   57) !        EGGX_N, some FA.. routines.
+(   58) 
+(   59) !     Reference.
+(   60) !     ----------
+(   61) !        ARPEGE/ALADIN Documentation.
+(   62) !        Document 'Control of coherence between namelist and Arpege File'
+(   63) !        by R. El Khatib
+(   64) 
+(   65) !     Author.
+(   66) !     -------
+(   67) !        R. El Khatib *METEO-FRANCE*
+(   68) 
+(   69) !     Modifications.
+(   70) !     --------------
+(   71) !        Original : 91-12-10
+(   72) !        R. El Khatib 24-Mar-2017 Extracted the KINF==1 case from ECHIEN, to clean up GEOMETRY intents
+(   73) !     ------------------------------------------------------------------
+(   74) 
+(   75) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   76) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   77) 
+(   78) USE YOMCST_IFSAUX   , ONLY : XRPI , XRA
+(   79) 
+(   80) IMPLICIT NONE
+(   81) 
+(   82) !     ------------------------------------------------------------------
+(   83) 
+(   84) INTEGER(KIND=JPIM), PARAMETER :: JPXGEO=18
+(   85) INTEGER(KIND=JPIM), PARAMETER :: JPXPAH=8
+(   86) 
+(   87) !     ------------------------------------------------------------------
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 4
+
+(   89) INTEGER(KIND=JPIM),INTENT(INOUT) :: KFLEV 
+(   90) CHARACTER(LEN=16),INTENT(IN)     :: CDNAMC
+(   91) INTEGER(KIND=JPIM),INTENT(INOUT) :: KTYPTR 
+(   92) LOGICAL           ,INTENT(INOUT) :: LDMAP 
+(   93) INTEGER(KIND=JPIM),INTENT(INOUT) :: KTRONC 
+(   94) INTEGER(KIND=JPIM),INTENT(INOUT) :: KDGL 
+(   95) INTEGER(KIND=JPIM),INTENT(INOUT) :: KNXLON 
+(   96) INTEGER(KIND=JPIM),INTENT(INOUT) :: KNLOPA(JPXPAH) 
+(   97) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSINLA(JPXGEO) 
+(   98) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PREF 
+(   99) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVALH(0:KFLEV) 
+(  100) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVBH(0:KFLEV) 
+(  101) REAL(KIND=JPRB)   ,INTENT(IN)    :: PEPS 
+(  102) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(  103) 
+(  104) !     ------------------------------------------------------------------
+(  105) 
+(  106) INTEGER(KIND=JPIM), ALLOCATABLE :: INLOPA(:),INOZPA(:)
+(  107) REAL(KIND=JPRB), ALLOCATABLE :: ZVALH(:),ZVBH(:)
+(  108) REAL(KIND=JPRB), ALLOCATABLE :: ZSINLA(:)
+(  109) 
+(  110) ! Work files for EGGX only
+(  111) REAL(KIND=JPRB), ALLOCATABLE :: ZGELAM(:,:), ZGELAT(:,:), ZGM(:,:),&
+(  112)  & ZGENORX(:,:),ZGENORY(:,:)  
+(  113) 
+(  114) INTEGER(KIND=JPIM) :: IERR, IERRA, II, INIVER, INLATI, INXLON, ITRONC, &
+(  115)  & ITYPTR, JFLEV, JL, JLEV, IROTEQ, ISOTRP, IGIVO, IMAXLEV, IMAXGL, & 
+(  116)  & IMAXLON, IMAXTRUNC , IBWX, IBWY
+(  117) 
+(  118) LOGICAL :: LLMAP, LLGARD
+(  119) 
+(  120) REAL(KIND=JPRB) :: Z2PI, ZCLOPO, ZCODIL, ZDIFF, ZREF, ZSLAPO, ZSLOPO, ZEPS
+(  121) REAL(KIND=JPRB) :: ZRPK, ZLON0, ZLAT0, ZLONC, ZLATC, ZDELX, ZDELY, ZELX, ZELY
+(  122) REAL(KIND=JPRB) :: ZEXWN,ZEYWN, ZLON1, ZLAT1, ZLON2, ZLAT2
+(  123) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  124) 
+(  125) !     ------------------------------------------------------------------
+(  126) 
+(  127) #include "eggx_n.h"
+(  128) 
+(  129) #include "abor1.intfb.h"
+(  130) 
+(  131) !     ------------------------------------------------------------------
+(  132) 
+(  133) IF (LHOOK) CALL DR_HOOK('ERIEN',0,ZHOOK_HANDLE)
+(  134) 
+(  135) !     ------------------------------------------------------------------
+(  136) 
+(  137) !*       0.    Get software limits
+(  138) !              -------------------
+(  139) 
+(  140) CALL FALIMU(IMAXLEV,IMAXTRUNC,IMAXGL,IMAXLON)
+(  141) ALLOCATE(INLOPA(IMAXGL))
+(  142) ALLOCATE(INOZPA(IMAXGL))
+(  143) ALLOCATE(ZSINLA(IMAXGL))
+(  144) ALLOCATE(ZVALH(0:IMAXLEV))
+(  145) ALLOCATE(ZVBH(0:IMAXLEV))
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 5
+
+(  147) !*       1.    Read file characteristics
+(  148) !              -------------------------
+(  149) 
+(  150) WRITE(KULOUT,*) ' HAF, HAF : CADRE : ',CDNAMC
+(  151) LLGARD=.FALSE.
+(  152) CALL FACIES(CDNAMC,ITYPTR,ZSLAPO,ZCLOPO,ZSLOPO,ZCODIL,ITRONC,&
+(  153)  & INLATI,INXLON,INLOPA,INOZPA,ZSINLA,INIVER,ZREF,ZVALH,&
+(  154)  & ZVBH,LLGARD)  
+(  155) 
+(  156) IF (INIVER > KFLEV) THEN
+(  157)   CALL ABOR1('ERIEN : MAX. NUMBER OF LEVEL IN MODEL TOO SMALL !')
+(  158) ENDIF
+(  159) 
+(  160) !     ------------------------------------------------------------------
+(  161) 
+(  162) !*       2.    Preliminary test
+(  163) !              ----------------
+(  164) 
+(  165) IF(ITYPTR > 0) THEN
+(  166)   WRITE(KULOUT,*) 'YOU ARE USING A FILE ARPEGE ',&
+(  167)    & 'WHILE THE MODEL EXPECTS A FILE ALADIN'  
+(  168)   CALL ABOR1('ERIEN: ABOR1 CALLED 2')
+(  169) ELSE
+(  170)   ITYPTR = - ITYPTR
+(  171)   LLMAP=ZCODIL >= 0.0_JPRB
+(  172) ENDIF
+(  173) 
+(  174) Z2PI = 2.0_JPRB*XRPI
+(  175) 
+(  176) IF(ZSINLA(1) >= 0.0_JPRB) THEN
+(  177)   ! Echien smells the old EGGX (i.e. the old format of the cadre)
+(  178)   WRITE(KULOUT,*) ' the cadre >>',CDNAMC,'<< has the old EGGX format'
+(  179)   WRITE(KULOUT,*) ' => consistency check of the geometry in the cadre&
+(  180)    & will be more forgiving'
+(  181) 
+(  182)   ZEPS=PEPS*1000._JPRB
+(  183) 
+(  184)   ZRPK=ZSINLA(10)
+(  185)   ZLON0=ZSINLA(8)
+(  186)   ZLAT0=ZSINLA(9)
+(  187)   ZLON1=ZSINLA(4)
+(  188)   ZLAT1=ZSINLA(5)
+(  189)   ZLON2=ZSINLA(6)
+(  190)   ZLAT2=ZSINLA(7)
+(  191)   ZELX=ZSINLA(13)
+(  192)   ZELY=ZSINLA(14)
+(  193)   ZDELX=ZSINLA(15)
+(  194)   ZDELY=ZSINLA(16)
+(  195)   ZEXWN=ZSINLA(17)
+(  196)   ZEYWN=ZSINLA(18)
+(  197)   ZLONC=ZSINLA(2)
+(  198)   ZLATC=ZSINLA(3)
+(  199) 
+(  200)   IF (ZRPK < 0.0_JPRB) THEN
+(  201)     ! latlon case :
+(  202)     IF (ZLON1 <= ZLON2) THEN 
+(  203)       ZLONC=MOD(0.5_JPRB*(ZLON1+ZLON2),Z2PI)
+(  204)     ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 6
+
+(  205)       ZLONC=MOD(0.5_JPRB*(ZLON1-Z2PI+ZLON2),Z2PI)
+(  206)     ENDIF
+(  207)     ZLATC=0.5_JPRB*(ZLAT1+ZLAT2)
+(  208)     ZDELX=ZSINLA(15)
+(  209)     ZDELY=ZSINLA(16)
+(  210)   ELSEIF(LLMAP) THEN
+(  211)     ! projection
+(  212)     ALLOCATE(ZGELAM(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  213)     ALLOCATE(ZGELAT(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  214)     ALLOCATE(ZGM(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  215)     ALLOCATE(ZGENORX(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  216)     ALLOCATE(ZGENORY(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  217)     IROTEQ=INT(ZSINLA(1))
+(  218)     ISOTRP=INT(ZSINLA(11))
+(  219)     IGIVO=INT(ZSINLA(12))
+(  220) 
+(  221)     WRITE(KULOUT,*) 'Call EGGX_N by ERIEN'
+(  222) 
+(  223)     CALL EGGX_N(XRPI,XRA,IROTEQ,ZSINLA(2),ZSINLA(3),ZSLAPO,&
+(  224)      & ZSINLA(4),ZSINLA(5),ZSINLA(6),ZSINLA(7),ZLON0,ZLAT0,&
+(  225)      & ZSINLA(10),KULOUT,ISOTRP,IGIVO,&
+(  226)      & ZGELAM,ZGELAT,ZGM,ZGENORX,ZGENORY,&
+(  227)      & INLOPA(3),INLOPA(4),INLOPA(5),INLOPA(6),&
+(  228)      & INLOPA(3),INLOPA(4),INLOPA(5),INLOPA(6),&
+(  229)      & ZDELX,ZDELY,ZLONC,ZLATC)  
+(  230)     DEALLOCATE(ZGELAM)
+(  231)     DEALLOCATE(ZGELAT)
+(  232)     DEALLOCATE(ZGM)
+(  233)     DEALLOCATE(ZGENORX)
+(  234)     DEALLOCATE(ZGENORY)
+(  235)     ZSINLA(1)=REAL(IROTEQ,JPRB)
+(  236)     ZSINLA(11)=REAL(ISOTRP,JPRB)
+(  237)     ZSINLA(12)=REAL(IGIVO,JPRB)
+(  238)   ENDIF
+(  239) 
+(  240) ELSE
+(  241) 
+(  242)   ZEPS=PEPS
+(  243) 
+(  244)   ZRPK =ZSINLA(2)
+(  245)   ZLON0=ZSINLA(3)
+(  246)   ZLAT0=ZSINLA(4)
+(  247)   ZLONC=ZSINLA(5)
+(  248)   ZLATC=ZSINLA(6)
+(  249)   ZDELX=ZSINLA(7)
+(  250)   ZDELY=ZSINLA(8)
+(  251)   ZELX =ZSINLA(9)
+(  252)   ZELY =ZSINLA(10)
+(  253)   ZEXWN=ZSINLA(11)
+(  254)   ZEYWN=ZSINLA(12)
+(  255)   ZLON1=ZSINLA(13)
+(  256)   ZLAT1=ZSINLA(14)
+(  257)   ZLON2=ZSINLA(15)
+(  258)   ZLAT2=ZSINLA(16)
+(  259)   IBWX=INT(ZSINLA(17))
+(  260)   IBWY=INT(ZSINLA(18))
+(  261) 
+(  262) ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 7
+
+(  263) 
+(  264) 
+(  265) !*       4.    Read information from file (extracted from ECHIEN)
+(  266) !              --------------------------------------------------
+(  267) 
+(  268) !*       4.1  Truncation, number of levels, ref. pressure, coef. A, B
+(  269) 
+(  270)   KTYPTR = ITYPTR
+(  271)   LDMAP  = ZCODIL >= 0.0_JPRB
+(  272)   KTRONC = ITRONC
+(  273)   KFLEV  = INIVER
+(  274)   PREF   = ZREF
+(  275)   DO JLEV = 0,KFLEV
+(  276)     PVALH(JLEV) = ZVALH(JLEV)
+(  277)     PVBH (JLEV) = ZVBH (JLEV)
+(  278)   ENDDO
+(  279) 
+(  280) !*      4.2  Geometrical characteristics
+(  281) 
+(  282)   KNXLON = INXLON
+(  283)   KDGL   = INLATI
+(  284)   IF (ZSINLA(1) >= 0.0_JPRB) THEN
+(  285)     PSINLA(1) = -1.0_JPRB
+(  286)   ELSE
+(  287)     PSINLA(1) = ZSINLA(1)
+(  288)     PSINLA(17)= ZSINLA(17)
+(  289)     PSINLA(18)= ZSINLA(18)
+(  290)   ENDIF
+(  291)   PSINLA(2) = ZRPK
+(  292)   PSINLA(3) = ZLON0
+(  293)   PSINLA(4) = ZLAT0
+(  294)   PSINLA(5) = ZLONC
+(  295)   PSINLA(6) = ZLATC
+(  296)   PSINLA(7) = ZDELX
+(  297)   PSINLA(8) = ZDELY
+(  298)   PSINLA(9) = ZELX
+(  299)   PSINLA(10)= ZELY
+(  300)   PSINLA(11)= ZEXWN
+(  301)   PSINLA(12)= ZEYWN
+(  302)   PSINLA(13)= ZLON1
+(  303)   PSINLA(14)= ZLAT1
+(  304)   PSINLA(15)= ZLON2
+(  305)   PSINLA(16)= ZLAT2
+(  306)   DO JL= 1, JPXPAH
+(  307)     KNLOPA(JL) = INLOPA(JL)
+(  308)   ENDDO
+(  309) 
+(  310) DEALLOCATE(INLOPA)
+(  311) DEALLOCATE(INOZPA)
+(  312) DEALLOCATE(ZSINLA)
+(  313) DEALLOCATE(ZVALH)
+(  314) DEALLOCATE(ZVBH)
+(  315) 
+(  316) !     ------------------------------------------------------------------
+(  317) 
+(  318) IF (LHOOK) CALL DR_HOOK('ERIEN',1,ZHOOK_HANDLE)
+(  319) END SUBROUTINE ERIEN
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 8
+
+(    1) # 1 "erien.F90"
+(    1) SUBROUTINE ERIEN(CDNAMC,KTYPTR,LDMAP,&
+(    2)  & KTRONC,KDGL,KNXLON,KNLOPA,PSINLA,&
+(    3)  & KFLEV,PREF,PVALH,PVBH,&
+(    4)  & PEPS,KULOUT)  
+(    5) # 6 "erien.F90"
+(    6) !**** *ERIEN*  - Read Input ENvironment - LAM case.
+(    7) # 8 "erien.F90"
+(    8) !     Purpose.
+(    9) !     --------
+(   10) !           It extracts geometry information from ALADIN file.
+(   11) # 12 "erien.F90"
+(   12) !**   Interface.
+(   13) !     ----------
+(   14) !        *CALL* *ERIEN(...)
+(   15) # 16 "erien.F90"
+(   16) !        Explicit arguments :
+(   17) !        --------------------
+(   18) !        Input - Output :
+(   19) !        ----------------------------
+(   20) # 21 "erien.F90"
+(   21) !        CDNAMC        ...   Name of the cadre
+(   22) # 23 "erien.F90"
+(   23) !        Determination of reference geometry:
+(   24) # 25 "erien.F90"
+(   25) !        KTYPTR        ...   Truncation NMSMAX
+(   26) !        LDMAP         ...   .TRUE. : Map projection calculated by EGGPACK
+(   27) !                      ...   .FALSE.: Biperiodic experiment file, EGGPACK
+(   28) !                                     routine not called
+(   29) !        KTRONC        ...   Truncation NSMAX
+(   30) !        KDGL          ...   Number of latitudes without poles
+(   31) !        KNXLON        ...   Max. number of longitudes at a parallel
+(   32) !        KNLOPA        ...   Limited Area characteristics
+(   33) !        PSINLA        ...   Horizontal geometry characteristics
+(   34) !        KFLEV         ...   Number of vertical levels
+(   35) !        PREF          ...   Reference pressure
+(   36) !        PVALH         ...   "A" coefficients of vertical system
+(   37) !        PVBH          ...   "B" coefficients of vertical system
+(   38) # 39 "erien.F90"
+(   39) !   -----------------------------------------------------------------
+(   40) !        Input :
+(   41) !        -------
+(   42) # 43 "erien.F90"
+(   43) !        PEPS          ...   Precision of the tests on real variables
+(   44) !        KULOUT        ...   Output file unit
+(   45) !   -----------------------------------------------------------------
+(   46) # 47 "erien.F90"
+(   47) !        Implicit arguments :
+(   48) !        --------------------
+(   49) !        YOMCST
+(   50) # 51 "erien.F90"
+(   51) !     Method.
+(   52) !     -------
+(   53) !        See documentation
+(   54) # 55 "erien.F90"
+(   55) !     Externals.
+(   56) !     ----------
+(   57) !        EGGX_N, some FA.. routines.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 9
+
+(   58) # 59 "erien.F90"
+(   59) !     Reference.
+(   60) !     ----------
+(   61) !        ARPEGE/ALADIN Documentation.
+(   62) !        Document 'Control of coherence between namelist and Arpege File'
+(   63) !        by R. El Khatib
+(   64) # 65 "erien.F90"
+(   65) !     Author.
+(   66) !     -------
+(   67) !        R. El Khatib *METEO-FRANCE*
+(   68) # 69 "erien.F90"
+(   69) !     Modifications.
+(   70) !     --------------
+(   71) !        Original : 91-12-10
+(   72) !        R. El Khatib 24-Mar-2017 Extracted the KINF==1 case from ECHIEN, to clean up GEOMETRY intents
+(   73) !     ------------------------------------------------------------------
+(   74) # 75 "erien.F90"
+(   75) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   76) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   77) # 78 "erien.F90"
+(   78) USE YOMCST_IFSAUX   , ONLY : XRPI , XRA
+(   79) # 80 "erien.F90"
+(   80) IMPLICIT NONE
+(   81) # 82 "erien.F90"
+(   82) !     ------------------------------------------------------------------
+(   83) # 84 "erien.F90"
+(   84) INTEGER(KIND=JPIM), PARAMETER :: JPXGEO=18
+(   85) INTEGER(KIND=JPIM), PARAMETER :: JPXPAH=8
+(   86) # 87 "erien.F90"
+(   87) !     ------------------------------------------------------------------
+(   88) # 89 "erien.F90"
+(   89) INTEGER(KIND=JPIM),INTENT(INOUT) :: KFLEV 
+(   90) CHARACTER(LEN=16),INTENT(IN)     :: CDNAMC
+(   91) INTEGER(KIND=JPIM),INTENT(INOUT) :: KTYPTR 
+(   92) LOGICAL           ,INTENT(INOUT) :: LDMAP 
+(   93) INTEGER(KIND=JPIM),INTENT(INOUT) :: KTRONC 
+(   94) INTEGER(KIND=JPIM),INTENT(INOUT) :: KDGL 
+(   95) INTEGER(KIND=JPIM),INTENT(INOUT) :: KNXLON 
+(   96) INTEGER(KIND=JPIM),INTENT(INOUT) :: KNLOPA(JPXPAH) 
+(   97) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PSINLA(JPXGEO) 
+(   98) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PREF 
+(   99) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVALH(0:KFLEV) 
+(  100) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PVBH(0:KFLEV) 
+(  101) REAL(KIND=JPRB)   ,INTENT(IN)    :: PEPS 
+(  102) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(  103) # 104 "erien.F90"
+(  104) !     ------------------------------------------------------------------
+(  105) # 106 "erien.F90"
+(  106) INTEGER(KIND=JPIM), ALLOCATABLE :: INLOPA(:),INOZPA(:)
+(  107) REAL(KIND=JPRB), ALLOCATABLE :: ZVALH(:),ZVBH(:)
+(  108) REAL(KIND=JPRB), ALLOCATABLE :: ZSINLA(:)
+(  109) # 110 "erien.F90"
+(  110) ! Work files for EGGX only
+(  111) REAL(KIND=JPRB), ALLOCATABLE :: ZGELAM(:,:), ZGELAT(:,:), ZGM(:,:),&
+(  112)  & ZGENORX(:,:),ZGENORY(:,:)  
+(  113) # 114 "erien.F90"
+(  114) INTEGER(KIND=JPIM) :: IERR, IERRA, II, INIVER, INLATI, INXLON, ITRONC, &
+(  115)  & ITYPTR, JFLEV, JL, JLEV, IROTEQ, ISOTRP, IGIVO, IMAXLEV, IMAXGL, & 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 10
+
+(  116)  & IMAXLON, IMAXTRUNC , IBWX, IBWY
+(  117) # 118 "erien.F90"
+(  118) LOGICAL :: LLMAP, LLGARD
+(  119) # 120 "erien.F90"
+(  120) REAL(KIND=JPRB) :: Z2PI, ZCLOPO, ZCODIL, ZDIFF, ZREF, ZSLAPO, ZSLOPO, ZEPS
+(  121) REAL(KIND=JPRB) :: ZRPK, ZLON0, ZLAT0, ZLONC, ZLATC, ZDELX, ZDELY, ZELX, ZELY
+(  122) REAL(KIND=JPRB) :: ZEXWN,ZEYWN, ZLON1, ZLAT1, ZLON2, ZLAT2
+(  123) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  124) # 125 "erien.F90"
+(  125) !     ------------------------------------------------------------------
+(  126) # 127 "erien.F90"
+(  127) # 1 ".D[61]/eggx_n.h"
+(    1) INTERFACE
+(    2) SUBROUTINE EGGX_N(PI,PRA,KROTEQ,PLONR,PLATR,PBETA,PLON1,PLAT1,PLON2,PLAT2,&
+(    3)      & PLON0,PLAT0,PRPK,KULOUT,KSOTRP,KGIVO,&
+(    4)      & PGELAM,PGELAT,PGM,PGNORX,PGNORY,KDLSA,&
+(    5)      & KDLSUR,KDGSA,KDGEN,KDLUN,KDLUX,KDGUN,KDGUX,&
+(    6)      & PDELX,PDELY,PLONC,PLATC)  
+(    7) !     ------------------------------------------------------------------
+(    8) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(    9) !     ------------------------------------------------------------------
+(   10) IMPLICIT NONE
+(   11) INTEGER(KIND=JPIM),INTENT(INOUT) :: KROTEQ
+(   12) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT
+(   13) INTEGER(KIND=JPIM),INTENT(INOUT) :: KSOTRP
+(   14) INTEGER(KIND=JPIM),INTENT(INOUT) :: KGIVO
+(   15) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSA
+(   16) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLSUR
+(   17) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGSA
+(   18) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGEN
+(   19) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUN
+(   20) INTEGER(KIND=JPIM),INTENT(IN)    :: KDLUX
+(   21) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUN
+(   22) INTEGER(KIND=JPIM),INTENT(IN)    :: KDGUX
+(   23) REAL(KIND=JPRB)   ,INTENT(IN)    :: PI 
+(   24) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA 
+(   25) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONR 
+(   26) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATR 
+(   27) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PBETA 
+(   28) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON1 
+(   29) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT1 
+(   30) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON2 
+(   31) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT2 
+(   32) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLON0 
+(   33) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLAT0 
+(   34) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PRPK 
+(   35) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(   36) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGELAT(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(   37) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(   38) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(   39) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KDLSA:KDLSUR,KDGSA:KDGEN) 
+(   40) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELX 
+(   41) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PDELY 
+(   42) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLONC 
+(   43) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PLATC 
+(   44) !     ------------------------------------------------------------------
+(   45) END SUBROUTINE EGGX_N
+(   46) END INTERFACE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 11
+
+(   47) # 128 "erien.F90"
+(  128) # 129 "erien.F90"
+(  129) # 1 ".D[61]/abor1.intfb.h"
+(    1) INTERFACE
+(    2) # 3 ".D[61]/abor1.intfb.h"
+(    3) SUBROUTINE ABOR1(CDTEXT)
+(    4) CHARACTER(LEN=*), INTENT(IN) :: CDTEXT
+(    5) END SUBROUTINE ABOR1
+(    6) # 7 ".D[61]/abor1.intfb.h"
+(    7) SUBROUTINE ABOR1FL(CDFILE, KLINENUM, CDTEXT)
+(    8) USE PARKIND1  ,ONLY : JPIM
+(    9) CHARACTER(LEN=*), INTENT(IN) :: CDFILE,CDTEXT
+(   10) INTEGER(KIND=JPIM), INTENT(IN) :: KLINENUM
+(   11) END SUBROUTINE ABOR1FL
+(   12) # 13 ".D[61]/abor1.intfb.h"
+(   13) SUBROUTINE ABOR1_EXCEPTION_HANDLER()
+(   14) END SUBROUTINE ABOR1_EXCEPTION_HANDLER
+(   15) # 16 ".D[61]/abor1.intfb.h"
+(   16) END INTERFACE
+(   17) # 130 "erien.F90"
+(  130) # 131 "erien.F90"
+(  131) !     ------------------------------------------------------------------
+(  132) # 133 "erien.F90"
+(  133) IF (LHOOK) CALL DR_HOOK('ERIEN',0,ZHOOK_HANDLE)
+(  134) # 135 "erien.F90"
+(  135) !     ------------------------------------------------------------------
+(  136) # 137 "erien.F90"
+(  137) !*       0.    Get software limits
+(  138) !              -------------------
+(  139) # 140 "erien.F90"
+(  140) CALL FALIMU(IMAXLEV,IMAXTRUNC,IMAXGL,IMAXLON)
+(  141) ALLOCATE(INLOPA(IMAXGL))
+(  142) ALLOCATE(INOZPA(IMAXGL))
+(  143) ALLOCATE(ZSINLA(IMAXGL))
+(  144) ALLOCATE(ZVALH(0:IMAXLEV))
+(  145) ALLOCATE(ZVBH(0:IMAXLEV))
+(  146) # 147 "erien.F90"
+(  147) !*       1.    Read file characteristics
+(  148) !              -------------------------
+(  149) # 150 "erien.F90"
+(  150) WRITE(KULOUT,*) ' HAF, HAF : CADRE : ',CDNAMC
+(  151) LLGARD=.FALSE.
+(  152) CALL FACIES(CDNAMC,ITYPTR,ZSLAPO,ZCLOPO,ZSLOPO,ZCODIL,ITRONC,&
+(  153)  & INLATI,INXLON,INLOPA,INOZPA,ZSINLA,INIVER,ZREF,ZVALH,&
+(  154)  & ZVBH,LLGARD)  
+(  155) # 156 "erien.F90"
+(  156) IF (INIVER > KFLEV) THEN
+(  157)   CALL ABOR1('ERIEN : MAX. NUMBER OF LEVEL IN MODEL TOO SMALL !')
+(  158) ENDIF
+(  159) # 160 "erien.F90"
+(  160) !     ------------------------------------------------------------------
+(  161) # 162 "erien.F90"
+(  162) !*       2.    Preliminary test
+(  163) !              ----------------
+(  164) # 165 "erien.F90"
+(  165) IF(ITYPTR > 0) THEN
+(  166)   WRITE(KULOUT,*) 'YOU ARE USING A FILE ARPEGE ',&
+(  167)    & 'WHILE THE MODEL EXPECTS A FILE ALADIN'  
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 12
+
+(  168)   CALL ABOR1('ERIEN: ABOR1 CALLED 2')
+(  169) ELSE
+(  170)   ITYPTR = - ITYPTR
+(  171)   LLMAP=ZCODIL >= 0.0_JPRB
+(  172) ENDIF
+(  173) # 174 "erien.F90"
+(  174) Z2PI = 2.0_JPRB*XRPI
+(  175) # 176 "erien.F90"
+(  176) IF(ZSINLA(1) >= 0.0_JPRB) THEN
+(  177)   ! Echien smells the old EGGX (i.e. the old format of the cadre)
+(  178)   WRITE(KULOUT,*) ' the cadre >>',CDNAMC,'<< has the old EGGX format'
+(  179)   WRITE(KULOUT,*) ' => consistency check of the geometry in the cadre&
+(  180)    & will be more forgiving'
+(  181) # 182 "erien.F90"
+(  182)   ZEPS=PEPS*1000._JPRB
+(  183) # 184 "erien.F90"
+(  184)   ZRPK=ZSINLA(10)
+(  185)   ZLON0=ZSINLA(8)
+(  186)   ZLAT0=ZSINLA(9)
+(  187)   ZLON1=ZSINLA(4)
+(  188)   ZLAT1=ZSINLA(5)
+(  189)   ZLON2=ZSINLA(6)
+(  190)   ZLAT2=ZSINLA(7)
+(  191)   ZELX=ZSINLA(13)
+(  192)   ZELY=ZSINLA(14)
+(  193)   ZDELX=ZSINLA(15)
+(  194)   ZDELY=ZSINLA(16)
+(  195)   ZEXWN=ZSINLA(17)
+(  196)   ZEYWN=ZSINLA(18)
+(  197)   ZLONC=ZSINLA(2)
+(  198)   ZLATC=ZSINLA(3)
+(  199) # 200 "erien.F90"
+(  200)   IF (ZRPK < 0.0_JPRB) THEN
+(  201)     ! latlon case :
+(  202)     IF (ZLON1 <= ZLON2) THEN 
+(  203)       ZLONC=MOD(0.5_JPRB*(ZLON1+ZLON2),Z2PI)
+(  204)     ELSE
+(  205)       ZLONC=MOD(0.5_JPRB*(ZLON1-Z2PI+ZLON2),Z2PI)
+(  206)     ENDIF
+(  207)     ZLATC=0.5_JPRB*(ZLAT1+ZLAT2)
+(  208)     ZDELX=ZSINLA(15)
+(  209)     ZDELY=ZSINLA(16)
+(  210)   ELSEIF(LLMAP) THEN
+(  211)     ! projection
+(  212)     ALLOCATE(ZGELAM(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  213)     ALLOCATE(ZGELAT(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  214)     ALLOCATE(ZGM(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  215)     ALLOCATE(ZGENORX(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  216)     ALLOCATE(ZGENORY(INLOPA(3):INLOPA(4),INLOPA(5):INLOPA(6)))
+(  217)     IROTEQ=INT(ZSINLA(1))
+(  218)     ISOTRP=INT(ZSINLA(11))
+(  219)     IGIVO=INT(ZSINLA(12))
+(  220) # 221 "erien.F90"
+(  221)     WRITE(KULOUT,*) 'Call EGGX_N by ERIEN'
+(  222) # 223 "erien.F90"
+(  223)     CALL EGGX_N(XRPI,XRA,IROTEQ,ZSINLA(2),ZSINLA(3),ZSLAPO,&
+(  224)      & ZSINLA(4),ZSINLA(5),ZSINLA(6),ZSINLA(7),ZLON0,ZLAT0,&
+(  225)      & ZSINLA(10),KULOUT,ISOTRP,IGIVO,&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 13
+
+(  226)      & ZGELAM,ZGELAT,ZGM,ZGENORX,ZGENORY,&
+(  227)      & INLOPA(3),INLOPA(4),INLOPA(5),INLOPA(6),&
+(  228)      & INLOPA(3),INLOPA(4),INLOPA(5),INLOPA(6),&
+(  229)      & ZDELX,ZDELY,ZLONC,ZLATC)  
+(  230)     DEALLOCATE(ZGELAM)
+(  231)     DEALLOCATE(ZGELAT)
+(  232)     DEALLOCATE(ZGM)
+(  233)     DEALLOCATE(ZGENORX)
+(  234)     DEALLOCATE(ZGENORY)
+(  235)     ZSINLA(1)=REAL(IROTEQ,JPRB)
+(  236)     ZSINLA(11)=REAL(ISOTRP,JPRB)
+(  237)     ZSINLA(12)=REAL(IGIVO,JPRB)
+(  238)   ENDIF
+(  239) # 240 "erien.F90"
+(  240) ELSE
+(  241) # 242 "erien.F90"
+(  242)   ZEPS=PEPS
+(  243) # 244 "erien.F90"
+(  244)   ZRPK =ZSINLA(2)
+(  245)   ZLON0=ZSINLA(3)
+(  246)   ZLAT0=ZSINLA(4)
+(  247)   ZLONC=ZSINLA(5)
+(  248)   ZLATC=ZSINLA(6)
+(  249)   ZDELX=ZSINLA(7)
+(  250)   ZDELY=ZSINLA(8)
+(  251)   ZELX =ZSINLA(9)
+(  252)   ZELY =ZSINLA(10)
+(  253)   ZEXWN=ZSINLA(11)
+(  254)   ZEYWN=ZSINLA(12)
+(  255)   ZLON1=ZSINLA(13)
+(  256)   ZLAT1=ZSINLA(14)
+(  257)   ZLON2=ZSINLA(15)
+(  258)   ZLAT2=ZSINLA(16)
+(  259)   IBWX=INT(ZSINLA(17))
+(  260)   IBWY=INT(ZSINLA(18))
+(  261) # 262 "erien.F90"
+(  262) ENDIF
+(  263) # 265 "erien.F90"
+(  265) !*       4.    Read information from file (extracted from ECHIEN)
+(  266) !              --------------------------------------------------
+(  267) # 268 "erien.F90"
+(  268) !*       4.1  Truncation, number of levels, ref. pressure, coef. A, B
+(  269) # 270 "erien.F90"
+(  270)   KTYPTR = ITYPTR
+(  271)   LDMAP  = ZCODIL >= 0.0_JPRB
+(  272)   KTRONC = ITRONC
+(  273)   KFLEV  = INIVER
+(  274)   PREF   = ZREF
+(  275)   DO JLEV = 0,KFLEV
+(  276)     PVALH(JLEV) = ZVALH(JLEV)
+(  277)     PVBH (JLEV) = ZVBH (JLEV)
+(  278)   ENDDO
+(  279) # 280 "erien.F90"
+(  280) !*      4.2  Geometrical characteristics
+(  281) # 282 "erien.F90"
+(  282)   KNXLON = INXLON
+(  283)   KDGL   = INLATI
+(  284)   IF (ZSINLA(1) >= 0.0_JPRB) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:23      page 14
+
+(  285)     PSINLA(1) = -1.0_JPRB
+(  286)   ELSE
+(  287)     PSINLA(1) = ZSINLA(1)
+(  288)     PSINLA(17)= ZSINLA(17)
+(  289)     PSINLA(18)= ZSINLA(18)
+(  290)   ENDIF
+(  291)   PSINLA(2) = ZRPK
+(  292)   PSINLA(3) = ZLON0
+(  293)   PSINLA(4) = ZLAT0
+(  294)   PSINLA(5) = ZLONC
+(  295)   PSINLA(6) = ZLATC
+(  296)   PSINLA(7) = ZDELX
+(  297)   PSINLA(8) = ZDELY
+(  298)   PSINLA(9) = ZELX
+(  299)   PSINLA(10)= ZELY
+(  300)   PSINLA(11)= ZEXWN
+(  301)   PSINLA(12)= ZEYWN
+(  302)   PSINLA(13)= ZLON1
+(  303)   PSINLA(14)= ZLAT1
+(  304)   PSINLA(15)= ZLON2
+(  305)   PSINLA(16)= ZLAT2
+(  306)   DO JL= 1, JPXPAH
+(  307)     KNLOPA(JL) = INLOPA(JL)
+(  308)   ENDDO
+(  309) # 310 "erien.F90"
+(  310) DEALLOCATE(INLOPA)
+(  311) DEALLOCATE(INOZPA)
+(  312) DEALLOCATE(ZSINLA)
+(  313) DEALLOCATE(ZVALH)
+(  314) DEALLOCATE(ZVBH)
+(  315) # 316 "erien.F90"
+(  316) !     ------------------------------------------------------------------
+(  317) # 318 "erien.F90"
+(  318) IF (LHOOK) CALL DR_HOOK('ERIEN',1,ZHOOK_HANDLE)
+(  319) END SUBROUTINE ERIEN

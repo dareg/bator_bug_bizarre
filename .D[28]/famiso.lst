@@ -1,0 +1,405 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: famiso.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAMISO_MT64             &
+(    4) &                     (FA,  LDEBUG )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Ce sous-programme permet d'activer ou de desactiver le mode
+(   12) !     "Mise au point du logiciel". ( par defaut, inactif )
+(   13) !        A noter que le mode "mise au point" du logiciel LFI n'est pas
+(   14) !     modifie.
+(   15) !**
+(   16) !        Argument : LDEBUG (Entree) ==> Vrai si on doit activer ce mode.
+(   17) !
+(   18) !
+(   19) !
+(   20) TYPE(FA_COM) :: FA
+(   21) INTEGER (KIND=JPLIKB) IREP, INUMER, INIMES
+(   22) !
+(   23) LOGICAL LDEBUG
+(   24) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   25) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   26) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   27) 
+(   28) !
+(   29) !
+(   30) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 3
+
+(   31) IF (LHOOK) CALL DR_HOOK('FAMISO_MT',0,ZHOOK_HANDLE)
+(   32) CLACTI=''
+(   33) IF (FA%FAMISO_LLPREA) THEN
+(   34)   CALL FARINE_MT64              &
+(   35) &                 (FA, 2_JPLIKB )
+(   36)   FA%FAMISO_LLPREA=.FALSE.
+(   37) ENDIF
+(   38) !
+(   39) FA%LFAMOP=LDEBUG
+(   40) !
+(   41) !  Prise en compte du niveau de messagerie dans GRIBEX
+(   42) !
+(   43) IF (FA%LFAMOP) THEN
+(   44)   CALL GRSDBG(1)
+(   45) ELSE
+(   46)   CALL GRSDBG(0)
+(   47) ENDIF
+(   48) !
+(   49) !        MESSAGERIE EVENTUELLE .
+(   50) !
+(   51) IF (FA%NIMSGA.NE.2)  THEN 
+(   52)   IF (LHOOK) CALL DR_HOOK('FAMISO_MT',1,ZHOOK_HANDLE)
+(   53)   RETURN
+(   54) ENDIF
+(   55) INUMER=JPNIIL
+(   56) INIMES=2
+(   57) IREP=0
+(   58) CLNSPR='FAMISO'
+(   59) WRITE (UNIT=CLMESS,FMT='(''LDEBUG= '',L1)') LDEBUG
+(   60) CALL FAIPAR_MT64                                      &
+(   61) &               (FA, INUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(   62) &                CLNSPR,CLACTI,.FALSE.)
+(   63) !
+(   64) IF (LHOOK) CALL DR_HOOK('FAMISO_MT',1,ZHOOK_HANDLE)
+(   65) END SUBROUTINE FAMISO_MT64
+(   66) 
+(   67) 
+(   68) 
+(   69) ! Oct-2012 P. Marguinaud 64b LFI
+(   70) SUBROUTINE FAMISO64           &
+(   71) &           (LDEBUG)
+(   72) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   73) &                   FA_COM_DEFAULT_INIT,  &
+(   74) &                   NEW_FA_DEFAULT
+(   75) USE LFI_PRECISION
+(   76) IMPLICIT NONE
+(   77) ! Arguments
+(   78) LOGICAL                LDEBUG                                 ! IN   
+(   79) 
+(   80) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   81) 
+(   82) CALL FAMISO_MT64           &
+(   83) &           (FA, LDEBUG)
+(   84) 
+(   85) END SUBROUTINE FAMISO64
+(   86) 
+(   87) SUBROUTINE FAMISO             &
+(   88) &           (LDEBUG)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 4
+
+(   89) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   90) &                   FA_COM_DEFAULT_INIT,  &
+(   91) &                   NEW_FA_DEFAULT
+(   92) USE LFI_PRECISION
+(   93) IMPLICIT NONE
+(   94) ! Arguments
+(   95) LOGICAL                LDEBUG                                 ! IN   
+(   96) 
+(   97) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   98) 
+(   99) CALL FAMISO_MT             &
+(  100) &           (FA, LDEBUG)
+(  101) 
+(  102) END SUBROUTINE FAMISO
+(  103) 
+(  104) SUBROUTINE FAMISO_MT             &
+(  105) &           (FA, LDEBUG)
+(  106) USE FA_MOD, ONLY : FA_COM
+(  107) USE LFI_PRECISION
+(  108) IMPLICIT NONE
+(  109) ! Arguments
+(  110) TYPE (FA_COM)          FA                                     ! INOUT
+(  111) LOGICAL                LDEBUG                                 ! IN   
+(  112) ! Local integers
+(  113) ! Convert arguments
+(  114) 
+(  115) 
+(  116) CALL FAMISO_MT64           &
+(  117) &           (FA, LDEBUG)
+(  118) 
+(  119) 
+(  120) END SUBROUTINE FAMISO_MT
+(  121) 
+(  122) !INTF LDEBUG        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 5
+
+(    1) # 1 "famiso.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAMISO_MT64             &
+(    4) &                     (FA,  LDEBUG )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !        Ce sous-programme permet d'activer ou de desactiver le mode
+(   12) !     "Mise au point du logiciel". ( par defaut, inactif )
+(   13) !        A noter que le mode "mise au point" du logiciel LFI n'est pas
+(   14) !     modifie.
+(   15) !**
+(   16) !        Argument : LDEBUG (Entree) ==> Vrai si on doit activer ce mode.
+(   17) !
+(   18) !
+(   19) !
+(   20) TYPE(FA_COM) :: FA
+(   21) INTEGER (KIND=JPLIKB) IREP, INUMER, INIMES
+(   22) !
+(   23) LOGICAL LDEBUG
+(   24) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   25) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   26) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   27) # 28 "famiso.F90"
+(   28) !
+(   29) !
+(   30) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   31) IF (LHOOK) CALL DR_HOOK('FAMISO_MT',0,ZHOOK_HANDLE)
+(   32) CLACTI=''
+(   33) IF (FA%FAMISO_LLPREA) THEN
+(   34)   CALL FARINE_MT64              &
+(   35) &                 (FA, 2_JPLIKB )
+(   36)   FA%FAMISO_LLPREA=.FALSE.
+(   37) ENDIF
+(   38) !
+(   39) FA%LFAMOP=LDEBUG
+(   40) !
+(   41) !  Prise en compte du niveau de messagerie dans GRIBEX
+(   42) !
+(   43) IF (FA%LFAMOP) THEN
+(   44)   CALL GRSDBG(1)
+(   45) ELSE
+(   46)   CALL GRSDBG(0)
+(   47) ENDIF
+(   48) !
+(   49) !        MESSAGERIE EVENTUELLE .
+(   50) !
+(   51) IF (FA%NIMSGA.NE.2)  THEN 
+(   52)   IF (LHOOK) CALL DR_HOOK('FAMISO_MT',1,ZHOOK_HANDLE)
+(   53)   RETURN
+(   54) ENDIF
+(   55) INUMER=JPNIIL
+(   56) INIMES=2
+(   57) IREP=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 6
+
+(   58) CLNSPR='FAMISO'
+(   59) WRITE (UNIT=CLMESS,FMT='(''LDEBUG= '',L1)') LDEBUG
+(   60) CALL FAIPAR_MT64                                      &
+(   61) &               (FA, INUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(   62) &                CLNSPR,CLACTI,.FALSE.)
+(   63) !
+(   64) IF (LHOOK) CALL DR_HOOK('FAMISO_MT',1,ZHOOK_HANDLE)
+(   65) END SUBROUTINE FAMISO_MT64
+(   66) # 69 "famiso.F90"
+(   69) ! Oct-2012 P. Marguinaud 64b LFI
+(   70) SUBROUTINE FAMISO64           &
+(   71) &           (LDEBUG)
+(   72) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   73) &                   FA_COM_DEFAULT_INIT,  &
+(   74) &                   NEW_FA_DEFAULT
+(   75) USE LFI_PRECISION
+(   76) IMPLICIT NONE
+(   77) ! Arguments
+(   78) LOGICAL                LDEBUG                                 ! IN   
+(   79) # 80 "famiso.F90"
+(   80) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   81) # 82 "famiso.F90"
+(   82) CALL FAMISO_MT64           &
+(   83) &           (FA, LDEBUG)
+(   84) # 85 "famiso.F90"
+(   85) END SUBROUTINE FAMISO64
+(   86) # 87 "famiso.F90"
+(   87) SUBROUTINE FAMISO             &
+(   88) &           (LDEBUG)
+(   89) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   90) &                   FA_COM_DEFAULT_INIT,  &
+(   91) &                   NEW_FA_DEFAULT
+(   92) USE LFI_PRECISION
+(   93) IMPLICIT NONE
+(   94) ! Arguments
+(   95) LOGICAL                LDEBUG                                 ! IN   
+(   96) # 97 "famiso.F90"
+(   97) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   98) # 99 "famiso.F90"
+(   99) CALL FAMISO_MT             &
+(  100) &           (FA, LDEBUG)
+(  101) # 102 "famiso.F90"
+(  102) END SUBROUTINE FAMISO
+(  103) # 104 "famiso.F90"
+(  104) SUBROUTINE FAMISO_MT             &
+(  105) &           (FA, LDEBUG)
+(  106) USE FA_MOD, ONLY : FA_COM
+(  107) USE LFI_PRECISION
+(  108) IMPLICIT NONE
+(  109) ! Arguments
+(  110) TYPE (FA_COM)          FA                                     ! INOUT
+(  111) LOGICAL                LDEBUG                                 ! IN   
+(  112) ! Local integers
+(  113) ! Convert arguments
+(  114) # 116 "famiso.F90"
+(  116) CALL FAMISO_MT64           &
+(  117) &           (FA, LDEBUG)
+(  118) # 120 "famiso.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 7
+
+(  120) END SUBROUTINE FAMISO_MT
+(  121) # 122 "famiso.F90"
+(  122) !INTF LDEBUG        IN    

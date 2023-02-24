@@ -1,0 +1,260 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:59      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:59      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_init_surf_landusen.F90
+
+(    1) !depfile:init_surf_landusen.F90
+(    2) MODULE MODI_INIT_SURF_LANDUSE_n 
+(    3) INTERFACE
+(    4) SUBROUTINE INIT_SURF_LANDUSE_n (DTCO, OREAD_BUDGETC, U, UG, IM, SV, SLT, NDST, &
+(    5)                                HPROGRAM,HINIT,OLAND_USE,                  &
+(    6)                                KI,KSV,KSW,                                &
+(    7)                                HSV,PCO2,PRHOA,                            &
+(    8)                                PZENITH,PAZIM,PSW_BANDS,PDIR_ALB,PSCA_ALB, &
+(    9)                                PEMIS,PTSRAD,PTSURF,                       &
+(   10)                                KYEAR, KMONTH,KDAY, PTIME,                 &
+(   11)                                HATMFILE,HATMFILETYPE,                     &
+(   12)                                HTEST                                      )  
+(   13) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   14) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   15) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   16) USE MODD_SURFEX_n, ONLY : ISBA_MODEL_t
+(   17) USE MODD_DST_n, ONLY : DST_NP_t
+(   18) USE MODD_SLT_n, ONLY : SLT_t
+(   19) USE MODD_SV_n, ONLY : SV_t
+(   20) TYPE(DATA_COVER_t) :: DTCO
+(   21) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   22) TYPE(SURF_ATM_t) :: U
+(   23) TYPE(SURF_ATM_GRID_t) :: UG
+(   24) TYPE(ISBA_MODEL_t) :: IM
+(   25) TYPE(SV_t), INTENT(INOUT) :: SV
+(   26) TYPE(DST_NP_t), INTENT(INOUT) :: NDST
+(   27) TYPE(SLT_t), INTENT(INOUT) :: SLT
+(   28)  CHARACTER(LEN=6),                 INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   29)  CHARACTER(LEN=3),                 INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   30) LOGICAL,                          INTENT(IN)  :: OLAND_USE ! choice of doing land use or not 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:59      page 3
+
+(   31) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+(   32) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+(   33) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   34)  CHARACTER(LEN=6), DIMENSION(KSV), INTENT(IN)  :: HSV       ! name of all scalar variables
+(   35) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   36) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   37) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   38) REAL,             DIMENSION(KI),  INTENT(IN)  :: PAZIM     ! solar azimuthal angle (rad from N, clock)
+(   39) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   40) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   41) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   42) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   43) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   44) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   45) INTEGER,                          INTENT(IN)  :: KYEAR     ! current year (UTC)
+(   46) INTEGER,                          INTENT(IN)  :: KMONTH    ! current month (UTC)
+(   47) INTEGER,                          INTENT(IN)  :: KDAY      ! current day (UTC)
+(   48) REAL,                             INTENT(IN)  :: PTIME     ! current time since
+(   49)  CHARACTER(LEN=28),                INTENT(IN)  :: HATMFILE    ! atmospheric file name
+(   50)  CHARACTER(LEN=6),                 INTENT(IN)  :: HATMFILETYPE! atmospheric file type
+(   51)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   52) END SUBROUTINE INIT_SURF_LANDUSE_n                           
+(   53) 
+(   54) END INTERFACE
+(   55) END MODULE MODI_INIT_SURF_LANDUSE_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:59      page 4
+
+(    1) # 1 "modi_init_surf_landusen.F90"
+(    1) !depfile:init_surf_landusen.F90
+(    2) MODULE MODI_INIT_SURF_LANDUSE_n 
+(    3) INTERFACE
+(    4) SUBROUTINE INIT_SURF_LANDUSE_n (DTCO, OREAD_BUDGETC, U, UG, IM, SV, SLT, NDST, &
+(    5)                                HPROGRAM,HINIT,OLAND_USE,                  &
+(    6)                                KI,KSV,KSW,                                &
+(    7)                                HSV,PCO2,PRHOA,                            &
+(    8)                                PZENITH,PAZIM,PSW_BANDS,PDIR_ALB,PSCA_ALB, &
+(    9)                                PEMIS,PTSRAD,PTSURF,                       &
+(   10)                                KYEAR, KMONTH,KDAY, PTIME,                 &
+(   11)                                HATMFILE,HATMFILETYPE,                     &
+(   12)                                HTEST                                      )  
+(   13) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   14) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   15) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   16) USE MODD_SURFEX_n, ONLY : ISBA_MODEL_t
+(   17) USE MODD_DST_n, ONLY : DST_NP_t
+(   18) USE MODD_SLT_n, ONLY : SLT_t
+(   19) USE MODD_SV_n, ONLY : SV_t
+(   20) TYPE(DATA_COVER_t) :: DTCO
+(   21) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   22) TYPE(SURF_ATM_t) :: U
+(   23) TYPE(SURF_ATM_GRID_t) :: UG
+(   24) TYPE(ISBA_MODEL_t) :: IM
+(   25) TYPE(SV_t), INTENT(INOUT) :: SV
+(   26) TYPE(DST_NP_t), INTENT(INOUT) :: NDST
+(   27) TYPE(SLT_t), INTENT(INOUT) :: SLT
+(   28)  CHARACTER(LEN=6),                 INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   29)  CHARACTER(LEN=3),                 INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   30) LOGICAL,                          INTENT(IN)  :: OLAND_USE ! choice of doing land use or not 
+(   31) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+(   32) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+(   33) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   34)  CHARACTER(LEN=6), DIMENSION(KSV), INTENT(IN)  :: HSV       ! name of all scalar variables
+(   35) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   36) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   37) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   38) REAL,             DIMENSION(KI),  INTENT(IN)  :: PAZIM     ! solar azimuthal angle (rad from N, clock)
+(   39) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   40) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   41) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   42) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   43) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   44) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   45) INTEGER,                          INTENT(IN)  :: KYEAR     ! current year (UTC)
+(   46) INTEGER,                          INTENT(IN)  :: KMONTH    ! current month (UTC)
+(   47) INTEGER,                          INTENT(IN)  :: KDAY      ! current day (UTC)
+(   48) REAL,                             INTENT(IN)  :: PTIME     ! current time since
+(   49)  CHARACTER(LEN=28),                INTENT(IN)  :: HATMFILE    ! atmospheric file name
+(   50)  CHARACTER(LEN=6),                 INTENT(IN)  :: HATMFILETYPE! atmospheric file type
+(   51)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   52) END SUBROUTINE INIT_SURF_LANDUSE_n                           
+(   53) # 54 "modi_init_surf_landusen.F90"
+(   54) END INTERFACE
+(   55) END MODULE MODI_INIT_SURF_LANDUSE_n 

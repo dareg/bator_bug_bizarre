@@ -1,0 +1,389 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: diffuse_scalar2D.F90
+
+(    1) subroutine diffuse_scalar2D (field,field0,fluxb,fluxt,tkh,rho,rhow,flux)
+(    2) 
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) 
+(   13) use grid
+(   14) use real_size
+(   15) implicit none
+(   16) 
+(   17) ! input
+(   18) real(RR) field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)  ! scalar
+(   19) real(RR) field0(nzm) ! horizonral mean
+(   20) real(RR) tkh(0:nxp1, 1-YES3D:nyp1, nzm) ! eddy conductivity
+(   21) real(RR) fluxb(nx,ny)       ! bottom flux
+(   22) real(RR) fluxt(nx,ny)       ! top flux
+(   23) real(RR) rho(nzm)
+(   24) real(RR) rhow(nz)
+(   25) real(RR) flux(nz)
+(   26)     
+(   27) ! local        
+(   28) real(RR) flx(0:nx,1,0:nzm)
+(   29) real(RR) dfdt(nx,ny,nzm) 
+(   30) real(RR) rdx2,rdz2,rdz,rdx5,rdz5,tmp
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 3
+
+(   31) real(RR) dxz,dzx,tkx,tkz,rhoi
+(   32) integer i,j,k,ib,ic,kc,kb
+(   33) 
+(   34) if(.not.dosgs.and..not.docolumn) return
+(   35) 
+(   36) rdx2=1./(dx*dx)
+(   37) rdz2=1./(dz*dz)
+(   38) rdz=1./dz
+(   39) dxz=dx/dz
+(   40) dzx=dz/dx
+(   41) 
+(   42) j=1
+(   43) 
+(   44) dfdt(:,:,:)=0.
+(   45) 
+(   46) if(dowallx) then
+(   47) 
+(   48)   if(mod(rank,nsubdomains_x).eq.0) then
+(   49)     do k=1,nzm
+(   50)          field(0,j,k) = field(1,j,k)
+(   51)     end do
+(   52)   end if
+(   53)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+(   54)     do k=1,nzm
+(   55)          field(nx+1,j,k) = field(nx,j,k)
+(   56)     end do
+(   57)   end if
+(   58) 
+(   59) end if
+(   60) 
+(   61) 
+(   62) if(.not.docolumn) then
+(   63) 
+(   64) 
+(   65) 
+(   66) do k=1,nzm
+(   67) 
+(   68)   rdx5=0.5*rdx2  *grdf_x(k)     
+(   69) 
+(   70)   do i=0,nx
+(   71)     ic=i+1
+(   72)     tkx=rdx5*(tkh(i,j,k)+tkh(ic,j,k))
+(   73)     flx(i,j,k)=-tkx*(field(ic,j,k)-field(i,j,k))
+(   74)   end do 
+(   75)   do i=1,nx
+(   76)     ib=i-1
+(   77)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(ib,j,k))
+(   78)   end do 
+(   79) 
+(   80) end do 
+(   81) 
+(   82) end if
+(   83) 
+(   84) !flux(1) = 0.
+(   85) tmp=1./adzw(nz)
+(   86) do i=1,nx
+(   87)    flx(i,j,0)=fluxb(i,j)*rdz*rhow(1)
+(   88)    flx(i,j,nzm)=fluxt(i,j)*rdz*tmp*rhow(nz)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 4
+
+(   89)    flux(1) = flux(1) + flx(i,j,0)
+(   90) end do
+(   91) 
+(   92) 
+(   93) do k=1,nzm-1
+(   94)  kc=k+1
+(   95) ! flux(kc)=0. 
+(   96)  rhoi = rhow(kc)/adzw(kc)
+(   97)  rdz5=0.5*rdz2 * grdf_z(k)
+(   98)  do i=1,nx
+(   99)     tkz=rdz5*(tkh(i,j,k)+tkh(i,j,kc))
+(  100)     flx(i,j,k)=-tkz*(field(i,j,kc)-field(i,j,k))*rhoi
+(  101)     flux(kc) = flux(kc) + flx(i,j,k)
+(  102)  end do
+(  103) end do
+(  104) 
+(  105) do k=1,nzm
+(  106)  kb=k-1
+(  107)  rhoi = 1./(adz(k)*rho(k))
+(  108)  do i=1,nx
+(  109)   dfdt(i,j,k)=dtn*(dfdt(i,j,k)-(flx(i,j,k)-flx(i,j,kb))*rhoi)
+(  110)   field(i,j,k)=field(i,j,k) + dfdt(i,j,k)
+(  111)  end do 
+(  112) end do 
+(  113) 
+(  114) end subroutine diffuse_scalar2D
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 5
+
+(    1) # 1 "diffuse_scalar2D.F90"
+(    1) subroutine diffuse_scalar2D (field,field0,fluxb,fluxt,tkh,rho,rhow,flux)
+(    2) # 3 "diffuse_scalar2D.F90"
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) # 13 "diffuse_scalar2D.F90"
+(   13) use grid
+(   14) use real_size
+(   15) implicit none
+(   16) # 17 "diffuse_scalar2D.F90"
+(   17) ! input
+(   18) real(RR) field(dimx1_s:dimx2_s, dimy1_s:dimy2_s, nzm)  ! scalar
+(   19) real(RR) field0(nzm) ! horizonral mean
+(   20) real(RR) tkh(0:nxp1, 1-YES3D:nyp1, nzm) ! eddy conductivity
+(   21) real(RR) fluxb(nx,ny)       ! bottom flux
+(   22) real(RR) fluxt(nx,ny)       ! top flux
+(   23) real(RR) rho(nzm)
+(   24) real(RR) rhow(nz)
+(   25) real(RR) flux(nz)
+(   26)     
+(   27) ! local        
+(   28) real(RR) flx(0:nx,1,0:nzm)
+(   29) real(RR) dfdt(nx,ny,nzm) 
+(   30) real(RR) rdx2,rdz2,rdz,rdx5,rdz5,tmp
+(   31) real(RR) dxz,dzx,tkx,tkz,rhoi
+(   32) integer i,j,k,ib,ic,kc,kb
+(   33) # 34 "diffuse_scalar2D.F90"
+(   34) if(.not.dosgs.and..not.docolumn) return
+(   35) # 36 "diffuse_scalar2D.F90"
+(   36) rdx2=1./(dx*dx)
+(   37) rdz2=1./(dz*dz)
+(   38) rdz=1./dz
+(   39) dxz=dx/dz
+(   40) dzx=dz/dx
+(   41) # 42 "diffuse_scalar2D.F90"
+(   42) j=1
+(   43) # 44 "diffuse_scalar2D.F90"
+(   44) dfdt(:,:,:)=0.
+(   45) # 46 "diffuse_scalar2D.F90"
+(   46) if(dowallx) then
+(   47) # 48 "diffuse_scalar2D.F90"
+(   48)   if(mod(rank,nsubdomains_x).eq.0) then
+(   49)     do k=1,nzm
+(   50)          field(0,j,k) = field(1,j,k)
+(   51)     end do
+(   52)   end if
+(   53)   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
+(   54)     do k=1,nzm
+(   55)          field(nx+1,j,k) = field(nx,j,k)
+(   56)     end do
+(   57)   end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:25      page 6
+
+(   58) # 59 "diffuse_scalar2D.F90"
+(   59) end if
+(   60) # 62 "diffuse_scalar2D.F90"
+(   62) if(.not.docolumn) then
+(   63) # 66 "diffuse_scalar2D.F90"
+(   66) do k=1,nzm
+(   67) # 68 "diffuse_scalar2D.F90"
+(   68)   rdx5=0.5*rdx2  *grdf_x(k)     
+(   69) # 70 "diffuse_scalar2D.F90"
+(   70)   do i=0,nx
+(   71)     ic=i+1
+(   72)     tkx=rdx5*(tkh(i,j,k)+tkh(ic,j,k))
+(   73)     flx(i,j,k)=-tkx*(field(ic,j,k)-field(i,j,k))
+(   74)   end do 
+(   75)   do i=1,nx
+(   76)     ib=i-1
+(   77)     dfdt(i,j,k)=dfdt(i,j,k)-(flx(i,j,k)-flx(ib,j,k))
+(   78)   end do 
+(   79) # 80 "diffuse_scalar2D.F90"
+(   80) end do 
+(   81) # 82 "diffuse_scalar2D.F90"
+(   82) end if
+(   83) # 84 "diffuse_scalar2D.F90"
+(   84) !flux(1) = 0.
+(   85) tmp=1./adzw(nz)
+(   86) do i=1,nx
+(   87)    flx(i,j,0)=fluxb(i,j)*rdz*rhow(1)
+(   88)    flx(i,j,nzm)=fluxt(i,j)*rdz*tmp*rhow(nz)
+(   89)    flux(1) = flux(1) + flx(i,j,0)
+(   90) end do
+(   91) # 93 "diffuse_scalar2D.F90"
+(   93) do k=1,nzm-1
+(   94)  kc=k+1
+(   95) ! flux(kc)=0. 
+(   96)  rhoi = rhow(kc)/adzw(kc)
+(   97)  rdz5=0.5*rdz2 * grdf_z(k)
+(   98)  do i=1,nx
+(   99)     tkz=rdz5*(tkh(i,j,k)+tkh(i,j,kc))
+(  100)     flx(i,j,k)=-tkz*(field(i,j,kc)-field(i,j,k))*rhoi
+(  101)     flux(kc) = flux(kc) + flx(i,j,k)
+(  102)  end do
+(  103) end do
+(  104) # 105 "diffuse_scalar2D.F90"
+(  105) do k=1,nzm
+(  106)  kb=k-1
+(  107)  rhoi = 1./(adz(k)*rho(k))
+(  108)  do i=1,nx
+(  109)   dfdt(i,j,k)=dtn*(dfdt(i,j,k)-(flx(i,j,k)-flx(i,j,kb))*rhoi)
+(  110)   field(i,j,k)=field(i,j,k) + dfdt(i,j,k)
+(  111)  end do 
+(  112) end do 
+(  113) # 114 "diffuse_scalar2D.F90"
+(  114) end subroutine diffuse_scalar2D

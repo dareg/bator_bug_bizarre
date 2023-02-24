@@ -1,0 +1,248 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_coupling_dstn.F90
+
+(    1) !depfile:coupling_dstn.F90
+(    2) MODULE MODI_COUPLING_DST_n 
+(    3) INTERFACE
+(    4) SUBROUTINE COUPLING_DST_n (DSTK, KK, PK, PEK, DK, &
+(    5)        HPROGRAM,                 &!I [char] Type of ISBA version
+(    6)        KI,                       &!I [nbr] number of points in patch
+(    7)        KDST,                     &!I Number of dust emission variables
+(    8)        PPS,                      &!I [Pa] surface pressure
+(    9)        PQA,                      &!I [kg/kg] atmospheric specific humidity
+(   10)        PRHOA,                    &!I [kg/m3] atmospheric density
+(   11)        PPA,                      &!I [K] Atmospheric pressure
+(   12)        PTA,                      &!I [K] Atmospheric temperature
+(   13)        PU,                       &!I [m/s] zonal wind at atmospheric height 
+(   14)        PUREF,                    &!I [m] reference height of wind
+(   15)        PV,                       &!I [m/s] meridional wind at atmospheric height
+(   16)        PZREF,                    &!I [m] reference height of wind
+(   17)        PSFDST                    &!O [kg/m2/sec] flux of dust
+(   18)        )  
+(   19) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   20) USE MODD_DIAG_n, ONLY : DIAG_t
+(   21) USE MODD_DST_n, ONLY : DST_t
+(   22) TYPE(DST_t), INTENT(INOUT) :: DSTK
+(   23) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   24) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   25) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   26) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   27)  CHARACTER(LEN=*), INTENT(IN)       :: HPROGRAM       !I Name of program
+(   28) INTEGER, INTENT(IN)                :: KI             !I Number of points in patch
+(   29) INTEGER, INTENT(IN)                :: KDST           !I Number of dust emission variables
+(   30) REAL, DIMENSION(KI), INTENT(IN)    :: PPS            !I [Pa] surface pressure
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 3
+
+(   31) REAL, DIMENSION(KI), INTENT(IN)    :: PQA            !I [kg/kg] atmospheric specific humidity
+(   32) REAL, DIMENSION(KI), INTENT(IN)    :: PRHOA          !I [kg/m3] atmospheric density
+(   33) REAL, DIMENSION(KI), INTENT(IN)    :: PPA            !I [K] Atmospheric pressure
+(   34) REAL, DIMENSION(KI), INTENT(IN)    :: PTA            !I [K] Atmospheric temperature
+(   35) REAL, DIMENSION(KI), INTENT(IN)    :: PU             !I [m/s] zonal wind at atmospheric height 
+(   36) REAL, DIMENSION(KI), INTENT(IN)    :: PUREF          !I [m] reference height of wind
+(   37) REAL, DIMENSION(KI), INTENT(IN)    :: PV             !I [m/s] meridional wind at atmospheric height
+(   38) REAL, DIMENSION(KI), INTENT(IN)    :: PZREF          !I [m] reference height of wind
+(   39) REAL, DIMENSION(KI,KDST), INTENT(OUT) :: PSFDST      !O [kg/m2/sec] flux of dust for a patch
+(   40) END SUBROUTINE COUPLING_DST_n
+(   41) 
+(   42) END INTERFACE
+(   43) END MODULE MODI_COUPLING_DST_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:17      page 4
+
+(    1) # 1 "modi_coupling_dstn.F90"
+(    1) !depfile:coupling_dstn.F90
+(    2) MODULE MODI_COUPLING_DST_n 
+(    3) INTERFACE
+(    4) SUBROUTINE COUPLING_DST_n (DSTK, KK, PK, PEK, DK, &
+(    5)        HPROGRAM,                 &!I [char] Type of ISBA version
+(    6)        KI,                       &!I [nbr] number of points in patch
+(    7)        KDST,                     &!I Number of dust emission variables
+(    8)        PPS,                      &!I [Pa] surface pressure
+(    9)        PQA,                      &!I [kg/kg] atmospheric specific humidity
+(   10)        PRHOA,                    &!I [kg/m3] atmospheric density
+(   11)        PPA,                      &!I [K] Atmospheric pressure
+(   12)        PTA,                      &!I [K] Atmospheric temperature
+(   13)        PU,                       &!I [m/s] zonal wind at atmospheric height 
+(   14)        PUREF,                    &!I [m] reference height of wind
+(   15)        PV,                       &!I [m/s] meridional wind at atmospheric height
+(   16)        PZREF,                    &!I [m] reference height of wind
+(   17)        PSFDST                    &!O [kg/m2/sec] flux of dust
+(   18)        )  
+(   19) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_P_t, ISBA_PE_t
+(   20) USE MODD_DIAG_n, ONLY : DIAG_t
+(   21) USE MODD_DST_n, ONLY : DST_t
+(   22) TYPE(DST_t), INTENT(INOUT) :: DSTK
+(   23) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   24) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   25) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   26) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   27)  CHARACTER(LEN=*), INTENT(IN)       :: HPROGRAM       !I Name of program
+(   28) INTEGER, INTENT(IN)                :: KI             !I Number of points in patch
+(   29) INTEGER, INTENT(IN)                :: KDST           !I Number of dust emission variables
+(   30) REAL, DIMENSION(KI), INTENT(IN)    :: PPS            !I [Pa] surface pressure
+(   31) REAL, DIMENSION(KI), INTENT(IN)    :: PQA            !I [kg/kg] atmospheric specific humidity
+(   32) REAL, DIMENSION(KI), INTENT(IN)    :: PRHOA          !I [kg/m3] atmospheric density
+(   33) REAL, DIMENSION(KI), INTENT(IN)    :: PPA            !I [K] Atmospheric pressure
+(   34) REAL, DIMENSION(KI), INTENT(IN)    :: PTA            !I [K] Atmospheric temperature
+(   35) REAL, DIMENSION(KI), INTENT(IN)    :: PU             !I [m/s] zonal wind at atmospheric height 
+(   36) REAL, DIMENSION(KI), INTENT(IN)    :: PUREF          !I [m] reference height of wind
+(   37) REAL, DIMENSION(KI), INTENT(IN)    :: PV             !I [m/s] meridional wind at atmospheric height
+(   38) REAL, DIMENSION(KI), INTENT(IN)    :: PZREF          !I [m] reference height of wind
+(   39) REAL, DIMENSION(KI,KDST), INTENT(OUT) :: PSFDST      !O [kg/m2/sec] flux of dust for a patch
+(   40) END SUBROUTINE COUPLING_DST_n
+(   41) # 42 "modi_coupling_dstn.F90"
+(   42) END INTERFACE
+(   43) END MODULE MODI_COUPLING_DST_n 

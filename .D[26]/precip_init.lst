@@ -1,0 +1,413 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: precip_init.F90
+
+(    1)   
+(    2) subroutine precip_init
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) ! Initialize precipitation related stuff
+(   15) 
+(   16) use vars
+(   17) use microphysics
+(   18) use micro_params
+(   19) use params
+(   20) use real_size
+(   21) 
+(   22) implicit none
+(   23) 
+(   24) real(RR) pratio, coef1, coef2,estw,esti,rrr1,rrr2
+(   25) real(4) gammafff   ! calling C module
+(   26) external gammafff
+(   27) integer k 
+(   28) 
+(   29) gam3 = 3. 
+(   30) gamr1 = 3.+b_rain
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 3
+
+(   31) gamr2 = (5.+b_rain)/2.
+(   32) gamr3 = 4.+b_rain
+(   33) gams1 = 3.+b_snow
+(   34) gams2 = (5.+b_snow)/2.
+(   35) gams3 = 4.+b_snow
+(   36) gamg1 = 3.+b_grau
+(   37) gamg2 = (5.+b_grau)/2.
+(   38) gamg3 = 4.+b_grau
+(   39) gam3 = gammafff(gam3) 
+(   40) gamr1 = gammafff(gamr1)
+(   41) gamr2 = gammafff(gamr2)
+(   42) gamr3 = gammafff(gamr3)
+(   43) gams1 = gammafff(gams1)
+(   44) gams2 = gammafff(gams2)
+(   45) gams3 = gammafff(gams3)
+(   46) gamg1 = gammafff(gamg1)
+(   47) gamg2 = gammafff(gamg2)
+(   48) gamg3 = gammafff(gamg3)
+(   49) !if(masterproc) then
+(   50) ! print*,'gam3=',gam3
+(   51) ! print*,'gamr1,gamr2,gamr3:',gamr1,gamr2,gamr3
+(   52) ! print*,'gams1,gams2,gams3:',gams1,gams2,gams3
+(   53) ! print*,'gamg1,gamg2,gamg3:',gamg1,gamg2,gamg3
+(   54) !endif
+(   55) if(nint(gam3).ne.2) then 
+(   56)    if(masterproc)print*,'cannot compute gamma-function in precip_init. Exiting...'
+(   57)    call task_abort
+(   58) end if
+(   59) 
+(   60) do k=1,nzm
+(   61) 
+(   62) ! pratio = (1000. / pres(k)) ** 0.4
+(   63)   pratio = sqrt(1.29 / rho(k))
+(   64) 
+(   65)   rrr1=393./(tabs0(k)+120.)*(tabs0(k)/273.)**1.5
+(   66)   rrr2=(tabs0(k)/273.)**1.94*(1000./pres(k))
+(   67) 
+(   68)   estw = 100.*esatw_crm(tabs0(k))
+(   69)   esti = 100.*esati_crm(tabs0(k))
+(   70) 
+(   71) ! accretion by snow:
+(   72) 
+(   73)   coef1 = 0.25 * pi * nzeros * a_snow * REAL(gams1,RR) * pratio/ &
+(   74)             (pi * rhos * nzeros/rho(k) ) ** ((3+b_snow)/4.)
+(   75)   coef2 = exp(0.025*(tabs0(k) - 273.15))                        
+(   76)   accrsi(k) =  coef1 * coef2 * esicoef
+(   77)   accrsc(k) =  coef1 * esccoef 
+(   78)   coefice(k) =  coef2
+(   79)           
+(   80) ! evaporation of snow:
+(   81)  
+(   82)   coef1  =(lsub/(tabs0(k)*rv)-1.)*lsub/(therco*rrr1*tabs0(k))
+(   83)   coef2  = rv*tabs0(k)/(diffelq*rrr2*esti)
+(   84)   evaps1(k)  =  0.65*4.*nzeros/sqrt(pi*rhos*nzeros)/(coef1+coef2)/sqrt(rho(k)) 
+(   85)   evaps2(k)  =  0.49*4.*nzeros*REAL(gams2,RR)*sqrt(a_snow/(muelq*rrr1))/ & 
+(   86)        (pi*rhos*nzeros)**((5+b_snow)/8.) / (coef1+coef2) &
+(   87)                * rho(k)**((1+b_snow)/8.)*sqrt(pratio)  
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 4
+
+(   89) ! accretion by graupel:
+(   90) 
+(   91)   coef1 = 0.25*pi*nzerog*a_grau*REAL(gamg1,RR)*pratio/&
+(   92)           (pi*rhog*nzerog/rho(k))**((3+b_grau)/4.)
+(   93)   coef2 = exp(0.025*(tabs0(k) - 273.15))                        
+(   94)   accrgi(k) =  coef1 * coef2 * egicoef
+(   95)   accrgc(k) =  coef1 * egccoef 
+(   96)           
+(   97) ! evaporation of graupel:
+(   98)  
+(   99)   coef1  =(lsub/(tabs0(k)*rv)-1.)*lsub/(therco*rrr1*tabs0(k))
+(  100)   coef2  = rv*tabs0(k)/(diffelq*rrr2*esti)
+(  101)   evapg1(k)  = 0.65*4.*nzerog/sqrt(pi*rhog*nzerog)/(coef1+coef2)/sqrt(rho(k)) 
+(  102)   evapg2(k)  = 0.49*4.*nzerog*REAL(gamg2,RR)*sqrt(a_grau/(muelq*rrr1))/ &
+(  103)         (pi * rhog * nzerog)**((5+b_grau)/8.) / (coef1+coef2) &
+(  104)                * rho(k)**((1+b_grau)/8.)*sqrt(pratio)  
+(  105) 
+(  106)  
+(  107) ! accretion by rain:
+(  108) 
+(  109)   accrrc(k)=  0.25 * pi * nzeror * a_rain * REAL(gamr1,RR) * pratio/ &
+(  110)               (pi * rhor * nzeror / rho(k)) ** ((3+b_rain)/4.)* erccoef   
+(  111) 
+(  112) ! evaporation of rain:
+(  113) 
+(  114)   coef1  =(lcond/(tabs0(k)*rv)-1.)*lcond/(therco*rrr1*tabs0(k))
+(  115)   coef2  = rv*tabs0(k)/(diffelq * rrr2 * estw)
+(  116)   evapr1(k)  =  0.78 * 2. * pi * nzeror / &
+(  117)         sqrt(pi * rhor * nzeror) / (coef1+coef2) / sqrt(rho(k)) 
+(  118)   evapr2(k)  =  0.31 * 2. * pi  * nzeror * REAL(gamr2,RR) * &
+(  119)         0.89 * sqrt(a_rain/(muelq*rrr1))/ &
+(  120)         (pi * rhor * nzeror)**((5+b_rain)/8.) / (coef1+coef2) & 
+(  121)              * rho(k)**((1+b_rain)/8.)*sqrt(pratio) 
+(  122) 
+(  123) end do
+(  124) 
+(  125)            
+(  126) end subroutine precip_init
+(  127) 
+(  128) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 5
+
+(    1) # 1 "precip_init.F90"
+(    1)   
+(    2) subroutine precip_init
+(    3) # 4 "precip_init.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "precip_init.F90"
+(   14) ! Initialize precipitation related stuff
+(   15) # 16 "precip_init.F90"
+(   16) use vars
+(   17) use microphysics
+(   18) use micro_params
+(   19) use params
+(   20) use real_size
+(   21) # 22 "precip_init.F90"
+(   22) implicit none
+(   23) # 24 "precip_init.F90"
+(   24) real(RR) pratio, coef1, coef2,estw,esti,rrr1,rrr2
+(   25) real(4) gammafff   ! calling C module
+(   26) external gammafff
+(   27) integer k 
+(   28) # 29 "precip_init.F90"
+(   29) gam3 = 3. 
+(   30) gamr1 = 3.+b_rain
+(   31) gamr2 = (5.+b_rain)/2.
+(   32) gamr3 = 4.+b_rain
+(   33) gams1 = 3.+b_snow
+(   34) gams2 = (5.+b_snow)/2.
+(   35) gams3 = 4.+b_snow
+(   36) gamg1 = 3.+b_grau
+(   37) gamg2 = (5.+b_grau)/2.
+(   38) gamg3 = 4.+b_grau
+(   39) gam3 = gammafff(gam3) 
+(   40) gamr1 = gammafff(gamr1)
+(   41) gamr2 = gammafff(gamr2)
+(   42) gamr3 = gammafff(gamr3)
+(   43) gams1 = gammafff(gams1)
+(   44) gams2 = gammafff(gams2)
+(   45) gams3 = gammafff(gams3)
+(   46) gamg1 = gammafff(gamg1)
+(   47) gamg2 = gammafff(gamg2)
+(   48) gamg3 = gammafff(gamg3)
+(   49) !if(masterproc) then
+(   50) ! print*,'gam3=',gam3
+(   51) ! print*,'gamr1,gamr2,gamr3:',gamr1,gamr2,gamr3
+(   52) ! print*,'gams1,gams2,gams3:',gams1,gams2,gams3
+(   53) ! print*,'gamg1,gamg2,gamg3:',gamg1,gamg2,gamg3
+(   54) !endif
+(   55) if(nint(gam3).ne.2) then 
+(   56)    if(masterproc)print*,'cannot compute gamma-function in precip_init. Exiting...'
+(   57)    call task_abort
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 6
+
+(   58) end if
+(   59) # 60 "precip_init.F90"
+(   60) do k=1,nzm
+(   61) # 62 "precip_init.F90"
+(   62) ! pratio = (1000. / pres(k)) ** 0.4
+(   63)   pratio = sqrt(1.29 / rho(k))
+(   64) # 65 "precip_init.F90"
+(   65)   rrr1=393./(tabs0(k)+120.)*(tabs0(k)/273.)**1.5
+(   66)   rrr2=(tabs0(k)/273.)**1.94*(1000./pres(k))
+(   67) # 68 "precip_init.F90"
+(   68)   estw = 100.*esatw_crm(tabs0(k))
+(   69)   esti = 100.*esati_crm(tabs0(k))
+(   70) # 71 "precip_init.F90"
+(   71) ! accretion by snow:
+(   72) # 73 "precip_init.F90"
+(   73)   coef1 = 0.25 * pi * nzeros * a_snow * REAL(gams1,RR) * pratio/ &
+(   74)             (pi * rhos * nzeros/rho(k) ) ** ((3+b_snow)/4.)
+(   75)   coef2 = exp(0.025*(tabs0(k) - 273.15))                        
+(   76)   accrsi(k) =  coef1 * coef2 * esicoef
+(   77)   accrsc(k) =  coef1 * esccoef 
+(   78)   coefice(k) =  coef2
+(   79)           
+(   80) ! evaporation of snow:
+(   81)  
+(   82)   coef1  =(lsub/(tabs0(k)*rv)-1.)*lsub/(therco*rrr1*tabs0(k))
+(   83)   coef2  = rv*tabs0(k)/(diffelq*rrr2*esti)
+(   84)   evaps1(k)  =  0.65*4.*nzeros/sqrt(pi*rhos*nzeros)/(coef1+coef2)/sqrt(rho(k)) 
+(   85)   evaps2(k)  =  0.49*4.*nzeros*REAL(gams2,RR)*sqrt(a_snow/(muelq*rrr1))/ & 
+(   86)        (pi*rhos*nzeros)**((5+b_snow)/8.) / (coef1+coef2) &
+(   87)                * rho(k)**((1+b_snow)/8.)*sqrt(pratio)  
+(   88) # 89 "precip_init.F90"
+(   89) ! accretion by graupel:
+(   90) # 91 "precip_init.F90"
+(   91)   coef1 = 0.25*pi*nzerog*a_grau*REAL(gamg1,RR)*pratio/&
+(   92)           (pi*rhog*nzerog/rho(k))**((3+b_grau)/4.)
+(   93)   coef2 = exp(0.025*(tabs0(k) - 273.15))                        
+(   94)   accrgi(k) =  coef1 * coef2 * egicoef
+(   95)   accrgc(k) =  coef1 * egccoef 
+(   96)           
+(   97) ! evaporation of graupel:
+(   98)  
+(   99)   coef1  =(lsub/(tabs0(k)*rv)-1.)*lsub/(therco*rrr1*tabs0(k))
+(  100)   coef2  = rv*tabs0(k)/(diffelq*rrr2*esti)
+(  101)   evapg1(k)  = 0.65*4.*nzerog/sqrt(pi*rhog*nzerog)/(coef1+coef2)/sqrt(rho(k)) 
+(  102)   evapg2(k)  = 0.49*4.*nzerog*REAL(gamg2,RR)*sqrt(a_grau/(muelq*rrr1))/ &
+(  103)         (pi * rhog * nzerog)**((5+b_grau)/8.) / (coef1+coef2) &
+(  104)                * rho(k)**((1+b_grau)/8.)*sqrt(pratio)  
+(  105) # 106 "precip_init.F90"
+(  106)  
+(  107) ! accretion by rain:
+(  108) # 109 "precip_init.F90"
+(  109)   accrrc(k)=  0.25 * pi * nzeror * a_rain * REAL(gamr1,RR) * pratio/ &
+(  110)               (pi * rhor * nzeror / rho(k)) ** ((3+b_rain)/4.)* erccoef   
+(  111) # 112 "precip_init.F90"
+(  112) ! evaporation of rain:
+(  113) # 114 "precip_init.F90"
+(  114)   coef1  =(lcond/(tabs0(k)*rv)-1.)*lcond/(therco*rrr1*tabs0(k))
+(  115)   coef2  = rv*tabs0(k)/(diffelq * rrr2 * estw)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:48      page 7
+
+(  116)   evapr1(k)  =  0.78 * 2. * pi * nzeror / &
+(  117)         sqrt(pi * rhor * nzeror) / (coef1+coef2) / sqrt(rho(k)) 
+(  118)   evapr2(k)  =  0.31 * 2. * pi  * nzeror * REAL(gamr2,RR) * &
+(  119)         0.89 * sqrt(a_rain/(muelq*rrr1))/ &
+(  120)         (pi * rhor * nzeror)**((5+b_rain)/8.) / (coef1+coef2) & 
+(  121)              * rho(k)**((1+b_rain)/8.)*sqrt(pratio) 
+(  122) # 123 "precip_init.F90"
+(  123) end do
+(  124) # 125 "precip_init.F90"
+(  125)            
+(  126) end subroutine precip_init

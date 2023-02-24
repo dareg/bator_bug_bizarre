@@ -1,0 +1,424 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: getopt.F
+
+(    1)       FUNCTION GETOPT(Y_OPTSTR, Y_OPTARG)
+(    2) 
+(    3)       USE PARKIND1, ONLY : JPIM
+(    4)       IMPLICIT NONE
+(    5) 
+(    6)       INTEGER(KIND=JPIM) :: GETOPT
+(    7)       CHARACTER(LEN=*)   :: Y_OPTSTR, Y_OPTARG
+(    8) 
+(    9)       INTEGER(KIND=JPIM) :: I,INITIAL,L_OPTSTR
+(   10)       INTEGER(KIND=JPIM) :: N_ARG,N_ARGS,NDX_ARG,NDX_OPT
+(   11)       CHARACTER(LEN=512) :: Y_ARG
+(   12)       CHARACTER(LEN=1)   :: Y_OPT
+(   13)       LOGICAL            :: LL_ENDOPTS
+(   14) 
+(   15)       COMMON/GOPT_COM1/ INITIAL  ,N_ARGS  ,N_ARG   ,NDX_ARG ,LL_ENDOPTS
+(   16)       COMMON/GOPT_COM2/ Y_ARG
+(   17) 
+(   18) !  Initialise on 1st. call
+(   19) !  -----------------------
+(   20) 
+(   21)       IF (INITIAL .NE. 123456) THEN
+(   22)          INITIAL    = 123456
+(   23)          N_ARGS     = COMMAND_ARGUMENT_COUNT()
+(   24)          N_ARG      = 0
+(   25)          NDX_ARG    = 0
+(   26)          LL_ENDOPTS = .FALSE.
+(   27)       ENDIF
+(   28) 
+(   29)       Y_OPTARG = ' '
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 3
+
+(   31) !  Get length of "y_optstr"
+(   32) !  ------------------------
+(   33) 
+(   34)       L_OPTSTR = 0
+(   35)       DO 10 I = LEN(Y_OPTSTR), 1, -1
+(   36)       IF (Y_OPTSTR(I : I) .NE. ' ') THEN
+(   37)          L_OPTSTR = I
+(   38)          GOTO 20
+(   39)       ENDIF
+(   40)    10 CONTINUE
+(   41)    20 CONTINUE
+(   42) 
+(   43) !  If already at end of options, return
+(   44) !  ------------------------------------
+(   45) 
+(   46)       IF ((N_ARG .GT. N_ARGS) .OR. LL_ENDOPTS) THEN
+(   47)          LL_ENDOPTS = .TRUE.
+(   48)          GETOPT = -1
+(   49)          RETURN
+(   50)       ENDIF
+(   51) 
+(   52) !  If we need to get the next argument, do so. Check for end of options
+(   53) !  --------------------------------------------------------------------
+(   54) 
+(   55)       IF (NDX_ARG .EQ. 0) THEN
+(   56)          N_ARG = N_ARG + 1
+(   57) 
+(   58)          IF (N_ARG .GT. N_ARGS) THEN
+(   59)             LL_ENDOPTS = .TRUE.
+(   60)             GETOPT     = -1
+(   61)             RETURN
+(   62)          ENDIF
+(   63) 
+(   64)          Y_ARG   = ' '
+(   65)          CALL GETARG(N_ARG, Y_ARG)
+(   66)          NDX_ARG = 1
+(   67) 
+(   68)          IF (Y_ARG(1 : 1) .NE. '-') THEN
+(   69)             LL_ENDOPTS = .TRUE.
+(   70)             GETOPT     = -1
+(   71)             RETURN
+(   72)          ELSE IF (Y_ARG .EQ. '--') THEN
+(   73)             LL_ENDOPTS = .TRUE.
+(   74)             N_ARG      = N_ARG + 1
+(   75)             Y_ARG      = ' '
+(   76)             IF (N_ARG .LE. N_ARGS) THEN
+(   77)                CALL GETARG(N_ARG, Y_ARG)
+(   78)             ENDIF
+(   79)             GETOPT     = -1
+(   80)             RETURN
+(   81)          ENDIF
+(   82)          NDX_ARG = 2
+(   83)       ENDIF
+(   84) 
+(   85) !  We have an option, now see if it is valid
+(   86) !  -----------------------------------------
+(   87) 
+(   88)       Y_OPT   = Y_ARG(NDX_ARG : NDX_ARG)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 4
+
+(   89)       NDX_OPT = INDEX(Y_OPTSTR, Y_OPT)
+(   90) 
+(   91)       IF (NDX_OPT .EQ. 0) THEN
+(   92)          NDX_ARG = NDX_ARG + 1
+(   93)          IF (Y_ARG(NDX_ARG : ) .EQ. ' ') THEN
+(   94)             NDX_ARG = 0
+(   95)          ENDIF
+(   96)          GETOPT = ICHAR(Y_OPT)
+(   97)          RETURN
+(   98)       ENDIF
+(   99) 
+(  100) !  We have a valid option, see if it should have an argument
+(  101) !  ---------------------------------------------------------
+(  102) 
+(  103)       NDX_ARG = NDX_ARG + 1
+(  104)       IF (Y_ARG(NDX_ARG :) .EQ. ' ') THEN
+(  105)          NDX_ARG = 0
+(  106)       ENDIF
+(  107) 
+(  108)       IF (NDX_OPT .EQ. L_OPTSTR) THEN
+(  109)          GETOPT = ICHAR(Y_OPT)
+(  110)          RETURN
+(  111)       ELSE IF (Y_OPTSTR(NDX_OPT + 1 : NDX_OPT + 1) .NE. ':') THEN
+(  112)          GETOPT = ICHAR(Y_OPT)
+(  113)          RETURN
+(  114)       ENDIF
+(  115) 
+(  116) 
+(  117) !  A valid option with an argument
+(  118) !  -------------------------------
+(  119) 
+(  120)       IF (NDX_ARG .EQ. 0) THEN
+(  121)          IF (N_ARG .EQ. N_ARGS) THEN
+(  122)             LL_ENDOPTS = .TRUE.
+(  123)             GETOPT     = 0
+(  124)             RETURN
+(  125)          ENDIF
+(  126) 
+(  127)          N_ARG = N_ARG + 1
+(  128)          Y_ARG = ' '
+(  129)          CALL GETARG(N_ARG, Y_ARG)
+(  130)          NDX_ARG = 1
+(  131)          LL_ENDOPTS = N_ARG .EQ. N_ARGS
+(  132)       ENDIF
+(  133) 
+(  134)       Y_OPTARG = Y_ARG(NDX_ARG : )
+(  135)       NDX_ARG  = 0
+(  136)       GETOPT   = ICHAR(Y_OPT)
+(  137) 
+(  138)       ENDFUNCTION GETOPT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 5
+
+(    1) # 1 "getopt.F"
+(    1)       FUNCTION GETOPT(Y_OPTSTR, Y_OPTARG)
+(    2) # 3 "getopt.F"
+(    3)       USE PARKIND1, ONLY : JPIM
+(    4)       IMPLICIT NONE
+(    5) # 6 "getopt.F"
+(    6)       INTEGER(KIND=JPIM) :: GETOPT
+(    7)       CHARACTER(LEN=*)   :: Y_OPTSTR, Y_OPTARG
+(    8) # 9 "getopt.F"
+(    9)       INTEGER(KIND=JPIM) :: I,INITIAL,L_OPTSTR
+(   10)       INTEGER(KIND=JPIM) :: N_ARG,N_ARGS,NDX_ARG,NDX_OPT
+(   11)       CHARACTER(LEN=512) :: Y_ARG
+(   12)       CHARACTER(LEN=1)   :: Y_OPT
+(   13)       LOGICAL            :: LL_ENDOPTS
+(   14) # 15 "getopt.F"
+(   15)       COMMON/GOPT_COM1/ INITIAL  ,N_ARGS  ,N_ARG   ,NDX_ARG ,LL_ENDOPTS
+(   16)       COMMON/GOPT_COM2/ Y_ARG
+(   17) # 18 "getopt.F"
+(   18) !  Initialise on 1st. call
+(   19) !  -----------------------
+(   20) # 21 "getopt.F"
+(   21)       IF (INITIAL .NE. 123456) THEN
+(   22)          INITIAL    = 123456
+(   23)          N_ARGS     = COMMAND_ARGUMENT_COUNT()
+(   24)          N_ARG      = 0
+(   25)          NDX_ARG    = 0
+(   26)          LL_ENDOPTS = .FALSE.
+(   27)       ENDIF
+(   28) # 29 "getopt.F"
+(   29)       Y_OPTARG = ' '
+(   30) # 31 "getopt.F"
+(   31) !  Get length of "y_optstr"
+(   32) !  ------------------------
+(   33) # 34 "getopt.F"
+(   34)       L_OPTSTR = 0
+(   35)       DO 10 I = LEN(Y_OPTSTR), 1, -1
+(   36)       IF (Y_OPTSTR(I : I) .NE. ' ') THEN
+(   37)          L_OPTSTR = I
+(   38)          GOTO 20
+(   39)       ENDIF
+(   40)    10 CONTINUE
+(   41)    20 CONTINUE
+(   42) # 43 "getopt.F"
+(   43) !  If already at end of options, return
+(   44) !  ------------------------------------
+(   45) # 46 "getopt.F"
+(   46)       IF ((N_ARG .GT. N_ARGS) .OR. LL_ENDOPTS) THEN
+(   47)          LL_ENDOPTS = .TRUE.
+(   48)          GETOPT = -1
+(   49)          RETURN
+(   50)       ENDIF
+(   51) # 52 "getopt.F"
+(   52) !  If we need to get the next argument, do so. Check for end of options
+(   53) !  --------------------------------------------------------------------
+(   54) # 55 "getopt.F"
+(   55)       IF (NDX_ARG .EQ. 0) THEN
+(   56)          N_ARG = N_ARG + 1
+(   57) # 58 "getopt.F"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 6
+
+(   58)          IF (N_ARG .GT. N_ARGS) THEN
+(   59)             LL_ENDOPTS = .TRUE.
+(   60)             GETOPT     = -1
+(   61)             RETURN
+(   62)          ENDIF
+(   63) # 64 "getopt.F"
+(   64)          Y_ARG   = ' '
+(   65)          CALL GETARG(N_ARG, Y_ARG)
+(   66)          NDX_ARG = 1
+(   67) # 68 "getopt.F"
+(   68)          IF (Y_ARG(1 : 1) .NE. '-') THEN
+(   69)             LL_ENDOPTS = .TRUE.
+(   70)             GETOPT     = -1
+(   71)             RETURN
+(   72)          ELSE IF (Y_ARG .EQ. '--') THEN
+(   73)             LL_ENDOPTS = .TRUE.
+(   74)             N_ARG      = N_ARG + 1
+(   75)             Y_ARG      = ' '
+(   76)             IF (N_ARG .LE. N_ARGS) THEN
+(   77)                CALL GETARG(N_ARG, Y_ARG)
+(   78)             ENDIF
+(   79)             GETOPT     = -1
+(   80)             RETURN
+(   81)          ENDIF
+(   82)          NDX_ARG = 2
+(   83)       ENDIF
+(   84) # 85 "getopt.F"
+(   85) !  We have an option, now see if it is valid
+(   86) !  -----------------------------------------
+(   87) # 88 "getopt.F"
+(   88)       Y_OPT   = Y_ARG(NDX_ARG : NDX_ARG)
+(   89)       NDX_OPT = INDEX(Y_OPTSTR, Y_OPT)
+(   90) # 91 "getopt.F"
+(   91)       IF (NDX_OPT .EQ. 0) THEN
+(   92)          NDX_ARG = NDX_ARG + 1
+(   93)          IF (Y_ARG(NDX_ARG : ) .EQ. ' ') THEN
+(   94)             NDX_ARG = 0
+(   95)          ENDIF
+(   96)          GETOPT = ICHAR(Y_OPT)
+(   97)          RETURN
+(   98)       ENDIF
+(   99) # 100 "getopt.F"
+(  100) !  We have a valid option, see if it should have an argument
+(  101) !  ---------------------------------------------------------
+(  102) # 103 "getopt.F"
+(  103)       NDX_ARG = NDX_ARG + 1
+(  104)       IF (Y_ARG(NDX_ARG :) .EQ. ' ') THEN
+(  105)          NDX_ARG = 0
+(  106)       ENDIF
+(  107) # 108 "getopt.F"
+(  108)       IF (NDX_OPT .EQ. L_OPTSTR) THEN
+(  109)          GETOPT = ICHAR(Y_OPT)
+(  110)          RETURN
+(  111)       ELSE IF (Y_OPTSTR(NDX_OPT + 1 : NDX_OPT + 1) .NE. ':') THEN
+(  112)          GETOPT = ICHAR(Y_OPT)
+(  113)          RETURN
+(  114)       ENDIF
+(  115) # 117 "getopt.F"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:29      page 7
+
+(  117) !  A valid option with an argument
+(  118) !  -------------------------------
+(  119) # 120 "getopt.F"
+(  120)       IF (NDX_ARG .EQ. 0) THEN
+(  121)          IF (N_ARG .EQ. N_ARGS) THEN
+(  122)             LL_ENDOPTS = .TRUE.
+(  123)             GETOPT     = 0
+(  124)             RETURN
+(  125)          ENDIF
+(  126) # 127 "getopt.F"
+(  127)          N_ARG = N_ARG + 1
+(  128)          Y_ARG = ' '
+(  129)          CALL GETARG(N_ARG, Y_ARG)
+(  130)          NDX_ARG = 1
+(  131)          LL_ENDOPTS = N_ARG .EQ. N_ARGS
+(  132)       ENDIF
+(  133) # 134 "getopt.F"
+(  134)       Y_OPTARG = Y_ARG(NDX_ARG : )
+(  135)       NDX_ARG  = 0
+(  136)       GETOPT   = ICHAR(Y_OPT)
+(  137) # 138 "getopt.F"
+(  138)       ENDFUNCTION GETOPT

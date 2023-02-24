@@ -1,0 +1,11 @@
+!depfile:prep_flake_unif.F90
+MODULE MODI_PREP_FLAKE_UNIF
+INTERFACE
+SUBROUTINE PREP_FLAKE_UNIF(KLUOUT,HSURF,PFIELD)
+INTEGER,            INTENT(IN)  :: KLUOUT    ! output listing logical unit
+ CHARACTER(LEN=7),   INTENT(IN)  :: HSURF     ! type of field
+REAL, POINTER, DIMENSION(:,:)   :: PFIELD    ! field to interpolate horizontally
+END SUBROUTINE PREP_FLAKE_UNIF
+
+END INTERFACE
+END MODULE MODI_PREP_FLAKE_UNIF

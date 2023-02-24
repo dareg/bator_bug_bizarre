@@ -1,0 +1,1472 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faicor.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAICOR_MT64           &
+(    4) &                     (FA)
+(    5) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   12) !      Initialisation des tableaux permettant la correspondance
+(   13) !      entre nom du champ dans FA et ses descripteurs GRIB.
+(   14) !
+(   15) !      **  FA%NBPARC ne doit pas depasser FA%JPXPAR !! **
+(   16) !**
+(   17) !
+(   18) TYPE(FA_COM) :: FA
+(   19) INTEGER (KIND=JPLIKB) I, J
+(   20) REAL (KIND=JPDBLR), PARAMETER :: ZONOVG = 1.0_JPDBLR / 9.80665_JPDBLR, &
+(   21)                                & Z100   = 100._JPDBLR
+(   22) LOGICAL :: LLALLOC
+(   23) 
+(   24) !**
+(   25) !     1.  -  TRAITEMENT DES CHAMPS MONO NIVEAU
+(   26) !-----------------------------------------------------------------------
+(   27) !
+(   28) !     1.1 -  Champs "profond"
+(   29) !
+(   30) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 3
+
+(   31) IF (LHOOK) CALL DR_HOOK('FAICOR_MT',0,ZHOOK_HANDLE)
+(   32) 
+(   33) DO I = 1, 2
+(   34) 
+(   35) LLALLOC = I == 2
+(   36) 
+(   37) IF (LLALLOC) THEN
+(   38)   ALLOCATE (FA%YGR1TAB (FA%NBPARC))
+(   39) ENDIF
+(   40) 
+(   41) FA%NBPARC = 0
+(   42) 
+(   43) ! 1 : Table                                                               
+(   44) ! 2 : Parameter                                                           
+(   45) ! 3 : LevelType                                                           
+(   46) ! 4 : FirstLevel                                                          
+(   47) ! 5 : SecondLevel                                                         
+(   48) ! 6 : 2 => min/max, 4 => sum since last term, 8 => sum since the beginning
+(   49) ! 7 : ScalingFactor                                                       
+(   50) ! 8 : BitsPerValue (usual value)                                          
+(   51) 
+(   52) CALL T ('PROF', 'TEMPERATURE ', (/   1,  11,   111,  10,   0, 0,  0,  12 /))
+(   53) CALL T ('PROF', 'RESERV.GLACE', (/   1, 152,   112,   0, 250, 0,  0,  16 /))
+(   54) CALL T ('PROF', 'RESERV.EAU' ,  (/   1, 153,   112,   0, 250, 0,  0,  16 /))
+(   55) CALL T ('PROF', 'RUISSELLEMEN', (/ 149,   2,   112,  10, 300, 4,  0,  12 /))
+(   56) CALL T ('PROF', 'FLUX DE GEL ', (/ 149,  73,   112,  10, 300, 4,  0,  12 /))
+(   57) CALL T ('PROF', 'PROP.RMAX.EA', (/ 149,  77,   112,  10, 300, 0,  0,  12 /))
+(   58) CALL T ('PROF', 'XRUISSELLEME', (/ 149,  85,   112,  10, 300, 0,  0,  12 /))
+(   59) 
+(   60) !
+(   61) !     1.2 -  Champs de surface
+(   62) !
+(   63) CALL T ('SURF', 'PRESSION    ', (/   1,   1,   1,     0,   0, 0,  0,  16 /))
+(   64) CALL T ('SURF', 'GEOPOTENTIEL', (/   1,   8,   1,     0,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(   65) CALL T ('SURF', 'TEMPERATURE ', (/   1,  11,   1,     0,   0, 0,  0,  12 /))
+(   66) CALL T ('SURF', 'FLU.MSUBL.NE', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   67) CALL T ('SURF', 'FLU.MEVAP.EA', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   68) CALL T ('SURF', 'FLU.MTOTA.NE', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   69) CALL T ('SURF', 'PREC.EAU.GEC', (/   1,  62,   1,     0,   0, 8,  0,  16 /))
+(   70) CALL T ('SURF', 'PREC.EAU.CON', (/   1,  63,   1,     0,   0, 8,  0,  16 /))
+(   71) CALL T ('SURF', 'RESERV.NEIGE', (/   1,  65,   1,     0,   0, 0,  0,  16 /))
+(   72) CALL T ('SURF', 'NEBUL.TOTALE', (/   1,  71,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   73) CALL T ('SURF', 'NEBUL.CONVEC', (/   1,  72,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   74) CALL T ('SURF', 'NEBUL.BASSE ', (/   1,  73,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   75) CALL T ('SURF', 'NEBUL.MOYENN', (/   1,  74,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   76) CALL T ('SURF', 'NEBUL.HAUTE ', (/   1,  75,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   77) CALL T ('SURF', 'PREC.NEI.CON', (/   1,  78,   1,     0,   0, 8,  0,  16 /))
+(   78) CALL T ('SURF', 'PREC.NEI.GEC', (/   1,  79,   1,     0,   0, 8,  0,  16 /))
+(   79) CALL T ('SURF', 'IND.TERREMER', (/   1,  81,   1,     0,   0, 0,  0,   1 /))
+(   80) CALL T ('SURF', 'Z0.FOIS.G   ', (/   1,  83,   1,     0,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(   81) CALL T ('SURF', 'ALBEDO      ', (/   1,  84,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(   82) CALL T ('SURF', 'PROP.VEGETAT', (/   1,  87,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(   83) CALL T ('SURF', 'FLU.RAY.SOLA', (/ 128, 111,   1,     0,   0, 8,  0,  16 /))
+(   84) CALL T ('SURF', 'FLU.RAY.THER', (/ 128, 112,   1,     0,   0, 8,  0,  16 /))
+(   85) CALL T ('SURF', 'FLU.LAT.MEVA', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   86) CALL T ('SURF', 'FLU.LAT.MSUB', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   87) CALL T ('SURF', 'FLU.LAT.MTOT', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   88) CALL T ('SURF', 'FLU.CHA.SENS', (/ 128, 122,   1,     0,   0, 8,  0,  16 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 4
+
+(   89) CALL T ('SURF', 'ETA.GEOPOTEN', (/   1, 128,   1,     0,   0, 0,  0,  16 /))
+(   90) CALL T ('SURF', 'ETP.GEOPOTEN', (/   1, 129,   1,     0,   0, 0,  0,  16 /))
+(   91) CALL T ('SURF', 'TENS.DMOG.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   92) CALL T ('SURF', 'TENS.TURB.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   93) CALL T ('SURF', 'TENS.TOTA.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   94) CALL T ('SURF', 'TENS.DMOG.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   95) CALL T ('SURF', 'TENS.TURB.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   96) CALL T ('SURF', 'TENS.TOTA.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   97) CALL T ('SURF', 'RESERV.GLACE', (/   1, 152, 112,     0,   1, 0,  0,  16 /))
+(   98) CALL T ('SURF', 'RESERV.EAU  ', (/   1, 153, 112,     0,   1, 0,  0,  16 /))
+(   99) CALL T ('SURF', 'RAYT.LUNE.DE', (/   1, 158,   1,     0,   0, 8,  0,  16 /))
+(  100) CALL T ('SURF', 'CAPE.MOD.XFU', (/ 159, 154,   1,     0,   0, 0,  0,  16 /))
+(  101) CALL T ('SURF', 'TOT.WAT.VAPO', (/   1, 167,   1,     0,   0, 0,  0,  12 /))
+(  102) ! Debut des champs pour Mocage :
+(  103) !DP: champ TCO3 remplace par O3_TOT le 18 oct 2004 par coherence
+(  104) ! avec la BDAP qui venait de proceder au changement.
+(  105) CALL T ('SURF', 'O3_TOT      ', (/   1,  10,   1,     0,   0, 0,  0,  12 /))
+(  106) CALL T ('SURF', 'CH4_TOT     ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  107) CALL T ('SURF', 'NO_TOT      ', (/ 159,  22,   1,     0,   0, 0,  0,  12 /))
+(  108) CALL T ('SURF', 'NO2_TOT     ', (/ 159,  23,   1,     0,   0, 0,  0,  12 /))
+(  109) CALL T ('SURF', 'CO_TOT      ', (/ 159,  24,   1,     0,   0, 0,  0,  12 /))
+(  110) ! Fin des champs pour Mocage
+(  111) CALL T ('SURF', 'ALBEDO NEIGE', (/ 149,   5,   1,     0,   0, 0,  0,  12 /))
+(  112) CALL T ('SURF', 'ALBEDO HISTO', (/ 149,  48,   1,     0,   0, 0,  0,  12 /))
+(  113) CALL T ('SURF', 'ALBEDO.SOLNU', (/ 149,  49,   1,     0,   0, 0,  0,  12 /))
+(  114) CALL T ('SURF', 'ALBEDO.VEG  ', (/ 149,  50,   1,     0,   0, 0,  0,  12 /))
+(  115) CALL T ('SURF', 'EMISSIVITE  ', (/ 149,  60,   1,     0,   0, 0,  0,  12 /))
+(  116) CALL T ('SURF', 'ET.GEOPOTENT', (/ 149,  93,   1,     0,   0, 0,  0,  12 /))
+(  117) CALL T ('SURF', 'VAR.GEOP.ANI', (/ 128, 161,   1,     0,   0, 0,  0,  12 /))
+(  118) CALL T ('SURF', 'VAR.GEOP.DIR', (/ 128, 162,   1,     0,   0, 0,  0,  12 /))
+(  119) CALL T ('SURF', 'IND.VEG.DOMI', (/ 149,  61,   1,     0,   0, 0,  0,  12 /))
+(  120) CALL T ('SURF', 'RESI.STO.MIN', (/ 149,  62,   1,     0,   0, 0,  0,  12 /))
+(  121) CALL T ('SURF', 'PROP.ARGILE ', (/ 149,  63,   1,     0,   0, 0,  0,  12 /))
+(  122) CALL T ('SURF', 'PROP.SABLE  ', (/ 149,  64,   1,     0,   0, 0,  0,  12 /))
+(  123) CALL T ('SURF', 'EPAIS.SOL   ', (/ 149,  51,   1,     0,   0, 0,  0,  12 /))
+(  124) CALL T ('SURF', 'IND.FOLIAIRE', (/ 149,  65,   1,     0,   0, 0,  0,  12 /))
+(  125) CALL T ('SURF', 'RES.EVAPOTRA', (/ 149,  66,   1,     0,   0, 0,  0,  12 /))
+(  126) CALL T ('SURF', 'GZ0.THERM   ', (/ 149,  67,   1,     0,   0, 0,  0,  12 /))
+(  127) CALL T ('SURF', 'RESERV.INTER', (/ 149,  68,   1,     0,   0, 0,  0,  12 /))
+(  128) CALL T ('SURF', 'FL.Q TURBUL ', (/ 149,  69,   1,     0,   0, 4,  0,  12 /))
+(  129) CALL T ('SURF', 'FL.CT TURBUL', (/ 149,  70,   1,     0,   0, 4,  0,  12 /))
+(  130) CALL T ('SURF', 'FONTE NEIGE ', (/   1,  99,   1,     0,   0, 4,  0,  12 /))
+(  131) CALL T ('SURF', 'CHAL. DS SOL', (/ 149,   8,   1,     0,   0, 4,  0,  12 /))
+(  132) CALL T ('SURF', 'EAU DANS SOL', (/   1, 150,   1,     0,   0, 4,  0,  12 /))
+(  133) CALL T ('SURF', 'RUISSELLEMEN', (/ 149,   2,   1,     0,   0, 4,  0,  12 /))
+(  134) CALL T ('SURF', 'EVAPOTRANSPI', (/   1, 168,   1,     0,   0, 4,  0,  12 /))
+(  135) CALL T ('SURF', 'TRANSPIRATIO', (/ 149,  71,   1,     0,   0, 4,  0,  12 /))
+(  136) CALL T ('SURF', 'RUISS. INTER', (/ 149,  72,   1,     0,   0, 4,  0,  12 /))
+(  137) CALL T ('SURF', 'FLUX DE GEL ', (/ 149,  73,   1,     0,   0, 4,  0,  12 /))
+(  138) CALL T ('SURF', 'RAYT DIR SUR', (/ 128, 137,   1,     0,   0, 8,  0,  16 /))
+(  139) CALL T ('SURF', 'RAYT DIFF DE', (/ 149,  75,   1,     0,   0, 4,  0,  12 /))
+(  140) CALL T ('SURF', 'RAYT THER DE', (/ 149, 104,   1,     0,   0, 8,  0,  16 /))
+(  141) CALL T ('SURF', 'PROP.RMAX.EA', (/ 149,  77,   1,     0,   0, 0,  0,  12 /))
+(  142) CALL T ('SURF', 'DENSIT.NEIGE', (/ 149,   3,   1,     0,   0, 0,  0,  12 /))
+(  143) CALL T ('SURF', 'CFU.Q.TURBUL', (/ 149,  78,   1,     0,   0, 4,  0,  12 /))
+(  144) CALL T ('SURF', 'CFU.CT.TURBU', (/ 149,  79,   1,     0,   0, 4,  0,  12 /))
+(  145) CALL T ('SURF', 'TIME.PREC.TO', (/ 149,  80,   1,     0,   0, 4,  0,  12 /))
+(  146) CALL T ('SURF', 'XFONTE NEIGE', (/ 149,  81,   1,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 5
+
+(  147) CALL T ('SURF', 'XCHAL. DS SO', (/ 149,  82,   1,     0,   0, 0,  0,  12 /))
+(  148) CALL T ('SURF', 'XEAU DANS SO', (/ 149,  83,   1,     0,   0, 0,  0,  12 /))
+(  149) CALL T ('SURF', 'XFLU.MEVAP.E', (/ 149,  84,   1,     0,   0, 0,  0,  12 /))
+(  150) CALL T ('SURF', 'XRUISSELLEME', (/ 149,  85,   1,     0,   0, 0,  0,  12 /))
+(  151) CALL T ('SURF', 'XEVAPOTRANSP', (/ 149,  86,   1,     0,   0, 0,  0,  12 /))
+(  152) CALL T ('SURF', 'XTRANSPIRATI', (/ 149,  87,   1,     0,   0, 0,  0,  12 /))
+(  153) CALL T ('SURF', 'XRUISS. INTE', (/ 149,  88,   1,     0,   0, 0,  0,  12 /))
+(  154) CALL T ('SURF', 'ISOTPW0.MALT', (/ 128,   8,  20, 27315,   0, 0,  0,  16 /))
+(  155) CALL T ('SURF', 'ISOTPW1.MALT', (/ 128,   8,  20, 27415,   0, 0,  0,  16 /))
+(  156) CALL T ('SURF', 'CAPE.POS.F00', (/   1, 160,   1,     0,   0, 0,  0,  16 /))
+(  157) CALL T ('SURF', 'CAPE.POS.F04', (/ 159, 154,   1,     0,   0, 0,  0,  16 /))
+(  158) CALL T ('SURF', 'HUMI.RELATIV', (/   1,  52,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  159) CALL T ('SURF', 'HUMI.SPECIFI', (/   1,  51,   1,     0,   0, 0,  0,  12 /))
+(  160) CALL T ('SURF', 'ISOT0.MALTIT', (/ 128,   8, 115, 27315,   0, 0,  0,  16 /))
+(  161) CALL T ('SURF', 'ISOTM10.MALT', (/ 128,   8, 115, 26315,   0, 0,  0,  16 /))
+(  162) CALL T ('SURF', 'EQUILIBRLEV ', (/ 159, 155,   1,     0,   0, 0,  0,  16 /))
+(  163) CALL T ('SURF', 'RAYT SOL CL ', (/ 128, 168,   1,     0,   0, 8,  0,  16 /))
+(  164) CALL T ('SURF', 'RAYT THER CL', (/ 128, 169,   1,     0,   0, 8,  0,  16 /))
+(  165) CALL T ('SURF', 'WIND_VELOC  ', (/   1,  32,   1,     0,   0, 0,  0,  24 /))
+(  166) CALL T ('SURF', 'TCO3        ', (/   1,  10,   1,     0,   0, 0,  0,  12 /))
+(  167) CALL T ('SURF', 'TCNOX       ', (/ 159,  22,   1,     0,   0, 0,  0,  12 /))
+(  168) CALL T ('SURF', 'TCCO        ', (/ 159,  24,   1,     0,   0, 0,  0,  12 /))
+(  169) CALL T ('SURF', 'TCCH4       ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  170) CALL T ('SURF', 'TCPAN       ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  171) CALL T ('SURF', 'TC_DUST     ', (/ 159,  94,   1,     0,   0, 0,  0,  12 /))
+(  172) CALL T ('SURF', 'OD_DUST     ', (/ 159,  95,   1,     0,   0, 0,  0,  12 /))
+(  173) CALL T ('SURF', 'DSEC_DUST   ', (/ 159,  96,   1,     0,   0, 0,  0,  12 /))
+(  174) CALL T ('SURF', 'DHUM_DUST   ', (/ 159,  97,   1,     0,   0, 0,  0,  12 /))
+(  175) CALL T ('SURF', 'DSEDI_DUST  ', (/ 159,  98,   1,     0,   0, 0,  0,  12 /))
+(  176) CALL T ('SURF', 'EMISS_DUST  ', (/ 159,  99,   1,     0,   0, 0,  0,  12 /))
+(  177) CALL T ('SURF', 'ANAMOCON    ', (/   1, 166,   1,     0,   0, 0,  0,  16 /))
+(  178) CALL T ('SURF', 'RAYT SOLA DE', (/ 149, 105,   1,     0,   0, 8,  0,  16 /))
+(  179) CALL T ('SURF', 'ACCPLUIE    ', (/   2, 150,   1,     0,   0, 8,  0,  16 /))
+(  180) CALL T ('SURF', 'INSPLUIE    ', (/   2, 150,   1,     0,   0, 0,  0,  16 /))
+(  181) CALL T ('SURF', 'ACCNEIGE    ', (/   1,  99,   1,     0,   0, 8,  0,  16 /))
+(  182) CALL T ('SURF', 'INSNEIGE    ', (/   1,  99,   1,     0,   0, 0,  0,  16 /))
+(  183) CALL T ('SURF', 'ACCGRAUPEL  ', (/ 159,  29,   1,     0,   0, 8,  0,  16 /))
+(  184) CALL T ('SURF', 'INSGRAUPEL  ', (/ 159,  29,   1,     0,   0, 0,  0,  12 /))
+(  185) CALL T ('SURF', 'ACCGRELE    ', (/ 159,  30,   1,     0,   0, 8,  0,  16 /))
+(  186) CALL T ('SURF', 'INSGRELE    ', (/ 159,  30,   1,     0,   0, 0,  0,  16 /))
+(  187) CALL T ('SURF', 'DIAGHAIL    ', (/ 159, 248,   1,     0,   0, 0,  0,  16 /))
+(  188) CALL T ('SURF', 'VERT.VELOC  ', (/   1,  40,   1,     0,   0, 0,  0,  16 /))
+(  189) CALL T ('SURF', 'TC_BLACKC   ', (/ 159, 196,   1,     0,   0, 0,  0,  12 /))
+(  190) CALL T ('SURF', 'EMISS_BLACKC', (/ 159, 200,   1,     0,   0, 0,  0,  12 /))
+(  191) CALL T ('SURF', 'DHUM_BLACKC ', (/ 159, 198,   1,     0,   0, 0,  0,  12 /))
+(  192) CALL T ('SURF', 'DSEC_BLACKC ', (/ 159, 197,   1,     0,   0, 0,  0,  12 /))
+(  193) CALL T ('SURF', 'DSEDI_BLACKC', (/ 159, 199,   1,     0,   0, 0,  0,  12 /))
+(  194) CALL T ('SURF', 'TC_DYNSAL   ', (/ 159, 190,   1,     0,   0, 0,  0,  12 /))
+(  195) CALL T ('SURF', 'EMISS_DYNSAL', (/ 159, 194,   1,     0,   0, 0,  0,  12 /))
+(  196) CALL T ('SURF', 'DHUM_DYNSAL ', (/ 159, 192,   1,     0,   0, 0,  0,  12 /))
+(  197) CALL T ('SURF', 'DSEC_DYNSAL ', (/ 159, 191,   1,     0,   0, 0,  0,  12 /))
+(  198) CALL T ('SURF', 'DSEDI_DYNSAL', (/ 159, 193,   1,     0,   0, 0,  0,  12 /))
+(  199) CALL T ('SURF', 'TC_PMANTH   ', (/ 159, 202,   1,     0,   0, 0,  0,  12 /))
+(  200) CALL T ('SURF', 'EMISS_BLACKC', (/ 159, 200,   1,     0,   0, 0,  0,  12 /))
+(  201) CALL T ('SURF', 'DHUM_BLACKC ', (/ 159, 198,   1,     0,   0, 0,  0,  12 /))
+(  202) CALL T ('SURF', 'DSEC_BLACKC ', (/ 159, 197,   1,     0,   0, 0,  0,  12 /))
+(  203) CALL T ('SURF', 'DSEDI_BLACKC', (/ 159, 199,   1,     0,   0, 0,  0,  12 /))
+(  204) CALL T ('SURF', 'TC_DYNSAL   ', (/ 159, 190,   1,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 6
+
+(  205) CALL T ('SURF', 'TC_BLACKC   ', (/ 159, 196,   1,     0,   0, 0,  0,  12 /))
+(  206) CALL T ('SURF', 'EMISS_PMANTH', (/ 159, 206,   1,     0,   0, 0,  0,  12 /))
+(  207) CALL T ('SURF', 'DHUM_PMANTH ', (/ 159, 204,   1,     0,   0, 0,  0,  12 /))
+(  208) CALL T ('SURF', 'DSEC_PMANTH ', (/ 159, 203,   1,     0,   0, 0,  0,  12 /))
+(  209) CALL T ('SURF', 'DSEDI_PMANTH', (/ 159, 205,   1,     0,   0, 0,  0,  12 /))
+(  210) CALL T ('SURF', 'TC_PM25     ', (/ 159, 208,   1,     0,   0, 0,  0,  12 /))
+(  211) CALL T ('SURF', 'TC_PM10     ', (/ 159, 210,   1,     0,   0, 0,  0,  12 /))
+(  212) !
+(  213) !  Geopotentiel de surface en spectral (relief)
+(  214) !
+(  215) CALL T ('SPECSURF', 'GEOPOTEN', (/   1,   8,   1,     0,   0, 0,  0,  12 /), PMULTI=ZONOVG)
+(  216) !
+(  217) !     1.3 -  Champs au sommet
+(  218) !
+(  219) CALL T ('SOMM', 'FLU.RAY.SOLA', (/ 128, 113,   8,     0,   0, 8,  0,  16 /))
+(  220) CALL T ('SOMM', 'FLU.RAY.THER', (/ 128, 114,   8,     0,   0, 8,  0,  16 /))
+(  221) CALL T ('SOMM', 'TB_OZ_CLEAR ', (/   1, 170,   8,     0,   0, 0,  0,  12 /))
+(  222) CALL T ('SOMM', 'TB_OZ_CLOUDY', (/   1, 171,   8,     0,   0, 0,  0,  12 /))
+(  223) CALL T ('SOMM', 'TB_IR_CLEAR ', (/   1, 172,   8,     0,   0, 0,  0,  12 /))
+(  224) CALL T ('SOMM', 'TB_IR_CLOUDY', (/   1, 173,   8,     0,   0, 0,  0,  12 /))
+(  225) CALL T ('SOMM', 'TB_WV_CLEAR ', (/   1, 174,   8,     0,   0, 0,  0,  12 /))
+(  226) CALL T ('SOMM', 'TB_WV_CLOUDY', (/   1, 175,   8,     0,   0, 0,  0,  12 /))
+(  227) !
+(  228) !     1.4 -  Champs de la Couche Limite de Surface
+(  229) !
+(  230) CALL T ('CLS', 'TEMPERATURE  ', (/   1,  11, 105,     2,   0, 0,  0,  12 /))
+(  231) CALL T ('CLS', 'MAXI.TEMPERAT', (/   1,  15, 105,     2,   0, 2,  0,  12 /))
+(  232) CALL T ('CLS', 'MINI.TEMPERAT', (/   1,  16, 105,     2,   0, 2,  0,  12 /))
+(  233) CALL T ('CLS', 'VENT.ZONAL   ', (/   1,  33, 105,    10,   0, 0,  0,  12 /))
+(  234) CALL T ('CLS', 'VENT.MERIDIEN', (/   1,  34, 105,    10,   0, 0,  0,  12 /))
+(  235) CALL T ('CLS', 'HUMI.SPECIFIQ', (/   1,  51, 105,     2,   0, 0,  0,  12 /))
+(  236) CALL T ('CLS', 'HUMI.RELATIVE', (/   1,  52, 105,     2,   0, 0, -2,  12 /), PMULTI=Z100)
+(  237) CALL T ('CLS', 'MAXI.HUMI.REL', (/ 149,  90, 105,     2,   0, 2,  0,  12 /))
+(  238) CALL T ('CLS', 'MINI.HUMI.REL', (/ 149,  91, 105,     2,   0, 2,  0,  12 /))
+(  239) CALL T ('CLS', 'U.RAF.MOD.XFU', (/   1, 163, 105,    10,   0, 0,  0,  12 /))
+(  240) CALL T ('CLS', 'V.RAF.MOD.XFU', (/   1, 164, 105,    10,   0, 0,  0,  12 /))
+(  241) !
+(  242) !     1.5 -  Champs au niveau tropopause
+(  243) !
+(  244) CALL T ('ICAO', 'TROP.PRESSUR', (/   1,   1,   7,     0,   0, 0,  0,  16 /))
+(  245) CALL T ('ICAO', 'TROP.TEMPERA', (/   1,  11,   7,     0,   0, 0,  0,  12 /))
+(  246) !
+(  247) !     1.6 -  Champs au niveau jet
+(  248) !
+(  249) CALL T ('JET', 'PRESSURE     ', (/   1,   1,   6,     0,   0, 0,  0,  16 /))
+(  250) CALL T ('JET', 'VENT_ZONAL   ', (/   1,  33,   6,     0,   0, 0,  0,  12 /))
+(  251) CALL T ('JET', 'VENT_MERIDIEN', (/   1,  34,   6,     0,   0, 0,  0,  12 /))
+(  252) !
+(  253) !     1.7 -  Champs pour la Couche Limite Planetaire
+(  254) !
+(  255) CALL T ('CLP', 'MHAUT.MOD.XFU', (/   1, 165,   1,     0,   0, 0,  0,  16 /))
+(  256) CALL T ('CLP', 'MOCON.MOD.XFU', (/   1, 166,   1,     0,   0, 0,  0,  16 /))
+(  257) CALL T ('CLP', 'GEOPO.MOD.XFU', (/   1, 165,   1,     0,   0, 0,  0,  16 /))
+(  258) !
+(  259) !     1.8 -  Champs au niveau mer
+(  260) !
+(  261) CALL T ('MSL', 'PRESSURE',      (/   1,   2, 102,     0,   0, 0,  0,  12 /))
+(  262) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 7
+
+(  263) !     1.9 - Relief
+(  264) !
+(  265) CALL T ('INT', 'SURFGEOPOTENT', (/   1,   8,   1,     0,   0, 0,  0,  16 /), PMULTI=ZONOVG)
+(  266) !
+(  267) !     1.10- ATMO
+(  268) !
+(  269) CALL T ('ATMO', 'NEBUL.CONVEC', (/ 128,  72,   1,     0,   0, 4,  0,  12 /))
+(  270) CALL T ('ATMO', 'NEBUL.BASSE ', (/ 128,  73,   1,     0,   0, 4,  0,  12 /))
+(  271) CALL T ('ATMO', 'NEBUL.MOYENN', (/ 128,  74,   1,     0,   0, 4,  0,  12 /))
+(  272) CALL T ('ATMO', 'NEBUL.HAUTE ', (/ 128,  75,   1,     0,   0, 4,  0,  12 /))
+(  273) !
+(  274) !     1.11- TOP
+(  275) !
+(  276) CALL T ('TOP', 'RAYT DIR SOM',  (/ 149, 174,   8,     0,   0, 4,  0,  12 /))
+(  277) !**
+(  278) !     2.  -  TRAITEMENT DES CHAMPS SUR NIVEAUX
+(  279) !-----------------------------------------------------------------------
+(  280) !
+(  281) !     2.1 -  Champs sur un niveau isobare
+(  282) !
+(  283) CALL T ('P', 'POT_VORTICIT',    (/   1,   4, 100,     0,   0, 0,  0,  16 /))
+(  284) CALL T ('P', 'GEOPOTENTIEL',    (/   1,   6, 100,     0,   0, 0,  0,  16 /))
+(  285) CALL T ('P', 'TEMPERATURE ',    (/   1,  11, 100,     0,   0, 0,  0,  12 /))
+(  286) CALL T ('P', 'TEMPE_POTENT',    (/   1,  13, 100,     0,   0, 0,  0,  12 /))
+(  287) CALL T ('P', 'THETA_PRIM_W',    (/   1,  14, 100,     0,   0, 0,  0,  12 /))
+(  288) CALL T ('P', 'VENT_ZONAL  ',    (/   1,  33, 100,     0,   0, 0,  0,  12 /))
+(  289) CALL T ('P', 'VENT_MERIDIE',    (/   1,  34, 100,     0,   0, 0,  0,  12 /))
+(  290) CALL T ('P', 'VITESSE_VERT',    (/   1,  39, 100,     0,   0, 0,  0,  16 /))
+(  291) CALL T ('P', 'ABS_VORTICIT',    (/   1,  41, 100,     0,   0, 0,  0,  16 /))
+(  292) CALL T ('P', 'DIVERGENCE  ',    (/   1,  44, 100,     0,   0, 0,  0,  16 /))
+(  293) CALL T ('P', 'HUMI.SPECIFI',    (/   1,  51, 100,     0,   0, 0,  0,  12 /))
+(  294) CALL T ('P', 'HUMI_RELATIV',    (/   1,  52, 100,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  295) CALL T ('P', 'PRESSURE    ',    (/   1,   1, 105,     0,   0, 0,  0,  12 /))
+(  296) CALL T ('P', 'WIND_VELOCIT',    (/   1,  32, 100,     0,   0, 0,  0,  24 /))
+(  297) CALL T ('P', 'VORTICITY   ',    (/   1,  43, 100,     0,   0, 0,  0,  16 /))
+(  298) CALL T ('P', 'FONC.COURANT',    (/   1,  35, 100,     0,   0, 0,  0,  24 /))
+(  299) CALL T ('P', 'POT.VITESSE ',    (/   1,  36, 100,     0,   0, 0,  0,  24 /))
+(  300) ! Debut des champs pour Mocage :
+(  301) CALL T ('P', 'O3        ',      (/ 159,   1, 100,     0,   0, 0,  0,  12 /))
+(  302) CALL T ('P', 'NO2       ',      (/ 159,   2, 100,     0,   0, 0,  0,  12 /))
+(  303) CALL T ('P', 'NO        ',      (/ 159,   3, 100,     0,   0, 0,  0,  12 /))
+(  304) CALL T ('P', 'PAN       ',      (/ 159,   4, 100,     0,   0, 0,  0,  12 /))
+(  305) CALL T ('P', 'HNO3      ',      (/ 159,   5, 100,     0,   0, 0,  0,  12 /))
+(  306) CALL T ('P', 'SO2       ',      (/ 159,   6, 100,     0,   0, 0,  0,  12 /))
+(  307) CALL T ('P', 'CO        ',      (/ 159,   7, 100,     0,   0, 0,  0,  12 /))
+(  308) CALL T ('P', 'CH4       ',      (/ 159,   8, 100,     0,   0, 0,  0,  12 /))
+(  309) CALL T ('P', 'C2H6      ',      (/ 159,   9, 100,     0,   0, 0,  0,  12 /))
+(  310) CALL T ('P', 'NC4H10    ',      (/ 159,  10, 100,     0,   0, 0,  0,  12 /))
+(  311) CALL T ('P', 'C2H4      ',      (/ 159,  11, 100,     0,   0, 0,  0,  12 /))
+(  312) CALL T ('P', 'C3H6      ',      (/ 159,  12, 100,     0,   0, 0,  0,  12 /))
+(  313) CALL T ('P', 'OXYL      ',      (/ 159,  13, 100,     0,   0, 0,  0,  12 /))
+(  314) CALL T ('P', 'C5H8      ',      (/ 159,  14, 100,     0,   0, 0,  0,  12 /))
+(  315) CALL T ('P', 'APINEN    ',      (/ 159,  15, 100,     0,   0, 0,  0,  12 /))
+(  316) CALL T ('P', 'HCHO      ',      (/ 159,  16, 100,     0,   0, 0,  0,  12 /))
+(  317) CALL T ('P', 'CH3CHO    ',      (/ 159,  17, 100,     0,   0, 0,  0,  12 /))
+(  318) CALL T ('P', 'GLYOX     ',      (/ 159,  18, 100,     0,   0, 0,  0,  12 /))
+(  319) CALL T ('P', 'MGLYOX    ',      (/ 159,  19, 100,     0,   0, 0,  0,  12 /))
+(  320) CALL T ('P', 'CH3COE    ',      (/ 159,  20, 100,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 8
+
+(  321) ! Fin des champs pour Mocage
+(  322) CALL T ('P', 'RAD_LIQUID_W',    (/ 159,  32, 100,     0,   0, 0,  0,  16 /))
+(  323) CALL T ('P', 'RAD_SOLID_WA',    (/ 128, 247, 100,     0,   0, 0,  0,  16 /))
+(  324) CALL T ('P', 'CLOUD_FRACTI',    (/ 159,  36, 100,     0,   0, 0,  0,  16 /))
+(  325) CALL T ('P', 'TKE         ',    (/ 159,  37, 100,     0,   0, 0,  0,  16 /))
+(  326) CALL T ('P', 'SURFMOCON   ',    (/   1, 166,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  327) CALL T ('P', 'MAX_O3      ',    (/ 159,  23, 100,     0,   0, 0,  0,  12 /))
+(  328) CALL T ('P', 'MAX_NO      ',    (/ 159,  25, 100,     0,   0, 0,  0,  12 /))
+(  329) CALL T ('P', 'MAX_NO2     ',    (/ 159,  26, 100,     0,   0, 0,  0,  12 /))
+(  330) CALL T ('P', 'MAX_IUVCC   ',    (/ 159,  27, 100,     0,   0, 0,  0,  12 /))
+(  331) CALL T ('P', 'MAX_IUVCN   ',    (/ 159,  28, 100,     0,   0, 0,  0,  12 /))
+(  332) CALL T ('P', 'VERT.VELOCIT',    (/   1,  40, 100,     0,   0, 0,  0,  16 /))
+(  333) CALL T ('P', 'SIM_REFLECTI',    (/ 159,  31, 100,     0,   0, 0,  0,  16 /))
+(  334) CALL T ('P', 'CLOUD_WATER ',    (/ 159,  32, 100,     0,   0, 0,  0,  16 /))
+(  335) CALL T ('P', 'RAIN        ',    (/ 159,  33, 100,     0,   0, 0,  0,  16 /))
+(  336) CALL T ('P', 'ICE_CRYSTAL ',    (/ 128, 247, 100,     0,   0, 0,  0,  16 /))
+(  337) CALL T ('P', 'SNOW        ',    (/ 159,  34, 100,     0,   0, 0,  0,  16 /))
+(  338) CALL T ('P', 'GRAUPEL     ',    (/ 159,  35, 100,     0,   0, 0,  0,  16 /))
+(  339) CALL T ('P', 'THETA_VIRTUA',    (/ 159,  38, 100,     0,   0, 0,  0,  16 /))
+(  340) CALL T ('P', 'DUST        ',    (/ 159,  93, 100,     0,   0, 0,  0,  12 /))
+(  341) CALL T ('P', 'HAIL        ',    (/ 159, 100, 100,     0,   0, 0,  0,  12 /))
+(  342) CALL T ('P', 'BLACKC      ',    (/ 159, 195, 100,     0,   0, 0,  0,  12 /))
+(  343) CALL T ('P', 'DYNSAL      ',    (/ 159, 189, 100,     0,   0, 0,  0,  12 /))
+(  344) CALL T ('P', 'PMANTH      ',    (/ 159, 201, 100,     0,   0, 0,  0,  12 /))
+(  345) CALL T ('P', 'PM25        ',    (/ 159, 207, 100,     0,   0, 0,  0,  12 /))
+(  346) CALL T ('P', 'PM10        ',    (/ 159, 209, 100,     0,   0, 0,  0,  12 /))
+(  347) CALL T ('P', 'EDR         ',    (/ 128, 135, 100,     0,   0, 0,  0,  12 /))
+(  348) !
+(  349) !     2.2 -  Champs sur un niveau hauteur
+(  350) !
+(  351) CALL T ('H', 'POT_VORTICIT',    (/   1,   4, 105,     0,   0, 0,  0,  16 /))
+(  352) CALL T ('H', 'GEOPOTENTIEL',    (/   1,   6, 105,     0,   0, 0,  0,  12 /))
+(  353) CALL T ('H', 'TEMPERATURE ',    (/   1,  11, 105,     0,   0, 0,  0,  12 /))
+(  354) CALL T ('H', 'TEMPE_POTENT',    (/   1,  13, 105,     0,   0, 0,  0,  12 /))
+(  355) CALL T ('H', 'THETA_PRIM_W',    (/   1,  14, 105,     0,   0, 0,  0,  12 /))
+(  356) CALL T ('H', 'VENT_ZONAL  ',    (/   1,  33, 105,     0,   0, 0,  0,  12 /))
+(  357) CALL T ('H', 'VENT_MERIDIE',    (/   1,  34, 105,     0,   0, 0,  0,  12 /))
+(  358) CALL T ('H', 'VITESSE_VERT',    (/   1,  39, 105,     0,   0, 0,  0,  16 /))
+(  359) CALL T ('H', 'ABS_VORTICIT',    (/   1,  41, 105,     0,   0, 0,  0,  16 /))
+(  360) CALL T ('H', 'DIVERGENCE  ',    (/   1,  44, 105,     0,   0, 0,  0,  16 /))
+(  361) CALL T ('H', 'HUMI.SPECIFI',    (/   1,  51, 105,     0,   0, 0,  0,  12 /))
+(  362) CALL T ('H', 'HUMI_RELATIV',    (/   1,  52, 105,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  363) CALL T ('H', 'PRESSURE    ',    (/   1,   1, 105,     0,   0, 0,  0,  16 /))
+(  364) CALL T ('H', 'WIND_VELOCIT',    (/   1,  32, 105,     0,   0, 0,  0,  24 /))
+(  365) CALL T ('H', 'VORTICITY   ',    (/   1,  43, 105,     0,   0, 0,  0,  16 /))
+(  366) CALL T ('H', 'FONC.COURANT',    (/   1,  35, 105,     0,   0, 0,  0,  24 /))
+(  367) CALL T ('H', 'POT.VITESSE ',    (/   1,  36, 105,     0,   0, 0,  0,  24 /))
+(  368) ! Debut des champs pour Mocage :
+(  369) CALL T ('H', 'O3        ',      (/ 159,   1, 105,     0,   0, 0,  0,  12 /))
+(  370) CALL T ('H', 'NO2       ',      (/ 159,   2, 105,     0,   0, 0,  0,  12 /))
+(  371) CALL T ('H', 'NO        ',      (/ 159,   3, 105,     0,   0, 0,  0,  12 /))
+(  372) CALL T ('H', 'PAN       ',      (/ 159,   4, 105,     0,   0, 0,  0,  12 /))
+(  373) CALL T ('H', 'HNO3      ',      (/ 159,   5, 105,     0,   0, 0,  0,  12 /))
+(  374) CALL T ('H', 'SO2       ',      (/ 159,   6, 105,     0,   0, 0,  0,  12 /))
+(  375) CALL T ('H', 'CO        ',      (/ 159,   7, 105,     0,   0, 0,  0,  12 /))
+(  376) CALL T ('H', 'CH4       ',      (/ 159,   8, 105,     0,   0, 0,  0,  12 /))
+(  377) CALL T ('H', 'C2H6      ',      (/ 159,   9, 105,     0,   0, 0,  0,  12 /))
+(  378) CALL T ('H', 'NC4H10    ',      (/ 159,  10, 105,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 9
+
+(  379) CALL T ('H', 'C2H4      ',      (/ 159,  11, 105,     0,   0, 0,  0,  12 /))
+(  380) CALL T ('H', 'C3H6      ',      (/ 159,  12, 105,     0,   0, 0,  0,  12 /))
+(  381) CALL T ('H', 'OXYL      ',      (/ 159,  13, 105,     0,   0, 0,  0,  12 /))
+(  382) CALL T ('H', 'C5H8      ',      (/ 159,  14, 105,     0,   0, 0,  0,  12 /))
+(  383) CALL T ('H', 'APINEN    ',      (/ 159,  15, 105,     0,   0, 0,  0,  12 /))
+(  384) CALL T ('H', 'HCHO      ',      (/ 159,  16, 105,     0,   0, 0,  0,  12 /))
+(  385) CALL T ('H', 'CH3CHO    ',      (/ 159,  17, 105,     0,   0, 0,  0,  12 /))
+(  386) CALL T ('H', 'GLYOX     ',      (/ 159,  18, 105,     0,   0, 0,  0,  12 /))
+(  387) CALL T ('H', 'MGLYOX    ',      (/ 159,  19, 105,     0,   0, 0,  0,  12 /))
+(  388) CALL T ('H', 'CH3COE    ',      (/ 159,  20, 105,     0,   0, 0,  0,  12 /))
+(  389) ! Fin des champs pour Mocage
+(  390) CALL T ('H', 'RAD_LIQUID_W',      (/ 159,  32, 105,     0,   0, 0,  0,  16 /))
+(  391) CALL T ('H', 'RAD_SOLID_WA',      (/ 128, 247, 105,     0,   0, 0,  0,  16 /))
+(  392) CALL T ('H', 'CLOUD_FRACTI',      (/ 159,  36, 105,     0,   0, 0,  0,  16 /))
+(  393) CALL T ('H', 'TKE         ',      (/ 159,  37, 105,     0,   0, 0,  0,  16 /))
+(  394) CALL T ('H', 'SURFMOCON   ',      (/   1, 166, 105,     0,   0, 0,  0,  12 /), LDNIVA=.TRUE.)
+(  395) CALL T ('H', 'MAX_O3      ',      (/ 159,  23, 105,     0,   0, 0,  0,  12 /))
+(  396) CALL T ('H', 'MAX_NO      ',      (/ 159,  25, 105,     0,   0, 0,  0,  12 /))
+(  397) CALL T ('H', 'MAX_NO2     ',      (/ 159,  26, 105,     0,   0, 0,  0,  12 /))
+(  398) CALL T ('H', 'MAX_IUVCC   ',      (/ 159,  27, 105,     0,   0, 0,  0,  12 /))
+(  399) CALL T ('H', 'MAX_IUVCN   ',      (/ 159,  28, 105,     0,   0, 0,  0,  12 /))
+(  400) CALL T ('H', 'VERT.VELOCIT',      (/   1,  40, 105,     0,   0, 0,  0,  16 /))
+(  401) CALL T ('H', 'SIM_REFLECTI',      (/ 159,  31, 105,     0,   0, 0,  0,  16 /))
+(  402) CALL T ('H', 'CLOUD_WATER ',      (/ 159,  32, 105,     0,   0, 0,  0,  16 /))
+(  403) CALL T ('H', 'RAIN        ',      (/ 159,  33, 105,     0,   0, 0,  0,  16 /))
+(  404) CALL T ('H', 'ICE_CRYSTAL ',      (/ 128, 247, 105,     0,   0, 0,  0,  16 /))
+(  405) CALL T ('H', 'SNOW        ',      (/ 159,  34, 105,     0,   0, 0,  0,  16 /))
+(  406) CALL T ('H', 'GRAUPEL     ',      (/ 159,  35, 105,     0,   0, 0,  0,  16 /))
+(  407) CALL T ('H', 'THETA_VIRTUA',      (/ 159,  38, 105,     0,   0, 0,  0,  16 /))
+(  408) CALL T ('H', 'DUST        ',      (/ 159,  93, 105,     0,   0, 0,  0,  12 /))
+(  409) CALL T ('H', 'HAIL        ',      (/ 159, 100, 105,     0,   0, 0,  0,  12 /))
+(  410) CALL T ('H', 'BLACKC      ',      (/ 159, 195, 105,     0,   0, 0,  0,  12 /))
+(  411) CALL T ('H', 'DYNSAL      ',      (/ 159, 189, 105,     0,   0, 0,  0,  12 /))
+(  412) CALL T ('H', 'PMANTH      ',      (/ 159, 201, 105,     0,   0, 0,  0,  12 /))
+(  413) CALL T ('H', 'PM25        ',      (/ 159, 207, 105,     0,   0, 0,  0,  12 /))
+(  414) CALL T ('H', 'PM10        ',      (/ 159, 209, 105,     0,   0, 0,  0,  12 /))
+(  415) CALL T ('H', 'EDR         ',      (/ 128, 135, 105,     0,   0, 0,  0,  12 /))
+(  416) !
+(  417) !     2.3 -  Champs sur un niveau iso-tourbillon-potentiel
+(  418) !
+(  419) CALL T ('V', 'POT_VORTICIT',    (/   1,   4, 117,     0,   0, 0,  0,  16 /))
+(  420) CALL T ('V', 'GEOPOTENTIEL',    (/   1,   6, 117,     0,   0, 0,  0,  16 /))
+(  421) CALL T ('V', 'TEMPERATURE ',    (/   1,  11, 117,     0,   0, 0,  0,  12 /))
+(  422) CALL T ('V', 'TEMPE_POTENT',    (/   1,  13, 117,     0,   0, 0,  0,  12 /))
+(  423) CALL T ('V', 'THETA_PRIM_W',    (/   1,  14, 117,  1500,   0, 0,  0,  12 /))
+(  424) CALL T ('V', 'VENT_ZONAL  ',    (/   1,  33, 117,     0,   0, 0,  0,  12 /))
+(  425) CALL T ('V', 'VENT_MERIDIE',    (/   1,  34, 117,     0,   0, 0,  0,  12 /))
+(  426) CALL T ('V', 'VITESSE_VERT',    (/   1,  39, 117,  1500,   0, 0,  0,  16 /))
+(  427) CALL T ('V', 'ABS_VORTICIT',    (/   1,  41, 117,     0,   0, 0,  0,  16 /))
+(  428) CALL T ('V', 'DIVERGENCE  ',    (/   1,  44, 117,     0,   0, 0,  0,  16 /))
+(  429) CALL T ('V', 'HUMI.SPECIFI',    (/   1,  51, 117,     0,   0, 0,  0,  12 /))
+(  430) CALL T ('V', 'HUMI_RELATIV',    (/   1,  52, 117,  1500,   0, 0, -2,  12 /), PMULTI=Z100)
+(  431) CALL T ('V', 'PRESSURE    ',    (/   1,   1, 117,  1500,   0, 0,  0,  16 /))
+(  432) CALL T ('V', 'WIND_VELOCIT',    (/   1,  32, 117,  1500,   0, 0,  0,  24 /))
+(  433) CALL T ('V', 'VORTICITY   ',    (/   1,  43, 117,     0,   0, 0,  0,  16 /))
+(  434) CALL T ('V', 'FONC.COURANT',    (/   1,  35, 117,     0,   0, 0,  0,  24 /))
+(  435) CALL T ('V', 'POT.VITESSE ',    (/   1,  36, 117,     0,   0, 0,  0,  24 /))
+(  436) CALL T ('V', 'TKE         ',    (/ 159,  37, 117,  1500,   0, 0,  0,  16 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 10
+
+(  437) CALL T ('V', 'CLOUD_FRACTI',    (/ 159,  36, 117,  1500,   0, 0,  0,  16 /))
+(  438) CALL T ('V', 'CLOUD_WATER ',    (/ 159,  32, 117,  1500,   0, 0,  0,  16 /))
+(  439) CALL T ('V', 'RAD_LIQUID_W',    (/ 159,  32, 117,  1500,   0, 0,  0,  16 /))
+(  440) CALL T ('V', 'ICE_CRYSTAL ',    (/ 128, 247, 117,  1500,   0, 0,  0,  16 /))
+(  441) CALL T ('V', 'RAD_SOLID_WA',    (/ 128, 247, 117,  1500,   0, 0,  0,  16 /))
+(  442) !
+(  443) !     2.4 -  Champs sur un niveau isentrope
+(  444) !
+(  445) CALL T ('T', 'POT_VORTICIT',    (/   1,   4, 107,     0,   0, 0,  0,  16 /))
+(  446) CALL T ('T', 'GEOPOTENTIEL',    (/   1,   6, 107,     0,   0, 0,  0,  16 /))
+(  447) CALL T ('T', 'TEMPERATURE ',    (/   1,  11, 107,     0,   0, 0,  0,  12 /))
+(  448) CALL T ('T', 'TEMPE_POTENT',    (/   1,  13, 107,     0,   0, 0,  0,  12 /))
+(  449) CALL T ('T', 'THETA_PRIM_W',    (/   1,  14, 107,  1500,   0, 0,  0,  12 /))
+(  450) CALL T ('T', 'VENT_ZONAL  ',    (/   1,  33, 107,     0,   0, 0,  0,  12 /))
+(  451) CALL T ('T', 'VENT_MERIDIE',    (/   1,  34, 107,     0,   0, 0,  0,  12 /))
+(  452) CALL T ('T', 'VITESSE_VERT',    (/   1,  39, 107,     0,   0, 0,  0,  16 /))
+(  453) CALL T ('T', 'ABS_VORTICIT',    (/   1,  41, 107,     0,   0, 0,  0,  12 /))
+(  454) CALL T ('T', 'DIVERGENCE  ',    (/   1,  44, 107,     0,   0, 0,  0,  16 /))
+(  455) CALL T ('T', 'HUMI.SPECIFI',    (/   1,  51, 107,     0,   0, 0,  0,  12 /))
+(  456) CALL T ('T', 'HUMI_RELATIV',    (/   1,  52, 107,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  457) CALL T ('T', 'PRESSURE    ',    (/   1,   1, 107,  1500,   0, 0,  0,  16 /))
+(  458) CALL T ('T', 'WIND_VELOCIT',    (/   1,  32, 107,  1500,   0, 0,  0,  12 /))
+(  459) CALL T ('T', 'VORTICITY   ',    (/   1,  43, 107,     0,   0, 0,  0,  16 /))
+(  460) CALL T ('T', 'FONC.COURANT',    (/   1,  35, 107,     0,   0, 0,  0,  24 /))
+(  461) CALL T ('T', 'POT.VITESSE ',    (/   1,  36, 107,     0,   0, 0,  0,  24 /))
+(  462) CALL T ('T', 'TKE         ',    (/ 159,  37, 107,  1500,   0, 0,  0,  12 /))
+(  463) CALL T ('T', 'CLOUD_FRACTI',    (/ 159,  36, 107,  1500,   0, 0,  0,  12 /))
+(  464) CALL T ('T', 'CLOUD_WATER ',    (/ 159,  32, 107,  1500,   0, 0,  0,  12 /))
+(  465) CALL T ('T', 'RAD_LIQUID_W',    (/ 159,  32, 107,  1500,   0, 0,  0,  12 /))
+(  466) CALL T ('T', 'ICE_CRYSTAL ',    (/ 128, 247, 107,  1500,   0, 0,  0,  12 /))
+(  467) CALL T ('T', 'RAD_SOLID_WA',    (/ 128, 247, 107,  1500,   0, 0,  0,  12 /))
+(  468) !
+(  469) !     2.5 -  Champs sur un niveau modele
+(  470) !
+(  471) !
+(  472) CALL T ('S', 'TEMPERATURE ',    (/   1,  11, 109,     0,   0, 0,  0,  12 /))
+(  473) CALL T ('S', 'WIND.U.PHYS ',    (/   1,  33, 109,     0,   0, 0,  0,  12 /))
+(  474) CALL T ('S', 'VENT_ZONAL  ',    (/   1,  33, 109,     0,   0, 0,  0,  12 /))
+(  475) CALL T ('S', 'WIND.V.PHYS ',    (/   1,  34, 109,     0,   0, 0,  0,  12 /))
+(  476) CALL T ('S', 'VENT_MERIDIE',    (/   1,  34, 109,     0,   0, 0,  0,  12 /))
+(  477) CALL T ('S', 'FONC.COURANT',    (/   1,  35, 109,     0,   0, 0,  0,  24 /))
+(  478) CALL T ('S', 'POT.VITESSE ',    (/   1,  36, 109,     0,   0, 0,  0,  24 /))
+(  479) CALL T ('S', 'VORTICITY   ',    (/   1,  43, 109,     0,   0, 0,  0,  16 /))
+(  480) CALL T ('S', 'DIVERGENCE  ',    (/   1,  44, 109,     0,   0, 0,  0,  16 /))
+(  481) CALL T ('S', 'HUMI.SPECIFI',    (/   1,  51, 109,     0,   0, 0,  0,  12 /))
+(  482) CALL T ('S', 'VERTIC.DIVER',    (/ 149,  91, 109,     0,   0, 0,  0,  12 /))
+(  483) CALL T ('S', 'PRESS.DEPART',    (/ 149,  92, 109,     0,   0, 0,  0,  12 /))
+(  484) CALL T ('S', 'PRESSURE    ',    (/   1,   1, 109,     1,   0, 0,  0,  16 /))
+(  485) CALL T ('S', 'GEOPOTENTIEL',    (/   1,   8, 109,     1,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(  486) CALL T ('S', 'HUMI_RELATIV',    (/   1,  52, 109,     1,   0, 0, -2,  12 /), PMULTI=Z100)
+(  487) CALL T ('S', 'VITESSE_VERT',    (/   1,  39, 109,     1,   0, 0,  0,  16 /))
+(  488) CALL T ('S', 'O3          ',    (/ 159,   1, 109,     1,   0, 0,  0,  12 /))
+(  489) CALL T ('S', 'NO2         ',    (/ 159,   2, 109,     1,   0, 0,  0,  12 /))
+(  490) CALL T ('S', 'NO          ',    (/ 159,   3, 109,     1,   0, 0,  0,  12 /))
+(  491) CALL T ('S', 'PAN         ',    (/ 159,   4, 109,     1,   0, 0,  0,  12 /))
+(  492) CALL T ('S', 'HNO3        ',    (/ 159,   5, 109,     1,   0, 0,  0,  12 /))
+(  493) CALL T ('S', 'SO2         ',    (/ 159,   6, 109,     1,   0, 0,  0,  12 /))
+(  494) CALL T ('S', 'CO          ',    (/ 159,   7, 109,     1,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 11
+
+(  495) CALL T ('S', 'CH4         ',    (/ 159,   8, 109,     1,   0, 0,  0,  12 /))
+(  496) CALL T ('S', 'C2H6        ',    (/ 159,   9, 109,     1,   0, 0,  0,  12 /))
+(  497) CALL T ('S', 'NC4H10      ',    (/ 159,  10, 109,     1,   0, 0,  0,  12 /))
+(  498) CALL T ('S', 'C2H4        ',    (/ 159,  11, 109,     1,   0, 0,  0,  12 /))
+(  499) CALL T ('S', 'C3H6        ',    (/ 159,  12, 109,     1,   0, 0,  0,  12 /))
+(  500) CALL T ('S', 'OXYL        ',    (/ 159,  13, 109,     1,   0, 0,  0,  12 /))
+(  501) CALL T ('S', 'C5H8        ',    (/ 159,  14, 109,     1,   0, 0,  0,  12 /))
+(  502) CALL T ('S', 'APINEN      ',    (/ 159,  15, 109,     1,   0, 0,  0,  12 /))
+(  503) CALL T ('S', 'HCHO        ',    (/ 159,  16, 109,     1,   0, 0,  0,  12 /))
+(  504) CALL T ('S', 'CH3CHO      ',    (/ 159,  17, 109,     1,   0, 0,  0,  12 /))
+(  505) CALL T ('S', 'GLYOX       ',    (/ 159,  18, 109,     1,   0, 0,  0,  12 /))
+(  506) CALL T ('S', 'MGLYOX      ',    (/ 159,  19, 109,     1,   0, 0,  0,  12 /))
+(  507) CALL T ('S', 'CH3COE      ',    (/ 159,  20, 109,     1,   0, 0,  0,  12 /))
+(  508) CALL T ('S', 'PLUIE STRATI',    (/   1,  62,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  509) CALL T ('S', 'PLUIE CONVEC',    (/   1,  63,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  510) CALL T ('S', 'VERT.VELOCIT',    (/   1,  40, 109,     1,   0, 0,  0,  16 /))
+(  511) CALL T ('S', 'SIM_REFLECTI',    (/ 159,  31, 109,     1,   0, 0,  0,  16 /))
+(  512) CALL T ('S', 'CLOUD_WATER ',    (/ 159,  32, 109,     1,   0, 0,  0,  16 /))
+(  513) CALL T ('S', 'RAD_LIQUID  ',    (/ 159,  32, 109,     1,   0, 0,  0,  16 /))
+(  514) CALL T ('S', 'RAIN        ',    (/ 159,  33, 109,     1,   0, 0,  0,  16 /))
+(  515) CALL T ('S', 'ICE_CRYSTA  ',    (/ 128, 247, 109,     1,   0, 0,  0,  16 /))
+(  516) CALL T ('S', 'RAD_SOLID_WA',    (/ 128, 247, 109,     1,   0, 0,  0,  16 /))
+(  517) CALL T ('S', 'SNOW        ',    (/ 159,  34, 109,     1,   0, 0,  0,  16 /))
+(  518) CALL T ('S', 'GRAUPEL     ',    (/ 159,  35, 109,     1,   0, 0,  0,  16 /))
+(  519) CALL T ('S', 'CLOUD_FRACTI',    (/ 159,  36, 109,     1,   0, 0,  0,  16 /))
+(  520) CALL T ('S', 'TKE         ',    (/ 159,  37, 109,     1,   0, 0,  0,  16 /))
+(  521) CALL T ('S', 'THETA_VIRTUA',    (/ 159,  38, 109,     1,   0, 0,  0,  16 /))
+(  522) CALL T ('S', 'HAIL        ',    (/ 159, 100, 109,     1,   0, 0,  0,  12 /))
+(  523) CALL T ('S', 'RAYT THER CL',    (/ 128, 169, 109,     0,   0, 8,  0,  16 /))
+(  524) !
+(  525) CALL T ('SPEC', 'SURFGEOPOTEN', (/   1,   8, 109,     1,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(  526) !
+(  527) CALL T ('KT', 'ISOT_ALTIT ',    (/ 128,   8, 115,     0,   0, 0,  0,  16 /))
+(  528) CALL T ('KT', 'ISOT_PRESS ',    (/ 254,   1, 115, 27315,   0, 0,  0,  16 /)) 
+(  529) CALL T ('KB', 'ISOT_ALTIT ',    (/ 128,   8, 115, 27315,   0, 0,  0,  16 /)) 
+(  530) CALL T ('KB', 'ISOT_PRESS ',    (/ 254,   1, 115, 27315,   0, 0,  0,  16 /)) 
+(  531) !
+(  532) CALL T ('C001', '_METEOSAT_07', (/ 129,   1, 100,    64,   0, 0,  0,  12 /))
+(  533) CALL T ('C002', '_METEOSAT_07', (/ 129,   1, 100,   115,   0, 0,  0,  12 /))
+(  534) !
+(  535) CALL T ('C001', '_METEOSAT_09', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  536) CALL T ('C002', '_METEOSAT_09', (/ 129,   1, 100,    62,   0, 0,  0,  12 /))
+(  537) CALL T ('C003', '_METEOSAT_09', (/ 129,   1, 100,    73,   0, 0,  0,  12 /))
+(  538) CALL T ('C004', '_METEOSAT_09', (/ 129,   1, 100,    87,   0, 0,  0,  12 /))
+(  539) CALL T ('C005', '_METEOSAT_09', (/ 129,   1, 100,    97,   0, 0,  0,  12 /))
+(  540) CALL T ('C006', '_METEOSAT_09', (/ 129,   1, 100,   108,   0, 0,  0,  12 /))
+(  541) CALL T ('C007', '_METEOSAT_09', (/ 129,   1, 100,   120,   0, 0,  0,  12 /))
+(  542) CALL T ('C008', '_METEOSAT_09', (/ 129,   1, 100,   134,   0, 0,  0,  12 /))
+(  543) !
+(  544) CALL T ('C001', '_GOES_11_IMA', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  545) CALL T ('C002', '_GOES_11_IMA', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  546) CALL T ('C003', '_GOES_11_IMA', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  547) CALL T ('C004', '_GOES_11_IMA', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+(  548) !
+(  549) CALL T ('C001', '_GOES_12_IMA', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  550) CALL T ('C002', '_GOES_12_IMA', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  551) CALL T ('C003', '_GOES_12_IMA', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  552) CALL T ('C004', '_GOES_12_IMA', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 12
+
+(  553) !
+(  554) CALL T ('C001', '_MTSAT_01_IM', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  555) CALL T ('C002', '_MTSAT_01_IM', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  556) CALL T ('C003', '_MTSAT_01_IM', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  557) CALL T ('C004', '_MTSAT_01_IM', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+(  558) !
+(  559) 
+(  560) ENDDO
+(  561) 
+(  562) IF (LHOOK) CALL DR_HOOK('FAICOR_MT',1,ZHOOK_HANDLE)
+(  563) 
+(  564) CONTAINS
+(  565) 
+(  566) SUBROUTINE T (CDPREF, CDSUFF, KCODPA, LDNIVA, PMULTI)
+(  567) 
+(  568) CHARACTER (LEN=*),              INTENT (IN) :: CDPREF, CDSUFF
+(  569) INTEGER,                        INTENT (IN) :: KCODPA (8)
+(  570) LOGICAL,            OPTIONAL,   INTENT (IN) :: LDNIVA
+(  571) REAL (KIND=JPDBLR), OPTIONAL,   INTENT (IN) :: PMULTI
+(  572) 
+(  573) LOGICAL :: LLNIVA
+(  574) 
+(  575) LLNIVA = .FALSE.
+(  576) IF (PRESENT (LDNIVA)) LLNIVA = LDNIVA
+(  577) 
+(  578) FA%NBPARC = FA%NBPARC + 1
+(  579) 
+(  580) IF (LLALLOC) THEN
+(  581)   FA%YGR1TAB (FA%NBPARC)%CIPREF = CDPREF
+(  582)   FA%YGR1TAB (FA%NBPARC)%CISUFF = CDSUFF
+(  583)   FA%YGR1TAB (FA%NBPARC)%NCODPA = INT (KCODPA, JPLIKB)
+(  584)   FA%YGR1TAB (FA%NBPARC)%LFNIVA = LLNIVA
+(  585)   IF (PRESENT (PMULTI)) THEN
+(  586)     FA%YGR1TAB (FA%NBPARC)%FMULTI = PMULTI
+(  587)     FA%YGR1TAB (FA%NBPARC)%LMULTI = .TRUE.
+(  588)   ENDIF
+(  589) ENDIF
+(  590) 
+(  591) END SUBROUTINE T
+(  592) ! 
+(  593) END SUBROUTINE FAICOR_MT64
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 13
+
+(    1) # 1 "faicor.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAICOR_MT64           &
+(    4) &                     (FA)
+(    5) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   12) !      Initialisation des tableaux permettant la correspondance
+(   13) !      entre nom du champ dans FA et ses descripteurs GRIB.
+(   14) !
+(   15) !      **  FA%NBPARC ne doit pas depasser FA%JPXPAR !! **
+(   16) !**
+(   17) !
+(   18) TYPE(FA_COM) :: FA
+(   19) INTEGER (KIND=JPLIKB) I, J
+(   20) REAL (KIND=JPDBLR), PARAMETER :: ZONOVG = 1.0_JPDBLR / 9.80665_JPDBLR, &
+(   21)                                & Z100   = 100._JPDBLR
+(   22) LOGICAL :: LLALLOC
+(   23) # 24 "faicor.F90"
+(   24) !**
+(   25) !     1.  -  TRAITEMENT DES CHAMPS MONO NIVEAU
+(   26) !-----------------------------------------------------------------------
+(   27) !
+(   28) !     1.1 -  Champs "profond"
+(   29) !
+(   30) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   31) IF (LHOOK) CALL DR_HOOK('FAICOR_MT',0,ZHOOK_HANDLE)
+(   32) # 33 "faicor.F90"
+(   33) DO I = 1, 2
+(   34) # 35 "faicor.F90"
+(   35) LLALLOC = I == 2
+(   36) # 37 "faicor.F90"
+(   37) IF (LLALLOC) THEN
+(   38)   ALLOCATE (FA%YGR1TAB (FA%NBPARC))
+(   39) ENDIF
+(   40) # 41 "faicor.F90"
+(   41) FA%NBPARC = 0
+(   42) # 43 "faicor.F90"
+(   43) ! 1 : Table                                                               
+(   44) ! 2 : Parameter                                                           
+(   45) ! 3 : LevelType                                                           
+(   46) ! 4 : FirstLevel                                                          
+(   47) ! 5 : SecondLevel                                                         
+(   48) ! 6 : 2 => min/max, 4 => sum since last term, 8 => sum since the beginning
+(   49) ! 7 : ScalingFactor                                                       
+(   50) ! 8 : BitsPerValue (usual value)                                          
+(   51) # 52 "faicor.F90"
+(   52) CALL T ('PROF', 'TEMPERATURE ', (/   1,  11,   111,  10,   0, 0,  0,  12 /))
+(   53) CALL T ('PROF', 'RESERV.GLACE', (/   1, 152,   112,   0, 250, 0,  0,  16 /))
+(   54) CALL T ('PROF', 'RESERV.EAU' ,  (/   1, 153,   112,   0, 250, 0,  0,  16 /))
+(   55) CALL T ('PROF', 'RUISSELLEMEN', (/ 149,   2,   112,  10, 300, 4,  0,  12 /))
+(   56) CALL T ('PROF', 'FLUX DE GEL ', (/ 149,  73,   112,  10, 300, 4,  0,  12 /))
+(   57) CALL T ('PROF', 'PROP.RMAX.EA', (/ 149,  77,   112,  10, 300, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 14
+
+(   58) CALL T ('PROF', 'XRUISSELLEME', (/ 149,  85,   112,  10, 300, 0,  0,  12 /))
+(   59) # 60 "faicor.F90"
+(   60) !
+(   61) !     1.2 -  Champs de surface
+(   62) !
+(   63) CALL T ('SURF', 'PRESSION    ', (/   1,   1,   1,     0,   0, 0,  0,  16 /))
+(   64) CALL T ('SURF', 'GEOPOTENTIEL', (/   1,   8,   1,     0,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(   65) CALL T ('SURF', 'TEMPERATURE ', (/   1,  11,   1,     0,   0, 0,  0,  12 /))
+(   66) CALL T ('SURF', 'FLU.MSUBL.NE', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   67) CALL T ('SURF', 'FLU.MEVAP.EA', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   68) CALL T ('SURF', 'FLU.MTOTA.NE', (/   1,  57,   1,     0,   0, 8,  0,  16 /))
+(   69) CALL T ('SURF', 'PREC.EAU.GEC', (/   1,  62,   1,     0,   0, 8,  0,  16 /))
+(   70) CALL T ('SURF', 'PREC.EAU.CON', (/   1,  63,   1,     0,   0, 8,  0,  16 /))
+(   71) CALL T ('SURF', 'RESERV.NEIGE', (/   1,  65,   1,     0,   0, 0,  0,  16 /))
+(   72) CALL T ('SURF', 'NEBUL.TOTALE', (/   1,  71,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   73) CALL T ('SURF', 'NEBUL.CONVEC', (/   1,  72,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   74) CALL T ('SURF', 'NEBUL.BASSE ', (/   1,  73,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   75) CALL T ('SURF', 'NEBUL.MOYENN', (/   1,  74,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   76) CALL T ('SURF', 'NEBUL.HAUTE ', (/   1,  75,   1,     0,   0, 0, -2,   8 /), PMULTI=Z100)
+(   77) CALL T ('SURF', 'PREC.NEI.CON', (/   1,  78,   1,     0,   0, 8,  0,  16 /))
+(   78) CALL T ('SURF', 'PREC.NEI.GEC', (/   1,  79,   1,     0,   0, 8,  0,  16 /))
+(   79) CALL T ('SURF', 'IND.TERREMER', (/   1,  81,   1,     0,   0, 0,  0,   1 /))
+(   80) CALL T ('SURF', 'Z0.FOIS.G   ', (/   1,  83,   1,     0,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(   81) CALL T ('SURF', 'ALBEDO      ', (/   1,  84,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(   82) CALL T ('SURF', 'PROP.VEGETAT', (/   1,  87,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(   83) CALL T ('SURF', 'FLU.RAY.SOLA', (/ 128, 111,   1,     0,   0, 8,  0,  16 /))
+(   84) CALL T ('SURF', 'FLU.RAY.THER', (/ 128, 112,   1,     0,   0, 8,  0,  16 /))
+(   85) CALL T ('SURF', 'FLU.LAT.MEVA', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   86) CALL T ('SURF', 'FLU.LAT.MSUB', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   87) CALL T ('SURF', 'FLU.LAT.MTOT', (/ 128, 121,   1,     0,   0, 8,  0,  16 /))
+(   88) CALL T ('SURF', 'FLU.CHA.SENS', (/ 128, 122,   1,     0,   0, 8,  0,  16 /))
+(   89) CALL T ('SURF', 'ETA.GEOPOTEN', (/   1, 128,   1,     0,   0, 0,  0,  16 /))
+(   90) CALL T ('SURF', 'ETP.GEOPOTEN', (/   1, 129,   1,     0,   0, 0,  0,  16 /))
+(   91) CALL T ('SURF', 'TENS.DMOG.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   92) CALL T ('SURF', 'TENS.TURB.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   93) CALL T ('SURF', 'TENS.TOTA.ZO', (/   1, 130,   1,     0,   0, 8,  0,  16 /))
+(   94) CALL T ('SURF', 'TENS.DMOG.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   95) CALL T ('SURF', 'TENS.TURB.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   96) CALL T ('SURF', 'TENS.TOTA.ME', (/   1, 131,   1,     0,   0, 8,  0,  16 /))
+(   97) CALL T ('SURF', 'RESERV.GLACE', (/   1, 152, 112,     0,   1, 0,  0,  16 /))
+(   98) CALL T ('SURF', 'RESERV.EAU  ', (/   1, 153, 112,     0,   1, 0,  0,  16 /))
+(   99) CALL T ('SURF', 'RAYT.LUNE.DE', (/   1, 158,   1,     0,   0, 8,  0,  16 /))
+(  100) CALL T ('SURF', 'CAPE.MOD.XFU', (/ 159, 154,   1,     0,   0, 0,  0,  16 /))
+(  101) CALL T ('SURF', 'TOT.WAT.VAPO', (/   1, 167,   1,     0,   0, 0,  0,  12 /))
+(  102) ! Debut des champs pour Mocage :
+(  103) !DP: champ TCO3 remplace par O3_TOT le 18 oct 2004 par coherence
+(  104) ! avec la BDAP qui venait de proceder au changement.
+(  105) CALL T ('SURF', 'O3_TOT      ', (/   1,  10,   1,     0,   0, 0,  0,  12 /))
+(  106) CALL T ('SURF', 'CH4_TOT     ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  107) CALL T ('SURF', 'NO_TOT      ', (/ 159,  22,   1,     0,   0, 0,  0,  12 /))
+(  108) CALL T ('SURF', 'NO2_TOT     ', (/ 159,  23,   1,     0,   0, 0,  0,  12 /))
+(  109) CALL T ('SURF', 'CO_TOT      ', (/ 159,  24,   1,     0,   0, 0,  0,  12 /))
+(  110) ! Fin des champs pour Mocage
+(  111) CALL T ('SURF', 'ALBEDO NEIGE', (/ 149,   5,   1,     0,   0, 0,  0,  12 /))
+(  112) CALL T ('SURF', 'ALBEDO HISTO', (/ 149,  48,   1,     0,   0, 0,  0,  12 /))
+(  113) CALL T ('SURF', 'ALBEDO.SOLNU', (/ 149,  49,   1,     0,   0, 0,  0,  12 /))
+(  114) CALL T ('SURF', 'ALBEDO.VEG  ', (/ 149,  50,   1,     0,   0, 0,  0,  12 /))
+(  115) CALL T ('SURF', 'EMISSIVITE  ', (/ 149,  60,   1,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 15
+
+(  116) CALL T ('SURF', 'ET.GEOPOTENT', (/ 149,  93,   1,     0,   0, 0,  0,  12 /))
+(  117) CALL T ('SURF', 'VAR.GEOP.ANI', (/ 128, 161,   1,     0,   0, 0,  0,  12 /))
+(  118) CALL T ('SURF', 'VAR.GEOP.DIR', (/ 128, 162,   1,     0,   0, 0,  0,  12 /))
+(  119) CALL T ('SURF', 'IND.VEG.DOMI', (/ 149,  61,   1,     0,   0, 0,  0,  12 /))
+(  120) CALL T ('SURF', 'RESI.STO.MIN', (/ 149,  62,   1,     0,   0, 0,  0,  12 /))
+(  121) CALL T ('SURF', 'PROP.ARGILE ', (/ 149,  63,   1,     0,   0, 0,  0,  12 /))
+(  122) CALL T ('SURF', 'PROP.SABLE  ', (/ 149,  64,   1,     0,   0, 0,  0,  12 /))
+(  123) CALL T ('SURF', 'EPAIS.SOL   ', (/ 149,  51,   1,     0,   0, 0,  0,  12 /))
+(  124) CALL T ('SURF', 'IND.FOLIAIRE', (/ 149,  65,   1,     0,   0, 0,  0,  12 /))
+(  125) CALL T ('SURF', 'RES.EVAPOTRA', (/ 149,  66,   1,     0,   0, 0,  0,  12 /))
+(  126) CALL T ('SURF', 'GZ0.THERM   ', (/ 149,  67,   1,     0,   0, 0,  0,  12 /))
+(  127) CALL T ('SURF', 'RESERV.INTER', (/ 149,  68,   1,     0,   0, 0,  0,  12 /))
+(  128) CALL T ('SURF', 'FL.Q TURBUL ', (/ 149,  69,   1,     0,   0, 4,  0,  12 /))
+(  129) CALL T ('SURF', 'FL.CT TURBUL', (/ 149,  70,   1,     0,   0, 4,  0,  12 /))
+(  130) CALL T ('SURF', 'FONTE NEIGE ', (/   1,  99,   1,     0,   0, 4,  0,  12 /))
+(  131) CALL T ('SURF', 'CHAL. DS SOL', (/ 149,   8,   1,     0,   0, 4,  0,  12 /))
+(  132) CALL T ('SURF', 'EAU DANS SOL', (/   1, 150,   1,     0,   0, 4,  0,  12 /))
+(  133) CALL T ('SURF', 'RUISSELLEMEN', (/ 149,   2,   1,     0,   0, 4,  0,  12 /))
+(  134) CALL T ('SURF', 'EVAPOTRANSPI', (/   1, 168,   1,     0,   0, 4,  0,  12 /))
+(  135) CALL T ('SURF', 'TRANSPIRATIO', (/ 149,  71,   1,     0,   0, 4,  0,  12 /))
+(  136) CALL T ('SURF', 'RUISS. INTER', (/ 149,  72,   1,     0,   0, 4,  0,  12 /))
+(  137) CALL T ('SURF', 'FLUX DE GEL ', (/ 149,  73,   1,     0,   0, 4,  0,  12 /))
+(  138) CALL T ('SURF', 'RAYT DIR SUR', (/ 128, 137,   1,     0,   0, 8,  0,  16 /))
+(  139) CALL T ('SURF', 'RAYT DIFF DE', (/ 149,  75,   1,     0,   0, 4,  0,  12 /))
+(  140) CALL T ('SURF', 'RAYT THER DE', (/ 149, 104,   1,     0,   0, 8,  0,  16 /))
+(  141) CALL T ('SURF', 'PROP.RMAX.EA', (/ 149,  77,   1,     0,   0, 0,  0,  12 /))
+(  142) CALL T ('SURF', 'DENSIT.NEIGE', (/ 149,   3,   1,     0,   0, 0,  0,  12 /))
+(  143) CALL T ('SURF', 'CFU.Q.TURBUL', (/ 149,  78,   1,     0,   0, 4,  0,  12 /))
+(  144) CALL T ('SURF', 'CFU.CT.TURBU', (/ 149,  79,   1,     0,   0, 4,  0,  12 /))
+(  145) CALL T ('SURF', 'TIME.PREC.TO', (/ 149,  80,   1,     0,   0, 4,  0,  12 /))
+(  146) CALL T ('SURF', 'XFONTE NEIGE', (/ 149,  81,   1,     0,   0, 0,  0,  12 /))
+(  147) CALL T ('SURF', 'XCHAL. DS SO', (/ 149,  82,   1,     0,   0, 0,  0,  12 /))
+(  148) CALL T ('SURF', 'XEAU DANS SO', (/ 149,  83,   1,     0,   0, 0,  0,  12 /))
+(  149) CALL T ('SURF', 'XFLU.MEVAP.E', (/ 149,  84,   1,     0,   0, 0,  0,  12 /))
+(  150) CALL T ('SURF', 'XRUISSELLEME', (/ 149,  85,   1,     0,   0, 0,  0,  12 /))
+(  151) CALL T ('SURF', 'XEVAPOTRANSP', (/ 149,  86,   1,     0,   0, 0,  0,  12 /))
+(  152) CALL T ('SURF', 'XTRANSPIRATI', (/ 149,  87,   1,     0,   0, 0,  0,  12 /))
+(  153) CALL T ('SURF', 'XRUISS. INTE', (/ 149,  88,   1,     0,   0, 0,  0,  12 /))
+(  154) CALL T ('SURF', 'ISOTPW0.MALT', (/ 128,   8,  20, 27315,   0, 0,  0,  16 /))
+(  155) CALL T ('SURF', 'ISOTPW1.MALT', (/ 128,   8,  20, 27415,   0, 0,  0,  16 /))
+(  156) CALL T ('SURF', 'CAPE.POS.F00', (/   1, 160,   1,     0,   0, 0,  0,  16 /))
+(  157) CALL T ('SURF', 'CAPE.POS.F04', (/ 159, 154,   1,     0,   0, 0,  0,  16 /))
+(  158) CALL T ('SURF', 'HUMI.RELATIV', (/   1,  52,   1,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  159) CALL T ('SURF', 'HUMI.SPECIFI', (/   1,  51,   1,     0,   0, 0,  0,  12 /))
+(  160) CALL T ('SURF', 'ISOT0.MALTIT', (/ 128,   8, 115, 27315,   0, 0,  0,  16 /))
+(  161) CALL T ('SURF', 'ISOTM10.MALT', (/ 128,   8, 115, 26315,   0, 0,  0,  16 /))
+(  162) CALL T ('SURF', 'EQUILIBRLEV ', (/ 159, 155,   1,     0,   0, 0,  0,  16 /))
+(  163) CALL T ('SURF', 'RAYT SOL CL ', (/ 128, 168,   1,     0,   0, 8,  0,  16 /))
+(  164) CALL T ('SURF', 'RAYT THER CL', (/ 128, 169,   1,     0,   0, 8,  0,  16 /))
+(  165) CALL T ('SURF', 'WIND_VELOC  ', (/   1,  32,   1,     0,   0, 0,  0,  24 /))
+(  166) CALL T ('SURF', 'TCO3        ', (/   1,  10,   1,     0,   0, 0,  0,  12 /))
+(  167) CALL T ('SURF', 'TCNOX       ', (/ 159,  22,   1,     0,   0, 0,  0,  12 /))
+(  168) CALL T ('SURF', 'TCCO        ', (/ 159,  24,   1,     0,   0, 0,  0,  12 /))
+(  169) CALL T ('SURF', 'TCCH4       ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  170) CALL T ('SURF', 'TCPAN       ', (/ 159,  21,   1,     0,   0, 0,  0,  12 /))
+(  171) CALL T ('SURF', 'TC_DUST     ', (/ 159,  94,   1,     0,   0, 0,  0,  12 /))
+(  172) CALL T ('SURF', 'OD_DUST     ', (/ 159,  95,   1,     0,   0, 0,  0,  12 /))
+(  173) CALL T ('SURF', 'DSEC_DUST   ', (/ 159,  96,   1,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 16
+
+(  174) CALL T ('SURF', 'DHUM_DUST   ', (/ 159,  97,   1,     0,   0, 0,  0,  12 /))
+(  175) CALL T ('SURF', 'DSEDI_DUST  ', (/ 159,  98,   1,     0,   0, 0,  0,  12 /))
+(  176) CALL T ('SURF', 'EMISS_DUST  ', (/ 159,  99,   1,     0,   0, 0,  0,  12 /))
+(  177) CALL T ('SURF', 'ANAMOCON    ', (/   1, 166,   1,     0,   0, 0,  0,  16 /))
+(  178) CALL T ('SURF', 'RAYT SOLA DE', (/ 149, 105,   1,     0,   0, 8,  0,  16 /))
+(  179) CALL T ('SURF', 'ACCPLUIE    ', (/   2, 150,   1,     0,   0, 8,  0,  16 /))
+(  180) CALL T ('SURF', 'INSPLUIE    ', (/   2, 150,   1,     0,   0, 0,  0,  16 /))
+(  181) CALL T ('SURF', 'ACCNEIGE    ', (/   1,  99,   1,     0,   0, 8,  0,  16 /))
+(  182) CALL T ('SURF', 'INSNEIGE    ', (/   1,  99,   1,     0,   0, 0,  0,  16 /))
+(  183) CALL T ('SURF', 'ACCGRAUPEL  ', (/ 159,  29,   1,     0,   0, 8,  0,  16 /))
+(  184) CALL T ('SURF', 'INSGRAUPEL  ', (/ 159,  29,   1,     0,   0, 0,  0,  12 /))
+(  185) CALL T ('SURF', 'ACCGRELE    ', (/ 159,  30,   1,     0,   0, 8,  0,  16 /))
+(  186) CALL T ('SURF', 'INSGRELE    ', (/ 159,  30,   1,     0,   0, 0,  0,  16 /))
+(  187) CALL T ('SURF', 'DIAGHAIL    ', (/ 159, 248,   1,     0,   0, 0,  0,  16 /))
+(  188) CALL T ('SURF', 'VERT.VELOC  ', (/   1,  40,   1,     0,   0, 0,  0,  16 /))
+(  189) CALL T ('SURF', 'TC_BLACKC   ', (/ 159, 196,   1,     0,   0, 0,  0,  12 /))
+(  190) CALL T ('SURF', 'EMISS_BLACKC', (/ 159, 200,   1,     0,   0, 0,  0,  12 /))
+(  191) CALL T ('SURF', 'DHUM_BLACKC ', (/ 159, 198,   1,     0,   0, 0,  0,  12 /))
+(  192) CALL T ('SURF', 'DSEC_BLACKC ', (/ 159, 197,   1,     0,   0, 0,  0,  12 /))
+(  193) CALL T ('SURF', 'DSEDI_BLACKC', (/ 159, 199,   1,     0,   0, 0,  0,  12 /))
+(  194) CALL T ('SURF', 'TC_DYNSAL   ', (/ 159, 190,   1,     0,   0, 0,  0,  12 /))
+(  195) CALL T ('SURF', 'EMISS_DYNSAL', (/ 159, 194,   1,     0,   0, 0,  0,  12 /))
+(  196) CALL T ('SURF', 'DHUM_DYNSAL ', (/ 159, 192,   1,     0,   0, 0,  0,  12 /))
+(  197) CALL T ('SURF', 'DSEC_DYNSAL ', (/ 159, 191,   1,     0,   0, 0,  0,  12 /))
+(  198) CALL T ('SURF', 'DSEDI_DYNSAL', (/ 159, 193,   1,     0,   0, 0,  0,  12 /))
+(  199) CALL T ('SURF', 'TC_PMANTH   ', (/ 159, 202,   1,     0,   0, 0,  0,  12 /))
+(  200) CALL T ('SURF', 'EMISS_BLACKC', (/ 159, 200,   1,     0,   0, 0,  0,  12 /))
+(  201) CALL T ('SURF', 'DHUM_BLACKC ', (/ 159, 198,   1,     0,   0, 0,  0,  12 /))
+(  202) CALL T ('SURF', 'DSEC_BLACKC ', (/ 159, 197,   1,     0,   0, 0,  0,  12 /))
+(  203) CALL T ('SURF', 'DSEDI_BLACKC', (/ 159, 199,   1,     0,   0, 0,  0,  12 /))
+(  204) CALL T ('SURF', 'TC_DYNSAL   ', (/ 159, 190,   1,     0,   0, 0,  0,  12 /))
+(  205) CALL T ('SURF', 'TC_BLACKC   ', (/ 159, 196,   1,     0,   0, 0,  0,  12 /))
+(  206) CALL T ('SURF', 'EMISS_PMANTH', (/ 159, 206,   1,     0,   0, 0,  0,  12 /))
+(  207) CALL T ('SURF', 'DHUM_PMANTH ', (/ 159, 204,   1,     0,   0, 0,  0,  12 /))
+(  208) CALL T ('SURF', 'DSEC_PMANTH ', (/ 159, 203,   1,     0,   0, 0,  0,  12 /))
+(  209) CALL T ('SURF', 'DSEDI_PMANTH', (/ 159, 205,   1,     0,   0, 0,  0,  12 /))
+(  210) CALL T ('SURF', 'TC_PM25     ', (/ 159, 208,   1,     0,   0, 0,  0,  12 /))
+(  211) CALL T ('SURF', 'TC_PM10     ', (/ 159, 210,   1,     0,   0, 0,  0,  12 /))
+(  212) !
+(  213) !  Geopotentiel de surface en spectral (relief)
+(  214) !
+(  215) CALL T ('SPECSURF', 'GEOPOTEN', (/   1,   8,   1,     0,   0, 0,  0,  12 /), PMULTI=ZONOVG)
+(  216) !
+(  217) !     1.3 -  Champs au sommet
+(  218) !
+(  219) CALL T ('SOMM', 'FLU.RAY.SOLA', (/ 128, 113,   8,     0,   0, 8,  0,  16 /))
+(  220) CALL T ('SOMM', 'FLU.RAY.THER', (/ 128, 114,   8,     0,   0, 8,  0,  16 /))
+(  221) CALL T ('SOMM', 'TB_OZ_CLEAR ', (/   1, 170,   8,     0,   0, 0,  0,  12 /))
+(  222) CALL T ('SOMM', 'TB_OZ_CLOUDY', (/   1, 171,   8,     0,   0, 0,  0,  12 /))
+(  223) CALL T ('SOMM', 'TB_IR_CLEAR ', (/   1, 172,   8,     0,   0, 0,  0,  12 /))
+(  224) CALL T ('SOMM', 'TB_IR_CLOUDY', (/   1, 173,   8,     0,   0, 0,  0,  12 /))
+(  225) CALL T ('SOMM', 'TB_WV_CLEAR ', (/   1, 174,   8,     0,   0, 0,  0,  12 /))
+(  226) CALL T ('SOMM', 'TB_WV_CLOUDY', (/   1, 175,   8,     0,   0, 0,  0,  12 /))
+(  227) !
+(  228) !     1.4 -  Champs de la Couche Limite de Surface
+(  229) !
+(  230) CALL T ('CLS', 'TEMPERATURE  ', (/   1,  11, 105,     2,   0, 0,  0,  12 /))
+(  231) CALL T ('CLS', 'MAXI.TEMPERAT', (/   1,  15, 105,     2,   0, 2,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 17
+
+(  232) CALL T ('CLS', 'MINI.TEMPERAT', (/   1,  16, 105,     2,   0, 2,  0,  12 /))
+(  233) CALL T ('CLS', 'VENT.ZONAL   ', (/   1,  33, 105,    10,   0, 0,  0,  12 /))
+(  234) CALL T ('CLS', 'VENT.MERIDIEN', (/   1,  34, 105,    10,   0, 0,  0,  12 /))
+(  235) CALL T ('CLS', 'HUMI.SPECIFIQ', (/   1,  51, 105,     2,   0, 0,  0,  12 /))
+(  236) CALL T ('CLS', 'HUMI.RELATIVE', (/   1,  52, 105,     2,   0, 0, -2,  12 /), PMULTI=Z100)
+(  237) CALL T ('CLS', 'MAXI.HUMI.REL', (/ 149,  90, 105,     2,   0, 2,  0,  12 /))
+(  238) CALL T ('CLS', 'MINI.HUMI.REL', (/ 149,  91, 105,     2,   0, 2,  0,  12 /))
+(  239) CALL T ('CLS', 'U.RAF.MOD.XFU', (/   1, 163, 105,    10,   0, 0,  0,  12 /))
+(  240) CALL T ('CLS', 'V.RAF.MOD.XFU', (/   1, 164, 105,    10,   0, 0,  0,  12 /))
+(  241) !
+(  242) !     1.5 -  Champs au niveau tropopause
+(  243) !
+(  244) CALL T ('ICAO', 'TROP.PRESSUR', (/   1,   1,   7,     0,   0, 0,  0,  16 /))
+(  245) CALL T ('ICAO', 'TROP.TEMPERA', (/   1,  11,   7,     0,   0, 0,  0,  12 /))
+(  246) !
+(  247) !     1.6 -  Champs au niveau jet
+(  248) !
+(  249) CALL T ('JET', 'PRESSURE     ', (/   1,   1,   6,     0,   0, 0,  0,  16 /))
+(  250) CALL T ('JET', 'VENT_ZONAL   ', (/   1,  33,   6,     0,   0, 0,  0,  12 /))
+(  251) CALL T ('JET', 'VENT_MERIDIEN', (/   1,  34,   6,     0,   0, 0,  0,  12 /))
+(  252) !
+(  253) !     1.7 -  Champs pour la Couche Limite Planetaire
+(  254) !
+(  255) CALL T ('CLP', 'MHAUT.MOD.XFU', (/   1, 165,   1,     0,   0, 0,  0,  16 /))
+(  256) CALL T ('CLP', 'MOCON.MOD.XFU', (/   1, 166,   1,     0,   0, 0,  0,  16 /))
+(  257) CALL T ('CLP', 'GEOPO.MOD.XFU', (/   1, 165,   1,     0,   0, 0,  0,  16 /))
+(  258) !
+(  259) !     1.8 -  Champs au niveau mer
+(  260) !
+(  261) CALL T ('MSL', 'PRESSURE',      (/   1,   2, 102,     0,   0, 0,  0,  12 /))
+(  262) !
+(  263) !     1.9 - Relief
+(  264) !
+(  265) CALL T ('INT', 'SURFGEOPOTENT', (/   1,   8,   1,     0,   0, 0,  0,  16 /), PMULTI=ZONOVG)
+(  266) !
+(  267) !     1.10- ATMO
+(  268) !
+(  269) CALL T ('ATMO', 'NEBUL.CONVEC', (/ 128,  72,   1,     0,   0, 4,  0,  12 /))
+(  270) CALL T ('ATMO', 'NEBUL.BASSE ', (/ 128,  73,   1,     0,   0, 4,  0,  12 /))
+(  271) CALL T ('ATMO', 'NEBUL.MOYENN', (/ 128,  74,   1,     0,   0, 4,  0,  12 /))
+(  272) CALL T ('ATMO', 'NEBUL.HAUTE ', (/ 128,  75,   1,     0,   0, 4,  0,  12 /))
+(  273) !
+(  274) !     1.11- TOP
+(  275) !
+(  276) CALL T ('TOP', 'RAYT DIR SOM',  (/ 149, 174,   8,     0,   0, 4,  0,  12 /))
+(  277) !**
+(  278) !     2.  -  TRAITEMENT DES CHAMPS SUR NIVEAUX
+(  279) !-----------------------------------------------------------------------
+(  280) !
+(  281) !     2.1 -  Champs sur un niveau isobare
+(  282) !
+(  283) CALL T ('P', 'POT_VORTICIT',    (/   1,   4, 100,     0,   0, 0,  0,  16 /))
+(  284) CALL T ('P', 'GEOPOTENTIEL',    (/   1,   6, 100,     0,   0, 0,  0,  16 /))
+(  285) CALL T ('P', 'TEMPERATURE ',    (/   1,  11, 100,     0,   0, 0,  0,  12 /))
+(  286) CALL T ('P', 'TEMPE_POTENT',    (/   1,  13, 100,     0,   0, 0,  0,  12 /))
+(  287) CALL T ('P', 'THETA_PRIM_W',    (/   1,  14, 100,     0,   0, 0,  0,  12 /))
+(  288) CALL T ('P', 'VENT_ZONAL  ',    (/   1,  33, 100,     0,   0, 0,  0,  12 /))
+(  289) CALL T ('P', 'VENT_MERIDIE',    (/   1,  34, 100,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 18
+
+(  290) CALL T ('P', 'VITESSE_VERT',    (/   1,  39, 100,     0,   0, 0,  0,  16 /))
+(  291) CALL T ('P', 'ABS_VORTICIT',    (/   1,  41, 100,     0,   0, 0,  0,  16 /))
+(  292) CALL T ('P', 'DIVERGENCE  ',    (/   1,  44, 100,     0,   0, 0,  0,  16 /))
+(  293) CALL T ('P', 'HUMI.SPECIFI',    (/   1,  51, 100,     0,   0, 0,  0,  12 /))
+(  294) CALL T ('P', 'HUMI_RELATIV',    (/   1,  52, 100,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  295) CALL T ('P', 'PRESSURE    ',    (/   1,   1, 105,     0,   0, 0,  0,  12 /))
+(  296) CALL T ('P', 'WIND_VELOCIT',    (/   1,  32, 100,     0,   0, 0,  0,  24 /))
+(  297) CALL T ('P', 'VORTICITY   ',    (/   1,  43, 100,     0,   0, 0,  0,  16 /))
+(  298) CALL T ('P', 'FONC.COURANT',    (/   1,  35, 100,     0,   0, 0,  0,  24 /))
+(  299) CALL T ('P', 'POT.VITESSE ',    (/   1,  36, 100,     0,   0, 0,  0,  24 /))
+(  300) ! Debut des champs pour Mocage :
+(  301) CALL T ('P', 'O3        ',      (/ 159,   1, 100,     0,   0, 0,  0,  12 /))
+(  302) CALL T ('P', 'NO2       ',      (/ 159,   2, 100,     0,   0, 0,  0,  12 /))
+(  303) CALL T ('P', 'NO        ',      (/ 159,   3, 100,     0,   0, 0,  0,  12 /))
+(  304) CALL T ('P', 'PAN       ',      (/ 159,   4, 100,     0,   0, 0,  0,  12 /))
+(  305) CALL T ('P', 'HNO3      ',      (/ 159,   5, 100,     0,   0, 0,  0,  12 /))
+(  306) CALL T ('P', 'SO2       ',      (/ 159,   6, 100,     0,   0, 0,  0,  12 /))
+(  307) CALL T ('P', 'CO        ',      (/ 159,   7, 100,     0,   0, 0,  0,  12 /))
+(  308) CALL T ('P', 'CH4       ',      (/ 159,   8, 100,     0,   0, 0,  0,  12 /))
+(  309) CALL T ('P', 'C2H6      ',      (/ 159,   9, 100,     0,   0, 0,  0,  12 /))
+(  310) CALL T ('P', 'NC4H10    ',      (/ 159,  10, 100,     0,   0, 0,  0,  12 /))
+(  311) CALL T ('P', 'C2H4      ',      (/ 159,  11, 100,     0,   0, 0,  0,  12 /))
+(  312) CALL T ('P', 'C3H6      ',      (/ 159,  12, 100,     0,   0, 0,  0,  12 /))
+(  313) CALL T ('P', 'OXYL      ',      (/ 159,  13, 100,     0,   0, 0,  0,  12 /))
+(  314) CALL T ('P', 'C5H8      ',      (/ 159,  14, 100,     0,   0, 0,  0,  12 /))
+(  315) CALL T ('P', 'APINEN    ',      (/ 159,  15, 100,     0,   0, 0,  0,  12 /))
+(  316) CALL T ('P', 'HCHO      ',      (/ 159,  16, 100,     0,   0, 0,  0,  12 /))
+(  317) CALL T ('P', 'CH3CHO    ',      (/ 159,  17, 100,     0,   0, 0,  0,  12 /))
+(  318) CALL T ('P', 'GLYOX     ',      (/ 159,  18, 100,     0,   0, 0,  0,  12 /))
+(  319) CALL T ('P', 'MGLYOX    ',      (/ 159,  19, 100,     0,   0, 0,  0,  12 /))
+(  320) CALL T ('P', 'CH3COE    ',      (/ 159,  20, 100,     0,   0, 0,  0,  12 /))
+(  321) ! Fin des champs pour Mocage
+(  322) CALL T ('P', 'RAD_LIQUID_W',    (/ 159,  32, 100,     0,   0, 0,  0,  16 /))
+(  323) CALL T ('P', 'RAD_SOLID_WA',    (/ 128, 247, 100,     0,   0, 0,  0,  16 /))
+(  324) CALL T ('P', 'CLOUD_FRACTI',    (/ 159,  36, 100,     0,   0, 0,  0,  16 /))
+(  325) CALL T ('P', 'TKE         ',    (/ 159,  37, 100,     0,   0, 0,  0,  16 /))
+(  326) CALL T ('P', 'SURFMOCON   ',    (/   1, 166,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  327) CALL T ('P', 'MAX_O3      ',    (/ 159,  23, 100,     0,   0, 0,  0,  12 /))
+(  328) CALL T ('P', 'MAX_NO      ',    (/ 159,  25, 100,     0,   0, 0,  0,  12 /))
+(  329) CALL T ('P', 'MAX_NO2     ',    (/ 159,  26, 100,     0,   0, 0,  0,  12 /))
+(  330) CALL T ('P', 'MAX_IUVCC   ',    (/ 159,  27, 100,     0,   0, 0,  0,  12 /))
+(  331) CALL T ('P', 'MAX_IUVCN   ',    (/ 159,  28, 100,     0,   0, 0,  0,  12 /))
+(  332) CALL T ('P', 'VERT.VELOCIT',    (/   1,  40, 100,     0,   0, 0,  0,  16 /))
+(  333) CALL T ('P', 'SIM_REFLECTI',    (/ 159,  31, 100,     0,   0, 0,  0,  16 /))
+(  334) CALL T ('P', 'CLOUD_WATER ',    (/ 159,  32, 100,     0,   0, 0,  0,  16 /))
+(  335) CALL T ('P', 'RAIN        ',    (/ 159,  33, 100,     0,   0, 0,  0,  16 /))
+(  336) CALL T ('P', 'ICE_CRYSTAL ',    (/ 128, 247, 100,     0,   0, 0,  0,  16 /))
+(  337) CALL T ('P', 'SNOW        ',    (/ 159,  34, 100,     0,   0, 0,  0,  16 /))
+(  338) CALL T ('P', 'GRAUPEL     ',    (/ 159,  35, 100,     0,   0, 0,  0,  16 /))
+(  339) CALL T ('P', 'THETA_VIRTUA',    (/ 159,  38, 100,     0,   0, 0,  0,  16 /))
+(  340) CALL T ('P', 'DUST        ',    (/ 159,  93, 100,     0,   0, 0,  0,  12 /))
+(  341) CALL T ('P', 'HAIL        ',    (/ 159, 100, 100,     0,   0, 0,  0,  12 /))
+(  342) CALL T ('P', 'BLACKC      ',    (/ 159, 195, 100,     0,   0, 0,  0,  12 /))
+(  343) CALL T ('P', 'DYNSAL      ',    (/ 159, 189, 100,     0,   0, 0,  0,  12 /))
+(  344) CALL T ('P', 'PMANTH      ',    (/ 159, 201, 100,     0,   0, 0,  0,  12 /))
+(  345) CALL T ('P', 'PM25        ',    (/ 159, 207, 100,     0,   0, 0,  0,  12 /))
+(  346) CALL T ('P', 'PM10        ',    (/ 159, 209, 100,     0,   0, 0,  0,  12 /))
+(  347) CALL T ('P', 'EDR         ',    (/ 128, 135, 100,     0,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 19
+
+(  348) !
+(  349) !     2.2 -  Champs sur un niveau hauteur
+(  350) !
+(  351) CALL T ('H', 'POT_VORTICIT',    (/   1,   4, 105,     0,   0, 0,  0,  16 /))
+(  352) CALL T ('H', 'GEOPOTENTIEL',    (/   1,   6, 105,     0,   0, 0,  0,  12 /))
+(  353) CALL T ('H', 'TEMPERATURE ',    (/   1,  11, 105,     0,   0, 0,  0,  12 /))
+(  354) CALL T ('H', 'TEMPE_POTENT',    (/   1,  13, 105,     0,   0, 0,  0,  12 /))
+(  355) CALL T ('H', 'THETA_PRIM_W',    (/   1,  14, 105,     0,   0, 0,  0,  12 /))
+(  356) CALL T ('H', 'VENT_ZONAL  ',    (/   1,  33, 105,     0,   0, 0,  0,  12 /))
+(  357) CALL T ('H', 'VENT_MERIDIE',    (/   1,  34, 105,     0,   0, 0,  0,  12 /))
+(  358) CALL T ('H', 'VITESSE_VERT',    (/   1,  39, 105,     0,   0, 0,  0,  16 /))
+(  359) CALL T ('H', 'ABS_VORTICIT',    (/   1,  41, 105,     0,   0, 0,  0,  16 /))
+(  360) CALL T ('H', 'DIVERGENCE  ',    (/   1,  44, 105,     0,   0, 0,  0,  16 /))
+(  361) CALL T ('H', 'HUMI.SPECIFI',    (/   1,  51, 105,     0,   0, 0,  0,  12 /))
+(  362) CALL T ('H', 'HUMI_RELATIV',    (/   1,  52, 105,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  363) CALL T ('H', 'PRESSURE    ',    (/   1,   1, 105,     0,   0, 0,  0,  16 /))
+(  364) CALL T ('H', 'WIND_VELOCIT',    (/   1,  32, 105,     0,   0, 0,  0,  24 /))
+(  365) CALL T ('H', 'VORTICITY   ',    (/   1,  43, 105,     0,   0, 0,  0,  16 /))
+(  366) CALL T ('H', 'FONC.COURANT',    (/   1,  35, 105,     0,   0, 0,  0,  24 /))
+(  367) CALL T ('H', 'POT.VITESSE ',    (/   1,  36, 105,     0,   0, 0,  0,  24 /))
+(  368) ! Debut des champs pour Mocage :
+(  369) CALL T ('H', 'O3        ',      (/ 159,   1, 105,     0,   0, 0,  0,  12 /))
+(  370) CALL T ('H', 'NO2       ',      (/ 159,   2, 105,     0,   0, 0,  0,  12 /))
+(  371) CALL T ('H', 'NO        ',      (/ 159,   3, 105,     0,   0, 0,  0,  12 /))
+(  372) CALL T ('H', 'PAN       ',      (/ 159,   4, 105,     0,   0, 0,  0,  12 /))
+(  373) CALL T ('H', 'HNO3      ',      (/ 159,   5, 105,     0,   0, 0,  0,  12 /))
+(  374) CALL T ('H', 'SO2       ',      (/ 159,   6, 105,     0,   0, 0,  0,  12 /))
+(  375) CALL T ('H', 'CO        ',      (/ 159,   7, 105,     0,   0, 0,  0,  12 /))
+(  376) CALL T ('H', 'CH4       ',      (/ 159,   8, 105,     0,   0, 0,  0,  12 /))
+(  377) CALL T ('H', 'C2H6      ',      (/ 159,   9, 105,     0,   0, 0,  0,  12 /))
+(  378) CALL T ('H', 'NC4H10    ',      (/ 159,  10, 105,     0,   0, 0,  0,  12 /))
+(  379) CALL T ('H', 'C2H4      ',      (/ 159,  11, 105,     0,   0, 0,  0,  12 /))
+(  380) CALL T ('H', 'C3H6      ',      (/ 159,  12, 105,     0,   0, 0,  0,  12 /))
+(  381) CALL T ('H', 'OXYL      ',      (/ 159,  13, 105,     0,   0, 0,  0,  12 /))
+(  382) CALL T ('H', 'C5H8      ',      (/ 159,  14, 105,     0,   0, 0,  0,  12 /))
+(  383) CALL T ('H', 'APINEN    ',      (/ 159,  15, 105,     0,   0, 0,  0,  12 /))
+(  384) CALL T ('H', 'HCHO      ',      (/ 159,  16, 105,     0,   0, 0,  0,  12 /))
+(  385) CALL T ('H', 'CH3CHO    ',      (/ 159,  17, 105,     0,   0, 0,  0,  12 /))
+(  386) CALL T ('H', 'GLYOX     ',      (/ 159,  18, 105,     0,   0, 0,  0,  12 /))
+(  387) CALL T ('H', 'MGLYOX    ',      (/ 159,  19, 105,     0,   0, 0,  0,  12 /))
+(  388) CALL T ('H', 'CH3COE    ',      (/ 159,  20, 105,     0,   0, 0,  0,  12 /))
+(  389) ! Fin des champs pour Mocage
+(  390) CALL T ('H', 'RAD_LIQUID_W',      (/ 159,  32, 105,     0,   0, 0,  0,  16 /))
+(  391) CALL T ('H', 'RAD_SOLID_WA',      (/ 128, 247, 105,     0,   0, 0,  0,  16 /))
+(  392) CALL T ('H', 'CLOUD_FRACTI',      (/ 159,  36, 105,     0,   0, 0,  0,  16 /))
+(  393) CALL T ('H', 'TKE         ',      (/ 159,  37, 105,     0,   0, 0,  0,  16 /))
+(  394) CALL T ('H', 'SURFMOCON   ',      (/   1, 166, 105,     0,   0, 0,  0,  12 /), LDNIVA=.TRUE.)
+(  395) CALL T ('H', 'MAX_O3      ',      (/ 159,  23, 105,     0,   0, 0,  0,  12 /))
+(  396) CALL T ('H', 'MAX_NO      ',      (/ 159,  25, 105,     0,   0, 0,  0,  12 /))
+(  397) CALL T ('H', 'MAX_NO2     ',      (/ 159,  26, 105,     0,   0, 0,  0,  12 /))
+(  398) CALL T ('H', 'MAX_IUVCC   ',      (/ 159,  27, 105,     0,   0, 0,  0,  12 /))
+(  399) CALL T ('H', 'MAX_IUVCN   ',      (/ 159,  28, 105,     0,   0, 0,  0,  12 /))
+(  400) CALL T ('H', 'VERT.VELOCIT',      (/   1,  40, 105,     0,   0, 0,  0,  16 /))
+(  401) CALL T ('H', 'SIM_REFLECTI',      (/ 159,  31, 105,     0,   0, 0,  0,  16 /))
+(  402) CALL T ('H', 'CLOUD_WATER ',      (/ 159,  32, 105,     0,   0, 0,  0,  16 /))
+(  403) CALL T ('H', 'RAIN        ',      (/ 159,  33, 105,     0,   0, 0,  0,  16 /))
+(  404) CALL T ('H', 'ICE_CRYSTAL ',      (/ 128, 247, 105,     0,   0, 0,  0,  16 /))
+(  405) CALL T ('H', 'SNOW        ',      (/ 159,  34, 105,     0,   0, 0,  0,  16 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 20
+
+(  406) CALL T ('H', 'GRAUPEL     ',      (/ 159,  35, 105,     0,   0, 0,  0,  16 /))
+(  407) CALL T ('H', 'THETA_VIRTUA',      (/ 159,  38, 105,     0,   0, 0,  0,  16 /))
+(  408) CALL T ('H', 'DUST        ',      (/ 159,  93, 105,     0,   0, 0,  0,  12 /))
+(  409) CALL T ('H', 'HAIL        ',      (/ 159, 100, 105,     0,   0, 0,  0,  12 /))
+(  410) CALL T ('H', 'BLACKC      ',      (/ 159, 195, 105,     0,   0, 0,  0,  12 /))
+(  411) CALL T ('H', 'DYNSAL      ',      (/ 159, 189, 105,     0,   0, 0,  0,  12 /))
+(  412) CALL T ('H', 'PMANTH      ',      (/ 159, 201, 105,     0,   0, 0,  0,  12 /))
+(  413) CALL T ('H', 'PM25        ',      (/ 159, 207, 105,     0,   0, 0,  0,  12 /))
+(  414) CALL T ('H', 'PM10        ',      (/ 159, 209, 105,     0,   0, 0,  0,  12 /))
+(  415) CALL T ('H', 'EDR         ',      (/ 128, 135, 105,     0,   0, 0,  0,  12 /))
+(  416) !
+(  417) !     2.3 -  Champs sur un niveau iso-tourbillon-potentiel
+(  418) !
+(  419) CALL T ('V', 'POT_VORTICIT',    (/   1,   4, 117,     0,   0, 0,  0,  16 /))
+(  420) CALL T ('V', 'GEOPOTENTIEL',    (/   1,   6, 117,     0,   0, 0,  0,  16 /))
+(  421) CALL T ('V', 'TEMPERATURE ',    (/   1,  11, 117,     0,   0, 0,  0,  12 /))
+(  422) CALL T ('V', 'TEMPE_POTENT',    (/   1,  13, 117,     0,   0, 0,  0,  12 /))
+(  423) CALL T ('V', 'THETA_PRIM_W',    (/   1,  14, 117,  1500,   0, 0,  0,  12 /))
+(  424) CALL T ('V', 'VENT_ZONAL  ',    (/   1,  33, 117,     0,   0, 0,  0,  12 /))
+(  425) CALL T ('V', 'VENT_MERIDIE',    (/   1,  34, 117,     0,   0, 0,  0,  12 /))
+(  426) CALL T ('V', 'VITESSE_VERT',    (/   1,  39, 117,  1500,   0, 0,  0,  16 /))
+(  427) CALL T ('V', 'ABS_VORTICIT',    (/   1,  41, 117,     0,   0, 0,  0,  16 /))
+(  428) CALL T ('V', 'DIVERGENCE  ',    (/   1,  44, 117,     0,   0, 0,  0,  16 /))
+(  429) CALL T ('V', 'HUMI.SPECIFI',    (/   1,  51, 117,     0,   0, 0,  0,  12 /))
+(  430) CALL T ('V', 'HUMI_RELATIV',    (/   1,  52, 117,  1500,   0, 0, -2,  12 /), PMULTI=Z100)
+(  431) CALL T ('V', 'PRESSURE    ',    (/   1,   1, 117,  1500,   0, 0,  0,  16 /))
+(  432) CALL T ('V', 'WIND_VELOCIT',    (/   1,  32, 117,  1500,   0, 0,  0,  24 /))
+(  433) CALL T ('V', 'VORTICITY   ',    (/   1,  43, 117,     0,   0, 0,  0,  16 /))
+(  434) CALL T ('V', 'FONC.COURANT',    (/   1,  35, 117,     0,   0, 0,  0,  24 /))
+(  435) CALL T ('V', 'POT.VITESSE ',    (/   1,  36, 117,     0,   0, 0,  0,  24 /))
+(  436) CALL T ('V', 'TKE         ',    (/ 159,  37, 117,  1500,   0, 0,  0,  16 /))
+(  437) CALL T ('V', 'CLOUD_FRACTI',    (/ 159,  36, 117,  1500,   0, 0,  0,  16 /))
+(  438) CALL T ('V', 'CLOUD_WATER ',    (/ 159,  32, 117,  1500,   0, 0,  0,  16 /))
+(  439) CALL T ('V', 'RAD_LIQUID_W',    (/ 159,  32, 117,  1500,   0, 0,  0,  16 /))
+(  440) CALL T ('V', 'ICE_CRYSTAL ',    (/ 128, 247, 117,  1500,   0, 0,  0,  16 /))
+(  441) CALL T ('V', 'RAD_SOLID_WA',    (/ 128, 247, 117,  1500,   0, 0,  0,  16 /))
+(  442) !
+(  443) !     2.4 -  Champs sur un niveau isentrope
+(  444) !
+(  445) CALL T ('T', 'POT_VORTICIT',    (/   1,   4, 107,     0,   0, 0,  0,  16 /))
+(  446) CALL T ('T', 'GEOPOTENTIEL',    (/   1,   6, 107,     0,   0, 0,  0,  16 /))
+(  447) CALL T ('T', 'TEMPERATURE ',    (/   1,  11, 107,     0,   0, 0,  0,  12 /))
+(  448) CALL T ('T', 'TEMPE_POTENT',    (/   1,  13, 107,     0,   0, 0,  0,  12 /))
+(  449) CALL T ('T', 'THETA_PRIM_W',    (/   1,  14, 107,  1500,   0, 0,  0,  12 /))
+(  450) CALL T ('T', 'VENT_ZONAL  ',    (/   1,  33, 107,     0,   0, 0,  0,  12 /))
+(  451) CALL T ('T', 'VENT_MERIDIE',    (/   1,  34, 107,     0,   0, 0,  0,  12 /))
+(  452) CALL T ('T', 'VITESSE_VERT',    (/   1,  39, 107,     0,   0, 0,  0,  16 /))
+(  453) CALL T ('T', 'ABS_VORTICIT',    (/   1,  41, 107,     0,   0, 0,  0,  12 /))
+(  454) CALL T ('T', 'DIVERGENCE  ',    (/   1,  44, 107,     0,   0, 0,  0,  16 /))
+(  455) CALL T ('T', 'HUMI.SPECIFI',    (/   1,  51, 107,     0,   0, 0,  0,  12 /))
+(  456) CALL T ('T', 'HUMI_RELATIV',    (/   1,  52, 107,     0,   0, 0, -2,  12 /), PMULTI=Z100)
+(  457) CALL T ('T', 'PRESSURE    ',    (/   1,   1, 107,  1500,   0, 0,  0,  16 /))
+(  458) CALL T ('T', 'WIND_VELOCIT',    (/   1,  32, 107,  1500,   0, 0,  0,  12 /))
+(  459) CALL T ('T', 'VORTICITY   ',    (/   1,  43, 107,     0,   0, 0,  0,  16 /))
+(  460) CALL T ('T', 'FONC.COURANT',    (/   1,  35, 107,     0,   0, 0,  0,  24 /))
+(  461) CALL T ('T', 'POT.VITESSE ',    (/   1,  36, 107,     0,   0, 0,  0,  24 /))
+(  462) CALL T ('T', 'TKE         ',    (/ 159,  37, 107,  1500,   0, 0,  0,  12 /))
+(  463) CALL T ('T', 'CLOUD_FRACTI',    (/ 159,  36, 107,  1500,   0, 0,  0,  12 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 21
+
+(  464) CALL T ('T', 'CLOUD_WATER ',    (/ 159,  32, 107,  1500,   0, 0,  0,  12 /))
+(  465) CALL T ('T', 'RAD_LIQUID_W',    (/ 159,  32, 107,  1500,   0, 0,  0,  12 /))
+(  466) CALL T ('T', 'ICE_CRYSTAL ',    (/ 128, 247, 107,  1500,   0, 0,  0,  12 /))
+(  467) CALL T ('T', 'RAD_SOLID_WA',    (/ 128, 247, 107,  1500,   0, 0,  0,  12 /))
+(  468) !
+(  469) !     2.5 -  Champs sur un niveau modele
+(  470) !
+(  471) !
+(  472) CALL T ('S', 'TEMPERATURE ',    (/   1,  11, 109,     0,   0, 0,  0,  12 /))
+(  473) CALL T ('S', 'WIND.U.PHYS ',    (/   1,  33, 109,     0,   0, 0,  0,  12 /))
+(  474) CALL T ('S', 'VENT_ZONAL  ',    (/   1,  33, 109,     0,   0, 0,  0,  12 /))
+(  475) CALL T ('S', 'WIND.V.PHYS ',    (/   1,  34, 109,     0,   0, 0,  0,  12 /))
+(  476) CALL T ('S', 'VENT_MERIDIE',    (/   1,  34, 109,     0,   0, 0,  0,  12 /))
+(  477) CALL T ('S', 'FONC.COURANT',    (/   1,  35, 109,     0,   0, 0,  0,  24 /))
+(  478) CALL T ('S', 'POT.VITESSE ',    (/   1,  36, 109,     0,   0, 0,  0,  24 /))
+(  479) CALL T ('S', 'VORTICITY   ',    (/   1,  43, 109,     0,   0, 0,  0,  16 /))
+(  480) CALL T ('S', 'DIVERGENCE  ',    (/   1,  44, 109,     0,   0, 0,  0,  16 /))
+(  481) CALL T ('S', 'HUMI.SPECIFI',    (/   1,  51, 109,     0,   0, 0,  0,  12 /))
+(  482) CALL T ('S', 'VERTIC.DIVER',    (/ 149,  91, 109,     0,   0, 0,  0,  12 /))
+(  483) CALL T ('S', 'PRESS.DEPART',    (/ 149,  92, 109,     0,   0, 0,  0,  12 /))
+(  484) CALL T ('S', 'PRESSURE    ',    (/   1,   1, 109,     1,   0, 0,  0,  16 /))
+(  485) CALL T ('S', 'GEOPOTENTIEL',    (/   1,   8, 109,     1,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(  486) CALL T ('S', 'HUMI_RELATIV',    (/   1,  52, 109,     1,   0, 0, -2,  12 /), PMULTI=Z100)
+(  487) CALL T ('S', 'VITESSE_VERT',    (/   1,  39, 109,     1,   0, 0,  0,  16 /))
+(  488) CALL T ('S', 'O3          ',    (/ 159,   1, 109,     1,   0, 0,  0,  12 /))
+(  489) CALL T ('S', 'NO2         ',    (/ 159,   2, 109,     1,   0, 0,  0,  12 /))
+(  490) CALL T ('S', 'NO          ',    (/ 159,   3, 109,     1,   0, 0,  0,  12 /))
+(  491) CALL T ('S', 'PAN         ',    (/ 159,   4, 109,     1,   0, 0,  0,  12 /))
+(  492) CALL T ('S', 'HNO3        ',    (/ 159,   5, 109,     1,   0, 0,  0,  12 /))
+(  493) CALL T ('S', 'SO2         ',    (/ 159,   6, 109,     1,   0, 0,  0,  12 /))
+(  494) CALL T ('S', 'CO          ',    (/ 159,   7, 109,     1,   0, 0,  0,  12 /))
+(  495) CALL T ('S', 'CH4         ',    (/ 159,   8, 109,     1,   0, 0,  0,  12 /))
+(  496) CALL T ('S', 'C2H6        ',    (/ 159,   9, 109,     1,   0, 0,  0,  12 /))
+(  497) CALL T ('S', 'NC4H10      ',    (/ 159,  10, 109,     1,   0, 0,  0,  12 /))
+(  498) CALL T ('S', 'C2H4        ',    (/ 159,  11, 109,     1,   0, 0,  0,  12 /))
+(  499) CALL T ('S', 'C3H6        ',    (/ 159,  12, 109,     1,   0, 0,  0,  12 /))
+(  500) CALL T ('S', 'OXYL        ',    (/ 159,  13, 109,     1,   0, 0,  0,  12 /))
+(  501) CALL T ('S', 'C5H8        ',    (/ 159,  14, 109,     1,   0, 0,  0,  12 /))
+(  502) CALL T ('S', 'APINEN      ',    (/ 159,  15, 109,     1,   0, 0,  0,  12 /))
+(  503) CALL T ('S', 'HCHO        ',    (/ 159,  16, 109,     1,   0, 0,  0,  12 /))
+(  504) CALL T ('S', 'CH3CHO      ',    (/ 159,  17, 109,     1,   0, 0,  0,  12 /))
+(  505) CALL T ('S', 'GLYOX       ',    (/ 159,  18, 109,     1,   0, 0,  0,  12 /))
+(  506) CALL T ('S', 'MGLYOX      ',    (/ 159,  19, 109,     1,   0, 0,  0,  12 /))
+(  507) CALL T ('S', 'CH3COE      ',    (/ 159,  20, 109,     1,   0, 0,  0,  12 /))
+(  508) CALL T ('S', 'PLUIE STRATI',    (/   1,  62,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  509) CALL T ('S', 'PLUIE CONVEC',    (/   1,  63,   1,     0,   0, 0,  0,  16 /), LDNIVA=.TRUE.)
+(  510) CALL T ('S', 'VERT.VELOCIT',    (/   1,  40, 109,     1,   0, 0,  0,  16 /))
+(  511) CALL T ('S', 'SIM_REFLECTI',    (/ 159,  31, 109,     1,   0, 0,  0,  16 /))
+(  512) CALL T ('S', 'CLOUD_WATER ',    (/ 159,  32, 109,     1,   0, 0,  0,  16 /))
+(  513) CALL T ('S', 'RAD_LIQUID  ',    (/ 159,  32, 109,     1,   0, 0,  0,  16 /))
+(  514) CALL T ('S', 'RAIN        ',    (/ 159,  33, 109,     1,   0, 0,  0,  16 /))
+(  515) CALL T ('S', 'ICE_CRYSTA  ',    (/ 128, 247, 109,     1,   0, 0,  0,  16 /))
+(  516) CALL T ('S', 'RAD_SOLID_WA',    (/ 128, 247, 109,     1,   0, 0,  0,  16 /))
+(  517) CALL T ('S', 'SNOW        ',    (/ 159,  34, 109,     1,   0, 0,  0,  16 /))
+(  518) CALL T ('S', 'GRAUPEL     ',    (/ 159,  35, 109,     1,   0, 0,  0,  16 /))
+(  519) CALL T ('S', 'CLOUD_FRACTI',    (/ 159,  36, 109,     1,   0, 0,  0,  16 /))
+(  520) CALL T ('S', 'TKE         ',    (/ 159,  37, 109,     1,   0, 0,  0,  16 /))
+(  521) CALL T ('S', 'THETA_VIRTUA',    (/ 159,  38, 109,     1,   0, 0,  0,  16 /))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 22
+
+(  522) CALL T ('S', 'HAIL        ',    (/ 159, 100, 109,     1,   0, 0,  0,  12 /))
+(  523) CALL T ('S', 'RAYT THER CL',    (/ 128, 169, 109,     0,   0, 8,  0,  16 /))
+(  524) !
+(  525) CALL T ('SPEC', 'SURFGEOPOTEN', (/   1,   8, 109,     1,   0, 0,  0,  24 /), PMULTI=ZONOVG)
+(  526) !
+(  527) CALL T ('KT', 'ISOT_ALTIT ',    (/ 128,   8, 115,     0,   0, 0,  0,  16 /))
+(  528) CALL T ('KT', 'ISOT_PRESS ',    (/ 254,   1, 115, 27315,   0, 0,  0,  16 /)) 
+(  529) CALL T ('KB', 'ISOT_ALTIT ',    (/ 128,   8, 115, 27315,   0, 0,  0,  16 /)) 
+(  530) CALL T ('KB', 'ISOT_PRESS ',    (/ 254,   1, 115, 27315,   0, 0,  0,  16 /)) 
+(  531) !
+(  532) CALL T ('C001', '_METEOSAT_07', (/ 129,   1, 100,    64,   0, 0,  0,  12 /))
+(  533) CALL T ('C002', '_METEOSAT_07', (/ 129,   1, 100,   115,   0, 0,  0,  12 /))
+(  534) !
+(  535) CALL T ('C001', '_METEOSAT_09', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  536) CALL T ('C002', '_METEOSAT_09', (/ 129,   1, 100,    62,   0, 0,  0,  12 /))
+(  537) CALL T ('C003', '_METEOSAT_09', (/ 129,   1, 100,    73,   0, 0,  0,  12 /))
+(  538) CALL T ('C004', '_METEOSAT_09', (/ 129,   1, 100,    87,   0, 0,  0,  12 /))
+(  539) CALL T ('C005', '_METEOSAT_09', (/ 129,   1, 100,    97,   0, 0,  0,  12 /))
+(  540) CALL T ('C006', '_METEOSAT_09', (/ 129,   1, 100,   108,   0, 0,  0,  12 /))
+(  541) CALL T ('C007', '_METEOSAT_09', (/ 129,   1, 100,   120,   0, 0,  0,  12 /))
+(  542) CALL T ('C008', '_METEOSAT_09', (/ 129,   1, 100,   134,   0, 0,  0,  12 /))
+(  543) !
+(  544) CALL T ('C001', '_GOES_11_IMA', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  545) CALL T ('C002', '_GOES_11_IMA', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  546) CALL T ('C003', '_GOES_11_IMA', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  547) CALL T ('C004', '_GOES_11_IMA', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+(  548) !
+(  549) CALL T ('C001', '_GOES_12_IMA', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  550) CALL T ('C002', '_GOES_12_IMA', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  551) CALL T ('C003', '_GOES_12_IMA', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  552) CALL T ('C004', '_GOES_12_IMA', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+(  553) !
+(  554) CALL T ('C001', '_MTSAT_01_IM', (/ 129,   1, 100,    39,   0, 0,  0,  12 /))
+(  555) CALL T ('C002', '_MTSAT_01_IM', (/ 129,   1, 100,    67,   0, 0,  0,  12 /))
+(  556) CALL T ('C003', '_MTSAT_01_IM', (/ 129,   1, 100,   107,   0, 0,  0,  12 /))
+(  557) CALL T ('C004', '_MTSAT_01_IM', (/ 129,   1, 100,   110,   0, 0,  0,  12 /))
+(  558) !
+(  559) # 560 "faicor.F90"
+(  560) ENDDO
+(  561) # 562 "faicor.F90"
+(  562) IF (LHOOK) CALL DR_HOOK('FAICOR_MT',1,ZHOOK_HANDLE)
+(  563) # 564 "faicor.F90"
+(  564) CONTAINS
+(  565) # 566 "faicor.F90"
+(  566) SUBROUTINE T (CDPREF, CDSUFF, KCODPA, LDNIVA, PMULTI)
+(  567) # 568 "faicor.F90"
+(  568) CHARACTER (LEN=*),              INTENT (IN) :: CDPREF, CDSUFF
+(  569) INTEGER,                        INTENT (IN) :: KCODPA (8)
+(  570) LOGICAL,            OPTIONAL,   INTENT (IN) :: LDNIVA
+(  571) REAL (KIND=JPDBLR), OPTIONAL,   INTENT (IN) :: PMULTI
+(  572) # 573 "faicor.F90"
+(  573) LOGICAL :: LLNIVA
+(  574) # 575 "faicor.F90"
+(  575) LLNIVA = .FALSE.
+(  576) IF (PRESENT (LDNIVA)) LLNIVA = LDNIVA
+(  577) # 578 "faicor.F90"
+(  578) FA%NBPARC = FA%NBPARC + 1
+(  579) # 580 "faicor.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:40      page 23
+
+(  580) IF (LLALLOC) THEN
+(  581)   FA%YGR1TAB (FA%NBPARC)%CIPREF = CDPREF
+(  582)   FA%YGR1TAB (FA%NBPARC)%CISUFF = CDSUFF
+(  583)   FA%YGR1TAB (FA%NBPARC)%NCODPA = INT (KCODPA, JPLIKB)
+(  584)   FA%YGR1TAB (FA%NBPARC)%LFNIVA = LLNIVA
+(  585)   IF (PRESENT (PMULTI)) THEN
+(  586)     FA%YGR1TAB (FA%NBPARC)%FMULTI = PMULTI
+(  587)     FA%YGR1TAB (FA%NBPARC)%LMULTI = .TRUE.
+(  588)   ENDIF
+(  589) ENDIF
+(  590) # 591 "faicor.F90"
+(  591) END SUBROUTINE T
+(  592) ! 
+(  593) END SUBROUTINE FAICOR_MT64

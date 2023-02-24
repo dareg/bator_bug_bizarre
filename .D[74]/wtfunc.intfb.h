@@ -1,0 +1,18 @@
+INTERFACE
+SUBROUTINE wtfunc(&
+ & klog_io,&
+ & CD_CWTLABEL, KWTMETHOD,&
+ & KWTPARAM, KWT,&
+ & PWTLIST, KWTLIST_LEN,&
+ & PWTSCALING,&
+ & kerror_code) 
+USE PARKIND1 ,ONLY : JPIM ,JPRD
+INTEGER(KIND=JPIM), intent(in) :: klog_io
+character*(*), intent(in) :: CD_CWTLABEL
+INTEGER(KIND=JPIM), intent(in) :: KWTMETHOD, KWTPARAM, KWT
+INTEGER(KIND=JPIM), intent(in) :: KWTLIST_LEN
+REAL(KIND=JPRD), intent(in) :: PWTLIST(KWTLIST_LEN)
+REAL(KIND=JPRD), intent(in) :: PWTSCALING
+INTEGER(KIND=JPIM), intent(out) :: kerror_code
+END SUBROUTINE wtfunc
+END INTERFACE

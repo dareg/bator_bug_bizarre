@@ -1,0 +1,22 @@
+!depfile:ch_init_dep_isban.F90
+MODULE MODI_CH_INIT_DEP_ISBA_n 
+INTERFACE
+      SUBROUTINE CH_INIT_DEP_ISBA_n (CHI, NCHI, NP, DTCO, KPATCH, OCOVER, PCOVER, &
+                                     KCH,KLUOUT,KLU)
+USE MODD_CH_ISBA_n, ONLY : CH_ISBA_t, CH_ISBA_NP_t
+USE MODD_ISBA_n, ONLY : ISBA_NP_t
+USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+TYPE(CH_ISBA_t), INTENT(INOUT) :: CHI
+TYPE(CH_ISBA_NP_t), INTENT(INOUT) :: NCHI
+TYPE(ISBA_NP_t), INTENT(INOUT) :: NP
+TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+INTEGER, INTENT(IN) :: KPATCH
+LOGICAL, DIMENSION(:), INTENT(IN) :: OCOVER
+REAL, DIMENSION(:,:), INTENT(IN) :: PCOVER
+INTEGER,                         INTENT(IN)  :: KCH      ! chemistry input file
+INTEGER,                         INTENT(IN)  :: KLUOUT   ! output listing channel
+INTEGER,                         INTENT(IN)  :: KLU      ! number of points
+END SUBROUTINE CH_INIT_DEP_ISBA_n
+
+END INTERFACE
+END MODULE MODI_CH_INIT_DEP_ISBA_n 

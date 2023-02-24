@@ -1,0 +1,169 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:44      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:44      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_sfx_xios_setup.F90
+
+(    1) !depfile:sfx_xios_setup.F90
+(    2) MODULE MODI_SFX_XIOS_SETUP
+(    3) INTERFACE
+(    4) SUBROUTINE SFX_XIOS_SETUP(YSC, KCOMM, KLUOUT, KYEAR, KMONTH, KDAY, PTIME, PTSTEP, &
+(    5)      KDIM1, KDIM2, KEXT1, PCLAT, PCLON, KXINDEX, ODXMASK,&
+(    6)      KMASKNAT, KMASKSEA, KMASKWAT, KMASKTOWN)
+(    7) USE MODD_SURFEX_n, ONLY : SURFEX_t
+(    8) TYPE (SURFEX_t),    INTENT(IN) :: YSC
+(    9) INTEGER,            INTENT(INOUT) :: KCOMM  ! Communicator
+(   10) INTEGER,            INTENT(IN) :: KLUOUT    ! Listing logical unit number
+(   11) INTEGER,            INTENT(IN) :: KYEAR     ! current year (UTC)
+(   12) INTEGER,            INTENT(IN) :: KMONTH    ! current month (UTC)
+(   13) INTEGER,            INTENT(IN) :: KDAY      ! current day (UTC)
+(   14) REAL,               INTENT(IN) :: PTIME     ! current time since midnight (UTC,s)
+(   15) REAL,               INTENT(IN) :: PTSTEP    ! model time step 
+(   16) INTEGER,            INTENT(IN) :: KDIM1     ! Geometry param. (see  sfx_set_domain)
+(   17) INTEGER,            INTENT(IN) :: KDIM2     ! Geometry param. (see  sfx_set_domain)
+(   18) INTEGER,            INTENT(IN) :: KEXT1     ! Geometry param. (see  sfx_set_domain)
+(   19) REAL   ,   INTENT(IN) , DIMENSION(:,:) :: PCLAT      ! Lat corners "
+(   20) REAL   ,   INTENT(IN) , DIMENSION(:,:) :: PCLON      ! Lon corners "
+(   21) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KXINDEX    ! index of proc cells in global grid
+(   22) LOGICAL,   INTENT(IN) , DIMENSION(:)   :: ODXMASK    ! Cells mask
+(   23) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKNAT   ! Masks for the whole MPI task
+(   24) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKSEA
+(   25) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKWAT
+(   26) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKTOWN
+(   27) END SUBROUTINE SFX_XIOS_SETUP
+(   28) 
+(   29) END INTERFACE
+(   30) END MODULE MODI_SFX_XIOS_SETUP
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:44      page 3
+
+(    1) # 1 "modi_sfx_xios_setup.F90"
+(    1) !depfile:sfx_xios_setup.F90
+(    2) MODULE MODI_SFX_XIOS_SETUP
+(    3) INTERFACE
+(    4) SUBROUTINE SFX_XIOS_SETUP(YSC, KCOMM, KLUOUT, KYEAR, KMONTH, KDAY, PTIME, PTSTEP, &
+(    5)      KDIM1, KDIM2, KEXT1, PCLAT, PCLON, KXINDEX, ODXMASK,&
+(    6)      KMASKNAT, KMASKSEA, KMASKWAT, KMASKTOWN)
+(    7) USE MODD_SURFEX_n, ONLY : SURFEX_t
+(    8) TYPE (SURFEX_t),    INTENT(IN) :: YSC
+(    9) INTEGER,            INTENT(INOUT) :: KCOMM  ! Communicator
+(   10) INTEGER,            INTENT(IN) :: KLUOUT    ! Listing logical unit number
+(   11) INTEGER,            INTENT(IN) :: KYEAR     ! current year (UTC)
+(   12) INTEGER,            INTENT(IN) :: KMONTH    ! current month (UTC)
+(   13) INTEGER,            INTENT(IN) :: KDAY      ! current day (UTC)
+(   14) REAL,               INTENT(IN) :: PTIME     ! current time since midnight (UTC,s)
+(   15) REAL,               INTENT(IN) :: PTSTEP    ! model time step 
+(   16) INTEGER,            INTENT(IN) :: KDIM1     ! Geometry param. (see  sfx_set_domain)
+(   17) INTEGER,            INTENT(IN) :: KDIM2     ! Geometry param. (see  sfx_set_domain)
+(   18) INTEGER,            INTENT(IN) :: KEXT1     ! Geometry param. (see  sfx_set_domain)
+(   19) REAL   ,   INTENT(IN) , DIMENSION(:,:) :: PCLAT      ! Lat corners "
+(   20) REAL   ,   INTENT(IN) , DIMENSION(:,:) :: PCLON      ! Lon corners "
+(   21) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KXINDEX    ! index of proc cells in global grid
+(   22) LOGICAL,   INTENT(IN) , DIMENSION(:)   :: ODXMASK    ! Cells mask
+(   23) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKNAT   ! Masks for the whole MPI task
+(   24) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKSEA
+(   25) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKWAT
+(   26) INTEGER,   INTENT(IN) , DIMENSION(:)   :: KMASKTOWN
+(   27) END SUBROUTINE SFX_XIOS_SETUP
+(   28) # 29 "modi_sfx_xios_setup.F90"
+(   29) END INTERFACE
+(   30) END MODULE MODI_SFX_XIOS_SETUP

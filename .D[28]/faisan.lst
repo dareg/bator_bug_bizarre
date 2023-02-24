@@ -1,0 +1,1039 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faisan.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAISAN_MT64                                           &
+(    4) &                     (FA,  KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme d'ecriture d'un article de donnees non assimila-
+(   12) !     bles a un champ horizontal sur un fichier ARPEGE.
+(   13) !       ( Integration Simple d'un Article Non code )
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   17) !                CDNOMA (Entree) ==> Nom de l'article;
+(   18) !    ( Tableau ) KDONNE (Entree) ==> Donnees a ecrire;
+(   19) !                KLONGD (Entree) ==> Nombre de mots a ecrire.
+(   20) !
+(   21) !
+(   22) !
+(   23) TYPE(FA_COM) :: FA
+(   24) INTEGER (KIND=JPLIKB) KREP, KNUMER, KLONGD
+(   25) !
+(   26) INTEGER (KIND=JPLIKB) ILCDNO, IRANG, IREP
+(   27) INTEGER (KIND=JPLIKB) ILNOMA, INIMES, ILACTI
+(   28) !
+(   29) INTEGER (KIND=JPLIKB) KDONNE (KLONGD)
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 3
+
+(   31) LOGICAL LLVERF, LLRLFI
+(   32) !
+(   33) CHARACTER CDNOMA*(*)
+(   34) !
+(   35) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   36) CHARACTER(LEN=FA%JPXNOM) CLNOMA
+(   37) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   38) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   39) LOGICAL                  LLFATA
+(   40) LOGICAL                  LLECRI
+(   41) 
+(   42) !**
+(   43) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   44) !-----------------------------------------------------------------------
+(   45) !
+(   46) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   47) IF (LHOOK) CALL DR_HOOK('FAISAN_MT',0,ZHOOK_HANDLE)
+(   48) CLACTI=''
+(   49) LLVERF=.FALSE.
+(   50) LLRLFI=.FALSE.
+(   51) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   52) CALL FANUMU_MT64                 &
+(   53) &               (FA, KNUMER,IRANG)
+(   54) 
+(   55) !
+(   56) IF (IRANG.EQ.0) THEN
+(   57)   IREP=-51
+(   58)   GOTO 1001
+(   59) ELSEIF (KLONGD.LE.0) THEN
+(   60)   IREP=-64
+(   61)   GOTO 1001
+(   62) ELSEIF (ILCDNO.LE.0) THEN
+(   63)   IREP=-65
+(   64)   GOTO 1001
+(   65) ENDIF
+(   66) !
+(   67) !         Verrouillage eventuel du fichier.
+(   68) !
+(   69) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   70) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   71) LLVERF=FA%LFAMUL
+(   72) !
+(   73) IF (FA%FICHIER(IRANG)%LCREAF) THEN
+(   74)   IREP=-85
+(   75)   GOTO 1001
+(   76) ELSEIF (CDNOMA.EQ.FA%CPCACH.OR.CDNOMA.EQ.FA%CPCADI.OR.  &
+(   77) &       CDNOMA.EQ.FA%CPCAFS.OR.CDNOMA.EQ.FA%CPCARP.OR.  &
+(   78) &       CDNOMA.EQ.FA%CPDATE.OR.CDNOMA.EQ.FA%CPDATX.OR.  &
+(   79) &       CDNOMA.EQ.FA%FICHIER(IRANG)%CIDENT) THEN
+(   80)   IREP=-111
+(   81)   GOTO 1001
+(   82) ENDIF
+(   83) !**
+(   84) !     2.  -  ECRITURE DE L'ARTICLE DE DONNEES SUR LE FICHIER.
+(   85) !-----------------------------------------------------------------------
+(   86) !
+(   87) ILNOMA=MIN ( FA%NCPCAD, INT (LEN (CDNOMA), JPLIKB) )
+(   88) CLNOMA(1:ILNOMA)=CDNOMA(1:ILNOMA)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 4
+
+(   89) !
+(   90) 
+(   91) LLECRI = .FALSE.
+(   92) IF (FA%FICHIER(IRANG)%NCOGRIF (12) > 0) THEN
+(   93)   CALL WGRIB1 (LLECRI)
+(   94) ENDIF
+(   95) IF (.NOT. LLECRI) THEN
+(   96)   CALL LFIECR_MT64                                       &
+(   97)   &               (FA%LFI, IREP,KNUMER,CLNOMA(1:ILNOMA), &
+(   98)   &                KDONNE,KLONGD)
+(   99) ENDIF
+(  100) LLRLFI=IREP.NE.0
+(  101) !**
+(  102) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  103) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  104) !-----------------------------------------------------------------------
+(  105) !
+(  106) 1001 CONTINUE
+(  107) KREP=IREP
+(  108) LLFATA=LLMOER (IREP,IRANG)
+(  109) !
+(  110) !        Deverrouillage eventuel du fichier.
+(  111) !
+(  112) IF (LLVERF) CALL LFIVER_MT64                                &
+(  113) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  114) !
+(  115) IF (LLFATA) THEN
+(  116)   INIMES=2
+(  117) ELSE
+(  118)   INIMES=IXNVMS(IRANG)
+(  119) ENDIF
+(  120) !
+(  121) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  122)   IF (LHOOK) CALL DR_HOOK('FAISAN_MT',1,ZHOOK_HANDLE)
+(  123)   RETURN
+(  124) ENDIF
+(  125) !
+(  126) CLNSPR='FAISAN'
+(  127) !
+(  128) IF (IREP.NE.-65) THEN
+(  129)   ILACTI=MIN (ILCDNO,FA%NCPCAD)
+(  130)   CLACTI(1:ILACTI)=CDNOMA(:ILACTI)
+(  131) ELSE
+(  132)   ILACTI=8
+(  133)   CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  134) ENDIF
+(  135) !
+(  136) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  137) &       '', CDNOMA='''''',A,'''''', KLONGD='',I8)')     &
+(  138) &   KREP,KNUMER,CLACTI(1:ILACTI),KLONGD
+(  139) CALL FAIPAR_MT64                                       &
+(  140) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  141) &                CLNSPR, CLACTI(1:ILACTI),LLRLFI)
+(  142) !
+(  143) IF (LHOOK) CALL DR_HOOK('FAISAN_MT',1,ZHOOK_HANDLE)
+(  144) 
+(  145) CONTAINS
+(  146) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 5
+
+(  147) #include "facom2.llmoer.h"
+(  148) #include "facom2.ixnvms.h"
+(  149) #include "falgra.h"
+(  150) 
+(  151) SUBROUTINE WGRIB1 (LDECRI)
+(  152) 
+(  153) LOGICAL :: LDECRI
+(  154) 
+(  155) INTEGER (KIND=JPLIKB), PARAMETER :: ILONGD = 5_JPLIKB
+(  156) 
+(  157) INTEGER (KIND=JPLIKB)  IDONNE (ILONGD)
+(  158) CHARACTER(LEN=16)      CLGRIB, CL7777
+(  159) INTEGER (KIND=JPLIKB)  J, IL7777, INGRIB, IREP8, ILGRIBA, ILGRIBB, IGRIBED
+(  160) LOGICAL                LLNOMM, LLERFA, LLIMST
+(  161) CHARACTER (LEN=256)    CLNOMF, CLNOMD, CLNOMB
+(  162) CHARACTER (LEN=16)     CLSTTU
+(  163) INTEGER (KIND=JPLIKB)  INIMES
+(  164) INTEGER (KIND=JPLIKM)  IREP4
+(  165) 
+(  166) LDECRI = .FALSE.
+(  167) 
+(  168) IF (KLONGD < 10) RETURN ! Trop petit pour etre un GRIB1
+(  169) 
+(  170) INGRIB = KDONNE (1)                        ! Methode de codage
+(  171) CLGRIB = TRANSFER (KDONNE (4:5), CLGRIB)   ! Debut de l'entete GRIB1
+(  172) 
+(  173) IF ((INGRIB /= 3) .AND. (.NOT. FALGRA (INGRIB))) RETURN
+(  174) 
+(  175) IF (CLGRIB (1:4) /= 'GRIB') RETURN
+(  176) 
+(  177) IGRIBED = MOD (ICHAR (CLGRIB (8:8)), 256)
+(  178) 
+(  179) IF ((IGRIBED /= 1) .AND. (IGRIBED /= 2)) RETURN
+(  180) 
+(  181) ! Recuperation de la longueur du message GRIB
+(  182) 
+(  183) ILGRIBA = 0
+(  184) 
+(  185) IF (IGRIBED == 1) THEN
+(  186)   DO J = 5, 7
+(  187)     ILGRIBA = 256 * ILGRIBA + MOD (ICHAR (CLGRIB (J:J)), 256)
+(  188)   ENDDO
+(  189) ELSE
+(  190)   DO J = 9, 16
+(  191)     ILGRIBA = 256 * ILGRIBA + MOD (ICHAR (CLGRIB (J:J)), 256)
+(  192)   ENDDO
+(  193) ENDIF
+(  194) 
+(  195) ! On cherche maintenant la fin du message GRIB1
+(  196) 
+(  197) CL7777 = TRANSFER (KDONNE (KLONGD-1:KLONGD), CL7777)
+(  198) IL7777 = LEN (CL7777)
+(  199) 
+(  200) DO J = 0, IL7777-4
+(  201)   IF (CL7777 (IL7777-J-3:IL7777-J) == '7777') EXIT
+(  202) ENDDO
+(  203) 
+(  204) IF (J == -1) RETURN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 6
+
+(  205) 
+(  206) ! Calcul de la longueur du message GRIB en octets
+(  207) 
+(  208) ILGRIBB = (KLONGD-3)*8 - J
+(  209) 
+(  210) ! On verifie que les deux longueurs correspondent
+(  211) 
+(  212) IF (ILGRIBA /= ILGRIBB) RETURN
+(  213) 
+(  214) ! Ouverture du fichier externe
+(  215) 
+(  216) IF (FA%FICHIER(IRANG)%NFILEP == 0) THEN
+(  217)   CALL LFIOPT_MT64                                        &
+(  218) &                 (FA%LFI, IREP, KNUMER, LLNOMM, CLNOMF,  &
+(  219) &                  CLSTTU, LLERFA, LLIMST, INIMES)
+(  220)   IF (IREP /= 0) RETURN
+(  221)   CALL FILEPARSE (CLNOMF, CLNOMD, CLNOMB)
+(  222)   CLNOMF = TRIM (CLNOMD)//'GRIB'//TRIM (CLNOMB)
+(  223)   CALL FI_FOPEN (FA%FICHIER(IRANG)%NFILEP, CLNOMF, "a")
+(  224)   IF (FA%FICHIER(IRANG)%NFILEP == 0) THEN
+(  225)     CALL FI_ERRNO (IREP4)
+(  226)     IREP = IREP4
+(  227)     RETURN
+(  228)   ENDIF
+(  229) ENDIF
+(  230) 
+(  231) ! Ecriture de l'article GRIB
+(  232) 
+(  233) CALL FI_FWRITE (IREP8, KDONNE (4), ILGRIBA, 1_JPLIKB, &
+(  234)               & FA%FICHIER(IRANG)%NFILEP)
+(  235) IF (IREP8 /= 1) THEN
+(  236)   CALL FI_ERRNO (IREP4)
+(  237)   IREP = IREP4
+(  238) ELSE
+(  239)   IREP = 0
+(  240) ENDIF
+(  241) 
+(  242) FA%FICHIER(IRANG)%NOFFST = FA%FICHIER(IRANG)%NOFFST + ILGRIBA
+(  243) 
+(  244) ! Ecriture d'un article referencant le champ GRIB
+(  245) 
+(  246) IDONNE (1:3) = KDONNE (1:3)
+(  247) IDONNE (4) = FA%FICHIER(IRANG)%NOFFST
+(  248) IDONNE (5) = ILONGD
+(  249) 
+(  250) CALL LFIECR_MT64                                         &
+(  251) &               (FA%LFI, IREP, KNUMER, CLNOMA(1:ILNOMA), &
+(  252) &                IDONNE, ILONGD)
+(  253) 
+(  254) IF (IREP /= 0) RETURN
+(  255) 
+(  256) LDECRI = .TRUE.
+(  257) 
+(  258) END SUBROUTINE WGRIB1
+(  259) 
+(  260) SUBROUTINE FILEPARSE (CDNOMF, CDNOMD, CDNOMB)
+(  261) 
+(  262) CHARACTER (LEN=*) :: CDNOMF, CDNOMD, CDNOMB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 7
+
+(  263) 
+(  264) INTEGER (KIND=JPLIKB) :: I
+(  265) 
+(  266) I = INDEX (CDNOMF, "/", .TRUE.)
+(  267) 
+(  268) IF (I == 0) THEN
+(  269)   CDNOMD = ''
+(  270)   CDNOMB = CDNOMF
+(  271) ELSE
+(  272)   CDNOMD = CDNOMF (1:I)
+(  273)   CDNOMB = CDNOMF (I+1:)
+(  274) ENDIF
+(  275) 
+(  276) END SUBROUTINE FILEPARSE
+(  277) 
+(  278) END SUBROUTINE FAISAN_MT64
+(  279) 
+(  280) 
+(  281) 
+(  282) ! Oct-2012 P. Marguinaud 64b LFI
+(  283) SUBROUTINE FAISAN64                              &
+(  284) &           (KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  285) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  286) &                   FA_COM_DEFAULT_INIT,  &
+(  287) &                   NEW_FA_DEFAULT
+(  288) USE LFI_PRECISION
+(  289) IMPLICIT NONE
+(  290) ! Arguments
+(  291) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  292) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  293) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+(  294) INTEGER (KIND=JPLIKB)  KLONGD                                 ! IN   
+(  295) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  296) 
+(  297) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  298) 
+(  299) CALL FAISAN_MT64                                     &
+(  300) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  301) 
+(  302) END SUBROUTINE FAISAN64
+(  303) 
+(  304) SUBROUTINE FAISAN                                &
+(  305) &           (KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  306) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  307) &                   FA_COM_DEFAULT_INIT,  &
+(  308) &                   NEW_FA_DEFAULT
+(  309) USE LFI_PRECISION
+(  310) IMPLICIT NONE
+(  311) ! Arguments
+(  312) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  313) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  314) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+(  315) INTEGER (KIND=JPLIKM)  KLONGD                                 ! IN   
+(  316) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  317) 
+(  318) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  319) 
+(  320) CALL FAISAN_MT                                       &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 8
+
+(  321) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  322) 
+(  323) END SUBROUTINE FAISAN
+(  324) 
+(  325) SUBROUTINE FAISAN_MT                                 &
+(  326) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  327) USE FA_MOD, ONLY : FA_COM
+(  328) USE LFI_PRECISION
+(  329) IMPLICIT NONE
+(  330) ! Arguments
+(  331) TYPE (FA_COM)          FA                                     ! INOUT
+(  332) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  333) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  334) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+(  335) INTEGER (KIND=JPLIKM)  KLONGD                                 ! IN   
+(  336) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  337) ! Local integers
+(  338) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  339) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  340) INTEGER (KIND=JPLIKB)  ILONGD                                 ! IN   
+(  341) ! Convert arguments
+(  342) 
+(  343) INUMER     = INT (    KNUMER, JPLIKB)
+(  344) ILONGD     = INT (    KLONGD, JPLIKB)
+(  345) 
+(  346) CALL FAISAN_MT64                                     &
+(  347) &           (FA, IREP, INUMER, CDNOMA, KDONNE, ILONGD)
+(  348) 
+(  349) KREP       = INT (      IREP, JPLIKM)
+(  350) 
+(  351) END SUBROUTINE FAISAN_MT
+(  352) 
+(  353) !INTF KREP            OUT                               
+(  354) !INTF KNUMER        IN                                  
+(  355) !INTF CDNOMA        IN                                  
+(  356) !INTF KDONNE        IN    KDIMS=KLONGD                  
+(  357) !INTF KLONGD        IN                                  
+(  358) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 9
+
+(    1) # 1 "faisan.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAISAN_MT64                                           &
+(    4) &                     (FA,  KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme d'ecriture d'un article de donnees non assimila-
+(   12) !     bles a un champ horizontal sur un fichier ARPEGE.
+(   13) !       ( Integration Simple d'un Article Non code )
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   17) !                CDNOMA (Entree) ==> Nom de l'article;
+(   18) !    ( Tableau ) KDONNE (Entree) ==> Donnees a ecrire;
+(   19) !                KLONGD (Entree) ==> Nombre de mots a ecrire.
+(   20) !
+(   21) !
+(   22) !
+(   23) TYPE(FA_COM) :: FA
+(   24) INTEGER (KIND=JPLIKB) KREP, KNUMER, KLONGD
+(   25) !
+(   26) INTEGER (KIND=JPLIKB) ILCDNO, IRANG, IREP
+(   27) INTEGER (KIND=JPLIKB) ILNOMA, INIMES, ILACTI
+(   28) !
+(   29) INTEGER (KIND=JPLIKB) KDONNE (KLONGD)
+(   30) !
+(   31) LOGICAL LLVERF, LLRLFI
+(   32) !
+(   33) CHARACTER CDNOMA*(*)
+(   34) !
+(   35) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   36) CHARACTER(LEN=FA%JPXNOM) CLNOMA
+(   37) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   38) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   39) LOGICAL                  LLFATA
+(   40) LOGICAL                  LLECRI
+(   41) # 42 "faisan.F90"
+(   42) !**
+(   43) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   44) !-----------------------------------------------------------------------
+(   45) !
+(   46) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   47) IF (LHOOK) CALL DR_HOOK('FAISAN_MT',0,ZHOOK_HANDLE)
+(   48) CLACTI=''
+(   49) LLVERF=.FALSE.
+(   50) LLRLFI=.FALSE.
+(   51) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   52) CALL FANUMU_MT64                 &
+(   53) &               (FA, KNUMER,IRANG)
+(   54) # 55 "faisan.F90"
+(   55) !
+(   56) IF (IRANG.EQ.0) THEN
+(   57)   IREP=-51
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 10
+
+(   58)   GOTO 1001
+(   59) ELSEIF (KLONGD.LE.0) THEN
+(   60)   IREP=-64
+(   61)   GOTO 1001
+(   62) ELSEIF (ILCDNO.LE.0) THEN
+(   63)   IREP=-65
+(   64)   GOTO 1001
+(   65) ENDIF
+(   66) !
+(   67) !         Verrouillage eventuel du fichier.
+(   68) !
+(   69) IF (FA%LFAMUL) CALL LFIVER_MT64                               &
+(   70) &                              (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'ON')
+(   71) LLVERF=FA%LFAMUL
+(   72) !
+(   73) IF (FA%FICHIER(IRANG)%LCREAF) THEN
+(   74)   IREP=-85
+(   75)   GOTO 1001
+(   76) ELSEIF (CDNOMA.EQ.FA%CPCACH.OR.CDNOMA.EQ.FA%CPCADI.OR.  &
+(   77) &       CDNOMA.EQ.FA%CPCAFS.OR.CDNOMA.EQ.FA%CPCARP.OR.  &
+(   78) &       CDNOMA.EQ.FA%CPDATE.OR.CDNOMA.EQ.FA%CPDATX.OR.  &
+(   79) &       CDNOMA.EQ.FA%FICHIER(IRANG)%CIDENT) THEN
+(   80)   IREP=-111
+(   81)   GOTO 1001
+(   82) ENDIF
+(   83) !**
+(   84) !     2.  -  ECRITURE DE L'ARTICLE DE DONNEES SUR LE FICHIER.
+(   85) !-----------------------------------------------------------------------
+(   86) !
+(   87) ILNOMA=MIN ( FA%NCPCAD, INT (LEN (CDNOMA), JPLIKB) )
+(   88) CLNOMA(1:ILNOMA)=CDNOMA(1:ILNOMA)
+(   89) !
+(   90) # 91 "faisan.F90"
+(   91) LLECRI = .FALSE.
+(   92) IF (FA%FICHIER(IRANG)%NCOGRIF (12) > 0) THEN
+(   93)   CALL WGRIB1 (LLECRI)
+(   94) ENDIF
+(   95) IF (.NOT. LLECRI) THEN
+(   96)   CALL LFIECR_MT64                                       &
+(   97)   &               (FA%LFI, IREP,KNUMER,CLNOMA(1:ILNOMA), &
+(   98)   &                KDONNE,KLONGD)
+(   99) ENDIF
+(  100) LLRLFI=IREP.NE.0
+(  101) !**
+(  102) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  103) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  104) !-----------------------------------------------------------------------
+(  105) !
+(  106) 1001 CONTINUE
+(  107) KREP=IREP
+(  108) LLFATA=LLMOER (IREP,IRANG)
+(  109) !
+(  110) !        Deverrouillage eventuel du fichier.
+(  111) !
+(  112) IF (LLVERF) CALL LFIVER_MT64                                &
+(  113) &                           (FA%LFI, FA%FICHIER(IRANG)%VRFICH,'OFF')
+(  114) !
+(  115) IF (LLFATA) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 11
+
+(  116)   INIMES=2
+(  117) ELSE
+(  118)   INIMES=IXNVMS(IRANG)
+(  119) ENDIF
+(  120) !
+(  121) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  122)   IF (LHOOK) CALL DR_HOOK('FAISAN_MT',1,ZHOOK_HANDLE)
+(  123)   RETURN
+(  124) ENDIF
+(  125) !
+(  126) CLNSPR='FAISAN'
+(  127) !
+(  128) IF (IREP.NE.-65) THEN
+(  129)   ILACTI=MIN (ILCDNO,FA%NCPCAD)
+(  130)   CLACTI(1:ILACTI)=CDNOMA(:ILACTI)
+(  131) ELSE
+(  132)   ILACTI=8
+(  133)   CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  134) ENDIF
+(  135) !
+(  136) WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KNUMER='',I3, &
+(  137) &       '', CDNOMA='''''',A,'''''', KLONGD='',I8)')     &
+(  138) &   KREP,KNUMER,CLACTI(1:ILACTI),KLONGD
+(  139) CALL FAIPAR_MT64                                       &
+(  140) &               (FA, KNUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  141) &                CLNSPR, CLACTI(1:ILACTI),LLRLFI)
+(  142) !
+(  143) IF (LHOOK) CALL DR_HOOK('FAISAN_MT',1,ZHOOK_HANDLE)
+(  144) # 145 "faisan.F90"
+(  145) CONTAINS
+(  146) # 147 "faisan.F90"
+(  147) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 148 "faisan.F90"
+(  148) # 148 "faisan.F90"
+(  148) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 12
+
+(   12) END FUNCTION
+(   13) # 149 "faisan.F90"
+(  149) # 149 "faisan.F90"
+(  149) # 1 ".D[27]/falgra.h"
+(    1) LOGICAL FUNCTION FALGRA (KNGRIB)
+(    2) !****
+(    3) !    Cette fonction renvoie une valeur vraie si la methode d'encodage passee en argument fait appel a grib_api
+(    4) !**
+(    5) !    Arguments : KNGRIB (Entree) ==> Methode d'encodage
+(    6) !
+(    7) !
+(    8) INTEGER (KIND=JPLIKB) KNGRIB
+(    9) INTEGER (KIND=JPLIKB) INGRIB_SP, INGRIB_GP
+(   10) LOGICAL LLFALGRA_SP, LLFALGRA_GP
+(   11) # 12 ".D[27]/falgra.h"
+(   12) FALGRA = .FALSE.
+(   13) # 14 ".D[27]/falgra.h"
+(   14) IF (100 <= KNGRIB .AND. KNGRIB <= 200) THEN
+(   15) # 16 ".D[27]/falgra.h"
+(   16)   INGRIB_SP = FALGRA_SP (KNGRIB)
+(   17)   INGRIB_GP = FALGRA_GP (KNGRIB)
+(   18)   
+(   19)   LLFALGRA_SP = &
+(   20)    & (INGRIB_SP - 100 ==  1) .OR. &      ! GRIB2 complex packing (bug)
+(   21)    & (INGRIB_SP - 100 ==  2) .OR. &      ! GRIB0 
+(   22)    & (INGRIB_SP - 100 ==  3)             ! GRIB2 complex packing
+(   23)   
+(   24)   LLFALGRA_GP = &
+(   25)    & ((INGRIB_GP-100) / 20 ==  1) .OR. & ! GRIB2 simple packing
+(   26)    & ((INGRIB_GP-100) / 20 ==  2) .OR. & ! GRIB2 second order packing
+(   27)    & ((INGRIB_GP-100) / 20 ==  3) .OR. & ! GRIB1 simple packing
+(   28)    & ((INGRIB_GP-100) / 20 ==  4) .OR. & ! GRIB1 second order packing
+(   29)    & ((INGRIB_GP-100) / 20 ==  5)        ! GRIB2 complex packing
+(   30)    
+(   31) # 32 ".D[27]/falgra.h"
+(   32)   IF (LLFALGRA_GP .AND. LLFALGRA_SP) THEN
+(   33)     FALGRA = .TRUE.
+(   34)   ELSEIF (LLFALGRA_GP) THEN
+(   35)     FALGRA = INGRIB_SP == 100
+(   36)   ELSEIF (LLFALGRA_SP) THEN
+(   37)     FALGRA = INGRIB_GP == 100
+(   38)   ENDIF
+(   39) # 40 ".D[27]/falgra.h"
+(   40) ENDIF
+(   41) # 42 ".D[27]/falgra.h"
+(   42) END FUNCTION FALGRA
+(   43) # 44 ".D[27]/falgra.h"
+(   44) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_SP (KNGRIB)
+(   45) INTEGER (KIND=JPLIKB) KNGRIB
+(   46) FALGRA_SP = 100+MODULO ((KNGRIB-100),20)
+(   47) END FUNCTION FALGRA_SP
+(   48) # 49 ".D[27]/falgra.h"
+(   49) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_GP (KNGRIB)
+(   50) INTEGER (KIND=JPLIKB) KNGRIB
+(   51) FALGRA_GP = 100+20*((KNGRIB-100)/20)
+(   52) END FUNCTION FALGRA_GP
+(   53) # 54 ".D[27]/falgra.h"
+(   54) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_ED (KNGRIB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 13
+
+(   55) INTEGER (KIND=JPLIKB) KNGRIB
+(   56) # 57 ".D[27]/falgra.h"
+(   57) SELECT CASE (KNGRIB)
+(   58)   CASE (160, 180)
+(   59)     FALGRA_ED = 1
+(   60)   CASE DEFAULT
+(   61)     FALGRA_ED = 2
+(   62) END SELECT 
+(   63) # 64 ".D[27]/falgra.h"
+(   64) END FUNCTION FALGRA_ED
+(   65) # 150 "faisan.F90"
+(  150) # 151 "faisan.F90"
+(  151) SUBROUTINE WGRIB1 (LDECRI)
+(  152) # 153 "faisan.F90"
+(  153) LOGICAL :: LDECRI
+(  154) # 155 "faisan.F90"
+(  155) INTEGER (KIND=JPLIKB), PARAMETER :: ILONGD = 5_JPLIKB
+(  156) # 157 "faisan.F90"
+(  157) INTEGER (KIND=JPLIKB)  IDONNE (ILONGD)
+(  158) CHARACTER(LEN=16)      CLGRIB, CL7777
+(  159) INTEGER (KIND=JPLIKB)  J, IL7777, INGRIB, IREP8, ILGRIBA, ILGRIBB, IGRIBED
+(  160) LOGICAL                LLNOMM, LLERFA, LLIMST
+(  161) CHARACTER (LEN=256)    CLNOMF, CLNOMD, CLNOMB
+(  162) CHARACTER (LEN=16)     CLSTTU
+(  163) INTEGER (KIND=JPLIKB)  INIMES
+(  164) INTEGER (KIND=JPLIKM)  IREP4
+(  165) # 166 "faisan.F90"
+(  166) LDECRI = .FALSE.
+(  167) # 168 "faisan.F90"
+(  168) IF (KLONGD < 10) RETURN ! Trop petit pour etre un GRIB1
+(  169) # 170 "faisan.F90"
+(  170) INGRIB = KDONNE (1)                        ! Methode de codage
+(  171) CLGRIB = TRANSFER (KDONNE (4:5), CLGRIB)   ! Debut de l'entete GRIB1
+(  172) # 173 "faisan.F90"
+(  173) IF ((INGRIB /= 3) .AND. (.NOT. FALGRA (INGRIB))) RETURN
+(  174) # 175 "faisan.F90"
+(  175) IF (CLGRIB (1:4) /= 'GRIB') RETURN
+(  176) # 177 "faisan.F90"
+(  177) IGRIBED = MOD (ICHAR (CLGRIB (8:8)), 256)
+(  178) # 179 "faisan.F90"
+(  179) IF ((IGRIBED /= 1) .AND. (IGRIBED /= 2)) RETURN
+(  180) # 181 "faisan.F90"
+(  181) ! Recuperation de la longueur du message GRIB
+(  182) # 183 "faisan.F90"
+(  183) ILGRIBA = 0
+(  184) # 185 "faisan.F90"
+(  185) IF (IGRIBED == 1) THEN
+(  186)   DO J = 5, 7
+(  187)     ILGRIBA = 256 * ILGRIBA + MOD (ICHAR (CLGRIB (J:J)), 256)
+(  188)   ENDDO
+(  189) ELSE
+(  190)   DO J = 9, 16
+(  191)     ILGRIBA = 256 * ILGRIBA + MOD (ICHAR (CLGRIB (J:J)), 256)
+(  192)   ENDDO
+(  193) ENDIF
+(  194) # 195 "faisan.F90"
+(  195) ! On cherche maintenant la fin du message GRIB1
+(  196) # 197 "faisan.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 14
+
+(  197) CL7777 = TRANSFER (KDONNE (KLONGD-1:KLONGD), CL7777)
+(  198) IL7777 = LEN (CL7777)
+(  199) # 200 "faisan.F90"
+(  200) DO J = 0, IL7777-4
+(  201)   IF (CL7777 (IL7777-J-3:IL7777-J) == '7777') EXIT
+(  202) ENDDO
+(  203) # 204 "faisan.F90"
+(  204) IF (J == -1) RETURN
+(  205) # 206 "faisan.F90"
+(  206) ! Calcul de la longueur du message GRIB en octets
+(  207) # 208 "faisan.F90"
+(  208) ILGRIBB = (KLONGD-3)*8 - J
+(  209) # 210 "faisan.F90"
+(  210) ! On verifie que les deux longueurs correspondent
+(  211) # 212 "faisan.F90"
+(  212) IF (ILGRIBA /= ILGRIBB) RETURN
+(  213) # 214 "faisan.F90"
+(  214) ! Ouverture du fichier externe
+(  215) # 216 "faisan.F90"
+(  216) IF (FA%FICHIER(IRANG)%NFILEP == 0) THEN
+(  217)   CALL LFIOPT_MT64                                        &
+(  218) &                 (FA%LFI, IREP, KNUMER, LLNOMM, CLNOMF,  &
+(  219) &                  CLSTTU, LLERFA, LLIMST, INIMES)
+(  220)   IF (IREP /= 0) RETURN
+(  221)   CALL FILEPARSE (CLNOMF, CLNOMD, CLNOMB)
+(  222)   CLNOMF = TRIM (CLNOMD)//'GRIB'//TRIM (CLNOMB)
+(  223)   CALL FI_FOPEN (FA%FICHIER(IRANG)%NFILEP, CLNOMF, "a")
+(  224)   IF (FA%FICHIER(IRANG)%NFILEP == 0) THEN
+(  225)     CALL FI_ERRNO (IREP4)
+(  226)     IREP = IREP4
+(  227)     RETURN
+(  228)   ENDIF
+(  229) ENDIF
+(  230) # 231 "faisan.F90"
+(  231) ! Ecriture de l'article GRIB
+(  232) # 233 "faisan.F90"
+(  233) CALL FI_FWRITE (IREP8, KDONNE (4), ILGRIBA, 1_JPLIKB, &
+(  234)               & FA%FICHIER(IRANG)%NFILEP)
+(  235) IF (IREP8 /= 1) THEN
+(  236)   CALL FI_ERRNO (IREP4)
+(  237)   IREP = IREP4
+(  238) ELSE
+(  239)   IREP = 0
+(  240) ENDIF
+(  241) # 242 "faisan.F90"
+(  242) FA%FICHIER(IRANG)%NOFFST = FA%FICHIER(IRANG)%NOFFST + ILGRIBA
+(  243) # 244 "faisan.F90"
+(  244) ! Ecriture d'un article referencant le champ GRIB
+(  245) # 246 "faisan.F90"
+(  246) IDONNE (1:3) = KDONNE (1:3)
+(  247) IDONNE (4) = FA%FICHIER(IRANG)%NOFFST
+(  248) IDONNE (5) = ILONGD
+(  249) # 250 "faisan.F90"
+(  250) CALL LFIECR_MT64                                         &
+(  251) &               (FA%LFI, IREP, KNUMER, CLNOMA(1:ILNOMA), &
+(  252) &                IDONNE, ILONGD)
+(  253) # 254 "faisan.F90"
+(  254) IF (IREP /= 0) RETURN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 15
+
+(  255) # 256 "faisan.F90"
+(  256) LDECRI = .TRUE.
+(  257) # 258 "faisan.F90"
+(  258) END SUBROUTINE WGRIB1
+(  259) # 260 "faisan.F90"
+(  260) SUBROUTINE FILEPARSE (CDNOMF, CDNOMD, CDNOMB)
+(  261) # 262 "faisan.F90"
+(  262) CHARACTER (LEN=*) :: CDNOMF, CDNOMD, CDNOMB
+(  263) # 264 "faisan.F90"
+(  264) INTEGER (KIND=JPLIKB) :: I
+(  265) # 266 "faisan.F90"
+(  266) I = INDEX (CDNOMF, "/", .TRUE.)
+(  267) # 268 "faisan.F90"
+(  268) IF (I == 0) THEN
+(  269)   CDNOMD = ''
+(  270)   CDNOMB = CDNOMF
+(  271) ELSE
+(  272)   CDNOMD = CDNOMF (1:I)
+(  273)   CDNOMB = CDNOMF (I+1:)
+(  274) ENDIF
+(  275) # 276 "faisan.F90"
+(  276) END SUBROUTINE FILEPARSE
+(  277) # 278 "faisan.F90"
+(  278) END SUBROUTINE FAISAN_MT64
+(  279) # 282 "faisan.F90"
+(  282) ! Oct-2012 P. Marguinaud 64b LFI
+(  283) SUBROUTINE FAISAN64                              &
+(  284) &           (KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  285) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  286) &                   FA_COM_DEFAULT_INIT,  &
+(  287) &                   NEW_FA_DEFAULT
+(  288) USE LFI_PRECISION
+(  289) IMPLICIT NONE
+(  290) ! Arguments
+(  291) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  292) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  293) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+(  294) INTEGER (KIND=JPLIKB)  KLONGD                                 ! IN   
+(  295) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  296) # 297 "faisan.F90"
+(  297) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  298) # 299 "faisan.F90"
+(  299) CALL FAISAN_MT64                                     &
+(  300) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  301) # 302 "faisan.F90"
+(  302) END SUBROUTINE FAISAN64
+(  303) # 304 "faisan.F90"
+(  304) SUBROUTINE FAISAN                                &
+(  305) &           (KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  306) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  307) &                   FA_COM_DEFAULT_INIT,  &
+(  308) &                   NEW_FA_DEFAULT
+(  309) USE LFI_PRECISION
+(  310) IMPLICIT NONE
+(  311) ! Arguments
+(  312) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  313) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  314) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:29      page 16
+
+(  315) INTEGER (KIND=JPLIKM)  KLONGD                                 ! IN   
+(  316) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  317) # 318 "faisan.F90"
+(  318) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  319) # 320 "faisan.F90"
+(  320) CALL FAISAN_MT                                       &
+(  321) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  322) # 323 "faisan.F90"
+(  323) END SUBROUTINE FAISAN
+(  324) # 325 "faisan.F90"
+(  325) SUBROUTINE FAISAN_MT                                 &
+(  326) &           (FA, KREP, KNUMER, CDNOMA, KDONNE, KLONGD)
+(  327) USE FA_MOD, ONLY : FA_COM
+(  328) USE LFI_PRECISION
+(  329) IMPLICIT NONE
+(  330) ! Arguments
+(  331) TYPE (FA_COM)          FA                                     ! INOUT
+(  332) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  333) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  334) CHARACTER (LEN=*)      CDNOMA                                 ! IN   
+(  335) INTEGER (KIND=JPLIKM)  KLONGD                                 ! IN   
+(  336) INTEGER (KIND=JPLIKB)  KDONNE (KLONGD)                        ! IN   
+(  337) ! Local integers
+(  338) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  339) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  340) INTEGER (KIND=JPLIKB)  ILONGD                                 ! IN   
+(  341) ! Convert arguments
+(  342) # 343 "faisan.F90"
+(  343) INUMER     = INT (    KNUMER, JPLIKB)
+(  344) ILONGD     = INT (    KLONGD, JPLIKB)
+(  345) # 346 "faisan.F90"
+(  346) CALL FAISAN_MT64                                     &
+(  347) &           (FA, IREP, INUMER, CDNOMA, KDONNE, ILONGD)
+(  348) # 349 "faisan.F90"
+(  349) KREP       = INT (      IREP, JPLIKM)
+(  350) # 351 "faisan.F90"
+(  351) END SUBROUTINE FAISAN_MT
+(  352) # 353 "faisan.F90"
+(  353) !INTF KREP            OUT                               
+(  354) !INTF KNUMER        IN                                  
+(  355) !INTF CDNOMA        IN                                  
+(  356) !INTF KDONNE        IN    KDIMS=KLONGD                  
+(  357) !INTF KLONGD        IN                                  

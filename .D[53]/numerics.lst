@@ -1,0 +1,3060 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: numerics.F90
+
+(    1) MODULE numerics
+(    2)   !  #[ Documentation
+(    3)   !---------------------------------------------------
+(    4)   !   -a real type that presumably has the characteristics
+(    5)   !    of 4 and 8 byte IEEE 754 floating-point types
+(    6)   !    is defined.
+(    7)   !
+(    8)   !    Written by: J. de kloe, inspired on ideas from a module
+(    9)   !                written by Aad van der Steen, UU
+(   10)   !    first version 18-Oct-2001 by J. de Kloe
+(   11)   !
+(   12)   !    Modifications:
+(   13)   !    27-Nov-2003 J. de Kloe added the code for handling missing_reals and
+(   14)   !                           missing_integers as is usual in the 
+(   15)   !                           scatterometry software
+(   16)   !    25-Feb-2004 J. de Kloe added the do_range_check subroutines
+(   17)   !    16-Mar-2004 J. de Kloe added the subroutine detect_variable_sizes
+(   18)   !    25-Oct-2005 J. de Kloe added missing_integer definitions for 1, 2 and 4
+(   19)   !                       byte integers
+(   20)   !    21-Feb-2006 P. Poli    added function int2txt to handle printing
+(   21)   !                       of missing values
+(   22)   !    13-Sep-2006 J. de Kloe added explanation why an interface to 
+(   23)   !                           generic int2real doesn't work
+(   24)   !    06-Oct-2006 J. de Kloe added is_NaN/is_PosInf/is_NegInf functions
+(   25)   !                           and real2txt_extra_checks function
+(   26)   !    24-Oct-2006 J. de Kloe changed is_NaN/is_PosInf/is_NegInf functions 
+(   27)   !                           to be compatible with gfortran
+(   28)   !    06-Nov-2006 P. Poli    moved int2txt to the module ee_cfi_datatypes 
+(   29)   !                           (to handle unsigned integers, unknown in 
+(   30)   !                           module numerics)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 3
+
+(   31)   !    24-Nov-2006 J. de Kloe added tests for the character type.
+(   32)   !    13-Dec-2006 J. de Kloe added check_hex_values() routine
+(   33)   !    16-Jan-2008 J. de Kloe phase out integer kind i_ 
+(   34)   !    23-Jan-2008 P. Poli    changed definitions of integer*8 for NEC-SX
+(   35)   !                           removed missing_int1 from generic missing_int
+(   36)   !                           (never called as such)
+(   37)   !    07-Oct-2008 J. de Kloe removed some unused constants that caused
+(   38)   !                           ansi warnings on SUNOS.
+(   39)   !    17-Mar-2009 J. de Kloe allow i1_ to have 2 bytes to enable running
+(   40)   !                           the L2BP on the NECSX machine
+(   41)   !    22-Apr-2009 J. de Kloe added quartet_to_hex(), int1_to_hex() and
+(   42)   !                           int4_to_hex() functions
+(   43)   !    28-Apr-2009 D. Tan     Removed special case for integer*8 on NEC-SX
+(   44)   !    11-Feb-2014 M. Rennie  Save time in missing_real8
+(   45)   !    14-Mar-2014 J. de Kloe replace hex constants by decimals to prevent
+(   46)   !                           warnings issued by gfortran
+(   47)   !
+(   48)   !---------------------------------------------------
+(   49)   !  #]
+(   50)   !  #[ Modules used
+(   51)   !  #]
+(   52)   !  #[ global parameters
+(   53)   IMPLICIT NONE
+(   54) 
+(   55)   ! normal definition
+(   56)   integer, parameter :: i1_ = Selected_Int_Kind( 2)  ! = integer*1 
+(   57) 
+(   58)   ! replace the above definition by this one, to test the effect
+(   59)   ! of i1_ having 2 bytes (as is the case on the NECSX machine at MF)
+(   60)   !integer, parameter :: i1_ = Selected_Int_Kind( 4)  ! = integer*1 
+(   61) 
+(   62)   integer, parameter :: i2_ = Selected_Int_Kind( 4)  ! = integer*2
+(   63)   integer, parameter :: i4_ = Selected_Int_Kind( 9)  ! = integer*4
+(   64)   integer, parameter :: i8_ = Selected_Int_Kind(18)  ! = integer*8
+(   65) ! gives compile errors on linux, 16 byte numbers are typically only
+(   66) ! available on high-end Unix machines, so not portable
+(   67) !  integer, parameter :: i16_ = Selected_Int_Kind(36) ! = integer*16
+(   68) 
+(   69)   integer, parameter :: r4_ = Selected_Real_Kind( 6, 37)  ! = real*4
+(   70)   integer, parameter :: r8_ = Selected_Real_Kind(15,307)  ! = real*8
+(   71) ! gives compile errors on linux, 16 byte numbers are typically only
+(   72) ! available on high-end Unix machines, so not portable
+(   73) !  integer, parameter :: r16_ = Selected_Real_Kind(31,275) ! = real*16
+(   74) 
+(   75) 
+(   76)   ! Removed i_ and r_, since they cause portability problems 
+(   77)   ! between 32 and 64 systems if you are not VERY carefull,
+(   78)   ! and with our usual 32 bit workstations we cannot test
+(   79)   ! for these problems.
+(   80)   ! JK, 20080110
+(   81) 
+(   82)   ! default integer and real types (4 bytes)
+(   83)   !  integer, parameter :: r_ = r4_
+(   84)   !  integer, parameter :: i_ = i4_
+(   85) 
+(   86)   ! r_ and i_ may be used as a general default for the whole program.
+(   87)   ! Using these kinds removes the need for -i4 and -r4 options etc. on
+(   88)   ! the command line, and thus should make programs more portable.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 4
+
+(   89) 
+(   90)   ! maintained for compatibility reasons
+(   91)   ! (to be phased out, dont use them any more in new code!)
+(   92)   integer, parameter :: s_ = r4_
+(   93)   integer, parameter :: l_ = r4_ ! should be r8_ to keep naming consistent
+(   94) 
+(   95)   integer, parameter :: nbytes_i1_ = 1
+(   96)   integer, parameter :: nbytes_i2_ = 2
+(   97)   integer, parameter :: nbytes_i4_ = 4
+(   98)   integer, parameter :: nbytes_i8_ = 8
+(   99) !  integer, parameter :: nbytes_i_  = nbytes_i4_
+(  100) 
+(  101)   integer, parameter :: nbytes_r4_ = 4
+(  102)   integer, parameter :: nbytes_r8_ = 8
+(  103) !  integer, parameter :: nbytes_r_  = nbytes_r4_
+(  104) 
+(  105)   integer, parameter :: nbytes_c   = 1
+(  106) 
+(  107)   ! WARNING: although these numbers usually gives the nr of bytes for
+(  108)   ! these variable kinds in fortran90 there is no guarantee in the
+(  109)   ! language definition that selected_int_kind and selected_real_kind
+(  110)   ! will always return with these numbers !!!
+(  111)   ! To be absolutely sure, use the check_variable_sizes() routine
+(  112)   ! to check the sizes during runtime.
+(  113) 
+(  114)   ! The same for character. Upto now we only have seen compilers
+(  115)   ! using 1 byte per character. However, in principle the character
+(  116)   ! type may also occur with kind=2 to support languages with large
+(  117)   ! numbers of characters, like Chinese/Kanji. (see Metcalf/Reid, p.19)
+(  118)   ! I hope nobody will ever consider making this kind=2 characters
+(  119)   ! the default, but just in case, we should check on it
+(  120)   ! (since all low level read/write/convert/byteswap routines depend
+(  121)   !  on the assumption that 1 character equals 1 byte)
+(  122) 
+(  123)   !---------------------------------------------------
+(  124)   ! SELECTED_INT_KIND(R) selects an integer type able to contain
+(  125)   ! the range -10^R < n < 10^R
+(  126)   !
+(  127)   ! SELECTED_REAL_KIND(P,R) selects a real type able to contain
+(  128)   ! at least P significant digits, and a decimal exponent range
+(  129)   ! of at least R
+(  130)   !---------------------------------------------------
+(  131) 
+(  132)   ! integer and real missing indicators
+(  133)   ! for integers, use the maximum possible positive value
+(  134)   ! (which can be obtained by the huge() command)
+(  135)   integer(i1_), parameter :: missing_indicator_integer_i1_ = 127        ! = 2**7 -1
+(  136)   integer(i2_), parameter :: missing_indicator_integer_i2_ = 32767      ! = 2**15-1
+(  137)   integer(i4_), parameter :: missing_indicator_integer_i4_ = 2147483647 ! = 2**31-1
+(  138)   integer(i8_), parameter :: missing_indicator_integer_i8_ = &
+(  139)                                                 9223372036854775807_i8_ ! = 2**63-1
+(  140)   integer,      parameter :: missing_indicator_integer = (2**30-1)+2**30! = 2**31-1
+(  141) 
+(  142)   ! for reals use the usual number in scatterometry software
+(  143)   real(r8_), parameter   :: missing_indicator_real    = 1.7E38_r8_ ! old: rMDI
+(  144)   real(r8_), parameter   :: missing_indicator_real_lower  = missing_indicator_real*0.99
+(  145)   real(r8_), parameter   :: missing_indicator_real_r8 = 1.7E38_r8_ ! old: rMDI
+(  146)   ! we should not use this 4 byte version
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 5
+
+(  147)   real(r4_), parameter   :: missing_indicator_real_r4 = 1.7E38_r4_ ! old: rMDI
+(  148)   ! use the functions missing_real/missing_int to check these conditions
+(  149) 
+(  150)   ! REMARK: these missing values are HARDCODED into the ECMWF BUFR library
+(  151)   ! but are adjustable for the GRIB library.
+(  152)   ! For BUFR, do a grep on "NVIND=" or "RVIND=" to find the values.
+(  153)   ! NVIND = (2**30-1)+2**30 =  2**31-1 = 2147483647
+(  154)   ! RVIND = 1.7E38
+(  155) 
+(  156)   ! WARNING: these parameters should have the same values as the ones
+(  157)   ! defined in the ErrorHandler module, otherwise the error printing
+(  158)   ! routine will produce incorrect results...
+(  159)   integer, parameter :: no_error                = 0
+(  160)   integer, parameter :: error_numerics_intsize  = 50301
+(  161)   integer, parameter :: error_numerics_realsize = 50311
+(  162)   integer, parameter :: error_numerics_charsize = 50321
+(  163)   integer, parameter :: error_numerics_hexval   = 50331
+(  164) 
+(  165)   ! hexadecimal numbers can only be used portably inside data statements
+(  166)   ! and since I wish to use them for constant parameters I have
+(  167)   ! to give the corresponding integer values instead.
+(  168)   ! Note that the correspondence between the two representations 
+(  169)   ! is checked by calling the routine check_hex_values defined below.
+(  170) 
+(  171)   ! remark:
+(  172)   !For single-precision real values:
+(  173)   !
+(  174)   ! * A signaling NaN is represented by any bit pattern between 
+(  175)   !   X'7F80 0001' and X'7FBF FFFF' or between X'FF80 0001' and X'FFBF FFFF'.
+(  176)   ! * A quiet NaN is represented by any bit pattern between 
+(  177)   !   X'7FC0 0000' and X'7FFF FFFF' or between X'FFC0 0000' and X'FFFF FFFF'.
+(  178)   ! see:
+(  179)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  180)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  181) 
+(  182)   !integer(i4_), parameter :: pos_nan_lower_i4 = z"7F800001"
+(  183)   integer(i4_), parameter :: pos_nan_lower_i4 = 2139095041
+(  184)   !integer(i4_), parameter :: pos_nan_upper_i4 = z"7FFFFFFF"
+(  185)   integer(i4_), parameter :: pos_nan_upper_i4 = 2147483647
+(  186)   !integer(i4_), parameter :: neg_nan_lower_i4 = z"FF800001"
+(  187)   integer(i4_), parameter :: neg_nan_lower_i4 = -8388607
+(  188)   !integer(i4_), parameter :: neg_nan_upper_i4 = z"FFFFFFFF"
+(  189)   integer(i4_), parameter :: neg_nan_upper_i4 = -1
+(  190) 
+(  191)   ! remark:
+(  192)   !For double-precision real values:
+(  193)   !
+(  194)   ! * A signaling NaN is represented by any bit pattern between 
+(  195)   !   X'7FF00000 00000001' and X'7FF7FFFF FFFFFFFF' or between 
+(  196)   !   X'FFF00000 00000001' and X'FFF7FFFF FFFFFFFF'.
+(  197)   ! * A quiet NaN is represented by any bit pattern between 
+(  198)   !   X'7FF80000 00000000' and X'7FFFFFFF FFFFFFFF' or between 
+(  199)   !   X'FFF80000 00000000' and X'FFFFFFFF FFFFFFFF'.
+(  200)   ! see:
+(  201)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  202)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  203) 
+(  204)   !integer(i8_), parameter :: pos_nan_lower_i8 = z'7FF0000000000001'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 6
+
+(  205)   integer(i8_), parameter :: pos_nan_lower_i8 = 9218868437227405313_i8_
+(  206)   !integer(i8_), parameter :: pos_nan_upper_i8 = z'7FFFFFFFFFFFFFFF'
+(  207)   integer(i8_), parameter :: pos_nan_upper_i8 = 9223372036854775807_i8_
+(  208)   !integer(i8_), parameter :: neg_nan_lower_i8 = z'FFF0000000000001'
+(  209)   integer(i8_), parameter :: neg_nan_lower_i8 = -4503599627370495_i8_
+(  210)   !integer(i8_), parameter :: neg_nan_upper_i8 = z'FFFFFFFFFFFFFFFF'
+(  211)   integer(i8_), parameter :: neg_nan_upper_i8 = -1_i8_
+(  212) 
+(  213)   !For single-precision real values:
+(  214)   !
+(  215)   ! * Positive infinity is represented by the bit pattern X'7F80 0000'.
+(  216)   ! * Negative infinity is represented by the bit pattern X'FF80 0000'.
+(  217)   ! see:
+(  218)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  219)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  220) 
+(  221)   integer(i4_), parameter :: bit_pattern_PosInf_i4 = 2139095040
+(  222)   integer(i4_), parameter :: bit_pattern_NegInf_i4 = -8388608
+(  223)   
+(  224)   !For double-precision real values:
+(  225)   !
+(  226)   ! * Pos. infinity is represented by the bit pattern X'7FF00000 00000000'.
+(  227)   ! * Neg. infinity is represented by the bit pattern X'FFF00000 00000000'.
+(  228)   ! see:
+(  229)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  230)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  231) 
+(  232)   integer(i8_), parameter :: bit_pattern_PosInf_i8 = 9218868437227405312_i8_
+(  233)   integer(i8_), parameter :: bit_pattern_NegInf_i8 = -4503599627370496_i8_
+(  234) 
+(  235)   !  #]
+(  236)   !  #[ interfaces for overloading functions
+(  237) 
+(  238)   ! overload the function missing_int
+(  239)   INTERFACE missing_int
+(  240)      module procedure missing_int2, missing_int4, missing_int8
+(  241)   END INTERFACE
+(  242) 
+(  243)   ! overload the function missing_real
+(  244)   INTERFACE missing_real
+(  245)      module procedure missing_real4, missing_real8 !, missing_real16
+(  246)   END INTERFACE
+(  247)   ! overload the is_NAN function
+(  248)   INTERFACE is_NAN
+(  249)      module procedure is_NaN_real4, is_NaN_real8
+(  250)   END INTERFACE
+(  251)   ! overload the is_PosInf function
+(  252)   INTERFACE is_PosInf
+(  253)      module procedure is_PosInf_real4, is_PosInf_real8
+(  254)   END INTERFACE
+(  255)   ! overload the is_NegInf function
+(  256)   INTERFACE is_NegInf
+(  257)      module procedure is_NegInf_real4, is_NegInf_real8
+(  258)   END INTERFACE
+(  259)   ! overload the function real2txt
+(  260)   INTERFACE real2txt
+(  261)      module procedure real4_2txt, real8_2txt
+(  262)   END INTERFACE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 7
+
+(  263)   ! overload the function real2txt_extra_checks
+(  264)   INTERFACE real2txt_extra_checks
+(  265)      module procedure real4_to_txt_extra_checks, real8_to_txt_extra_checks
+(  266)   END INTERFACE
+(  267)   ! overload the function real2int
+(  268)   INTERFACE real2int
+(  269)      module procedure real4_to_int, real8_to_int
+(  270)   END INTERFACE
+(  271)   ! overload the function int2real
+(  272)   ! this doesn't work because the input interface is identical 
+(  273)   ! for the 2 functions!!!
+(  274)   !INTERFACE int2real
+(  275)   !   module procedure int_to_real4,int_to_real8
+(  276)   !END INTERFACE
+(  277) 
+(  278)   !  #]
+(  279) CONTAINS
+(  280)   !---------------------------------------------------
+(  281)   subroutine detect_variable_sizes
+(  282)     !  #[
+(  283)     ! determines nr of bytes in a variable of the given kind_type
+(  284) 
+(  285)     integer      :: test_di  ! default_integer
+(  286) !    integer(i_)  :: test_i
+(  287) 
+(  288)     integer(i1_) :: test_i1
+(  289)     integer(i2_) :: test_i2
+(  290)     integer(i4_) :: test_i4
+(  291)     integer(i8_) :: test_i8
+(  292) !    integer(i16_) :: test_i16 ! gives compile error, since i16_ = -1
+(  293) 
+(  294)     real         :: test_dr ! default_real
+(  295)     real(s_)     :: test_s
+(  296)     real(l_)     :: test_l
+(  297) !    real(r_)     :: test_r
+(  298)     real(r4_)    :: test_r4
+(  299)     real(r8_)    :: test_r8
+(  300) !    real(r16_)   :: test_r16 ! fails on 32 bit linux
+(  301) 
+(  302)     character(len=1) :: test_c
+(  303) 
+(  304)     integer :: var_length
+(  305) 
+(  306)     write (*,"(a8,1X,a11,1X,a5,1X,a9)") &
+(  307)          "var_type","nr_of_bytes","range","precision"
+(  308) 
+(  309)     inquire(iolength=var_length) test_di
+(  310)     write (*,"(a8,1X,i11,1X,i5)") "di",var_length,range(test_di)
+(  311) 
+(  312) !    inquire(iolength=var_length) test_i
+(  313) !    write (*,"(a8,1X,i11,1X,i5)") "i",var_length,range(test_i)
+(  314) 
+(  315)     inquire(iolength=var_length) test_i1
+(  316)     write (*,"(a8,1X,i11,1X,i5)") "i1_",var_length,range(test_i1)
+(  317) 
+(  318)     inquire(iolength=var_length) test_i2
+(  319)     write (*,"(a8,1X,i11,1X,i5)") "i2_",var_length,range(test_i2)
+(  320) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 8
+
+(  321)     inquire(iolength=var_length) test_i4
+(  322)     write (*,"(a8,1X,i11,1X,i5)") "i4_",var_length,range(test_i4)
+(  323) 
+(  324)     inquire(iolength=var_length) test_i8
+(  325)     write (*,"(a8,1X,i11,1X,i5)") "i8_",var_length,range(test_i8)
+(  326) 
+(  327) ! a 16 byte integer does not exist on SGI-IRIX, but maybe on other machines?
+(  328) !    inquire(iolength=var_length) test_i16
+(  329) !    write (*,"(a8,1X,i11,1X,i5)") "i16_",var_length,range(test_i16)
+(  330) 
+(  331)     inquire(iolength=var_length) test_dr
+(  332)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  333)          "dr",var_length,range(test_dr),precision(test_dr)
+(  334) 
+(  335)     inquire(iolength=var_length) test_s
+(  336)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  337)          "s_",var_length,range(test_s),precision(test_s)
+(  338) 
+(  339)     inquire(iolength=var_length) test_l
+(  340)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  341)          "l_",var_length,range(test_l),precision(test_l)
+(  342) 
+(  343) !    inquire(iolength=var_length) test_r
+(  344) !    write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  345) !         "r_",var_length,range(test_r),precision(test_r)
+(  346) 
+(  347)     inquire(iolength=var_length) test_r4
+(  348)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  349)          "r4_",var_length,range(test_r4),precision(test_r4)
+(  350) 
+(  351)     inquire(iolength=var_length) test_r8
+(  352)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  353)          "r8_",var_length,range(test_r8),precision(test_r8)
+(  354) 
+(  355) !    inquire(iolength=var_length) test_r16
+(  356) !    write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  357) !         "r16_",var_length,range(test_r16),precision(test_r16)
+(  358) 
+(  359)     inquire(iolength=var_length) test_c
+(  360)     write (*,"(a8,1X,i11)") "char",var_length
+(  361) 
+(  362)   end subroutine detect_variable_sizes
+(  363)   !---------------------------------------------------
+(  364)   !  #]
+(  365)   subroutine check_variable_sizes(error_flag)
+(  366)     !  #[
+(  367)     integer, intent(out) :: error_flag
+(  368) 
+(  369)     ! local variables
+(  370)     integer      :: nbytes
+(  371)     integer(i1_) :: value_i1_
+(  372)     integer(i2_) :: value_i2_
+(  373)     integer(i4_) :: value_i4_
+(  374)     integer(i8_) :: value_i8_
+(  375)     !integer(i_)  :: value_i_
+(  376)     real(r4_)    :: value_r4_
+(  377)     real(r8_)    :: value_r8_
+(  378)     !real(r_)     :: value_r_
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 9
+
+(  379)     character(len=1) :: c
+(  380) 
+(  381)     ! initialize error flag
+(  382)     error_flag = no_error
+(  383)     
+(  384)     ! see how many bytes there are in the default integer i_ datatype
+(  385)     inquire(iolength=nbytes) value_i1_
+(  386)     IF (nbytes .ne. nbytes_i1_) THEN 
+(  387)        IF (nbytes .ne. nbytes_i2_) THEN 
+(  388)           print *,"ERROR: size of integer kind i1_ is not the expected ",&
+(  389)                nbytes_i1_," byte"
+(  390)           print *,"but seems to be ",nbytes," bytes ..."
+(  391)           error_flag = error_numerics_intsize
+(  392)        !ELSE
+(  393)           ! this exception is needed to let the software run on the 
+(  394)           ! NECSX machine at MF
+(  395)           !print *,"WARNING: size of integer kind i1_ equals size of"
+(  396)           !print *,"WARNING: integer kind i2_."
+(  397)           !print *,"WARNING: NECSX workarounds will be activated ..."
+(  398)        END IF
+(  399)     END IF
+(  400) 
+(  401)     inquire(iolength=nbytes) value_i2_
+(  402)     IF (nbytes .ne. nbytes_i2_) THEN
+(  403)        print *,"ERROR: size of integer kind i2_ is not the expected ",&
+(  404)             nbytes_i2_," bytes"
+(  405)        print *,"but seems to be ",nbytes," bytes ..."
+(  406)        error_flag = error_numerics_intsize
+(  407)     END IF
+(  408)     inquire(iolength=nbytes) value_i4_
+(  409)     IF (nbytes .ne. nbytes_i4_) THEN
+(  410)        print *,"ERROR: size of integer kind i4_ is not the expected ",&
+(  411)             nbytes_i4_," bytes"
+(  412)        print *,"but seems to be ",nbytes," bytes ..."
+(  413)        error_flag = error_numerics_intsize
+(  414)     END IF
+(  415)     inquire(iolength=nbytes) value_i8_
+(  416)     IF (nbytes .ne. nbytes_i8_) THEN
+(  417)        print *,"ERROR: size of integer kind i8_ is not the expected ",&
+(  418)             nbytes_i8_," byte"
+(  419)        print *,"but seems to be ",nbytes," bytes ..."
+(  420)        error_flag = error_numerics_intsize
+(  421)     END IF
+(  422) !    inquire(iolength=nbytes) value_i_
+(  423) !    IF (nbytes .ne. nbytes_i_) THEN
+(  424) !       print *,"ERROR: size of the default integer kind i_ is not",&
+(  425) !            " the expected ",nbytes_i_," bytes"
+(  426) !       print *,"but seems to be ",nbytes," bytes ..."
+(  427) !       error_flag = error_numerics_intsize
+(  428) !    END IF
+(  429) 
+(  430)     inquire(iolength=nbytes) value_r4_
+(  431)     IF (nbytes .ne. nbytes_r4_) THEN
+(  432)        print *,"ERROR: size of real kind r4_ is not the expected ",&
+(  433)             nbytes_r4_," byte"
+(  434)        print *,"but seems to be ",nbytes," bytes ..."
+(  435)        error_flag = error_numerics_realsize
+(  436)     END IF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 10
+
+(  437)     inquire(iolength=nbytes) value_r8_
+(  438)     IF (nbytes .ne. nbytes_r8_) THEN
+(  439)        print *,"ERROR: size of real kind r8_ is not the expected ",&
+(  440)             nbytes_r8_," byte"
+(  441)        print *,"but seems to be ",nbytes," bytes ..."
+(  442)        error_flag = error_numerics_realsize
+(  443)     END IF
+(  444) !    inquire(iolength=nbytes) value_r_
+(  445) !    IF (nbytes .ne. nbytes_r_) THEN
+(  446) !       print *,"ERROR: size of the default real kind r_ is not the expected ",&
+(  447) !            nbytes_r4_," byte"
+(  448) !       print *,"but seems to be ",nbytes," bytes ..."
+(  449) !       error_flag = error_numerics_realsize
+(  450) !    END IF
+(  451) 
+(  452)     inquire(iolength=nbytes) c
+(  453)     IF (nbytes .ne. nbytes_c) THEN
+(  454)        print *,"ERROR: size of a character is not the expected ",&
+(  455)             nbytes_c," byte"
+(  456)        print *,"but seems to be ",nbytes," bytes ..."
+(  457)        error_flag = error_numerics_charsize
+(  458)     END IF
+(  459) 
+(  460)     IF (error_flag .ne. no_error) THEN
+(  461)        print *,"ERROR in module numerics, subroutine check_variable_sizes():"
+(  462)        print *,"One of the variable kinds defined by the numerics module"
+(  463)        print *,"does not have the expected nr of bytes !!!!"
+(  464)        print *,"This may have serious consequences for handling"
+(  465)        print *,"unformatted data !!!! and should be corrected before"
+(  466)        print *,"using this program on this platform......."
+(  467)     END IF
+(  468) 
+(  469)   end subroutine check_variable_sizes
+(  470)     !  #]
+(  471)   subroutine check_hex_values(error_flag)
+(  472)     !  #[
+(  473)     integer, intent(out) :: error_flag
+(  474) 
+(  475)     ! local variables
+(  476)     integer(i4_) :: pos_nan_lower_i4_hex
+(  477)     integer(i4_) :: pos_nan_upper_i4_hex
+(  478)     integer(i4_) :: neg_nan_lower_i4_hex
+(  479)     integer(i4_) :: neg_nan_upper_i4_hex
+(  480) 
+(  481)     integer(i8_) :: pos_nan_lower_i8_hex
+(  482)     integer(i8_) :: pos_nan_upper_i8_hex
+(  483)     integer(i8_) :: neg_nan_lower_i8_hex
+(  484)     integer(i8_) :: neg_nan_upper_i8_hex
+(  485) 
+(  486)     integer(i4_) :: bit_pattern_PosInf_i4_hex
+(  487)     integer(i4_) :: bit_pattern_NegInf_i4_hex
+(  488) 
+(  489)     integer(i8_) :: bit_pattern_PosInf_i8_hex
+(  490)     integer(i8_) :: bit_pattern_NegInf_i8_hex
+(  491) 
+(  492)     ! some conversions fail
+(  493)     ! when following the strict fortran95 standard (which is what newer
+(  494)     ! versions of gfortran use). See the discussion at:
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 11
+
+(  495)     ! http://gcc.gnu.org/bugzilla/show_bug.cgi?id=18026
+(  496)     ! The constants are stored in 8 byte integers (or whatever the highest
+(  497)     ! precision integer is on the platform), so z"FF800001" gets converted
+(  498)     ! to z"FFFFFFFFFF800001" which cannot be stored anymore in a 4 byte
+(  499)     ! therefore a little trick is needed (raising the 31st bit)
+(  500) 
+(  501)     !data pos_nan_lower_i4_hex /z"7F800001"/
+(  502)     !data pos_nan_upper_i4_hex /z"7FFFFFFF"/
+(  503)     pos_nan_lower_i4_hex = 2139095041
+(  504)     pos_nan_upper_i4_hex = 2147483647
+(  505)     
+(  506)     !data neg_nan_lower_i4_hex /z"FF800001"/
+(  507)     !data neg_nan_upper_i4_hex /z"FFFFFFFF"/ 
+(  508)     ! not portable, replaced by:
+(  509)     neg_nan_lower_i4_hex = ibset(pos_nan_lower_i4_hex,31)
+(  510)     neg_nan_upper_i4_hex = ibset(pos_nan_upper_i4_hex,31)
+(  511) 
+(  512)     ! remark: the next data statements give some ANSI warnings on SUNOS
+(  513)     ! complaining about a type mismatch
+(  514)     ! I have no idea how to solve them, since giving the type i8_ to
+(  515)     ! this hexadecimal constant seems impossible to do in a portable way.
+(  516)     ! However, since this code is accepted by, and runs on all compilers I
+(  517)     ! know of, it seems no problem. JK. 07-Oct-2008
+(  518)     !data pos_nan_lower_i8_hex /z"7FF0000000000001"/
+(  519)     !data pos_nan_upper_i8_hex /z"7FFFFFFFFFFFFFFF"/
+(  520) 
+(  521)     pos_nan_lower_i8_hex = 9218868437227405313_i8_
+(  522)     pos_nan_upper_i8_hex = 9223372036854775807_i8_
+(  523)     
+(  524)     !data neg_nan_lower_i8_hex /z"FFF0000000000001"/
+(  525)     !data neg_nan_upper_i8_hex /z"FFFFFFFFFFFFFFFF"/
+(  526)     ! not portable, replaced by:
+(  527)     neg_nan_lower_i8_hex = ibset(pos_nan_lower_i8_hex,63)
+(  528)     neg_nan_upper_i8_hex = ibset(pos_nan_upper_i8_hex,63)
+(  529) 
+(  530)     !data bit_pattern_PosInf_i4_hex /z'7F800000'/
+(  531)     bit_pattern_PosInf_i4_hex = 2139095040
+(  532) 
+(  533)     !data bit_pattern_NegInf_i4_hex /z'FF800000'/
+(  534)     ! not portable, replaced by:
+(  535)     bit_pattern_NegInf_i4_hex = ibset(bit_pattern_PosInf_i4_hex,31)
+(  536) 
+(  537)     !data bit_pattern_PosInf_i8_hex /z'7FF0000000000000'/
+(  538)     bit_pattern_PosInf_i8_hex = 9218868437227405312_i8_
+(  539)     
+(  540)     !data bit_pattern_NegInf_i8_hex /z'FFF0000000000000'/
+(  541)     ! not portable, replaced by:
+(  542)     bit_pattern_NegInf_i8_hex = ibset(bit_pattern_PosInf_i8_hex,63)
+(  543) 
+(  544)     error_flag = no_error
+(  545) 
+(  546)     ! testing 4 byte NaN bit patterns
+(  547) 
+(  548)     IF (pos_nan_lower_i4 .ne. pos_nan_lower_i4_hex) THEN 
+(  549)        print *,"ERROR: hexadecimal value for pos_nan_lower_i4 seems ",&
+(  550)                "not correct"
+(  551)        print *,"    pos_nan_lower_i4     = ",pos_nan_lower_i4
+(  552)        print *,"but pos_nan_lower_i4_hex = ",pos_nan_lower_i4_hex
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 12
+
+(  553)        error_flag = error_numerics_hexval
+(  554)     END IF
+(  555) 
+(  556)     IF (pos_nan_upper_i4 .ne. pos_nan_upper_i4_hex) THEN 
+(  557)        print *,"ERROR: hexadecimal value for pos_nan_upper_i4 seems ",&
+(  558)                "not correct"
+(  559)        print *,"    pos_nan_upper_i4     = ",pos_nan_upper_i4
+(  560)        print *,"but pos_nan_upper_i4_hex = ",pos_nan_upper_i4_hex
+(  561)        error_flag = error_numerics_hexval
+(  562)     END IF
+(  563) 
+(  564)     IF (neg_nan_lower_i4 .ne. neg_nan_lower_i4_hex) THEN 
+(  565)        print *,"ERROR: hexadecimal value for neg_nan_lower_i4 seems ",&
+(  566)                "not correct"
+(  567)        print *,"    neg_nan_lower_i4     = ",neg_nan_lower_i4
+(  568)        print *,"but neg_nan_lower_i4_hex = ",neg_nan_lower_i4_hex
+(  569)        error_flag = error_numerics_hexval
+(  570)     END IF
+(  571) 
+(  572)     IF (neg_nan_upper_i4 .ne. neg_nan_upper_i4_hex) THEN 
+(  573)        print *,"ERROR: hexadecimal value for neg_nan_upper_i4 seems ",&
+(  574)                "not correct"
+(  575)        print *,"    neg_nan_upper_i4     = ",neg_nan_upper_i4
+(  576)        print *,"but neg_nan_upper_i4_hex = ",neg_nan_upper_i4_hex
+(  577)        error_flag = error_numerics_hexval
+(  578)     END IF
+(  579) 
+(  580)     ! testing 8 byte NaN bit patterns
+(  581) 
+(  582)     IF (pos_nan_lower_i8 .ne. pos_nan_lower_i8_hex) THEN 
+(  583)        print *,"ERROR: hexadecimal value for pos_nan_lower_i8 seems ",&
+(  584)                "not correct"
+(  585)        print *,"    pos_nan_lower_i8     = ",pos_nan_lower_i8
+(  586)        print *,"but pos_nan_lower_i8_hex = ",pos_nan_lower_i8_hex
+(  587)        error_flag = error_numerics_hexval
+(  588)     END IF
+(  589) 
+(  590)     IF (pos_nan_upper_i8 .ne. pos_nan_upper_i8_hex) THEN 
+(  591)        print *,"ERROR: hexadecimal value for pos_nan_upper_i8 seems ",&
+(  592)                "not correct"
+(  593)        print *,"    pos_nan_upper_i8     = ",pos_nan_upper_i8
+(  594)        print *,"but pos_nan_upper_i8_hex = ",pos_nan_upper_i8_hex
+(  595)        error_flag = error_numerics_hexval
+(  596)     END IF
+(  597) 
+(  598)     IF (neg_nan_lower_i8 .ne. neg_nan_lower_i8_hex) THEN 
+(  599)        print *,"ERROR: hexadecimal value for neg_nan_lower_i8 seems ",&
+(  600)                "not correct"
+(  601)        print *,"    neg_nan_lower_i8     = ",neg_nan_lower_i8
+(  602)        print *,"but neg_nan_lower_i8_hex = ",neg_nan_lower_i8_hex
+(  603)        error_flag = error_numerics_hexval
+(  604)     END IF
+(  605) 
+(  606)     IF (neg_nan_upper_i8 .ne. neg_nan_upper_i8_hex) THEN 
+(  607)        print *,"ERROR: hexadecimal value for neg_nan_upper_i8 seems ",&
+(  608)                "not correct"
+(  609)        print *,"    neg_nan_upper_i8     = ",neg_nan_upper_i8
+(  610)        print *,"but neg_nan_upper_i8_hex = ",neg_nan_upper_i8_hex
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 13
+
+(  611)        error_flag = error_numerics_hexval
+(  612)     END IF
+(  613) 
+(  614)     ! testing 4 byte Inf bit patterns
+(  615) 
+(  616)     IF (bit_pattern_PosInf_i4 .ne. bit_pattern_PosInf_i4_hex) THEN 
+(  617)        print *,"ERROR: hexadecimal value for bit_pattern_PosInf_i4 seems ",&
+(  618)                "not correct"
+(  619)        print *,"    bit_pattern_PosInf_i4     = ",bit_pattern_PosInf_i4
+(  620)        print *,"but bit_pattern_PosInf_i4_hex = ",bit_pattern_PosInf_i4_hex
+(  621)        error_flag = error_numerics_hexval
+(  622)     END IF
+(  623) 
+(  624)     IF (bit_pattern_NegInf_i4 .ne. bit_pattern_NegInf_i4_hex) THEN 
+(  625)        print *,"ERROR: hexadecimal value for bit_pattern_NegInf_i4 seems ",&
+(  626)                "not correct"
+(  627)        print *,"    bit_pattern_NegInf_i4     = ",bit_pattern_NegInf_i4
+(  628)        print *,"but bit_pattern_NegInf_i4_hex = ",bit_pattern_NegInf_i4_hex
+(  629)        error_flag = error_numerics_hexval
+(  630)     END IF
+(  631) 
+(  632)     ! testing 8 byte Inf bit patterns
+(  633) 
+(  634)     IF (bit_pattern_PosInf_i8 .ne. bit_pattern_PosInf_i8_hex) THEN 
+(  635)        print *,"ERROR: hexadecimal value for bit_pattern_PosInf_i8 seems ",&
+(  636)                "not correct"
+(  637)        print *,"    bit_pattern_PosInf_i8     = ",bit_pattern_PosInf_i8
+(  638)        print *,"but bit_pattern_PosInf_i8_hex = ",bit_pattern_PosInf_i8_hex
+(  639)        error_flag = error_numerics_hexval
+(  640)     END IF
+(  641) 
+(  642)     IF (bit_pattern_NegInf_i8 .ne. bit_pattern_NegInf_i8_hex) THEN 
+(  643)        print *,"ERROR: hexadecimal value for bit_pattern_NegInf_i8 seems ",&
+(  644)                "not correct"
+(  645)        print *,"    bit_pattern_NegInf_i8     = ",bit_pattern_NegInf_i8
+(  646)        print *,"but bit_pattern_NegInf_i8_hex = ",bit_pattern_NegInf_i8_hex
+(  647)        error_flag = error_numerics_hexval
+(  648)     END IF
+(  649) 
+(  650)   end subroutine check_hex_values
+(  651)     !  #]
+(  652)   !---------------------------------------------------
+(  653)   function missing_real4(x) result(m)
+(  654)     !  #[
+(  655)     real(r4_) :: x
+(  656)     logical  :: m
+(  657)     m=.false.
+(  658)     if (x .ge. missing_indicator_real_lower) m=.true.
+(  659)   end function missing_real4
+(  660)   !---------------------------------------------------
+(  661)   !  #]
+(  662)   function missing_real8(x) result(m)
+(  663)     !  #[
+(  664)     real(r8_) :: x
+(  665)     logical  :: m
+(  666)     m=.false.
+(  667)     if (x .ge. missing_indicator_real_lower) m=.true.
+(  668)   end function missing_real8
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 14
+
+(  669)   !---------------------------------------------------
+(  670)   !  #]
+(  671) ! not all platforms have real*16 defined!
+(  672) !  function missing_real16(x) result(m)
+(  673)     !  #[
+(  674) !    real(r16_) :: x
+(  675) !    logical  :: m
+(  676) !    m=.false.
+(  677) !    if (x .ge. (missing_indicator_real*0.99)) m=.true.
+(  678) !  end function missing_real16
+(  679)   !---------------------------------------------------
+(  680)     !  #]
+(  681)   function missing_int1(x) result(m)
+(  682)     !  #[
+(  683)     integer(i1_) :: x
+(  684)     logical :: m
+(  685)     m=.false.
+(  686)     if (x .eq. (missing_indicator_integer_i1_)) m=.true.
+(  687)   end function missing_int1
+(  688)   !---------------------------------------------------
+(  689)   !  #]
+(  690)   function missing_int2(x) result(m)
+(  691)     !  #[
+(  692)     integer(i2_) :: x
+(  693)     logical :: m
+(  694)     m=.false.
+(  695)     if (x .eq. (missing_indicator_integer_i2_)) m=.true.
+(  696)   end function missing_int2
+(  697)   !---------------------------------------------------
+(  698)   !  #]
+(  699)   function missing_int4(x) result(m)
+(  700)     !  #[
+(  701)     integer(i4_) :: x
+(  702)     logical :: m
+(  703)     m=.false.
+(  704)     if (x .eq. (missing_indicator_integer_i4_)) m=.true.
+(  705)   end function missing_int4
+(  706)   !---------------------------------------------------
+(  707)   !  #]
+(  708)   function missing_int8(x) result(m)
+(  709)     !  #[
+(  710) 
+(  711)     integer(i8_) :: x
+(  712)     logical :: m
+(  713)     m=.false.
+(  714) 
+(  715)     ! NOTE: this check fails if software is used on both 32 and 64 bit platforms.
+(  716)     !       routines like real2int always return the missing_indicator_integer_i4_
+(  717)     !       number, even when compiled for 64 bit.
+(  718)     !       So check for missing_indicator_integer for now.
+(  719)     !if (x .eq. (missing_indicator_integer_i8_)) m=.true.
+(  720) 
+(  721)     if (x .eq. (missing_indicator_integer)) m=.true.
+(  722) 
+(  723)   end function missing_int8
+(  724)   !---------------------------------------------------
+(  725) 
+(  726)   !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 15
+
+(  727)   !---------------------------------------------------
+(  728)   function is_NaN_real4(x) result(n)
+(  729)     !  #[
+(  730) 
+(  731)     real(r4_) :: x
+(  732)     logical   :: n
+(  733) 
+(  734)     ! this function does not (yet) discriminate between signalling
+(  735)     ! and not-signalling NaN's, and also the sign of the NaN
+(  736)     ! is ignored, since not all compilers use this feature.
+(  737) 
+(  738)     ! the trick I wanted to used here is the property that any if statement
+(  739)     ! fails if a NaN is used in its expression, so (x.eq.x)
+(  740)     ! actually returns .false. for reals with the NaN value ....
+(  741)     !n=.true.
+(  742)     !if (x .eq. x) n=.false.
+(  743)     ! However, this does not work for the pgf90 compiler, 
+(  744)     ! so we have to use the bitpatterns instead ....
+(  745) 
+(  746)     ! local variables and parameters
+(  747)     integer(i4_) :: bit_pattern
+(  748) 
+(  749)     bit_pattern = transfer(x,bit_pattern)
+(  750)     n=.false.
+(  751) 
+(  752)     if ( (bit_pattern .ge. pos_nan_lower_i4) .and. &
+(  753)          (bit_pattern .le. pos_nan_upper_i4)        ) then
+(  754)        !print *,"positive NaN!!!!"
+(  755)        n=.true.
+(  756)     end if
+(  757)     if ( (bit_pattern .ge. neg_nan_lower_i4) .and. &
+(  758)          (bit_pattern .le. neg_nan_upper_i4)        ) then
+(  759)        !print *,"negative NaN!!!!"
+(  760)        n=.true.
+(  761)     end if
+(  762) 
+(  763)   end function is_NaN_real4
+(  764)     !  #]
+(  765)   function is_NaN_real8(x) result(n)
+(  766)     !  #[
+(  767)     real(r8_) :: x
+(  768)     logical   :: n
+(  769) 
+(  770)     ! this function does not (yet) discriminate between signalling
+(  771)     ! and not-signalling NaN's, and also the sign of the NaN
+(  772)     ! is ignored, since not all compilers use this feature.
+(  773) 
+(  774)     ! the trick I wanted to used here is the property that any if statement
+(  775)     ! fails if a NaN is used in its expression, so (x.eq.x)
+(  776)     ! actually returns .false. for reals with the NaN value ....
+(  777)     !n=.true.
+(  778)     !if (x .eq. x) n=.false.
+(  779)     ! However, this does not work for the pgf90 compiler, 
+(  780)     ! so we have to use the bitpatterns instead ....
+(  781) 
+(  782)     ! local variables and parameters
+(  783)     integer(i8_) :: bit_pattern
+(  784) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 16
+
+(  785)     bit_pattern = transfer(x,bit_pattern)
+(  786)     n=.false.
+(  787) 
+(  788)     if ( (bit_pattern .ge. pos_nan_lower_i8) .and. &
+(  789)          (bit_pattern .le. pos_nan_upper_i8)        ) then
+(  790)        !print *,"positive NaN!!!!"
+(  791)        n=.true.
+(  792)     end if
+(  793)     if ( (bit_pattern .ge. neg_nan_lower_i8) .and. &
+(  794)          (bit_pattern .le. neg_nan_upper_i8)        ) then
+(  795)        !print *,"negative NaN!!!!"
+(  796)        n=.true.
+(  797)     end if
+(  798) 
+(  799)   end function is_NaN_real8
+(  800)     !  #]
+(  801)   function is_PosInf_real4(x) result(i)
+(  802)     !  #[
+(  803)     real(r4_) :: x
+(  804)     logical   :: i
+(  805) 
+(  806)     ! local variables and parameters
+(  807)     integer(i4_)            :: bit_pattern
+(  808) 
+(  809)     bit_pattern = transfer(x,bit_pattern)
+(  810) 
+(  811)     i = .false.
+(  812)     if (bit_pattern .eq. bit_pattern_PosInf_i4) i = .true.
+(  813) 
+(  814)   end function is_PosInf_real4
+(  815)     !  #]
+(  816)   function is_NegInf_real4(x) result(i)
+(  817)     !  #[
+(  818)     real(r4_) :: x
+(  819)     logical   :: i
+(  820) 
+(  821)     ! local variables and parameters
+(  822)     integer(i4_)            :: bit_pattern
+(  823)     
+(  824)     bit_pattern = transfer(x,bit_pattern)
+(  825) 
+(  826)     i = .false.
+(  827)     if (bit_pattern .eq. bit_pattern_NegInf_i4) i = .true.
+(  828) 
+(  829)   end function is_NegInf_real4
+(  830)     !  #]
+(  831)   function is_PosInf_real8(x) result(i)
+(  832)     !  #[
+(  833)     real(r8_) :: x
+(  834)     logical   :: i
+(  835) 
+(  836)     ! local variables
+(  837)     integer(i8_)            :: bit_pattern
+(  838) 
+(  839)     bit_pattern = transfer(x,bit_pattern)
+(  840) 
+(  841)     i=.false.
+(  842)     if (bit_pattern .eq. bit_pattern_PosInf_i8) i=.true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 17
+
+(  843) 
+(  844)   end function is_PosInf_real8
+(  845)     !  #]
+(  846)   function is_NegInf_real8(x) result(i)
+(  847)     !  #[
+(  848)     real(r8_) :: x
+(  849)     logical   :: i
+(  850) 
+(  851)     ! local variables
+(  852)     integer(i8_)            :: bit_pattern
+(  853) 
+(  854)     bit_pattern = transfer(x,bit_pattern)
+(  855) 
+(  856)     i=.false.
+(  857)     if (bit_pattern .eq. bit_pattern_NegInf_i8) i=.true.
+(  858) 
+(  859)   end function is_NegInf_real8
+(  860)     !  #]
+(  861)   !---------------------------------------------------
+(  862) !  function convert_missing_real(x1) result(x2)
+(  863)     !  #[
+(  864) !    ! convert the missing indicator number to the number -999.0
+(  865) !    ! which is much more convenient for writing to formatted output files
+(  866) !    real(r_)    :: x1,x2
+(  867) !    x2=x1
+(  868) !    if (missing_real(x1)) x2=-999.0
+(  869) !  end function convert_missing_real
+(  870)   !---------------------------------------------------
+(  871)   !  #]
+(  872) !  function convert_missing_integer(i1) result(i2)
+(  873)     !  #[
+(  874) !    ! convert the missing indicator number to the number -999
+(  875) !    ! which is much more convenient for writing to formatted output files
+(  876) !    integer :: i1,i2
+(  877) !    i2=i1
+(  878) !    if (missing_int(i1)) i2=-999.0
+(  879) !  end function convert_missing_integer
+(  880)   !  #]
+(  881)   !---------------------------------------------------
+(  882)   function real4_to_txt_extra_checks(value) result(str_value)
+(  883)     !  #[
+(  884)     ! this function converts a real in full precision to a string
+(  885)     ! (so without given a specific format, like the real4_2txt
+(  886)     ! and real8_2txt functions do)
+(  887)     ! It also check for missing, NaN or Inf, and returns with a
+(  888)     ! uniform message if it finds such a condition
+(  889)     ! (this to prevent test problems because not all compilers
+(  890)     !  print Inf in the same way. Some print "Inf", other "inf"
+(  891)     !  and yet others print "Infinite")
+(  892)     ! This is an extended version of the SetFAdoFull_or_Missing()
+(  893)     ! that we implemented in ee_cfi_datatypes.F90)
+(  894) 
+(  895)     ! length of the returned string
+(  896)     integer, parameter :: max_str_lenght = 50
+(  897) 
+(  898)     real(r4_),        intent(in)  :: value
+(  899)     character(len=max_str_lenght) :: str_value ! result
+(  900) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 18
+
+(  901)     ! local variable
+(  902)     character(len=max_str_lenght) :: temp_string
+(  903) 
+(  904)     ! init
+(  905)     temp_string(:) = ' '
+(  906) 
+(  907)     ! give the string "[not-a-number]" for missing numbers
+(  908)     IF (is_NaN_real4(value)) THEN
+(  909)        str_value = "[not-a-number]"
+(  910)        return
+(  911)     END IF
+(  912) 
+(  913)     ! give the string "[+Infinite]" for +Infinite numbers
+(  914)     IF (is_PosInf_real4(value)) THEN
+(  915)        str_value = "[+Infinite]"
+(  916)        return
+(  917)     END IF
+(  918) 
+(  919)     ! give the string "[-Infinite]" for -Infinite numbers
+(  920)     IF (is_NegInf_real4(value)) THEN
+(  921)        str_value = "[-Infinite]"
+(  922)        return
+(  923)     END IF
+(  924) 
+(  925)     ! give the string "[missing]" for missing numbers
+(  926)     IF (missing_real(value)) THEN
+(  927)        str_value = "[missing]"
+(  928)        return
+(  929)     END IF
+(  930) 
+(  931)     write(temp_string, *, err=999) value
+(  932)     str_value =  trim(adjustl(temp_string))
+(  933) 
+(  934)     return
+(  935) 
+(  936)     ! Conversion from type r4_ to string failed
+(  937)     ! Are you sure this number fits within the 50 characters of the
+(  938)     ! available temporaty string ?
+(  939) 999 str_value = "[conversion error]"
+(  940)     return
+(  941)     
+(  942)   end function real4_to_txt_extra_checks
+(  943)     !  #]
+(  944)   function real8_to_txt_extra_checks(value) result(str_value)
+(  945)     !  #[
+(  946)     ! this function converts a real in full precision to a string
+(  947)     ! (so without given a specific format, like the real4_2txt
+(  948)     ! and real8_2txt functions do)
+(  949)     ! It also checks for missing, NaN or Inf, and returns with a
+(  950)     ! uniform message if it finds such a condition
+(  951)     ! (this to prevent test problems because not all compilers
+(  952)     !  print Inf in the same way. Some print "Inf", other "inf"
+(  953)     !  and yet others print "Infinite")
+(  954)     ! This is an extended version of the SetFAdoFull_or_Missing()
+(  955)     ! that we implemented in ee_cfi_datatypes.F90)
+(  956) 
+(  957)     ! length of the returned string
+(  958)     integer, parameter :: max_str_lenght = 50
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 19
+
+(  959) 
+(  960)     real(r8_),        intent(in)  :: value
+(  961)     character(len=max_str_lenght) :: str_value ! result
+(  962) 
+(  963)     ! local variable
+(  964)     character(len=max_str_lenght) :: temp_string
+(  965) 
+(  966)     ! init
+(  967)     temp_string(:) = ' '
+(  968) 
+(  969)     ! give the string "[not-a-number]" for missing numbers
+(  970)     IF (is_NaN_real8(value)) THEN
+(  971)        str_value = "[not-a-number]"
+(  972)        return
+(  973)     END IF
+(  974) 
+(  975)     ! give the string "[+Infinite]" for +Infinite numbers
+(  976)     IF (is_PosInf_real8(value)) THEN
+(  977)        str_value = "[+Infinite]"
+(  978)        return
+(  979)     END IF
+(  980) 
+(  981)     ! give the string "[-Infinite]" for -Infinite numbers
+(  982)     IF (is_NegInf_real8(value)) THEN
+(  983)        str_value = "[-Infinite]"
+(  984)        return
+(  985)     END IF
+(  986) 
+(  987)     ! give the string "[missing]" for missing numbers
+(  988)     IF (missing_real(value)) THEN
+(  989)        str_value = "[missing]"
+(  990)        return
+(  991)     END IF
+(  992) 
+(  993)     write(temp_string, *, err=999) value
+(  994)     str_value =  trim(adjustl(temp_string))
+(  995) 
+(  996)     return
+(  997) 
+(  998)     ! Conversion from type r8_ to string failed
+(  999)     ! Are you sure this number fits within the 50 characters of the
+( 1000)     ! available temporaty string ?
+( 1001) 999 str_value = "[conversion error]"
+( 1002)     return
+( 1003)     
+( 1004)   end function real8_to_txt_extra_checks
+( 1005)     !  #]
+( 1006)   !---------------------------------------------------
+( 1007)   function int_to_real4(i) result(x)
+( 1008)     !  #[
+( 1009) 
+( 1010)     ! convert an integer to a real, taking into account that 
+( 1011)     ! the input integer might have the missing value
+( 1012)     integer   :: i
+( 1013)     real(r4_) :: x
+( 1014)     x = real(i,r4_)
+( 1015)     if (missing_int(i)) x = missing_indicator_real_r4
+( 1016)   end function int_to_real4
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 20
+
+( 1017)   !  #]
+( 1018)   function int_to_real8(i) result(x)
+( 1019)     !  #[
+( 1020) 
+( 1021)     ! convert an integer to a real, taking into account that 
+( 1022)     ! the input integer might have the missing value
+( 1023)     integer   :: i
+( 1024)     real(r8_) :: x
+( 1025)     x = i
+( 1026)     if (missing_int(i)) x = missing_indicator_real
+( 1027)   end function int_to_real8
+( 1028)   !  #]
+( 1029)   function intarr_to_real8arr(i) result(x)
+( 1030)     !  #[
+( 1031) 
+( 1032)     ! convert an integer to a real, taking into account that 
+( 1033)     ! the input integer might have the missing value
+( 1034)     integer,   dimension(:)       :: i
+( 1035)     real(r8_), dimension(size(i)) :: x
+( 1036) 
+( 1037)     ! local variable
+( 1038)     integer :: j
+( 1039) 
+( 1040)     DO j=1,size(i)
+( 1041)        x(j) = i(j)
+( 1042)        if (missing_int(i(j))) x(j) = missing_indicator_real
+( 1043)     END DO
+( 1044) 
+( 1045)   end function intarr_to_real8arr
+( 1046)   !  #]
+( 1047)   function real4_to_int(x) result(i)
+( 1048)     !  #[
+( 1049)     ! convert a real to an integer, taking into account that 
+( 1050)     ! the input real might have the missing value
+( 1051)     real(r4_) :: x
+( 1052)     integer   :: i
+( 1053)     if (missing_real(x)) then 
+( 1054)        i = missing_indicator_integer
+( 1055)     else
+( 1056)        i = nint(x)
+( 1057)     endif
+( 1058)   end function real4_to_int
+( 1059)     !  #]
+( 1060)   function real8_to_int(x) result(i)
+( 1061)     !  #[
+( 1062)     ! convert a real to an integer, taking into account that 
+( 1063)     ! the input real might have the missing value
+( 1064)     real(r8_) :: x
+( 1065)     integer   :: i
+( 1066)     if (missing_real(x)) then 
+( 1067)        i = missing_indicator_integer
+( 1068)     else
+( 1069)        i = nint(x)
+( 1070)     endif
+( 1071)   end function real8_to_int
+( 1072)     !  #]
+( 1073)   function real4_2txt(r,acc) result(txt)
+( 1074)     !  #[
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 21
+
+( 1075)     ! convert a real to an integer, taking into account that
+( 1076)     ! the input real might have the missing value
+( 1077) 
+( 1078)     ! if needed ad an optional format definition in the call to this function
+( 1079) 
+( 1080)     real(r4_),         intent(in)  :: r
+( 1081)     integer, optional, intent(in)  :: acc 
+( 1082)     character(len=13)              :: txt ! result
+( 1083) 
+( 1084)     ! local variable
+( 1085)     character(len=10) :: formatstring
+( 1086)     
+( 1087)     formatstring = "(es13.6e2)"
+( 1088)     IF (present(acc)) THEN
+( 1089)        IF ((acc .ge. 1) .and. (acc .le. 9)) THEN
+( 1090)           write(formatstring(7:7),"(i1)") acc
+( 1091)        END IF
+( 1092)     END IF
+( 1093) 
+( 1094)     if (missing_real(r)) then
+( 1095)        txt = "[missing]"
+( 1096)     else
+( 1097)        write(txt,formatstring) r
+( 1098)     endif
+( 1099) 
+( 1100)   end function real4_2txt
+( 1101)     !  #]
+( 1102)   function real8_2txt(r,acc) result(txt)
+( 1103)     !  #[
+( 1104)     ! convert a real to an integer, taking into account that
+( 1105)     ! the input real might have the missing value
+( 1106) 
+( 1107)     ! if needed ad an optional format definition in the call to this function
+( 1108) 
+( 1109)     real(r8_),         intent(in)  :: r
+( 1110)     integer, optional, intent(in)  :: acc 
+( 1111)     character(len=13)              :: txt ! result
+( 1112) 
+( 1113)     ! local variable
+( 1114)     character(len=10) :: formatstring
+( 1115)     
+( 1116)     formatstring = "(es13.6e2)"
+( 1117)     IF (present(acc)) THEN
+( 1118)        IF ((acc .ge. 1) .and. (acc .le. 9)) THEN
+( 1119)           write(formatstring(7:7),"(i1)") acc
+( 1120)        END IF
+( 1121)     END IF
+( 1122) 
+( 1123)     if (missing_real(r)) then
+( 1124)        txt = "[missing]"
+( 1125)     else
+( 1126)        write(txt,formatstring) r
+( 1127)     endif
+( 1128) 
+( 1129)   end function real8_2txt
+( 1130)     !  #]
+( 1131)   !---------------------------------------------------
+( 1132) !  subroutine do_range_check_int(val,min,max,inside_range,txt)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 22
+
+( 1133)     !  #[
+( 1134) !    ! check whether the value is inside the specified range
+( 1135) !    ! if not, change the value of inside_range
+( 1136) !
+( 1137) !    ! WARNING: the * for length of "txt" is essential. On Linux systems
+( 1138) !    ! the program  will not compile if you use a fixed number (256) and
+( 1139) !    ! call the routine with a constant string of different length !!!
+( 1140) !    integer, intent(in)           :: val, min, max
+( 1141) !    character(len=*),  intent(in) :: txt
+( 1142) !    logical, intent(inout)        :: inside_range
+( 1143) !
+( 1144) !    IF (missing_int(val)) return
+( 1145) !
+( 1146) !    IF ( (val .lt. min) .or. (val .gt. max) ) THEN 
+( 1147) !       print *,"range check: ",trim(txt),val
+( 1148) !       inside_range = .false.
+( 1149) !    END IF
+( 1150) !  end subroutine do_range_check_int
+( 1151)   !---------------------------------------------------
+( 1152)     !  #]
+( 1153) !  subroutine do_range_check_real(val,min,max,inside_range,txt)
+( 1154)     !  #[
+( 1155) !    ! check whether the value is inside the specified range
+( 1156) !    ! if not, change the value of inside_range
+( 1157) !
+( 1158) !    ! WARNING: the * for length of "txt" is essential. On Linux systems
+( 1159) !    ! the program  will not compile if you use a fixed number (256) and
+( 1160) !    ! call the routine with a constant string of different length !!!
+( 1161) !    real(r_), intent(in)          :: val, min, max
+( 1162) !    character(len=*),  intent(in) :: txt
+( 1163) !    logical, intent(inout)        :: inside_range
+( 1164) !
+( 1165) !    IF (missing_real(val)) return
+( 1166) !
+( 1167) !    IF ( (val .lt. min) .or. (val .gt. max) ) THEN 
+( 1168) !       print *,"range check: ",trim(txt),val
+( 1169) !       inside_range = .false.
+( 1170) !    END IF
+( 1171) !  end subroutine do_range_check_real
+( 1172)     !  #]
+( 1173)   !---------------------------------------------------
+( 1174)   function real2dB(x) result(val)
+( 1175)     !  #[
+( 1176)     real(r8_), intent(in) :: x   ! input
+( 1177)     real(r8_)             :: val ! result
+( 1178) 
+( 1179)     IF (missing_real(x)) THEN
+( 1180)        val = x
+( 1181)     ELSE
+( 1182)        IF (x .lt. 0.0_r8_) THEN
+( 1183)           print *,"ERROR: inside real2dB()"
+( 1184)           print *,"converting negative numbers to dB values is not possible !"
+( 1185)           print *,"possibly this value is already in dB ?"
+( 1186)           print *,"If needed, first take the abs() value"
+( 1187)           print *,"  input was: x = ",x
+( 1188)           print *,"returning with missing value"
+( 1189)           val = missing_indicator_real
+( 1190)        ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 23
+
+( 1191)           val = 10._r8_*LOG10(x)
+( 1192)        END IF
+( 1193)     END IF
+( 1194) 
+( 1195)   end function real2dB
+( 1196)   !  #]
+( 1197)   function dB2real(x) result(val)
+( 1198)     !  #[
+( 1199)     real(r8_), intent(in) :: x   ! input
+( 1200)     real(r8_)             :: val ! result
+( 1201) 
+( 1202)     IF (missing_real(x)) THEN
+( 1203)        val = x
+( 1204)     ELSE
+( 1205)        val = 10._r8_**(0.1_r8_*x)
+( 1206)     END IF
+( 1207) 
+( 1208)   end function dB2real
+( 1209)   !  #]
+( 1210)   !---------------------------------------------------
+( 1211)   function quartet_to_hex(val) result(txt)
+( 1212)     !  #[
+( 1213)     ! convert a 4-bit number into hexadecimal
+( 1214)     integer, intent(in) :: val ! input
+( 1215)     character(len=1)    :: txt ! result
+( 1216) 
+( 1217)     txt = ' '
+( 1218)     select case (val)
+( 1219)     case ( 0) ; txt = '0'
+( 1220)     case ( 1) ; txt = '1'
+( 1221)     case ( 2) ; txt = '2'
+( 1222)     case ( 3) ; txt = '3'
+( 1223)     case ( 4) ; txt = '4'
+( 1224)     case ( 5) ; txt = '5'
+( 1225)     case ( 6) ; txt = '6'
+( 1226)     case ( 7) ; txt = '7'
+( 1227)     case ( 8) ; txt = '8'
+( 1228)     case ( 9) ; txt = '9'
+( 1229)     case (10) ; txt = 'A'
+( 1230)     case (11) ; txt = 'B'
+( 1231)     case (12) ; txt = 'C'
+( 1232)     case (13) ; txt = 'D'
+( 1233)     case (14) ; txt = 'E'
+( 1234)     case (15) ; txt = 'F'
+( 1235)     case default
+( 1236)        print *,"ERROR convertion failed in quartet_to_hex"
+( 1237)        print *,"input out of range: ",val
+( 1238)        txt = 'Q'
+( 1239)        ! return 'Q' as error indicator
+( 1240)        ! note that returning 'E' is useless, since that is a valid
+( 1241)        ! hexadecimal number
+( 1242)     end select
+( 1243) 
+( 1244)   end function quartet_to_hex
+( 1245)     !  #]
+( 1246)   function int1_to_hex(val) result(txt)
+( 1247)     !  #[
+( 1248)     integer(i1_), intent(in) :: val ! input
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 24
+
+( 1249)     character(len=2)         :: txt ! result
+( 1250) 
+( 1251)     ! local variables
+( 1252)     integer :: unsigned_val, part1, part2
+( 1253) 
+( 1254)     unsigned_val = val
+( 1255)     if (val .lt. 0) unsigned_val = 256+val
+( 1256) 
+( 1257)     part1 = unsigned_val/16
+( 1258)     part2 = unsigned_val-16*part1
+( 1259)     !print *,"val=",val," part1=",part1," part2=",part2
+( 1260) 
+( 1261)     txt(1:1) = quartet_to_hex(part1)
+( 1262)     txt(2:2) = quartet_to_hex(part2)
+( 1263) 
+( 1264)   end function int1_to_hex
+( 1265)     !  #]
+( 1266)   function int4_to_hex(val,swap_bytes) result(txt)
+( 1267)     !  #[
+( 1268)     integer(i4_), intent(in) :: val        ! input
+( 1269)     logical,      intent(in) :: swap_bytes ! input
+( 1270)     character(len=8)         :: txt        ! result
+( 1271) 
+( 1272)     ! local variables
+( 1273)     character(len=4) :: bytes
+( 1274)     character(len=1) :: tmp_byte
+( 1275) 
+( 1276)     bytes(1:4) = transfer(val,bytes(1:4))
+( 1277)     if (swap_bytes) then
+( 1278)        tmp_byte   = bytes(4:4)
+( 1279)        bytes(4:4) = bytes(1:1)
+( 1280)        bytes(1:1) = tmp_byte
+( 1281)        tmp_byte   = bytes(3:3)
+( 1282)        bytes(3:3) = bytes(2:2)
+( 1283)        bytes(2:2) = tmp_byte
+( 1284)     end if
+( 1285) 
+( 1286)     txt(1:2) = int1_to_hex(int(ichar(bytes(1:1)),i1_))
+( 1287)     txt(3:4) = int1_to_hex(int(ichar(bytes(2:2)),i1_))
+( 1288)     txt(5:6) = int1_to_hex(int(ichar(bytes(3:3)),i1_))
+( 1289)     txt(7:8) = int1_to_hex(int(ichar(bytes(4:4)),i1_))
+( 1290) 
+( 1291)   end function int4_to_hex
+( 1292)     !  #]
+( 1293)   !---------------------------------------------------
+( 1294) END Module numerics
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 25
+
+(    1) # 1 "numerics.F90"
+(    1) MODULE numerics
+(    2)   !  #[ Documentation
+(    3)   !---------------------------------------------------
+(    4)   !   -a real type that presumably has the characteristics
+(    5)   !    of 4 and 8 byte IEEE 754 floating-point types
+(    6)   !    is defined.
+(    7)   !
+(    8)   !    Written by: J. de kloe, inspired on ideas from a module
+(    9)   !                written by Aad van der Steen, UU
+(   10)   !    first version 18-Oct-2001 by J. de Kloe
+(   11)   !
+(   12)   !    Modifications:
+(   13)   !    27-Nov-2003 J. de Kloe added the code for handling missing_reals and
+(   14)   !                           missing_integers as is usual in the 
+(   15)   !                           scatterometry software
+(   16)   !    25-Feb-2004 J. de Kloe added the do_range_check subroutines
+(   17)   !    16-Mar-2004 J. de Kloe added the subroutine detect_variable_sizes
+(   18)   !    25-Oct-2005 J. de Kloe added missing_integer definitions for 1, 2 and 4
+(   19)   !                       byte integers
+(   20)   !    21-Feb-2006 P. Poli    added function int2txt to handle printing
+(   21)   !                       of missing values
+(   22)   !    13-Sep-2006 J. de Kloe added explanation why an interface to 
+(   23)   !                           generic int2real doesn't work
+(   24)   !    06-Oct-2006 J. de Kloe added is_NaN/is_PosInf/is_NegInf functions
+(   25)   !                           and real2txt_extra_checks function
+(   26)   !    24-Oct-2006 J. de Kloe changed is_NaN/is_PosInf/is_NegInf functions 
+(   27)   !                           to be compatible with gfortran
+(   28)   !    06-Nov-2006 P. Poli    moved int2txt to the module ee_cfi_datatypes 
+(   29)   !                           (to handle unsigned integers, unknown in 
+(   30)   !                           module numerics)
+(   31)   !    24-Nov-2006 J. de Kloe added tests for the character type.
+(   32)   !    13-Dec-2006 J. de Kloe added check_hex_values() routine
+(   33)   !    16-Jan-2008 J. de Kloe phase out integer kind i_ 
+(   34)   !    23-Jan-2008 P. Poli    changed definitions of integer*8 for NEC-SX
+(   35)   !                           removed missing_int1 from generic missing_int
+(   36)   !                           (never called as such)
+(   37)   !    07-Oct-2008 J. de Kloe removed some unused constants that caused
+(   38)   !                           ansi warnings on SUNOS.
+(   39)   !    17-Mar-2009 J. de Kloe allow i1_ to have 2 bytes to enable running
+(   40)   !                           the L2BP on the NECSX machine
+(   41)   !    22-Apr-2009 J. de Kloe added quartet_to_hex(), int1_to_hex() and
+(   42)   !                           int4_to_hex() functions
+(   43)   !    28-Apr-2009 D. Tan     Removed special case for integer*8 on NEC-SX
+(   44)   !    11-Feb-2014 M. Rennie  Save time in missing_real8
+(   45)   !    14-Mar-2014 J. de Kloe replace hex constants by decimals to prevent
+(   46)   !                           warnings issued by gfortran
+(   47)   !
+(   48)   !---------------------------------------------------
+(   49)   !  #]
+(   50)   !  #[ Modules used
+(   51)   !  #]
+(   52)   !  #[ global parameters
+(   53)   IMPLICIT NONE
+(   54) # 55 "numerics.F90"
+(   55)   ! normal definition
+(   56)   integer, parameter :: i1_ = Selected_Int_Kind( 2)  ! = integer*1 
+(   57) # 58 "numerics.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 26
+
+(   58)   ! replace the above definition by this one, to test the effect
+(   59)   ! of i1_ having 2 bytes (as is the case on the NECSX machine at MF)
+(   60)   !integer, parameter :: i1_ = Selected_Int_Kind( 4)  ! = integer*1 
+(   61) # 62 "numerics.F90"
+(   62)   integer, parameter :: i2_ = Selected_Int_Kind( 4)  ! = integer*2
+(   63)   integer, parameter :: i4_ = Selected_Int_Kind( 9)  ! = integer*4
+(   64)   integer, parameter :: i8_ = Selected_Int_Kind(18)  ! = integer*8
+(   65) ! gives compile errors on 1, 16 byte numbers are typically only
+(   66) ! available on high-end Unix machines, so not portable
+(   67) !  integer, parameter :: i16_ = Selected_Int_Kind(36) ! = integer*16
+(   68) # 69 "numerics.F90"
+(   69)   integer, parameter :: r4_ = Selected_Real_Kind( 6, 37)  ! = real*4
+(   70)   integer, parameter :: r8_ = Selected_Real_Kind(15,307)  ! = real*8
+(   71) ! gives compile errors on 1, 16 byte numbers are typically only
+(   72) ! available on high-end Unix machines, so not portable
+(   73) !  integer, parameter :: r16_ = Selected_Real_Kind(31,275) ! = real*16
+(   74) # 76 "numerics.F90"
+(   76)   ! Removed i_ and r_, since they cause portability problems 
+(   77)   ! between 32 and 64 systems if you are not VERY carefull,
+(   78)   ! and with our usual 32 bit workstations we cannot test
+(   79)   ! for these problems.
+(   80)   ! JK, 20080110
+(   81) # 82 "numerics.F90"
+(   82)   ! default integer and real types (4 bytes)
+(   83)   !  integer, parameter :: r_ = r4_
+(   84)   !  integer, parameter :: i_ = i4_
+(   85) # 86 "numerics.F90"
+(   86)   ! r_ and i_ may be used as a general default for the whole program.
+(   87)   ! Using these kinds removes the need for -i4 and -r4 options etc. on
+(   88)   ! the command line, and thus should make programs more portable.
+(   89) # 90 "numerics.F90"
+(   90)   ! maintained for compatibility reasons
+(   91)   ! (to be phased out, dont use them any more in new code!)
+(   92)   integer, parameter :: s_ = r4_
+(   93)   integer, parameter :: l_ = r4_ ! should be r8_ to keep naming consistent
+(   94) # 95 "numerics.F90"
+(   95)   integer, parameter :: nbytes_i1_ = 1
+(   96)   integer, parameter :: nbytes_i2_ = 2
+(   97)   integer, parameter :: nbytes_i4_ = 4
+(   98)   integer, parameter :: nbytes_i8_ = 8
+(   99) !  integer, parameter :: nbytes_i_  = nbytes_i4_
+(  100) # 101 "numerics.F90"
+(  101)   integer, parameter :: nbytes_r4_ = 4
+(  102)   integer, parameter :: nbytes_r8_ = 8
+(  103) !  integer, parameter :: nbytes_r_  = nbytes_r4_
+(  104) # 105 "numerics.F90"
+(  105)   integer, parameter :: nbytes_c   = 1
+(  106) # 107 "numerics.F90"
+(  107)   ! WARNING: although these numbers usually gives the nr of bytes for
+(  108)   ! these variable kinds in fortran90 there is no guarantee in the
+(  109)   ! language definition that selected_int_kind and selected_real_kind
+(  110)   ! will always return with these numbers !!!
+(  111)   ! To be absolutely sure, use the check_variable_sizes() routine
+(  112)   ! to check the sizes during runtime.
+(  113) # 114 "numerics.F90"
+(  114)   ! The same for character. Upto now we only have seen compilers
+(  115)   ! using 1 byte per character. However, in principle the character
+(  116)   ! type may also occur with kind=2 to support languages with large
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 27
+
+(  117)   ! numbers of characters, like Chinese/Kanji. (see Metcalf/Reid, p.19)
+(  118)   ! I hope nobody will ever consider making this kind=2 characters
+(  119)   ! the default, but just in case, we should check on it
+(  120)   ! (since all low level read/write/convert/byteswap routines depend
+(  121)   !  on the assumption that 1 character equals 1 byte)
+(  122) # 123 "numerics.F90"
+(  123)   !---------------------------------------------------
+(  124)   ! SELECTED_INT_KIND(R) selects an integer type able to contain
+(  125)   ! the range -10^R < n < 10^R
+(  126)   !
+(  127)   ! SELECTED_REAL_KIND(P,R) selects a real type able to contain
+(  128)   ! at least P significant digits, and a decimal exponent range
+(  129)   ! of at least R
+(  130)   !---------------------------------------------------
+(  131) # 132 "numerics.F90"
+(  132)   ! integer and real missing indicators
+(  133)   ! for integers, use the maximum possible positive value
+(  134)   ! (which can be obtained by the huge() command)
+(  135)   integer(i1_), parameter :: missing_indicator_integer_i1_ = 127        ! = 2**7 -1
+(  136)   integer(i2_), parameter :: missing_indicator_integer_i2_ = 32767      ! = 2**15-1
+(  137)   integer(i4_), parameter :: missing_indicator_integer_i4_ = 2147483647 ! = 2**31-1
+(  138)   integer(i8_), parameter :: missing_indicator_integer_i8_ = &
+(  139)                                                 9223372036854775807_i8_ ! = 2**63-1
+(  140)   integer,      parameter :: missing_indicator_integer = (2**30-1)+2**30! = 2**31-1
+(  141) # 142 "numerics.F90"
+(  142)   ! for reals use the usual number in scatterometry software
+(  143)   real(r8_), parameter   :: missing_indicator_real    = 1.7E38_r8_ ! old: rMDI
+(  144)   real(r8_), parameter   :: missing_indicator_real_lower  = missing_indicator_real*0.99
+(  145)   real(r8_), parameter   :: missing_indicator_real_r8 = 1.7E38_r8_ ! old: rMDI
+(  146)   ! we should not use this 4 byte version
+(  147)   real(r4_), parameter   :: missing_indicator_real_r4 = 1.7E38_r4_ ! old: rMDI
+(  148)   ! use the functions missing_real/missing_int to check these conditions
+(  149) # 150 "numerics.F90"
+(  150)   ! REMARK: these missing values are HARDCODED into the ECMWF BUFR library
+(  151)   ! but are adjustable for the GRIB library.
+(  152)   ! For BUFR, do a grep on "NVIND=" or "RVIND=" to find the values.
+(  153)   ! NVIND = (2**30-1)+2**30 =  2**31-1 = 2147483647
+(  154)   ! RVIND = 1.7E38
+(  155) # 156 "numerics.F90"
+(  156)   ! WARNING: these parameters should have the same values as the ones
+(  157)   ! defined in the ErrorHandler module, otherwise the error printing
+(  158)   ! routine will produce incorrect results...
+(  159)   integer, parameter :: no_error                = 0
+(  160)   integer, parameter :: error_numerics_intsize  = 50301
+(  161)   integer, parameter :: error_numerics_realsize = 50311
+(  162)   integer, parameter :: error_numerics_charsize = 50321
+(  163)   integer, parameter :: error_numerics_hexval   = 50331
+(  164) # 165 "numerics.F90"
+(  165)   ! hexadecimal numbers can only be used portably inside data statements
+(  166)   ! and since I wish to use them for constant parameters I have
+(  167)   ! to give the corresponding integer values instead.
+(  168)   ! Note that the correspondence between the two representations 
+(  169)   ! is checked by calling the routine check_hex_values defined below.
+(  170) # 171 "numerics.F90"
+(  171)   ! remark:
+(  172)   !For single-precision real values:
+(  173)   !
+(  174)   ! * A signaling NaN is represented by any bit pattern between 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 28
+
+(  175)   !   X'7F80 0001' and X'7FBF FFFF' or between X'FF80 0001' and X'FFBF FFFF'.
+(  176)   ! * A quiet NaN is represented by any bit pattern between 
+(  177)   !   X'7FC0 0000' and X'7FFF FFFF' or between X'FFC0 0000' and X'FFFF FFFF'.
+(  178)   ! see:
+(  179)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  180)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  181) # 182 "numerics.F90"
+(  182)   !integer(i4_), parameter :: pos_nan_lower_i4 = z"7F800001"
+(  183)   integer(i4_), parameter :: pos_nan_lower_i4 = 2139095041
+(  184)   !integer(i4_), parameter :: pos_nan_upper_i4 = z"7FFFFFFF"
+(  185)   integer(i4_), parameter :: pos_nan_upper_i4 = 2147483647
+(  186)   !integer(i4_), parameter :: neg_nan_lower_i4 = z"FF800001"
+(  187)   integer(i4_), parameter :: neg_nan_lower_i4 = -8388607
+(  188)   !integer(i4_), parameter :: neg_nan_upper_i4 = z"FFFFFFFF"
+(  189)   integer(i4_), parameter :: neg_nan_upper_i4 = -1
+(  190) # 191 "numerics.F90"
+(  191)   ! remark:
+(  192)   !For double-precision real values:
+(  193)   !
+(  194)   ! * A signaling NaN is represented by any bit pattern between 
+(  195)   !   X'7FF00000 00000001' and X'7FF7FFFF FFFFFFFF' or between 
+(  196)   !   X'FFF00000 00000001' and X'FFF7FFFF FFFFFFFF'.
+(  197)   ! * A quiet NaN is represented by any bit pattern between 
+(  198)   !   X'7FF80000 00000000' and X'7FFFFFFF FFFFFFFF' or between 
+(  199)   !   X'FFF80000 00000000' and X'FFFFFFFF FFFFFFFF'.
+(  200)   ! see:
+(  201)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  202)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  203) # 204 "numerics.F90"
+(  204)   !integer(i8_), parameter :: pos_nan_lower_i8 = z'7FF0000000000001'
+(  205)   integer(i8_), parameter :: pos_nan_lower_i8 = 9218868437227405313_i8_
+(  206)   !integer(i8_), parameter :: pos_nan_upper_i8 = z'7FFFFFFFFFFFFFFF'
+(  207)   integer(i8_), parameter :: pos_nan_upper_i8 = 9223372036854775807_i8_
+(  208)   !integer(i8_), parameter :: neg_nan_lower_i8 = z'FFF0000000000001'
+(  209)   integer(i8_), parameter :: neg_nan_lower_i8 = -4503599627370495_i8_
+(  210)   !integer(i8_), parameter :: neg_nan_upper_i8 = z'FFFFFFFFFFFFFFFF'
+(  211)   integer(i8_), parameter :: neg_nan_upper_i8 = -1_i8_
+(  212) # 213 "numerics.F90"
+(  213)   !For single-precision real values:
+(  214)   !
+(  215)   ! * Positive infinity is represented by the bit pattern X'7F80 0000'.
+(  216)   ! * Negative infinity is represented by the bit pattern X'FF80 0000'.
+(  217)   ! see:
+(  218)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  219)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  220) # 221 "numerics.F90"
+(  221)   integer(i4_), parameter :: bit_pattern_PosInf_i4 = 2139095040
+(  222)   integer(i4_), parameter :: bit_pattern_NegInf_i4 = -8388608
+(  223)   
+(  224)   !For double-precision real values:
+(  225)   !
+(  226)   ! * Pos. infinity is represented by the bit pattern X'7FF00000 00000000'.
+(  227)   ! * Neg. infinity is represented by the bit pattern X'FFF00000 00000000'.
+(  228)   ! see:
+(  229)   ! http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?\
+(  230)   !            topic=/com.ibm.xlf101l.doc/xlfopg/fpieee.htm
+(  231) # 232 "numerics.F90"
+(  232)   integer(i8_), parameter :: bit_pattern_PosInf_i8 = 9218868437227405312_i8_
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 29
+
+(  233)   integer(i8_), parameter :: bit_pattern_NegInf_i8 = -4503599627370496_i8_
+(  234) # 235 "numerics.F90"
+(  235)   !  #]
+(  236)   !  #[ interfaces for overloading functions
+(  237) # 238 "numerics.F90"
+(  238)   ! overload the function missing_int
+(  239)   INTERFACE missing_int
+(  240)      module procedure missing_int2, missing_int4, missing_int8
+(  241)   END INTERFACE
+(  242) # 243 "numerics.F90"
+(  243)   ! overload the function missing_real
+(  244)   INTERFACE missing_real
+(  245)      module procedure missing_real4, missing_real8 !, missing_real16
+(  246)   END INTERFACE
+(  247)   ! overload the is_NAN function
+(  248)   INTERFACE is_NAN
+(  249)      module procedure is_NaN_real4, is_NaN_real8
+(  250)   END INTERFACE
+(  251)   ! overload the is_PosInf function
+(  252)   INTERFACE is_PosInf
+(  253)      module procedure is_PosInf_real4, is_PosInf_real8
+(  254)   END INTERFACE
+(  255)   ! overload the is_NegInf function
+(  256)   INTERFACE is_NegInf
+(  257)      module procedure is_NegInf_real4, is_NegInf_real8
+(  258)   END INTERFACE
+(  259)   ! overload the function real2txt
+(  260)   INTERFACE real2txt
+(  261)      module procedure real4_2txt, real8_2txt
+(  262)   END INTERFACE
+(  263)   ! overload the function real2txt_extra_checks
+(  264)   INTERFACE real2txt_extra_checks
+(  265)      module procedure real4_to_txt_extra_checks, real8_to_txt_extra_checks
+(  266)   END INTERFACE
+(  267)   ! overload the function real2int
+(  268)   INTERFACE real2int
+(  269)      module procedure real4_to_int, real8_to_int
+(  270)   END INTERFACE
+(  271)   ! overload the function int2real
+(  272)   ! this doesn't work because the input interface is identical 
+(  273)   ! for the 2 functions!!!
+(  274)   !INTERFACE int2real
+(  275)   !   module procedure int_to_real4,int_to_real8
+(  276)   !END INTERFACE
+(  277) # 278 "numerics.F90"
+(  278)   !  #]
+(  279) CONTAINS
+(  280)   !---------------------------------------------------
+(  281)   subroutine detect_variable_sizes
+(  282)     !  #[
+(  283)     ! determines nr of bytes in a variable of the given kind_type
+(  284) # 285 "numerics.F90"
+(  285)     integer      :: test_di  ! default_integer
+(  286) !    integer(i_)  :: test_i
+(  287) # 288 "numerics.F90"
+(  288)     integer(i1_) :: test_i1
+(  289)     integer(i2_) :: test_i2
+(  290)     integer(i4_) :: test_i4
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 30
+
+(  291)     integer(i8_) :: test_i8
+(  292) !    integer(i16_) :: test_i16 ! gives compile error, since i16_ = -1
+(  293) # 294 "numerics.F90"
+(  294)     real         :: test_dr ! default_real
+(  295)     real(s_)     :: test_s
+(  296)     real(l_)     :: test_l
+(  297) !    real(r_)     :: test_r
+(  298)     real(r4_)    :: test_r4
+(  299)     real(r8_)    :: test_r8
+(  300) !    real(r16_)   :: test_r16 ! fails on 32 bit 1
+(  301) # 302 "numerics.F90"
+(  302)     character(len=1) :: test_c
+(  303) # 304 "numerics.F90"
+(  304)     integer :: var_length
+(  305) # 306 "numerics.F90"
+(  306)     write (*,"(a8,1X,a11,1X,a5,1X,a9)") &
+(  307)          "var_type","nr_of_bytes","range","precision"
+(  308) # 309 "numerics.F90"
+(  309)     inquire(iolength=var_length) test_di
+(  310)     write (*,"(a8,1X,i11,1X,i5)") "di",var_length,range(test_di)
+(  311) # 312 "numerics.F90"
+(  312) !    inquire(iolength=var_length) test_i
+(  313) !    write (*,"(a8,1X,i11,1X,i5)") "i",var_length,range(test_i)
+(  314) # 315 "numerics.F90"
+(  315)     inquire(iolength=var_length) test_i1
+(  316)     write (*,"(a8,1X,i11,1X,i5)") "i1_",var_length,range(test_i1)
+(  317) # 318 "numerics.F90"
+(  318)     inquire(iolength=var_length) test_i2
+(  319)     write (*,"(a8,1X,i11,1X,i5)") "i2_",var_length,range(test_i2)
+(  320) # 321 "numerics.F90"
+(  321)     inquire(iolength=var_length) test_i4
+(  322)     write (*,"(a8,1X,i11,1X,i5)") "i4_",var_length,range(test_i4)
+(  323) # 324 "numerics.F90"
+(  324)     inquire(iolength=var_length) test_i8
+(  325)     write (*,"(a8,1X,i11,1X,i5)") "i8_",var_length,range(test_i8)
+(  326) # 327 "numerics.F90"
+(  327) ! a 16 byte integer does not exist on SGI-IRIX, but maybe on other machines?
+(  328) !    inquire(iolength=var_length) test_i16
+(  329) !    write (*,"(a8,1X,i11,1X,i5)") "i16_",var_length,range(test_i16)
+(  330) # 331 "numerics.F90"
+(  331)     inquire(iolength=var_length) test_dr
+(  332)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  333)          "dr",var_length,range(test_dr),precision(test_dr)
+(  334) # 335 "numerics.F90"
+(  335)     inquire(iolength=var_length) test_s
+(  336)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  337)          "s_",var_length,range(test_s),precision(test_s)
+(  338) # 339 "numerics.F90"
+(  339)     inquire(iolength=var_length) test_l
+(  340)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  341)          "l_",var_length,range(test_l),precision(test_l)
+(  342) # 343 "numerics.F90"
+(  343) !    inquire(iolength=var_length) test_r
+(  344) !    write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  345) !         "r_",var_length,range(test_r),precision(test_r)
+(  346) # 347 "numerics.F90"
+(  347)     inquire(iolength=var_length) test_r4
+(  348)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 31
+
+(  349)          "r4_",var_length,range(test_r4),precision(test_r4)
+(  350) # 351 "numerics.F90"
+(  351)     inquire(iolength=var_length) test_r8
+(  352)     write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  353)          "r8_",var_length,range(test_r8),precision(test_r8)
+(  354) # 355 "numerics.F90"
+(  355) !    inquire(iolength=var_length) test_r16
+(  356) !    write (*,"(a8,1X,i11,1X,i5,1X,i9)") &
+(  357) !         "r16_",var_length,range(test_r16),precision(test_r16)
+(  358) # 359 "numerics.F90"
+(  359)     inquire(iolength=var_length) test_c
+(  360)     write (*,"(a8,1X,i11)") "char",var_length
+(  361) # 362 "numerics.F90"
+(  362)   end subroutine detect_variable_sizes
+(  363)   !---------------------------------------------------
+(  364)   !  #]
+(  365)   subroutine check_variable_sizes(error_flag)
+(  366)     !  #[
+(  367)     integer, intent(out) :: error_flag
+(  368) # 369 "numerics.F90"
+(  369)     ! local variables
+(  370)     integer      :: nbytes
+(  371)     integer(i1_) :: value_i1_
+(  372)     integer(i2_) :: value_i2_
+(  373)     integer(i4_) :: value_i4_
+(  374)     integer(i8_) :: value_i8_
+(  375)     !integer(i_)  :: value_i_
+(  376)     real(r4_)    :: value_r4_
+(  377)     real(r8_)    :: value_r8_
+(  378)     !real(r_)     :: value_r_
+(  379)     character(len=1) :: c
+(  380) # 381 "numerics.F90"
+(  381)     ! initialize error flag
+(  382)     error_flag = no_error
+(  383)     
+(  384)     ! see how many bytes there are in the default integer i_ datatype
+(  385)     inquire(iolength=nbytes) value_i1_
+(  386)     IF (nbytes .ne. nbytes_i1_) THEN 
+(  387)        IF (nbytes .ne. nbytes_i2_) THEN 
+(  388)           print *,"ERROR: size of integer kind i1_ is not the expected ",&
+(  389)                nbytes_i1_," byte"
+(  390)           print *,"but seems to be ",nbytes," bytes ..."
+(  391)           error_flag = error_numerics_intsize
+(  392)        !ELSE
+(  393)           ! this exception is needed to let the software run on the 
+(  394)           ! NECSX machine at MF
+(  395)           !print *,"WARNING: size of integer kind i1_ equals size of"
+(  396)           !print *,"WARNING: integer kind i2_."
+(  397)           !print *,"WARNING: NECSX workarounds will be activated ..."
+(  398)        END IF
+(  399)     END IF
+(  400) # 401 "numerics.F90"
+(  401)     inquire(iolength=nbytes) value_i2_
+(  402)     IF (nbytes .ne. nbytes_i2_) THEN
+(  403)        print *,"ERROR: size of integer kind i2_ is not the expected ",&
+(  404)             nbytes_i2_," bytes"
+(  405)        print *,"but seems to be ",nbytes," bytes ..."
+(  406)        error_flag = error_numerics_intsize
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 32
+
+(  407)     END IF
+(  408)     inquire(iolength=nbytes) value_i4_
+(  409)     IF (nbytes .ne. nbytes_i4_) THEN
+(  410)        print *,"ERROR: size of integer kind i4_ is not the expected ",&
+(  411)             nbytes_i4_," bytes"
+(  412)        print *,"but seems to be ",nbytes," bytes ..."
+(  413)        error_flag = error_numerics_intsize
+(  414)     END IF
+(  415)     inquire(iolength=nbytes) value_i8_
+(  416)     IF (nbytes .ne. nbytes_i8_) THEN
+(  417)        print *,"ERROR: size of integer kind i8_ is not the expected ",&
+(  418)             nbytes_i8_," byte"
+(  419)        print *,"but seems to be ",nbytes," bytes ..."
+(  420)        error_flag = error_numerics_intsize
+(  421)     END IF
+(  422) !    inquire(iolength=nbytes) value_i_
+(  423) !    IF (nbytes .ne. nbytes_i_) THEN
+(  424) !       print *,"ERROR: size of the default integer kind i_ is not",&
+(  425) !            " the expected ",nbytes_i_," bytes"
+(  426) !       print *,"but seems to be ",nbytes," bytes ..."
+(  427) !       error_flag = error_numerics_intsize
+(  428) !    END IF
+(  429) # 430 "numerics.F90"
+(  430)     inquire(iolength=nbytes) value_r4_
+(  431)     IF (nbytes .ne. nbytes_r4_) THEN
+(  432)        print *,"ERROR: size of real kind r4_ is not the expected ",&
+(  433)             nbytes_r4_," byte"
+(  434)        print *,"but seems to be ",nbytes," bytes ..."
+(  435)        error_flag = error_numerics_realsize
+(  436)     END IF
+(  437)     inquire(iolength=nbytes) value_r8_
+(  438)     IF (nbytes .ne. nbytes_r8_) THEN
+(  439)        print *,"ERROR: size of real kind r8_ is not the expected ",&
+(  440)             nbytes_r8_," byte"
+(  441)        print *,"but seems to be ",nbytes," bytes ..."
+(  442)        error_flag = error_numerics_realsize
+(  443)     END IF
+(  444) !    inquire(iolength=nbytes) value_r_
+(  445) !    IF (nbytes .ne. nbytes_r_) THEN
+(  446) !       print *,"ERROR: size of the default real kind r_ is not the expected ",&
+(  447) !            nbytes_r4_," byte"
+(  448) !       print *,"but seems to be ",nbytes," bytes ..."
+(  449) !       error_flag = error_numerics_realsize
+(  450) !    END IF
+(  451) # 452 "numerics.F90"
+(  452)     inquire(iolength=nbytes) c
+(  453)     IF (nbytes .ne. nbytes_c) THEN
+(  454)        print *,"ERROR: size of a character is not the expected ",&
+(  455)             nbytes_c," byte"
+(  456)        print *,"but seems to be ",nbytes," bytes ..."
+(  457)        error_flag = error_numerics_charsize
+(  458)     END IF
+(  459) # 460 "numerics.F90"
+(  460)     IF (error_flag .ne. no_error) THEN
+(  461)        print *,"ERROR in module numerics, subroutine check_variable_sizes():"
+(  462)        print *,"One of the variable kinds defined by the numerics module"
+(  463)        print *,"does not have the expected nr of bytes !!!!"
+(  464)        print *,"This may have serious consequences for handling"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 33
+
+(  465)        print *,"unformatted data !!!! and should be corrected before"
+(  466)        print *,"using this program on this platform......."
+(  467)     END IF
+(  468) # 469 "numerics.F90"
+(  469)   end subroutine check_variable_sizes
+(  470)     !  #]
+(  471)   subroutine check_hex_values(error_flag)
+(  472)     !  #[
+(  473)     integer, intent(out) :: error_flag
+(  474) # 475 "numerics.F90"
+(  475)     ! local variables
+(  476)     integer(i4_) :: pos_nan_lower_i4_hex
+(  477)     integer(i4_) :: pos_nan_upper_i4_hex
+(  478)     integer(i4_) :: neg_nan_lower_i4_hex
+(  479)     integer(i4_) :: neg_nan_upper_i4_hex
+(  480) # 481 "numerics.F90"
+(  481)     integer(i8_) :: pos_nan_lower_i8_hex
+(  482)     integer(i8_) :: pos_nan_upper_i8_hex
+(  483)     integer(i8_) :: neg_nan_lower_i8_hex
+(  484)     integer(i8_) :: neg_nan_upper_i8_hex
+(  485) # 486 "numerics.F90"
+(  486)     integer(i4_) :: bit_pattern_PosInf_i4_hex
+(  487)     integer(i4_) :: bit_pattern_NegInf_i4_hex
+(  488) # 489 "numerics.F90"
+(  489)     integer(i8_) :: bit_pattern_PosInf_i8_hex
+(  490)     integer(i8_) :: bit_pattern_NegInf_i8_hex
+(  491) # 492 "numerics.F90"
+(  492)     ! some conversions fail
+(  493)     ! when following the strict fortran95 standard (which is what newer
+(  494)     ! versions of gfortran use). See the discussion at:
+(  495)     ! http://gcc.gnu.org/bugzilla/show_bug.cgi?id=18026
+(  496)     ! The constants are stored in 8 byte integers (or whatever the highest
+(  497)     ! precision integer is on the platform), so z"FF800001" gets converted
+(  498)     ! to z"FFFFFFFFFF800001" which cannot be stored anymore in a 4 byte
+(  499)     ! therefore a little trick is needed (raising the 31st bit)
+(  500) # 501 "numerics.F90"
+(  501)     !data pos_nan_lower_i4_hex /z"7F800001"/
+(  502)     !data pos_nan_upper_i4_hex /z"7FFFFFFF"/
+(  503)     pos_nan_lower_i4_hex = 2139095041
+(  504)     pos_nan_upper_i4_hex = 2147483647
+(  505)     
+(  506)     !data neg_nan_lower_i4_hex /z"FF800001"/
+(  507)     !data neg_nan_upper_i4_hex /z"FFFFFFFF"/ 
+(  508)     ! not portable, replaced by:
+(  509)     neg_nan_lower_i4_hex = ibset(pos_nan_lower_i4_hex,31)
+(  510)     neg_nan_upper_i4_hex = ibset(pos_nan_upper_i4_hex,31)
+(  511) # 512 "numerics.F90"
+(  512)     ! remark: the next data statements give some ANSI warnings on SUNOS
+(  513)     ! complaining about a type mismatch
+(  514)     ! I have no idea how to solve them, since giving the type i8_ to
+(  515)     ! this hexadecimal constant seems impossible to do in a portable way.
+(  516)     ! However, since this code is accepted by, and runs on all compilers I
+(  517)     ! know of, it seems no problem. JK. 07-Oct-2008
+(  518)     !data pos_nan_lower_i8_hex /z"7FF0000000000001"/
+(  519)     !data pos_nan_upper_i8_hex /z"7FFFFFFFFFFFFFFF"/
+(  520) # 521 "numerics.F90"
+(  521)     pos_nan_lower_i8_hex = 9218868437227405313_i8_
+(  522)     pos_nan_upper_i8_hex = 9223372036854775807_i8_
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 34
+
+(  523)     
+(  524)     !data neg_nan_lower_i8_hex /z"FFF0000000000001"/
+(  525)     !data neg_nan_upper_i8_hex /z"FFFFFFFFFFFFFFFF"/
+(  526)     ! not portable, replaced by:
+(  527)     neg_nan_lower_i8_hex = ibset(pos_nan_lower_i8_hex,63)
+(  528)     neg_nan_upper_i8_hex = ibset(pos_nan_upper_i8_hex,63)
+(  529) # 530 "numerics.F90"
+(  530)     !data bit_pattern_PosInf_i4_hex /z'7F800000'/
+(  531)     bit_pattern_PosInf_i4_hex = 2139095040
+(  532) # 533 "numerics.F90"
+(  533)     !data bit_pattern_NegInf_i4_hex /z'FF800000'/
+(  534)     ! not portable, replaced by:
+(  535)     bit_pattern_NegInf_i4_hex = ibset(bit_pattern_PosInf_i4_hex,31)
+(  536) # 537 "numerics.F90"
+(  537)     !data bit_pattern_PosInf_i8_hex /z'7FF0000000000000'/
+(  538)     bit_pattern_PosInf_i8_hex = 9218868437227405312_i8_
+(  539)     
+(  540)     !data bit_pattern_NegInf_i8_hex /z'FFF0000000000000'/
+(  541)     ! not portable, replaced by:
+(  542)     bit_pattern_NegInf_i8_hex = ibset(bit_pattern_PosInf_i8_hex,63)
+(  543) # 544 "numerics.F90"
+(  544)     error_flag = no_error
+(  545) # 546 "numerics.F90"
+(  546)     ! testing 4 byte NaN bit patterns
+(  547) # 548 "numerics.F90"
+(  548)     IF (pos_nan_lower_i4 .ne. pos_nan_lower_i4_hex) THEN 
+(  549)        print *,"ERROR: hexadecimal value for pos_nan_lower_i4 seems ",&
+(  550)                "not correct"
+(  551)        print *,"    pos_nan_lower_i4     = ",pos_nan_lower_i4
+(  552)        print *,"but pos_nan_lower_i4_hex = ",pos_nan_lower_i4_hex
+(  553)        error_flag = error_numerics_hexval
+(  554)     END IF
+(  555) # 556 "numerics.F90"
+(  556)     IF (pos_nan_upper_i4 .ne. pos_nan_upper_i4_hex) THEN 
+(  557)        print *,"ERROR: hexadecimal value for pos_nan_upper_i4 seems ",&
+(  558)                "not correct"
+(  559)        print *,"    pos_nan_upper_i4     = ",pos_nan_upper_i4
+(  560)        print *,"but pos_nan_upper_i4_hex = ",pos_nan_upper_i4_hex
+(  561)        error_flag = error_numerics_hexval
+(  562)     END IF
+(  563) # 564 "numerics.F90"
+(  564)     IF (neg_nan_lower_i4 .ne. neg_nan_lower_i4_hex) THEN 
+(  565)        print *,"ERROR: hexadecimal value for neg_nan_lower_i4 seems ",&
+(  566)                "not correct"
+(  567)        print *,"    neg_nan_lower_i4     = ",neg_nan_lower_i4
+(  568)        print *,"but neg_nan_lower_i4_hex = ",neg_nan_lower_i4_hex
+(  569)        error_flag = error_numerics_hexval
+(  570)     END IF
+(  571) # 572 "numerics.F90"
+(  572)     IF (neg_nan_upper_i4 .ne. neg_nan_upper_i4_hex) THEN 
+(  573)        print *,"ERROR: hexadecimal value for neg_nan_upper_i4 seems ",&
+(  574)                "not correct"
+(  575)        print *,"    neg_nan_upper_i4     = ",neg_nan_upper_i4
+(  576)        print *,"but neg_nan_upper_i4_hex = ",neg_nan_upper_i4_hex
+(  577)        error_flag = error_numerics_hexval
+(  578)     END IF
+(  579) # 580 "numerics.F90"
+(  580)     ! testing 8 byte NaN bit patterns
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 35
+
+(  581) # 582 "numerics.F90"
+(  582)     IF (pos_nan_lower_i8 .ne. pos_nan_lower_i8_hex) THEN 
+(  583)        print *,"ERROR: hexadecimal value for pos_nan_lower_i8 seems ",&
+(  584)                "not correct"
+(  585)        print *,"    pos_nan_lower_i8     = ",pos_nan_lower_i8
+(  586)        print *,"but pos_nan_lower_i8_hex = ",pos_nan_lower_i8_hex
+(  587)        error_flag = error_numerics_hexval
+(  588)     END IF
+(  589) # 590 "numerics.F90"
+(  590)     IF (pos_nan_upper_i8 .ne. pos_nan_upper_i8_hex) THEN 
+(  591)        print *,"ERROR: hexadecimal value for pos_nan_upper_i8 seems ",&
+(  592)                "not correct"
+(  593)        print *,"    pos_nan_upper_i8     = ",pos_nan_upper_i8
+(  594)        print *,"but pos_nan_upper_i8_hex = ",pos_nan_upper_i8_hex
+(  595)        error_flag = error_numerics_hexval
+(  596)     END IF
+(  597) # 598 "numerics.F90"
+(  598)     IF (neg_nan_lower_i8 .ne. neg_nan_lower_i8_hex) THEN 
+(  599)        print *,"ERROR: hexadecimal value for neg_nan_lower_i8 seems ",&
+(  600)                "not correct"
+(  601)        print *,"    neg_nan_lower_i8     = ",neg_nan_lower_i8
+(  602)        print *,"but neg_nan_lower_i8_hex = ",neg_nan_lower_i8_hex
+(  603)        error_flag = error_numerics_hexval
+(  604)     END IF
+(  605) # 606 "numerics.F90"
+(  606)     IF (neg_nan_upper_i8 .ne. neg_nan_upper_i8_hex) THEN 
+(  607)        print *,"ERROR: hexadecimal value for neg_nan_upper_i8 seems ",&
+(  608)                "not correct"
+(  609)        print *,"    neg_nan_upper_i8     = ",neg_nan_upper_i8
+(  610)        print *,"but neg_nan_upper_i8_hex = ",neg_nan_upper_i8_hex
+(  611)        error_flag = error_numerics_hexval
+(  612)     END IF
+(  613) # 614 "numerics.F90"
+(  614)     ! testing 4 byte Inf bit patterns
+(  615) # 616 "numerics.F90"
+(  616)     IF (bit_pattern_PosInf_i4 .ne. bit_pattern_PosInf_i4_hex) THEN 
+(  617)        print *,"ERROR: hexadecimal value for bit_pattern_PosInf_i4 seems ",&
+(  618)                "not correct"
+(  619)        print *,"    bit_pattern_PosInf_i4     = ",bit_pattern_PosInf_i4
+(  620)        print *,"but bit_pattern_PosInf_i4_hex = ",bit_pattern_PosInf_i4_hex
+(  621)        error_flag = error_numerics_hexval
+(  622)     END IF
+(  623) # 624 "numerics.F90"
+(  624)     IF (bit_pattern_NegInf_i4 .ne. bit_pattern_NegInf_i4_hex) THEN 
+(  625)        print *,"ERROR: hexadecimal value for bit_pattern_NegInf_i4 seems ",&
+(  626)                "not correct"
+(  627)        print *,"    bit_pattern_NegInf_i4     = ",bit_pattern_NegInf_i4
+(  628)        print *,"but bit_pattern_NegInf_i4_hex = ",bit_pattern_NegInf_i4_hex
+(  629)        error_flag = error_numerics_hexval
+(  630)     END IF
+(  631) # 632 "numerics.F90"
+(  632)     ! testing 8 byte Inf bit patterns
+(  633) # 634 "numerics.F90"
+(  634)     IF (bit_pattern_PosInf_i8 .ne. bit_pattern_PosInf_i8_hex) THEN 
+(  635)        print *,"ERROR: hexadecimal value for bit_pattern_PosInf_i8 seems ",&
+(  636)                "not correct"
+(  637)        print *,"    bit_pattern_PosInf_i8     = ",bit_pattern_PosInf_i8
+(  638)        print *,"but bit_pattern_PosInf_i8_hex = ",bit_pattern_PosInf_i8_hex
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 36
+
+(  639)        error_flag = error_numerics_hexval
+(  640)     END IF
+(  641) # 642 "numerics.F90"
+(  642)     IF (bit_pattern_NegInf_i8 .ne. bit_pattern_NegInf_i8_hex) THEN 
+(  643)        print *,"ERROR: hexadecimal value for bit_pattern_NegInf_i8 seems ",&
+(  644)                "not correct"
+(  645)        print *,"    bit_pattern_NegInf_i8     = ",bit_pattern_NegInf_i8
+(  646)        print *,"but bit_pattern_NegInf_i8_hex = ",bit_pattern_NegInf_i8_hex
+(  647)        error_flag = error_numerics_hexval
+(  648)     END IF
+(  649) # 650 "numerics.F90"
+(  650)   end subroutine check_hex_values
+(  651)     !  #]
+(  652)   !---------------------------------------------------
+(  653)   function missing_real4(x) result(m)
+(  654)     !  #[
+(  655)     real(r4_) :: x
+(  656)     logical  :: m
+(  657)     m=.false.
+(  658)     if (x .ge. missing_indicator_real_lower) m=.true.
+(  659)   end function missing_real4
+(  660)   !---------------------------------------------------
+(  661)   !  #]
+(  662)   function missing_real8(x) result(m)
+(  663)     !  #[
+(  664)     real(r8_) :: x
+(  665)     logical  :: m
+(  666)     m=.false.
+(  667)     if (x .ge. missing_indicator_real_lower) m=.true.
+(  668)   end function missing_real8
+(  669)   !---------------------------------------------------
+(  670)   !  #]
+(  671) ! not all platforms have real*16 defined!
+(  672) !  function missing_real16(x) result(m)
+(  673)     !  #[
+(  674) !    real(r16_) :: x
+(  675) !    logical  :: m
+(  676) !    m=.false.
+(  677) !    if (x .ge. (missing_indicator_real*0.99)) m=.true.
+(  678) !  end function missing_real16
+(  679)   !---------------------------------------------------
+(  680)     !  #]
+(  681)   function missing_int1(x) result(m)
+(  682)     !  #[
+(  683)     integer(i1_) :: x
+(  684)     logical :: m
+(  685)     m=.false.
+(  686)     if (x .eq. (missing_indicator_integer_i1_)) m=.true.
+(  687)   end function missing_int1
+(  688)   !---------------------------------------------------
+(  689)   !  #]
+(  690)   function missing_int2(x) result(m)
+(  691)     !  #[
+(  692)     integer(i2_) :: x
+(  693)     logical :: m
+(  694)     m=.false.
+(  695)     if (x .eq. (missing_indicator_integer_i2_)) m=.true.
+(  696)   end function missing_int2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 37
+
+(  697)   !---------------------------------------------------
+(  698)   !  #]
+(  699)   function missing_int4(x) result(m)
+(  700)     !  #[
+(  701)     integer(i4_) :: x
+(  702)     logical :: m
+(  703)     m=.false.
+(  704)     if (x .eq. (missing_indicator_integer_i4_)) m=.true.
+(  705)   end function missing_int4
+(  706)   !---------------------------------------------------
+(  707)   !  #]
+(  708)   function missing_int8(x) result(m)
+(  709)     !  #[
+(  710) # 711 "numerics.F90"
+(  711)     integer(i8_) :: x
+(  712)     logical :: m
+(  713)     m=.false.
+(  714) # 715 "numerics.F90"
+(  715)     ! NOTE: this check fails if software is used on both 32 and 64 bit platforms.
+(  716)     !       routines like real2int always return the missing_indicator_integer_i4_
+(  717)     !       number, even when compiled for 64 bit.
+(  718)     !       So check for missing_indicator_integer for now.
+(  719)     !if (x .eq. (missing_indicator_integer_i8_)) m=.true.
+(  720) # 721 "numerics.F90"
+(  721)     if (x .eq. (missing_indicator_integer)) m=.true.
+(  722) # 723 "numerics.F90"
+(  723)   end function missing_int8
+(  724)   !---------------------------------------------------
+(  725) # 726 "numerics.F90"
+(  726)   !  #]
+(  727)   !---------------------------------------------------
+(  728)   function is_NaN_real4(x) result(n)
+(  729)     !  #[
+(  730) # 731 "numerics.F90"
+(  731)     real(r4_) :: x
+(  732)     logical   :: n
+(  733) # 734 "numerics.F90"
+(  734)     ! this function does not (yet) discriminate between signalling
+(  735)     ! and not-signalling NaN's, and also the sign of the NaN
+(  736)     ! is ignored, since not all compilers use this feature.
+(  737) # 738 "numerics.F90"
+(  738)     ! the trick I wanted to used here is the property that any if statement
+(  739)     ! fails if a NaN is used in its expression, so (x.eq.x)
+(  740)     ! actually returns .false. for reals with the NaN value ....
+(  741)     !n=.true.
+(  742)     !if (x .eq. x) n=.false.
+(  743)     ! However, this does not work for the pgf90 compiler, 
+(  744)     ! so we have to use the bitpatterns instead ....
+(  745) # 746 "numerics.F90"
+(  746)     ! local variables and parameters
+(  747)     integer(i4_) :: bit_pattern
+(  748) # 749 "numerics.F90"
+(  749)     bit_pattern = transfer(x,bit_pattern)
+(  750)     n=.false.
+(  751) # 752 "numerics.F90"
+(  752)     if ( (bit_pattern .ge. pos_nan_lower_i4) .and. &
+(  753)          (bit_pattern .le. pos_nan_upper_i4)        ) then
+(  754)        !print *,"positive NaN!!!!"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 38
+
+(  755)        n=.true.
+(  756)     end if
+(  757)     if ( (bit_pattern .ge. neg_nan_lower_i4) .and. &
+(  758)          (bit_pattern .le. neg_nan_upper_i4)        ) then
+(  759)        !print *,"negative NaN!!!!"
+(  760)        n=.true.
+(  761)     end if
+(  762) # 763 "numerics.F90"
+(  763)   end function is_NaN_real4
+(  764)     !  #]
+(  765)   function is_NaN_real8(x) result(n)
+(  766)     !  #[
+(  767)     real(r8_) :: x
+(  768)     logical   :: n
+(  769) # 770 "numerics.F90"
+(  770)     ! this function does not (yet) discriminate between signalling
+(  771)     ! and not-signalling NaN's, and also the sign of the NaN
+(  772)     ! is ignored, since not all compilers use this feature.
+(  773) # 774 "numerics.F90"
+(  774)     ! the trick I wanted to used here is the property that any if statement
+(  775)     ! fails if a NaN is used in its expression, so (x.eq.x)
+(  776)     ! actually returns .false. for reals with the NaN value ....
+(  777)     !n=.true.
+(  778)     !if (x .eq. x) n=.false.
+(  779)     ! However, this does not work for the pgf90 compiler, 
+(  780)     ! so we have to use the bitpatterns instead ....
+(  781) # 782 "numerics.F90"
+(  782)     ! local variables and parameters
+(  783)     integer(i8_) :: bit_pattern
+(  784) # 785 "numerics.F90"
+(  785)     bit_pattern = transfer(x,bit_pattern)
+(  786)     n=.false.
+(  787) # 788 "numerics.F90"
+(  788)     if ( (bit_pattern .ge. pos_nan_lower_i8) .and. &
+(  789)          (bit_pattern .le. pos_nan_upper_i8)        ) then
+(  790)        !print *,"positive NaN!!!!"
+(  791)        n=.true.
+(  792)     end if
+(  793)     if ( (bit_pattern .ge. neg_nan_lower_i8) .and. &
+(  794)          (bit_pattern .le. neg_nan_upper_i8)        ) then
+(  795)        !print *,"negative NaN!!!!"
+(  796)        n=.true.
+(  797)     end if
+(  798) # 799 "numerics.F90"
+(  799)   end function is_NaN_real8
+(  800)     !  #]
+(  801)   function is_PosInf_real4(x) result(i)
+(  802)     !  #[
+(  803)     real(r4_) :: x
+(  804)     logical   :: i
+(  805) # 806 "numerics.F90"
+(  806)     ! local variables and parameters
+(  807)     integer(i4_)            :: bit_pattern
+(  808) # 809 "numerics.F90"
+(  809)     bit_pattern = transfer(x,bit_pattern)
+(  810) # 811 "numerics.F90"
+(  811)     i = .false.
+(  812)     if (bit_pattern .eq. bit_pattern_PosInf_i4) i = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 39
+
+(  813) # 814 "numerics.F90"
+(  814)   end function is_PosInf_real4
+(  815)     !  #]
+(  816)   function is_NegInf_real4(x) result(i)
+(  817)     !  #[
+(  818)     real(r4_) :: x
+(  819)     logical   :: i
+(  820) # 821 "numerics.F90"
+(  821)     ! local variables and parameters
+(  822)     integer(i4_)            :: bit_pattern
+(  823)     
+(  824)     bit_pattern = transfer(x,bit_pattern)
+(  825) # 826 "numerics.F90"
+(  826)     i = .false.
+(  827)     if (bit_pattern .eq. bit_pattern_NegInf_i4) i = .true.
+(  828) # 829 "numerics.F90"
+(  829)   end function is_NegInf_real4
+(  830)     !  #]
+(  831)   function is_PosInf_real8(x) result(i)
+(  832)     !  #[
+(  833)     real(r8_) :: x
+(  834)     logical   :: i
+(  835) # 836 "numerics.F90"
+(  836)     ! local variables
+(  837)     integer(i8_)            :: bit_pattern
+(  838) # 839 "numerics.F90"
+(  839)     bit_pattern = transfer(x,bit_pattern)
+(  840) # 841 "numerics.F90"
+(  841)     i=.false.
+(  842)     if (bit_pattern .eq. bit_pattern_PosInf_i8) i=.true.
+(  843) # 844 "numerics.F90"
+(  844)   end function is_PosInf_real8
+(  845)     !  #]
+(  846)   function is_NegInf_real8(x) result(i)
+(  847)     !  #[
+(  848)     real(r8_) :: x
+(  849)     logical   :: i
+(  850) # 851 "numerics.F90"
+(  851)     ! local variables
+(  852)     integer(i8_)            :: bit_pattern
+(  853) # 854 "numerics.F90"
+(  854)     bit_pattern = transfer(x,bit_pattern)
+(  855) # 856 "numerics.F90"
+(  856)     i=.false.
+(  857)     if (bit_pattern .eq. bit_pattern_NegInf_i8) i=.true.
+(  858) # 859 "numerics.F90"
+(  859)   end function is_NegInf_real8
+(  860)     !  #]
+(  861)   !---------------------------------------------------
+(  862) !  function convert_missing_real(x1) result(x2)
+(  863)     !  #[
+(  864) !    ! convert the missing indicator number to the number -999.0
+(  865) !    ! which is much more convenient for writing to formatted output files
+(  866) !    real(r_)    :: x1,x2
+(  867) !    x2=x1
+(  868) !    if (missing_real(x1)) x2=-999.0
+(  869) !  end function convert_missing_real
+(  870)   !---------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 40
+
+(  871)   !  #]
+(  872) !  function convert_missing_integer(i1) result(i2)
+(  873)     !  #[
+(  874) !    ! convert the missing indicator number to the number -999
+(  875) !    ! which is much more convenient for writing to formatted output files
+(  876) !    integer :: i1,i2
+(  877) !    i2=i1
+(  878) !    if (missing_int(i1)) i2=-999.0
+(  879) !  end function convert_missing_integer
+(  880)   !  #]
+(  881)   !---------------------------------------------------
+(  882)   function real4_to_txt_extra_checks(value) result(str_value)
+(  883)     !  #[
+(  884)     ! this function converts a real in full precision to a string
+(  885)     ! (so without given a specific format, like the real4_2txt
+(  886)     ! and real8_2txt functions do)
+(  887)     ! It also check for missing, NaN or Inf, and returns with a
+(  888)     ! uniform message if it finds such a condition
+(  889)     ! (this to prevent test problems because not all compilers
+(  890)     !  print Inf in the same way. Some print "Inf", other "inf"
+(  891)     !  and yet others print "Infinite")
+(  892)     ! This is an extended version of the SetFAdoFull_or_Missing()
+(  893)     ! that we implemented in ee_cfi_datatypes.F90)
+(  894) # 895 "numerics.F90"
+(  895)     ! length of the returned string
+(  896)     integer, parameter :: max_str_lenght = 50
+(  897) # 898 "numerics.F90"
+(  898)     real(r4_),        intent(in)  :: value
+(  899)     character(len=max_str_lenght) :: str_value ! result
+(  900) # 901 "numerics.F90"
+(  901)     ! local variable
+(  902)     character(len=max_str_lenght) :: temp_string
+(  903) # 904 "numerics.F90"
+(  904)     ! init
+(  905)     temp_string(:) = ' '
+(  906) # 907 "numerics.F90"
+(  907)     ! give the string "[not-a-number]" for missing numbers
+(  908)     IF (is_NaN_real4(value)) THEN
+(  909)        str_value = "[not-a-number]"
+(  910)        return
+(  911)     END IF
+(  912) # 913 "numerics.F90"
+(  913)     ! give the string "[+Infinite]" for +Infinite numbers
+(  914)     IF (is_PosInf_real4(value)) THEN
+(  915)        str_value = "[+Infinite]"
+(  916)        return
+(  917)     END IF
+(  918) # 919 "numerics.F90"
+(  919)     ! give the string "[-Infinite]" for -Infinite numbers
+(  920)     IF (is_NegInf_real4(value)) THEN
+(  921)        str_value = "[-Infinite]"
+(  922)        return
+(  923)     END IF
+(  924) # 925 "numerics.F90"
+(  925)     ! give the string "[missing]" for missing numbers
+(  926)     IF (missing_real(value)) THEN
+(  927)        str_value = "[missing]"
+(  928)        return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 41
+
+(  929)     END IF
+(  930) # 931 "numerics.F90"
+(  931)     write(temp_string, *, err=999) value
+(  932)     str_value =  trim(adjustl(temp_string))
+(  933) # 934 "numerics.F90"
+(  934)     return
+(  935) # 936 "numerics.F90"
+(  936)     ! Conversion from type r4_ to string failed
+(  937)     ! Are you sure this number fits within the 50 characters of the
+(  938)     ! available temporaty string ?
+(  939) 999 str_value = "[conversion error]"
+(  940)     return
+(  941)     
+(  942)   end function real4_to_txt_extra_checks
+(  943)     !  #]
+(  944)   function real8_to_txt_extra_checks(value) result(str_value)
+(  945)     !  #[
+(  946)     ! this function converts a real in full precision to a string
+(  947)     ! (so without given a specific format, like the real4_2txt
+(  948)     ! and real8_2txt functions do)
+(  949)     ! It also checks for missing, NaN or Inf, and returns with a
+(  950)     ! uniform message if it finds such a condition
+(  951)     ! (this to prevent test problems because not all compilers
+(  952)     !  print Inf in the same way. Some print "Inf", other "inf"
+(  953)     !  and yet others print "Infinite")
+(  954)     ! This is an extended version of the SetFAdoFull_or_Missing()
+(  955)     ! that we implemented in ee_cfi_datatypes.F90)
+(  956) # 957 "numerics.F90"
+(  957)     ! length of the returned string
+(  958)     integer, parameter :: max_str_lenght = 50
+(  959) # 960 "numerics.F90"
+(  960)     real(r8_),        intent(in)  :: value
+(  961)     character(len=max_str_lenght) :: str_value ! result
+(  962) # 963 "numerics.F90"
+(  963)     ! local variable
+(  964)     character(len=max_str_lenght) :: temp_string
+(  965) # 966 "numerics.F90"
+(  966)     ! init
+(  967)     temp_string(:) = ' '
+(  968) # 969 "numerics.F90"
+(  969)     ! give the string "[not-a-number]" for missing numbers
+(  970)     IF (is_NaN_real8(value)) THEN
+(  971)        str_value = "[not-a-number]"
+(  972)        return
+(  973)     END IF
+(  974) # 975 "numerics.F90"
+(  975)     ! give the string "[+Infinite]" for +Infinite numbers
+(  976)     IF (is_PosInf_real8(value)) THEN
+(  977)        str_value = "[+Infinite]"
+(  978)        return
+(  979)     END IF
+(  980) # 981 "numerics.F90"
+(  981)     ! give the string "[-Infinite]" for -Infinite numbers
+(  982)     IF (is_NegInf_real8(value)) THEN
+(  983)        str_value = "[-Infinite]"
+(  984)        return
+(  985)     END IF
+(  986) # 987 "numerics.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 42
+
+(  987)     ! give the string "[missing]" for missing numbers
+(  988)     IF (missing_real(value)) THEN
+(  989)        str_value = "[missing]"
+(  990)        return
+(  991)     END IF
+(  992) # 993 "numerics.F90"
+(  993)     write(temp_string, *, err=999) value
+(  994)     str_value =  trim(adjustl(temp_string))
+(  995) # 996 "numerics.F90"
+(  996)     return
+(  997) # 998 "numerics.F90"
+(  998)     ! Conversion from type r8_ to string failed
+(  999)     ! Are you sure this number fits within the 50 characters of the
+( 1000)     ! available temporaty string ?
+( 1001) 999 str_value = "[conversion error]"
+( 1002)     return
+( 1003)     
+( 1004)   end function real8_to_txt_extra_checks
+( 1005)     !  #]
+( 1006)   !---------------------------------------------------
+( 1007)   function int_to_real4(i) result(x)
+( 1008)     !  #[
+( 1009) # 1010 "numerics.F90"
+( 1010)     ! convert an integer to a real, taking into account that 
+( 1011)     ! the input integer might have the missing value
+( 1012)     integer   :: i
+( 1013)     real(r4_) :: x
+( 1014)     x = real(i,r4_)
+( 1015)     if (missing_int(i)) x = missing_indicator_real_r4
+( 1016)   end function int_to_real4
+( 1017)   !  #]
+( 1018)   function int_to_real8(i) result(x)
+( 1019)     !  #[
+( 1020) # 1021 "numerics.F90"
+( 1021)     ! convert an integer to a real, taking into account that 
+( 1022)     ! the input integer might have the missing value
+( 1023)     integer   :: i
+( 1024)     real(r8_) :: x
+( 1025)     x = i
+( 1026)     if (missing_int(i)) x = missing_indicator_real
+( 1027)   end function int_to_real8
+( 1028)   !  #]
+( 1029)   function intarr_to_real8arr(i) result(x)
+( 1030)     !  #[
+( 1031) # 1032 "numerics.F90"
+( 1032)     ! convert an integer to a real, taking into account that 
+( 1033)     ! the input integer might have the missing value
+( 1034)     integer,   dimension(:)       :: i
+( 1035)     real(r8_), dimension(size(i)) :: x
+( 1036) # 1037 "numerics.F90"
+( 1037)     ! local variable
+( 1038)     integer :: j
+( 1039) # 1040 "numerics.F90"
+( 1040)     DO j=1,size(i)
+( 1041)        x(j) = i(j)
+( 1042)        if (missing_int(i(j))) x(j) = missing_indicator_real
+( 1043)     END DO
+( 1044) # 1045 "numerics.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 43
+
+( 1045)   end function intarr_to_real8arr
+( 1046)   !  #]
+( 1047)   function real4_to_int(x) result(i)
+( 1048)     !  #[
+( 1049)     ! convert a real to an integer, taking into account that 
+( 1050)     ! the input real might have the missing value
+( 1051)     real(r4_) :: x
+( 1052)     integer   :: i
+( 1053)     if (missing_real(x)) then 
+( 1054)        i = missing_indicator_integer
+( 1055)     else
+( 1056)        i = nint(x)
+( 1057)     endif
+( 1058)   end function real4_to_int
+( 1059)     !  #]
+( 1060)   function real8_to_int(x) result(i)
+( 1061)     !  #[
+( 1062)     ! convert a real to an integer, taking into account that 
+( 1063)     ! the input real might have the missing value
+( 1064)     real(r8_) :: x
+( 1065)     integer   :: i
+( 1066)     if (missing_real(x)) then 
+( 1067)        i = missing_indicator_integer
+( 1068)     else
+( 1069)        i = nint(x)
+( 1070)     endif
+( 1071)   end function real8_to_int
+( 1072)     !  #]
+( 1073)   function real4_2txt(r,acc) result(txt)
+( 1074)     !  #[
+( 1075)     ! convert a real to an integer, taking into account that
+( 1076)     ! the input real might have the missing value
+( 1077) # 1078 "numerics.F90"
+( 1078)     ! if needed ad an optional format definition in the call to this function
+( 1079) # 1080 "numerics.F90"
+( 1080)     real(r4_),         intent(in)  :: r
+( 1081)     integer, optional, intent(in)  :: acc 
+( 1082)     character(len=13)              :: txt ! result
+( 1083) # 1084 "numerics.F90"
+( 1084)     ! local variable
+( 1085)     character(len=10) :: formatstring
+( 1086)     
+( 1087)     formatstring = "(es13.6e2)"
+( 1088)     IF (present(acc)) THEN
+( 1089)        IF ((acc .ge. 1) .and. (acc .le. 9)) THEN
+( 1090)           write(formatstring(7:7),"(i1)") acc
+( 1091)        END IF
+( 1092)     END IF
+( 1093) # 1094 "numerics.F90"
+( 1094)     if (missing_real(r)) then
+( 1095)        txt = "[missing]"
+( 1096)     else
+( 1097)        write(txt,formatstring) r
+( 1098)     endif
+( 1099) # 1100 "numerics.F90"
+( 1100)   end function real4_2txt
+( 1101)     !  #]
+( 1102)   function real8_2txt(r,acc) result(txt)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 44
+
+( 1103)     !  #[
+( 1104)     ! convert a real to an integer, taking into account that
+( 1105)     ! the input real might have the missing value
+( 1106) # 1107 "numerics.F90"
+( 1107)     ! if needed ad an optional format definition in the call to this function
+( 1108) # 1109 "numerics.F90"
+( 1109)     real(r8_),         intent(in)  :: r
+( 1110)     integer, optional, intent(in)  :: acc 
+( 1111)     character(len=13)              :: txt ! result
+( 1112) # 1113 "numerics.F90"
+( 1113)     ! local variable
+( 1114)     character(len=10) :: formatstring
+( 1115)     
+( 1116)     formatstring = "(es13.6e2)"
+( 1117)     IF (present(acc)) THEN
+( 1118)        IF ((acc .ge. 1) .and. (acc .le. 9)) THEN
+( 1119)           write(formatstring(7:7),"(i1)") acc
+( 1120)        END IF
+( 1121)     END IF
+( 1122) # 1123 "numerics.F90"
+( 1123)     if (missing_real(r)) then
+( 1124)        txt = "[missing]"
+( 1125)     else
+( 1126)        write(txt,formatstring) r
+( 1127)     endif
+( 1128) # 1129 "numerics.F90"
+( 1129)   end function real8_2txt
+( 1130)     !  #]
+( 1131)   !---------------------------------------------------
+( 1132) !  subroutine do_range_check_int(val,min,max,inside_range,txt)
+( 1133)     !  #[
+( 1134) !    ! check whether the value is inside the specified range
+( 1135) !    ! if not, change the value of inside_range
+( 1136) !
+( 1137) !    ! WARNING: the * for length of "txt" is essential. On Linux systems
+( 1138) !    ! the program  will not compile if you use a fixed number (256) and
+( 1139) !    ! call the routine with a constant string of different length !!!
+( 1140) !    integer, intent(in)           :: val, min, max
+( 1141) !    character(len=*),  intent(in) :: txt
+( 1142) !    logical, intent(inout)        :: inside_range
+( 1143) !
+( 1144) !    IF (missing_int(val)) return
+( 1145) !
+( 1146) !    IF ( (val .lt. min) .or. (val .gt. max) ) THEN 
+( 1147) !       print *,"range check: ",trim(txt),val
+( 1148) !       inside_range = .false.
+( 1149) !    END IF
+( 1150) !  end subroutine do_range_check_int
+( 1151)   !---------------------------------------------------
+( 1152)     !  #]
+( 1153) !  subroutine do_range_check_real(val,min,max,inside_range,txt)
+( 1154)     !  #[
+( 1155) !    ! check whether the value is inside the specified range
+( 1156) !    ! if not, change the value of inside_range
+( 1157) !
+( 1158) !    ! WARNING: the * for length of "txt" is essential. On Linux systems
+( 1159) !    ! the program  will not compile if you use a fixed number (256) and
+( 1160) !    ! call the routine with a constant string of different length !!!
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 45
+
+( 1161) !    real(r_), intent(in)          :: val, min, max
+( 1162) !    character(len=*),  intent(in) :: txt
+( 1163) !    logical, intent(inout)        :: inside_range
+( 1164) !
+( 1165) !    IF (missing_real(val)) return
+( 1166) !
+( 1167) !    IF ( (val .lt. min) .or. (val .gt. max) ) THEN 
+( 1168) !       print *,"range check: ",trim(txt),val
+( 1169) !       inside_range = .false.
+( 1170) !    END IF
+( 1171) !  end subroutine do_range_check_real
+( 1172)     !  #]
+( 1173)   !---------------------------------------------------
+( 1174)   function real2dB(x) result(val)
+( 1175)     !  #[
+( 1176)     real(r8_), intent(in) :: x   ! input
+( 1177)     real(r8_)             :: val ! result
+( 1178) # 1179 "numerics.F90"
+( 1179)     IF (missing_real(x)) THEN
+( 1180)        val = x
+( 1181)     ELSE
+( 1182)        IF (x .lt. 0.0_r8_) THEN
+( 1183)           print *,"ERROR: inside real2dB()"
+( 1184)           print *,"converting negative numbers to dB values is not possible !"
+( 1185)           print *,"possibly this value is already in dB ?"
+( 1186)           print *,"If needed, first take the abs() value"
+( 1187)           print *,"  input was: x = ",x
+( 1188)           print *,"returning with missing value"
+( 1189)           val = missing_indicator_real
+( 1190)        ELSE
+( 1191)           val = 10._r8_*LOG10(x)
+( 1192)        END IF
+( 1193)     END IF
+( 1194) # 1195 "numerics.F90"
+( 1195)   end function real2dB
+( 1196)   !  #]
+( 1197)   function dB2real(x) result(val)
+( 1198)     !  #[
+( 1199)     real(r8_), intent(in) :: x   ! input
+( 1200)     real(r8_)             :: val ! result
+( 1201) # 1202 "numerics.F90"
+( 1202)     IF (missing_real(x)) THEN
+( 1203)        val = x
+( 1204)     ELSE
+( 1205)        val = 10._r8_**(0.1_r8_*x)
+( 1206)     END IF
+( 1207) # 1208 "numerics.F90"
+( 1208)   end function dB2real
+( 1209)   !  #]
+( 1210)   !---------------------------------------------------
+( 1211)   function quartet_to_hex(val) result(txt)
+( 1212)     !  #[
+( 1213)     ! convert a 4-bit number into hexadecimal
+( 1214)     integer, intent(in) :: val ! input
+( 1215)     character(len=1)    :: txt ! result
+( 1216) # 1217 "numerics.F90"
+( 1217)     txt = ' '
+( 1218)     select case (val)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 46
+
+( 1219)     case ( 0) ; txt = '0'
+( 1220)     case ( 1) ; txt = '1'
+( 1221)     case ( 2) ; txt = '2'
+( 1222)     case ( 3) ; txt = '3'
+( 1223)     case ( 4) ; txt = '4'
+( 1224)     case ( 5) ; txt = '5'
+( 1225)     case ( 6) ; txt = '6'
+( 1226)     case ( 7) ; txt = '7'
+( 1227)     case ( 8) ; txt = '8'
+( 1228)     case ( 9) ; txt = '9'
+( 1229)     case (10) ; txt = 'A'
+( 1230)     case (11) ; txt = 'B'
+( 1231)     case (12) ; txt = 'C'
+( 1232)     case (13) ; txt = 'D'
+( 1233)     case (14) ; txt = 'E'
+( 1234)     case (15) ; txt = 'F'
+( 1235)     case default
+( 1236)        print *,"ERROR convertion failed in quartet_to_hex"
+( 1237)        print *,"input out of range: ",val
+( 1238)        txt = 'Q'
+( 1239)        ! return 'Q' as error indicator
+( 1240)        ! note that returning 'E' is useless, since that is a valid
+( 1241)        ! hexadecimal number
+( 1242)     end select
+( 1243) # 1244 "numerics.F90"
+( 1244)   end function quartet_to_hex
+( 1245)     !  #]
+( 1246)   function int1_to_hex(val) result(txt)
+( 1247)     !  #[
+( 1248)     integer(i1_), intent(in) :: val ! input
+( 1249)     character(len=2)         :: txt ! result
+( 1250) # 1251 "numerics.F90"
+( 1251)     ! local variables
+( 1252)     integer :: unsigned_val, part1, part2
+( 1253) # 1254 "numerics.F90"
+( 1254)     unsigned_val = val
+( 1255)     if (val .lt. 0) unsigned_val = 256+val
+( 1256) # 1257 "numerics.F90"
+( 1257)     part1 = unsigned_val/16
+( 1258)     part2 = unsigned_val-16*part1
+( 1259)     !print *,"val=",val," part1=",part1," part2=",part2
+( 1260) # 1261 "numerics.F90"
+( 1261)     txt(1:1) = quartet_to_hex(part1)
+( 1262)     txt(2:2) = quartet_to_hex(part2)
+( 1263) # 1264 "numerics.F90"
+( 1264)   end function int1_to_hex
+( 1265)     !  #]
+( 1266)   function int4_to_hex(val,swap_bytes) result(txt)
+( 1267)     !  #[
+( 1268)     integer(i4_), intent(in) :: val        ! input
+( 1269)     logical,      intent(in) :: swap_bytes ! input
+( 1270)     character(len=8)         :: txt        ! result
+( 1271) # 1272 "numerics.F90"
+( 1272)     ! local variables
+( 1273)     character(len=4) :: bytes
+( 1274)     character(len=1) :: tmp_byte
+( 1275) # 1276 "numerics.F90"
+( 1276)     bytes(1:4) = transfer(val,bytes(1:4))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 47
+
+( 1277)     if (swap_bytes) then
+( 1278)        tmp_byte   = bytes(4:4)
+( 1279)        bytes(4:4) = bytes(1:1)
+( 1280)        bytes(1:1) = tmp_byte
+( 1281)        tmp_byte   = bytes(3:3)
+( 1282)        bytes(3:3) = bytes(2:2)
+( 1283)        bytes(2:2) = tmp_byte
+( 1284)     end if
+( 1285) # 1286 "numerics.F90"
+( 1286)     txt(1:2) = int1_to_hex(int(ichar(bytes(1:1)),i1_))
+( 1287)     txt(3:4) = int1_to_hex(int(ichar(bytes(2:2)),i1_))
+( 1288)     txt(5:6) = int1_to_hex(int(ichar(bytes(3:3)),i1_))
+( 1289)     txt(7:8) = int1_to_hex(int(ichar(bytes(4:4)),i1_))
+( 1290) # 1291 "numerics.F90"
+( 1291)   end function int4_to_hex
+( 1292)     !  #]
+( 1293)   !---------------------------------------------------
+( 1294) END Module numerics

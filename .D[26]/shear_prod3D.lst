@@ -1,0 +1,517 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: shear_prod3D.F90
+
+(    1) 
+(    2) subroutine shear_prod3D(def2)
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) use vars
+(   15) use real_size
+(   16) 
+(   17) implicit none
+(   18) 
+(   19) real(RR) def2(nx,ny,nzm)
+(   20) 
+(   21) real(RR) rdx0,rdx,rdx_up,rdx_dn
+(   22) real(RR) rdy0,rdy,rdy_up,rdy_dn
+(   23) real(RR) rdz,rdzw_up,rdzw_dn
+(   24) integer i,j,k,ib,ic,jb,jc,kb,kc
+(   25) 
+(   26) rdx0=1./dx 
+(   27) rdy0=1./dy
+(   28) 
+(   29) do k=2,nzm-1  
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 3
+
+(   31)  kb=k-1
+(   32)  kc=k+1
+(   33)  rdz = 1./(dz*adz(k))
+(   34)  rdzw_up = 1./(dz*adzw(kc))
+(   35)  rdzw_dn = 1./(dz*adzw(k))
+(   36)  rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   37)  rdy=rdy0 * sqrt(dy*rdz) 
+(   38)  rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   39)  rdy_up=rdy0 * sqrt(dy*rdzw_up) 
+(   40)  rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   41)  rdy_dn=rdy0 * sqrt(dy*rdzw_dn) 
+(   42) 
+(   43)  do j=1,ny
+(   44)    jb=j-YES3D
+(   45)    jc=j+YES3D
+(   46)    do i=1,nx
+(   47)      ib=i-1
+(   48)      ic=i+1
+(   49)  
+(   50)       def2(i,j,k)=2.* ( &
+(   51)           ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   52)           ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+(   53)           ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   54)         + 0.25 * ( &
+(   55)           ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(   56)           ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(   57)           ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(   58)           ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   
+(   59)       def2(i,j,k)=def2(i,j,k) &
+(   60)         + 0.25 * ( &
+(   61)           ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   62)             (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   63)           ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   64)             (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 + &
+(   65)           ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(   66)             (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(   67)           ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(   68)             (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(   69)       def2(i,j,k)=def2(i,j,k) &
+(   70)         + 0.25 * ( & 
+(   71)           ( (v(i,jc,kc)-v0(kc)-v(i,jc, k)+v0(k))*rdzw_up+ &
+(   72)             (w(i,jc,kc)-w(i,j ,kc))*rdy_up )**2 + &
+(   73)           ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up+ &
+(   74)             (w(i,j ,kc)-w(i,jb,kc))*rdy_up )**2 + &
+(   75)           ( (v(i,jc,k )-v0(k)-v(i,jc,kb)+v0(kb))*rdzw_dn+ &
+(   76)             (w(i,jc,k )-w(i,j ,k ))*rdy_dn )**2 + &
+(   77)           ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn+ &
+(   78)             (w(i,j ,k )-w(i,jb,k ))*rdy_dn )**2 )
+(   79) 
+(   80)     end do
+(   81)  end do
+(   82) end do ! k
+(   83) 
+(   84) 
+(   85) k=1
+(   86) kc=k+1
+(   87) 
+(   88) rdz = 1./(dz*adz(k))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 4
+
+(   89) rdzw_up = 1./(dz*adzw(kc))
+(   90) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   91) rdy=rdy0 * sqrt(dy*rdz) 
+(   92) rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   93) rdy_up=rdy0 * sqrt(dy*rdzw_up) 
+(   94)  
+(   95) do j=1,ny
+(   96)   jb=j-YES3D
+(   97)   jc=j+YES3D
+(   98)   do i=1,nx
+(   99)      ib=i-1
+(  100)      ic=i+1
+(  101) 
+(  102)       def2(i,j,k)=2.* ( &
+(  103)           ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  104)           ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+(  105)           ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  106)         + 0.25 * ( &
+(  107)           ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(  108)           ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(  109)           ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  110)           ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  111)         + 0.5 * ( &
+(  112)           ( (v(i,jc,kc)-v0(kc)-v(i,jc, k)+v0(k))*rdzw_up+ &
+(  113)             (w(i,jc,kc)-w(i,j ,kc))*rdy_up )**2 + &
+(  114)           ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up+ &
+(  115)           (w(i,j ,kc)-w(i,jb,kc))*rdy_up )**2 ) &
+(  116)         + 0.5 * ( &
+(  117)           ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(  118)           (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(  119)           ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(  120)           (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 )
+(  121) 
+(  122) 
+(  123)    end do 
+(  124) end do
+(  125)  
+(  126) 
+(  127) k=nzm
+(  128) kc=k+1
+(  129) kb=k-1
+(  130) 
+(  131) rdz = 1./(dz*adz(k))
+(  132) rdzw_dn = 1./(dz*adzw(k))
+(  133) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(  134) rdy=rdy0 * sqrt(dy*rdz) 
+(  135) rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(  136) rdy_dn=rdy0 * sqrt(dy*rdzw_dn) 
+(  137) 
+(  138) do j=1,ny
+(  139)   jb=j-1*YES3D
+(  140)   jc=j+1*YES3D
+(  141)   do i=1,nx
+(  142)       ib=i-1
+(  143)       ic=i+1
+(  144)       def2(i,j,k)=2.* ( &
+(  145)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  146)            ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 5
+
+(  147)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  148)        + 0.25 * ( &
+(  149)            ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(  150)            ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(  151)            ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  152)            ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  153)        + 0.5 * ( &
+(  154)            ( (v(i,jc,k )-v0(k)-v(i,jc,kb)+v0(kb))*rdzw_dn+ &
+(  155)              (w(i,jc,k )-w(i,j ,k ))*rdy_dn )**2 + &
+(  156)            ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn+ &
+(  157)              (w(i,j ,k )-w(i,jb,k ))*rdy_dn )**2 ) &
+(  158)        + 0.5 * ( &
+(  159)            ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(  160)              (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(  161)            ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(  162)              (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(  163)   end do 
+(  164) end do
+(  165) 
+(  166) end
+(  167) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 6
+
+(    1) # 1 "shear_prod3D.F90"
+(    1) # 2 "shear_prod3D.F90"
+(    2) subroutine shear_prod3D(def2)
+(    3) # 4 "shear_prod3D.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "shear_prod3D.F90"
+(   14) use vars
+(   15) use real_size
+(   16) # 17 "shear_prod3D.F90"
+(   17) implicit none
+(   18) # 19 "shear_prod3D.F90"
+(   19) real(RR) def2(nx,ny,nzm)
+(   20) # 21 "shear_prod3D.F90"
+(   21) real(RR) rdx0,rdx,rdx_up,rdx_dn
+(   22) real(RR) rdy0,rdy,rdy_up,rdy_dn
+(   23) real(RR) rdz,rdzw_up,rdzw_dn
+(   24) integer i,j,k,ib,ic,jb,jc,kb,kc
+(   25) # 26 "shear_prod3D.F90"
+(   26) rdx0=1./dx 
+(   27) rdy0=1./dy
+(   28) # 29 "shear_prod3D.F90"
+(   29) do k=2,nzm-1  
+(   30) # 31 "shear_prod3D.F90"
+(   31)  kb=k-1
+(   32)  kc=k+1
+(   33)  rdz = 1./(dz*adz(k))
+(   34)  rdzw_up = 1./(dz*adzw(kc))
+(   35)  rdzw_dn = 1./(dz*adzw(k))
+(   36)  rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   37)  rdy=rdy0 * sqrt(dy*rdz) 
+(   38)  rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   39)  rdy_up=rdy0 * sqrt(dy*rdzw_up) 
+(   40)  rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(   41)  rdy_dn=rdy0 * sqrt(dy*rdzw_dn) 
+(   42) # 43 "shear_prod3D.F90"
+(   43)  do j=1,ny
+(   44)    jb=j-YES3D
+(   45)    jc=j+YES3D
+(   46)    do i=1,nx
+(   47)      ib=i-1
+(   48)      ic=i+1
+(   49)  
+(   50)       def2(i,j,k)=2.* ( &
+(   51)           ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(   52)           ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+(   53)           ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(   54)         + 0.25 * ( &
+(   55)           ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(   56)           ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(   57)           ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 7
+
+(   58)           ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   
+(   59)       def2(i,j,k)=def2(i,j,k) &
+(   60)         + 0.25 * ( &
+(   61)           ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(   62)             (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(   63)           ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(   64)             (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 + &
+(   65)           ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(   66)             (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(   67)           ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(   68)             (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(   69)       def2(i,j,k)=def2(i,j,k) &
+(   70)         + 0.25 * ( & 
+(   71)           ( (v(i,jc,kc)-v0(kc)-v(i,jc, k)+v0(k))*rdzw_up+ &
+(   72)             (w(i,jc,kc)-w(i,j ,kc))*rdy_up )**2 + &
+(   73)           ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up+ &
+(   74)             (w(i,j ,kc)-w(i,jb,kc))*rdy_up )**2 + &
+(   75)           ( (v(i,jc,k )-v0(k)-v(i,jc,kb)+v0(kb))*rdzw_dn+ &
+(   76)             (w(i,jc,k )-w(i,j ,k ))*rdy_dn )**2 + &
+(   77)           ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn+ &
+(   78)             (w(i,j ,k )-w(i,jb,k ))*rdy_dn )**2 )
+(   79) # 80 "shear_prod3D.F90"
+(   80)     end do
+(   81)  end do
+(   82) end do ! k
+(   83) # 85 "shear_prod3D.F90"
+(   85) k=1
+(   86) kc=k+1
+(   87) # 88 "shear_prod3D.F90"
+(   88) rdz = 1./(dz*adz(k))
+(   89) rdzw_up = 1./(dz*adzw(kc))
+(   90) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(   91) rdy=rdy0 * sqrt(dy*rdz) 
+(   92) rdx_up=rdx0 * sqrt(dx*rdzw_up) 
+(   93) rdy_up=rdy0 * sqrt(dy*rdzw_up) 
+(   94)  
+(   95) do j=1,ny
+(   96)   jb=j-YES3D
+(   97)   jc=j+YES3D
+(   98)   do i=1,nx
+(   99)      ib=i-1
+(  100)      ic=i+1
+(  101) # 102 "shear_prod3D.F90"
+(  102)       def2(i,j,k)=2.* ( &
+(  103)           ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  104)           ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+(  105)           ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  106)         + 0.25 * ( &
+(  107)           ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(  108)           ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(  109)           ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  110)           ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  111)         + 0.5 * ( &
+(  112)           ( (v(i,jc,kc)-v0(kc)-v(i,jc, k)+v0(k))*rdzw_up+ &
+(  113)             (w(i,jc,kc)-w(i,j ,kc))*rdy_up )**2 + &
+(  114)           ( (v(i,j ,kc)-v0(kc)-v(i,j , k)+v0(k))*rdzw_up+ &
+(  115)           (w(i,j ,kc)-w(i,jb,kc))*rdy_up )**2 ) &
+(  116)         + 0.5 * ( &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:56      page 8
+
+(  117)           ( (u(ic,j,kc)-u0(kc)-u(ic,j, k)+u0(k))*rdzw_up+ &
+(  118)           (w(ic,j,kc)-w(i ,j,kc))*rdx_up )**2 + &
+(  119)           ( (u(i ,j,kc)-u0(kc)-u(i ,j, k)+u0(k))*rdzw_up+ &
+(  120)           (w(i ,j,kc)-w(ib,j,kc))*rdx_up )**2 )
+(  121) # 123 "shear_prod3D.F90"
+(  123)    end do 
+(  124) end do
+(  125)  
+(  126) # 127 "shear_prod3D.F90"
+(  127) k=nzm
+(  128) kc=k+1
+(  129) kb=k-1
+(  130) # 131 "shear_prod3D.F90"
+(  131) rdz = 1./(dz*adz(k))
+(  132) rdzw_dn = 1./(dz*adzw(k))
+(  133) rdx=rdx0 * sqrt(dx*rdz) ! take into account grid anisotropy
+(  134) rdy=rdy0 * sqrt(dy*rdz) 
+(  135) rdx_dn=rdx0 * sqrt(dx*rdzw_dn) 
+(  136) rdy_dn=rdy0 * sqrt(dy*rdzw_dn) 
+(  137) # 138 "shear_prod3D.F90"
+(  138) do j=1,ny
+(  139)   jb=j-1*YES3D
+(  140)   jc=j+1*YES3D
+(  141)   do i=1,nx
+(  142)       ib=i-1
+(  143)       ic=i+1
+(  144)       def2(i,j,k)=2.* ( &
+(  145)            ( (u(ic,j,k)-u(i,j,k))*rdx)**2+ &
+(  146)            ( (v(i,jc,k)-v(i,j,k))*rdy)**2+ &
+(  147)            ( (w(i,j,kc)-w(i,j,k))*rdz)**2 ) &
+(  148)        + 0.25 * ( &
+(  149)            ( (u(ic,jc,k)-u(ic,j ,k))*rdy+(v(ic,jc,k)-v(i ,jc,k))*rdx )**2 +  &
+(  150)            ( (u(i ,jc,k)-u(i ,j ,k))*rdy+(v(i ,jc,k)-v(ib,jc,k))*rdx )**2 +  &
+(  151)            ( (u(ic,j ,k)-u(ic,jb,k))*rdy+(v(ic,j ,k)-v(i ,j ,k))*rdx )**2 +  &
+(  152)            ( (u(i ,j ,k)-u(i ,jb,k))*rdy+(v(i ,j ,k)-v(ib,j ,k))*rdx )**2 )   &
+(  153)        + 0.5 * ( &
+(  154)            ( (v(i,jc,k )-v0(k)-v(i,jc,kb)+v0(kb))*rdzw_dn+ &
+(  155)              (w(i,jc,k )-w(i,j ,k ))*rdy_dn )**2 + &
+(  156)            ( (v(i,j ,k )-v0(k)-v(i,j ,kb)+v0(kb))*rdzw_dn+ &
+(  157)              (w(i,j ,k )-w(i,jb,k ))*rdy_dn )**2 ) &
+(  158)        + 0.5 * ( &
+(  159)            ( (u(ic,j,k )-u0(k)-u(ic,j,kb)+u0(kb))*rdzw_dn+ &
+(  160)              (w(ic,j,k )-w(i ,j,k ))*rdx_dn )**2 + &
+(  161)            ( (u(i ,j,k )-u0(k)-u(i ,j,kb)+u0(kb))*rdzw_dn+ &
+(  162)              (w(i ,j,k )-w(ib,j,k ))*rdx_dn )**2 )
+(  163)   end do 
+(  164) end do
+(  165) # 166 "shear_prod3D.F90"
+(  166) end

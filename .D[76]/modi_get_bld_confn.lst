@@ -1,0 +1,165 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:47      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:47      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_get_bld_confn.F90
+
+(    1) !depfile:get_bld_confn.F90
+(    2) MODULE MODI_GET_BLD_CONF_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_BLD_CONF_n (BDD, DTT, &
+(    5)                                  ODATA_BLDTYPE, ODATA_BLD_AGE, ODATA_USETYPE, &
+(    6)                 KDESC_ROOF_LAYER, KDESC_ROAD_LAYER, KDESC_WALL_LAYER, &
+(    7)                 KDESC_FLOOR_LAYER, KDESC_CODE, KDESC_USE, KDESC_AGE, KDESC_BLD)  
+(    8) USE MODD_BLD_DESCRIPTION_n, ONLY : BLD_DESC_t
+(    9) USE MODD_DATA_TEB_n, ONLY : DATA_TEB_t
+(   10) TYPE(BLD_DESC_t), INTENT(INOUT) :: BDD
+(   11) TYPE(DATA_TEB_t), INTENT(INOUT) :: DTT
+(   12) LOGICAL, INTENT(OUT) :: ODATA_BLDTYPE
+(   13) LOGICAL, INTENT(OUT) :: ODATA_BLD_AGE
+(   14) LOGICAL, INTENT(OUT) :: ODATA_USETYPE
+(   15) INTEGER, INTENT(OUT) :: KDESC_ROOF_LAYER
+(   16) INTEGER, INTENT(OUT) :: KDESC_ROAD_LAYER
+(   17) INTEGER, INTENT(OUT) :: KDESC_WALL_LAYER
+(   18) INTEGER, INTENT(OUT) :: KDESC_FLOOR_LAYER
+(   19) INTEGER, INTENT(OUT) :: KDESC_CODE
+(   20) INTEGER, INTENT(OUT) :: KDESC_USE
+(   21) INTEGER, INTENT(OUT) :: KDESC_AGE
+(   22) INTEGER, INTENT(OUT) :: KDESC_BLD
+(   23) END SUBROUTINE GET_BLD_CONF_n
+(   24) 
+(   25) END INTERFACE
+(   26) END MODULE MODI_GET_BLD_CONF_n 
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:47      page 3
+
+(    1) # 1 "modi_get_bld_confn.F90"
+(    1) !depfile:get_bld_confn.F90
+(    2) MODULE MODI_GET_BLD_CONF_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_BLD_CONF_n (BDD, DTT, &
+(    5)                                  ODATA_BLDTYPE, ODATA_BLD_AGE, ODATA_USETYPE, &
+(    6)                 KDESC_ROOF_LAYER, KDESC_ROAD_LAYER, KDESC_WALL_LAYER, &
+(    7)                 KDESC_FLOOR_LAYER, KDESC_CODE, KDESC_USE, KDESC_AGE, KDESC_BLD)  
+(    8) USE MODD_BLD_DESCRIPTION_n, ONLY : BLD_DESC_t
+(    9) USE MODD_DATA_TEB_n, ONLY : DATA_TEB_t
+(   10) TYPE(BLD_DESC_t), INTENT(INOUT) :: BDD
+(   11) TYPE(DATA_TEB_t), INTENT(INOUT) :: DTT
+(   12) LOGICAL, INTENT(OUT) :: ODATA_BLDTYPE
+(   13) LOGICAL, INTENT(OUT) :: ODATA_BLD_AGE
+(   14) LOGICAL, INTENT(OUT) :: ODATA_USETYPE
+(   15) INTEGER, INTENT(OUT) :: KDESC_ROOF_LAYER
+(   16) INTEGER, INTENT(OUT) :: KDESC_ROAD_LAYER
+(   17) INTEGER, INTENT(OUT) :: KDESC_WALL_LAYER
+(   18) INTEGER, INTENT(OUT) :: KDESC_FLOOR_LAYER
+(   19) INTEGER, INTENT(OUT) :: KDESC_CODE
+(   20) INTEGER, INTENT(OUT) :: KDESC_USE
+(   21) INTEGER, INTENT(OUT) :: KDESC_AGE
+(   22) INTEGER, INTENT(OUT) :: KDESC_BLD
+(   23) END SUBROUTINE GET_BLD_CONF_n
+(   24) # 25 "modi_get_bld_confn.F90"
+(   25) END INTERFACE
+(   26) END MODULE MODI_GET_BLD_CONF_n 

@@ -1,0 +1,11 @@
+!depfile:prep_ocean_unif.F90
+MODULE MODI_PREP_OCEAN_UNIF
+INTERFACE
+SUBROUTINE PREP_OCEAN_UNIF(KLUOUT,HSURF,PFIELD)
+INTEGER,            INTENT(IN)  :: KLUOUT    ! output listing logical unit
+ CHARACTER(LEN=7),   INTENT(IN)  :: HSURF     ! type of field
+REAL, POINTER, DIMENSION(:,:,:)   :: PFIELD    ! field to interpolate horizontally
+END SUBROUTINE PREP_OCEAN_UNIF
+
+END INTERFACE
+END MODULE MODI_PREP_OCEAN_UNIF

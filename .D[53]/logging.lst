@@ -1,0 +1,2123 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: logging.F90
+
+(    1) MODULE Logging
+(    2)   !  #[ Description
+(    3)   !---------------------------------------------------
+(    4)   ! a module to handle the production of log-messages
+(    5)   ! which is one of the required interfaces of the Thin Layer.
+(    6)   ! 
+(    7)   ! See: ESA-ID-ACS-GS-001_PDS-GENERIC-IF-GUIDELINES_Iss_1.1_040220.pdf
+(    8)   ! section 4.5, p.56-60 for specific details on this interfaces
+(    9)   !---------------------------------------------------
+(   10)   ! conventions:
+(   11)   ! a log messages is a one line message terminated by a newline character
+(   12)   ! and containing the following 8 elements (which may be of variable length),
+(   13)   ! separated by a single space:
+(   14)   ! 1->DateTime (format YYYY-MM-ddThh:mm:ss.nnnnnn)
+(   15)   ! 2->Node Name (string without whitespaces)
+(   16)   ! 3->Processor Name  (string without whitespaces)
+(   17)   ! 4->Processor version (format nn.nn)
+(   18)   ! 5->Process-ID (10 character integer enclosed by square brackets,
+(   19)   !                format [nnnnnnnnnn])
+(   20)   ! 6->Header Separator (a single colon character
+(   21)   ! 7->Message Type, one of: D,I,P,W,E enclosed by square brackets
+(   22)   ! 8->the actual message text
+(   23)   ! Log messages are written to stdout, and for some types to stderr
+(   24)   !
+(   25)   ! Remark: the logmsg() routine will be frequently called when reporting
+(   26)   !         a warning or an error. Therefore it is not very usefull to let
+(   27)   !         it report an error_flag if something goes wrong inside it.
+(   28)   !         In stead I choose to change the msg_type into an error
+(   29)   !         in case something goes wrong inside this routine.
+(   30)   !         (usually this indicates a programming error), and add some
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 3
+
+(   31)   !         text describing the problem to the msg_text string
+(   32)   !---------------------------------------------------
+(   33)   ! Written by:  Jos de Kloe.
+(   34)   ! created:     03-04-2006
+(   35)   !
+(   36)   ! Modifications:
+(   37)   ! 07-Aug-2006 J. de Kloe added init routine, to allow control by
+(   38)   !                        the ThinLayer/JobOrder system
+(   39)   ! 27-Jul-2006 P. Poli    Added by default REALACC(6) to all logmsg 
+(   40)   !                        outputs.
+(   41)   !                        Optional input arguments realacc_precision 
+(   42)   !                        and realacc_off to subroutine logmsg enable
+(   43)   !                        to change precision or to turn off REALACC 
+(   44)   !                        output.
+(   45)   ! 08-Aug-2006 D. Tan     Change default to no REALACC, allow realacc_on
+(   46)   !                        or precision
+(   47)   ! 17-Aug-2006 P. Poli    Added parameter Log_Level_Default
+(   48)   ! 15-Feb-2007 J. de Kloe Added mechanism to abort and report fatal errors
+(   49)   !                        from within functions that have no error_flag
+(   50)   ! 01-Mar-2007 J. de Kloe Added mechanism to export the log messages to
+(   51)   !                        a private log file, independant of the ThinLayer
+(   52)   !                        logging mechanism (which seems to be an 
+(   53)   !                        additional new requirement for us?)
+(   54)   !    Dec-2007 P. Poli    added GetFatalError() function
+(   55)   ! 16-Jan-2008 J. de Kloe phase out integer kind i_ 
+(   56)   ! 27-Jan-2009 J. de Kloe apply Stdout_Log_Level to the logfile as well
+(   57)   ! 15-Jul-2010 J. de Kloe some sanity checks added on logmsg()
+(   58)   ! 02-Aug-2010 J. de Kloe added a program_abort subroutine that writes 
+(   59)   !                        its error message to the logging system in 
+(   60)   !                        stead of to stdout
+(   61)   ! 02-Feb-2011 J. de Kloe add initialisation for total_log_msg in logmsg()
+(   62)   ! 24-May-2011 J. de Kloe add buffering capability to the logging module
+(   63)   ! 01-Jun-2011 J. de Kloe added the buffered_warning parameter and inserted
+(   64)   !                        its text into buffered log messages
+(   65)   ! 22-Jun-2011 J. de Kloe add flushing buffered log msgs in case the
+(   66)   !                        request_program_to_stop signal is used
+(   67)   ! 26-Jun-2012 M. Rennie  added return_log_level subroutine
+(   68)   ! 07-Dec-2012 J. de Kloe added more fine grained error messages in logmsg()
+(   69)   ! 25-Feb-2014 J. de Kloe add some exceptions in the additional error check
+(   70)   ! 26-Feb-2015 J. de Kloe report exit code of the program in a log message
+(   71)   !                        during program_abort, before stopping the program
+(   72)   ! 24-Jun-2015 J. de Kloe add an extra exception in logmsg()
+(   73)   ! 06-Oct-2015 J. de Kloe add another extra exception in logmsg()
+(   74)   ! 06-Nov-2015 J. de Kloe implement the custom log_science_warn type
+(   75)   ! 19-Nov-2015 J. de Kloe change log levels as suggested by PDGS
+(   76)   ! 14-Sep-2016 J. de Kloe add resetFatalErrorOccurredFlag routine
+(   77)   ! 12-Oct-2016 J. de Kloe add exception for additional warning message
+(   78)   ! 12-Sep-2016 J. de Kloe use wrapper for 'stop 0'
+(   79)   ! 01-Oct-2018 J. de Kloe little bug fix in warning handling
+(   80)   !
+(   81)   !---------------------------------------------------
+(   82)   !  #]
+(   83)   !  #[ modules used
+(   84)   USE ErrorHandler, only: no_error, error_programming, error_opening_file, &
+(   85)                           get_error_text, abort_with_given_code, &
+(   86)                           request_program_to_stop, do_abort_on_error, &
+(   87)                           error_allocate, request_exit_code
+(   88)   USE StringTools, only: space,contains_spaces,contains_crnl, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 4
+
+(   89)                          to_lowercase,string2chararray,chararray2string
+(   90)   USE LunManager, only: stdout, stderr, get_lun, free_lun
+(   91)   USE DateTimeMod, only: date_type, time_type, get_current_date_time,&
+(   92)                          date2string_sep,time2string_sep_ms
+(   93)   USE AeolusConstants, only: software_version,software_ProcName
+(   94)   USE Compiler_Features, only: flush_aeolus
+(   95)   USE c_support, only: get_hostname, get_process_id
+(   96)   USE numerics, only: r8_
+(   97)   !  #]
+(   98)   !  #[ Variables and parameters
+(   99)   IMPLICIT NONE
+(  100) 
+(  101)   ! types of log messages
+(  102)   character(len=1), parameter :: log_debug    = "D"
+(  103)   character(len=1), parameter :: log_info     = "I"
+(  104)   character(len=1), parameter :: log_progress = "P"
+(  105)   character(len=1), parameter :: log_warn     = "W"
+(  106)   character(len=1), parameter :: log_error    = "E"
+(  107) 
+(  108)   ! a custom warning type for science warnings.
+(  109)   ! this is not part of the ESA interface, but purely for science use.
+(  110)   ! It translates to log_info and prepends the text "Science Warning"
+(  111)   ! to the log message.
+(  112)   ! (this is according to what was agreed between Jos de Kloe, and
+(  113)   !  Fabio Buscaglione in a discussion following the L2B PM35
+(  114)   !  on 28-Oct-2015 at ESRIN/Frascati.)
+(  115)   character(len=1), parameter :: log_science_warn = "S"
+(  116)   
+(  117)   ! possible log levels
+(  118)   integer, parameter :: Log_Level_Debug    = 1
+(  119)   integer, parameter :: Log_Level_Info     = 2
+(  120)   integer, parameter :: Log_Level_Progress = 3
+(  121)   integer, parameter :: Log_Level_Warning  = 4
+(  122)   integer, parameter :: Log_Level_Error    = 5
+(  123)   integer, parameter :: Log_Level_Noop     = 99
+(  124)   integer, parameter :: Log_Level_Default  = Log_Level_Debug
+(  125) 
+(  126)   ! defaults
+(  127)   integer, save :: Stdout_Log_Level   = Log_Level_Info
+(  128)   integer, save :: Stderr_Log_Level   = Log_Level_Noop
+(  129)   
+(  130)   ! This string is mainly for our own use, and can be disabled in
+(  131)   ! delivered software versions if it confuses ESA or other users.
+(  132)   ! This string will be inserted in log messages that have been
+(  133)   ! buffered, and thus are printed later than the actual event occurred
+(  134)   ! (even though the timestamp should still be accurate).
+(  135)   ! While debugging, it is often essential to know the order in which
+(  136)   ! events occurred, which is why we should have a warning like this
+(  137)   ! in the output.
+(  138)   character(len=*), parameter :: buffered_warning = "(BUFFERED) "
+(  139)   !character(len=*), parameter :: buffered_warning = ""
+(  140) 
+(  141)   ! To enable signalling of serious errors/showstoppers from within
+(  142)   ! functions that cannot return an error_flag, the following flag may be
+(  143)   ! set to true. The program can check at a later time if this did occur
+(  144)   ! and take appropriate actions to terminate processing.
+(  145)   ! This should only be used with fatal-errors.
+(  146)   ! To activate it, use the optional flag SignalFatalError
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 5
+
+(  147)   ! in the logmsg() call
+(  148)   logical, save :: FatalErrorOccurred              = .false.
+(  149)   integer, save :: Error_That_Caused_This_Fatality = no_error
+(  150) 
+(  151)   ! some variables to enable using a private logfile
+(  152)   logical,            save :: UseOptionalLogFile  = .false.
+(  153)   integer,            save :: OptionalLogFileUnit = -1
+(  154)   character(len=256), save :: OptionalLogFile
+(  155) 
+(  156)   ! a switch to remember wether logging output must be buffered or not
+(  157)   logical, save :: buffer_logging_output = .false.
+(  158)   ! NOTE: this is intended for use in the main L2B_module executable
+(  159)   ! since this program only knows how to handle log messages after it has
+(  160)   ! succesfully read and interpreted the JobOrder file. However, it is
+(  161)   ! possible that log messages (progress, warnings, info, debug) have
+(  162)   ! been issued at earlier stages. This switch allows to postpone output
+(  163)   ! of these log messages untill it is clear how they should be handled.
+(  164) 
+(  165)   ! this datastructure will hold buffered log messages
+(  166)   ! it is implemented as a simple single-linked list that operates
+(  167)   ! as a fifo (first-in-first-out)
+(  168)   type logbuffer_type
+(  169)      character(len=1)                        :: msg_type
+(  170)      character(len=1), dimension(:), pointer :: msg_text
+(  171)      logical :: do_realacc           ! realacc_on
+(  172)      integer :: do_realacc_precision ! realacc_precision
+(  173)      logical :: do_SignalFatalError  ! SignalFatalError
+(  174)      integer :: which_FatalError     ! FatalError
+(  175)      type(logbuffer_type), pointer :: next_buffered_logmsg
+(  176)   end type logbuffer_type
+(  177) 
+(  178)   ! keep pointers to the first and last log in the logbuffer
+(  179)   type(logbuffer_type), pointer :: first_buffered_logmsg
+(  180)   type(logbuffer_type), pointer :: last_buffered_logmsg
+(  181) 
+(  182)   ! since Fortran90 does not allow nullifying pointers in the
+(  183)   ! module header, use this switch to ensure they will be defined
+(  184)   logical, save :: logging_buffer_initialised = .false.
+(  185)   
+(  186)   !  #]
+(  187) contains
+(  188)   !--------------------------------
+(  189)   subroutine add_to_logbuffer(msg_type,msg_text,do_realacc,&
+(  190)                  do_realacc_precision,do_SignalFatalError,which_FatalError)
+(  191)     !  #[
+(  192)     character(len=1), intent(in) :: msg_type
+(  193)     character(len=*), intent(in) :: msg_text
+(  194)     logical,          intent(in) :: do_realacc           ! realacc_on
+(  195)     integer,          intent(in) :: do_realacc_precision ! realacc_precision
+(  196)     logical,          intent(in) :: do_SignalFatalError  ! SignalFatalError
+(  197)     integer,          intent(in) :: which_FatalError     ! FatalError
+(  198) 
+(  199)     ! local variables
+(  200)     type(logbuffer_type), pointer :: new_buffered_logmsg
+(  201)     integer :: status, n
+(  202) 
+(  203)     if (.not. logging_buffer_initialised) then
+(  204)        nullify(first_buffered_logmsg)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 6
+
+(  205)        nullify(last_buffered_logmsg)
+(  206)        logging_buffer_initialised = .true.
+(  207)     end if
+(  208) 
+(  209)     ! allocate a new buffer entry
+(  210)     allocate(new_buffered_logmsg,stat=status)
+(  211)     if (status .ne. 0) goto 999
+(  212) 
+(  213)     ! allocate the char array, needed to store the text
+(  214)     n = len_trim(msg_text)
+(  215)     allocate(new_buffered_logmsg%msg_text(n),stat=status)
+(  216)     if (status .ne. 0) goto 999
+(  217) 
+(  218)     ! fill the new buffer entry
+(  219)     new_buffered_logmsg%msg_type             = msg_type
+(  220)     new_buffered_logmsg%msg_text             = string2chararray(trim(msg_text))
+(  221)     new_buffered_logmsg%do_realacc           = do_realacc
+(  222)     new_buffered_logmsg%do_realacc_precision = do_realacc_precision
+(  223)     new_buffered_logmsg%do_SignalFatalError  = do_SignalFatalError
+(  224)     new_buffered_logmsg%which_FatalError     = which_FatalError
+(  225)     nullify(new_buffered_logmsg%next_buffered_logmsg)
+(  226)     
+(  227)     ! update the 2 global pointers
+(  228)     if (.not. associated(first_buffered_logmsg)) then
+(  229)        first_buffered_logmsg => new_buffered_logmsg
+(  230)     end if
+(  231)     if (associated(last_buffered_logmsg)) then
+(  232)        last_buffered_logmsg%next_buffered_logmsg => new_buffered_logmsg
+(  233)     end if
+(  234)     last_buffered_logmsg => new_buffered_logmsg
+(  235) 
+(  236)     return
+(  237) 
+(  238)     ! first print to stdout to ensure the user has some feedback
+(  239)     ! even if one of the next 3 calls fail (which is likely since we
+(  240)     ! are in a situation where the stack is at its limit ...)
+(  241) 999 print *,'ERROR in add_to_logbuffer: allocation failed!'
+(  242)     ! then try to flush all logged messages
+(  243)     call stop_buffering_logmsgs()
+(  244)     ! finally issue the warning on this allocation problem and abort
+(  245)     call logmsg(log_error,'allocation problem in add_to_logbuffer')
+(  246)     call program_abort(error_allocate,'add_to_logbuffer')
+(  247)     
+(  248)   end subroutine add_to_logbuffer
+(  249)     !  #]
+(  250)   subroutine get_from_logbuffer(extracted_logmsg)
+(  251)     !  #[
+(  252)     type(logbuffer_type), pointer :: extracted_logmsg
+(  253)     
+(  254)     extracted_logmsg => first_buffered_logmsg
+(  255)     
+(  256)     first_buffered_logmsg => first_buffered_logmsg%next_buffered_logmsg
+(  257)     if (.not. associated(first_buffered_logmsg)) then
+(  258)        nullify(last_buffered_logmsg)
+(  259)     end if
+(  260)     
+(  261)   end subroutine get_from_logbuffer
+(  262)     !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 7
+
+(  263)   !--------------------------------
+(  264)   subroutine Init_Logging(Stdout_Log_Level_txt,Stderr_Log_Level_txt,&
+(  265)                           error_flag,OptionalLogFile_in)
+(  266)     !  #[
+(  267)     character(len=*), intent(in)  :: Stdout_Log_Level_txt
+(  268)     character(len=*), intent(in)  :: Stderr_Log_Level_txt
+(  269)     integer,          intent(out) :: error_flag
+(  270)     character(len=*), optional, intent(in) :: OptionalLogFile_in
+(  271) 
+(  272)     error_flag = no_error
+(  273)     FatalErrorOccurred = .false.
+(  274) 
+(  275)     IF (present(OptionalLogFile_in)) THEN
+(  276)        UseOptionalLogFile = .true.
+(  277)        OptionalLogFile = OptionalLogFile_in
+(  278)        OptionalLogFileUnit = get_lun()
+(  279)        open(unit=OptionalLogFileUnit,file=OptionalLogFile,status="replace",&
+(  280)             action="write",form="FORMATTED",ERR=999)
+(  281)     END IF
+(  282) 
+(  283)     ! define what log messages should be printed on what channel
+(  284)     select case (trim(Stdout_Log_Level_txt))
+(  285)     case("DEBUG")
+(  286)        Stdout_Log_Level = Log_Level_Debug
+(  287)     case("INFO")
+(  288)        Stdout_Log_Level = Log_Level_Info
+(  289)     case("PROGRESS")
+(  290)        Stdout_Log_Level = Log_Level_Progress
+(  291)     case("WARNING")
+(  292)        Stdout_Log_Level = Log_Level_Warning
+(  293)     case("ERROR")
+(  294)        Stdout_Log_Level = Log_Level_Error
+(  295)     case("NOOP")
+(  296)        Stdout_Log_Level = Log_Level_Noop
+(  297)     case default
+(  298)        ! this code should never be reached
+(  299)        call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  300)              " unknown Stdout log level: "//trim(Stdout_Log_Level_txt)//&
+(  301)              " This should have been handled in the"//&
+(  302)              " readjoborderdata() routine.")
+(  303)        error_flag = error_programming
+(  304)        return
+(  305)     end select
+(  306)     call logmsg(log_progress, "In Init_Logging():"//&
+(  307)              " Stdout log level set to: "//trim(Stdout_Log_Level_txt))
+(  308) 
+(  309)     select case (trim(Stderr_Log_Level_txt))
+(  310)     case("DEBUG")
+(  311)        Stderr_Log_Level = Log_Level_Debug
+(  312)     case("INFO")
+(  313)        Stderr_Log_Level = Log_Level_Info
+(  314)     case("PROGRESS")
+(  315)        Stderr_Log_Level = Log_Level_Progress
+(  316)     case("WARNING")
+(  317)        Stderr_Log_Level = Log_Level_Warning
+(  318)     case("ERROR")
+(  319)        Stderr_Log_Level = Log_Level_Error
+(  320)     case("NOOP")
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 8
+
+(  321)        Stderr_Log_Level = Log_Level_Noop
+(  322)     case default
+(  323)        ! this code should never be reached
+(  324)        call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  325)              " unknown Stderr log level: "//trim(Stderr_Log_Level_txt)//&
+(  326)              " This should have been handled in the"//&
+(  327)              " readjoborderdata() routine.")
+(  328)        error_flag = error_programming
+(  329)        return
+(  330)     end select
+(  331)     call logmsg(log_progress, "In Init_Logging():"//&
+(  332)              " Stderr log level set to: "//&
+(  333)              trim(Stderr_Log_Level_txt))
+(  334) 
+(  335)     return
+(  336) 
+(  337) 999 call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  338)              " opening optional logfile failed: "//trim(OptionalLogFile))
+(  339)     error_flag = error_opening_file
+(  340)     return
+(  341) 
+(  342)   end subroutine Init_Logging
+(  343)     !  #]
+(  344)   subroutine Close_Logging()
+(  345)     !  #[
+(  346)     if (buffer_logging_output) then
+(  347)        ! this should flush any buffered logmsgs
+(  348)        call stop_buffering_logmsgs()
+(  349)     end if
+(  350) 
+(  351)     IF (UseOptionalLogFile) THEN
+(  352)        close(unit=OptionalLogFileUnit)
+(  353)        call free_lun(OptionalLogFileUnit)
+(  354)     END IF
+(  355) 
+(  356)   end subroutine Close_Logging
+(  357)     !  #]
+(  358)   subroutine logmsg(msg_type,msg_text,realacc_on,realacc_precision,&
+(  359)                     SignalFatalError,FatalError)
+(  360)     !  #[
+(  361)     character(len=1),     intent(in) :: msg_type
+(  362)     character(len=*),     intent(in) :: msg_text
+(  363)     logical,    optional, intent(in) :: realacc_on
+(  364)     integer,    optional, intent(in) :: realacc_precision
+(  365)     logical,    optional, intent(in) :: SignalFatalError
+(  366)     integer,    optional, intent(in) :: FatalError
+(  367) 
+(  368)     ! local variables
+(  369)     integer                          :: pos, exc_pos
+(  370)     integer                          :: ios, log_level
+(  371)     character(len=1)                 :: msg_type_copy
+(  372)     character(len=len(msg_text)+256) :: msg_text_copy
+(  373)     character(len=len(msg_text)+256) :: tmp_txt
+(  374)     character(len=len(msg_text)+512) :: total_log_msg
+(  375)     ! max expected length is: 26+1+20+1+20+1+5+1+12+1+3+1+len(msg_text)+256
+(  376)     ! 92+len(msg_txt)+256  (+256 in case of added error texts)
+(  377)     ! so 512 extra bytes should be a safe margin
+(  378)     logical                          :: do_realacc
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 9
+
+(  379)     integer                          :: do_realacc_precision
+(  380)     character(len=2)                 :: str_realacc_precision
+(  381) 
+(  382)     type(date_type)   :: date_current
+(  383)     type(time_type)   :: time_current
+(  384)     character(len=26) :: DateTimeString
+(  385)     character(len=10) :: datestring ! 10 chars, format: yyyy-mm-dd  
+(  386)     character(len=15) :: timestring ! 15 chars, format: hh:mm:ss.nnnnnn
+(  387)     logical, save :: first_call = .true.
+(  388)     character(len=20) :: txt
+(  389)     character(len=25), save :: NodeName
+(  390)     character(len=20), save :: ProcName
+(  391)     character(len=5),  save :: ProcVersion
+(  392)     integer                 :: ProcID_nr
+(  393)     character(len=12), save :: ProcID
+(  394)     real(r8_)               :: version_nr
+(  395)     logical                 :: do_SignalFatalError
+(  396)     logical                 :: exception_found
+(  397)     integer                 :: which_FatalError
+(  398) 
+(  399)     ! is REALACC required ?
+(  400)     do_realacc=.false.
+(  401)     IF (present(realacc_on)) do_realacc=realacc_on
+(  402)     do_realacc_precision=6
+(  403)     IF (present(realacc_precision)) THEN
+(  404)        do_realacc=.true.
+(  405)        IF (realacc_precision .ge. 0 .and. &
+(  406)          & realacc_precision .le. 20) THEN
+(  407)           do_realacc_precision=realacc_precision
+(  408)        ELSE
+(  409)           write(stdout,*,err=998) &
+(  410)           "logmsg: WARNING: realacc_precision argument out of bounds (", &
+(  411)           realacc_precision,"). Setting to ",do_realacc_precision
+(  412)        ENDIF
+(  413)     ENDIF
+(  414)     str_realacc_precision="  "
+(  415)     IF (do_realacc_precision .ge. 10) THEN
+(  416)        write(str_realacc_precision,"(I2)") do_realacc_precision
+(  417)     ELSE
+(  418)        write(str_realacc_precision(1:1),"(I1)") do_realacc_precision
+(  419)     ENDIF
+(  420) 
+(  421)     do_SignalFatalError = .false.
+(  422)     which_FatalError = no_error
+(  423)     if (present(SignalFatalError)) then
+(  424)        do_SignalFatalError = SignalFatalError
+(  425)        if (present(FatalError)) then
+(  426)           which_FatalError = FatalError
+(  427)        else
+(  428)           which_FatalError = error_programming
+(  429)        end if
+(  430)     end if
+(  431) 
+(  432)     ! allow the log message to be buffered if needed
+(  433)     if (buffer_logging_output) then
+(  434)        call add_to_logbuffer(msg_type,msg_text,do_realacc,&
+(  435)                do_realacc_precision,do_SignalFatalError,which_FatalError)
+(  436)        return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 10
+
+(  437)     end if
+(  438) 
+(  439)     ! copy the type, to be able to switch it to "error"
+(  440)     ! in case something goes wrong inside this routine
+(  441)     ! or to info in case of science warnings
+(  442)     msg_type_copy = msg_type
+(  443) 
+(  444)     ! copy the msg_text to be able to add some text to it in case
+(  445)     ! something goes wrong inside this routine
+(  446)     ! or in case of science warnings
+(  447)     msg_text_copy = msg_text
+(  448) 
+(  449)     tmp_txt = to_lowercase(msg_text)
+(  450)     
+(  451)     ! sanity check: warn if the string "error" occurs in log msgs
+(  452)     ! that are not of type log_error:
+(  453)     if (msg_type .ne. log_error) then
+(  454)        pos = index(tmp_txt,"error")
+(  455) 
+(  456)        ! define some exceptions that should not trigger this 
+(  457)        ! special error case. Beware to translate the text to lowercase
+(  458)        ! first, before including it below as an exception.
+(  459)        exception_found = .false.
+(  460)        exc_pos = index(tmp_txt,"velocity_of_attitude_uncertainty_error")
+(  461)        if (exc_pos .gt. 0) exception_found = .true.
+(  462)        exc_pos = index(tmp_txt,"errorquantmie")
+(  463)        if (exc_pos .gt. 0) exception_found = .true.
+(  464)        exc_pos = index(tmp_txt,"errorquantray")
+(  465)        if (exc_pos .gt. 0) exception_found = .true.
+(  466)        exc_pos = index(tmp_txt,"error estimate of")
+(  467)        if (exc_pos .gt. 0) exception_found = .true.
+(  468) 
+(  469)        ! 'Stdout log level set to: ERROR' is logged in case a user only
+(  470)        ! wants to see error messages in the log.
+(  471)        exc_pos = index(tmp_txt,"stdout log level set to: error")
+(  472)        if (exc_pos .gt. 0) exception_found = .true.
+(  473)        exc_pos = index(tmp_txt,"stderr log level set to: error")
+(  474)        if (exc_pos .gt. 0) exception_found = .true.
+(  475) 
+(  476)        if ((pos .gt. 0) .and. (.not. exception_found)) then
+(  477)           msg_text_copy = trim(msg_text_copy)//" ADDITIONAL ERROR: "//&
+(  478)                "This message contains the word 'error'. This should not "//&
+(  479)                "occur unless the error type is log_error !!!!"
+(  480)           msg_type_copy = log_error
+(  481)        end if
+(  482)     end if
+(  483) 
+(  484)     ! sanity check: warn if the string "warn" occurs in log msgs
+(  485)     ! that are not of type log_warn:
+(  486)     if ( (msg_type .ne. log_warn)        .and. &
+(  487)          (msg_type .ne. log_science_warn)      ) then
+(  488)        pos = index(tmp_txt,"warn")
+(  489) 
+(  490)        ! define some exceptions that should not trigger this 
+(  491)        ! special warning case. Beware to translate the text to lowercase
+(  492)        ! first, before including it below as an exception.
+(  493)        exception_found = .false.
+(  494) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 11
+
+(  495)        ! Stdout log level set to: WARNING" is logged in case a user
+(  496)        ! wants to see error and warning messages in the log.
+(  497)        exc_pos = index(tmp_txt,"stdout log level set to: warning")
+(  498)        if (exc_pos .gt. 0) exception_found = .true.
+(  499)        exc_pos = index(tmp_txt,"stderr log level set to: warning")
+(  500)        if (exc_pos .gt. 0) exception_found = .true.
+(  501)        
+(  502)        if ((pos .gt. 0) .and. (.not. exception_found)) then
+(  503)           msg_text_copy = trim(msg_text_copy)//" ADDITIONAL WARNING: "//&
+(  504)                "This message contains the word 'warn'. This should not "//&
+(  505)                "occur unless the error type is log_warn !!!!"
+(  506)           ! only change the msg type if it is not an errpr
+(  507)           ! (which is more severe ofcourse)
+(  508)           if  (msg_type .ne. log_error) then
+(  509)              msg_type_copy = log_warn
+(  510)           end if
+(  511)        end if
+(  512)     end if
+(  513) 
+(  514)     if (msg_type .eq. log_science_warn) then
+(  515)        msg_text_copy = "Science Warning: "//&
+(  516)             trim(msg_text_copy(1:len(msg_text)+238))
+(  517)        msg_type_copy = log_info
+(  518)     end if
+(  519)     
+(  520)     ! get the current date and time and construct a DateTimeString from them
+(  521)     ! remark: the used stringformat for datetime is yet a little different
+(  522)     ! from the already defined XML adn KVT formats, so I can't reuse 
+(  523)     ! those here
+(  524)     call get_current_date_time(date_current,time_current)
+(  525)     datestring = date2string_sep(   date_current,"-")
+(  526)     timestring = time2string_sep_ms(time_current,":")
+(  527) 
+(  528)     DateTimeString = trim(datestring)//'T'//trim(timestring)
+(  529)     
+(  530)     ! set some variables at the first call only to save time
+(  531)     IF (first_call) THEN
+(  532)        first_call = .false.
+(  533)        ! get the nodename
+(  534)        NodeName = get_hostname()
+(  535)        ! make sure it contains no spaces !
+(  536)        IF (contains_spaces(NodeName)) THEN
+(  537)           msg_text_copy = trim(msg_text)//&
+(  538)                " ERROR in logmsg(): "//&
+(  539)                "NodeName ["//trim(NodeName)//"] contains one or more spaces"//&
+(  540)                "this is not allowed !!!"
+(  541)           msg_type_copy = log_error
+(  542)        END IF
+(  543) 
+(  544)        ! get the procname
+(  545)        ProcName = software_ProcName
+(  546)        ! make sure it contains no spaces !
+(  547)        IF (contains_spaces(ProcName)) THEN 
+(  548)           msg_text_copy = trim(msg_text)//&
+(  549)                " ERROR in logmsg(): "//&
+(  550)                "ProcName ["//trim(ProcName)//"] contains one or more spaces"//&
+(  551)                "this is not allowed !!!"
+(  552)           msg_type_copy = log_error
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 12
+
+(  553)        END IF
+(  554)        
+(  555)        ! get the Proc version
+(  556)        ! convert from "0.2" to "00.20"
+(  557)        txt = software_version
+(  558)        read(txt,*,iostat=ios) version_nr
+(  559)        IF (ios .ne.0) THEN
+(  560)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  561)                "conversion of software_version to integer string failed ..."
+(  562)           msg_type_copy = log_error
+(  563)        END IF
+(  564)        write(ProcVersion,"(f5.2)",iostat=ios) version_nr
+(  565)        IF (ios .ne.0) THEN
+(  566)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  567)                "conversion of version_nr to string failed ..."
+(  568)           msg_type_copy = log_error
+(  569)        END IF
+(  570) 
+(  571)        ! make sure the first char is a zero if it is not filled
+(  572)        if (ProcVersion(1:1) .eq. space) ProcVersion(1:1)="0"
+(  573) 
+(  574)        ! get the PID
+(  575)        ProcID_nr = get_process_id()
+(  576)        write(ProcID,"('[',i10.10,']')",iostat=ios) ProcID_nr
+(  577)        IF (ios .ne.0) THEN
+(  578)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  579)                "conversion of PID to string failed ..."
+(  580)           msg_type_copy = log_error
+(  581)        END IF
+(  582)     END IF
+(  583) 
+(  584)     ! verify that msg_type is one of the allowed types:
+(  585)     pos = verify(msg_type,"DIPWES")
+(  586)     IF (pos .ne. 0) THEN
+(  587)        msg_text_copy = trim(msg_text_copy)//" ERROR in logmsg(): "//&
+(  588)             "msg_type ["//msg_type//"] is not one of the allowed "//&
+(  589)             "types [DIPWES], this is a programming error ..."
+(  590)        msg_type_copy = log_error
+(  591)     END IF
+(  592) 
+(  593)     ! msg_type_copy may have been altered by one of the above checks
+(  594)     ! so also checl the copied variable msg_type_copy
+(  595)     pos = verify(msg_type_copy,"DIPWES")
+(  596)     IF (pos .ne. 0) THEN
+(  597)        msg_text_copy = trim(msg_text_copy)//" ERROR in logmsg(): "//&
+(  598)             "msg_type ["//msg_type_copy//"] is not one of the allowed "//&
+(  599)             "types [DIPWES], this is a programming error ..."
+(  600)        msg_type_copy = log_error
+(  601)     END IF
+(  602) 
+(  603)     ! verify that there are no illegal characters in the msg string 
+(  604)     ! (like return and newline characters ...)
+(  605)     IF (contains_crnl(msg_text_copy)) THEN
+(  606)        msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  607)             "msg_text contains one or more "//&
+(  608)             "carriage-return or newline characters, this is not allowed !!!"
+(  609)        msg_type_copy = log_error
+(  610)     END IF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 13
+
+(  611) 
+(  612)     ! construct the message line
+(  613)     total_log_msg(:) = ' '
+(  614)     write(total_log_msg,"(a)",err=993) &
+(  615)          DateTimeString//space//&
+(  616)          trim(Nodename)//space//&
+(  617)          trim(ProcName)//space//&
+(  618)          trim(ProcVersion)//space//&
+(  619)          trim(ProcID)//& ! no space here !!!!!
+(  620)          ":"//space//&
+(  621)          "["//msg_type_copy//"]"//space//&
+(  622)          trim(adjustl(msg_text_copy))
+(  623) 
+(  624)     ! there should be no space after the ProcID field.
+(  625)     ! see email of Christophe Caspar, 3-apr-2006
+(  626) 
+(  627)     ! Poli: set log_level to default to prevent
+(  628)     ! "warning: 'log_level' may be used uninitialized in this function"
+(  629)     ! with g95
+(  630) 
+(  631)     log_level = Log_Level_Default
+(  632) 
+(  633)     select case (msg_type_copy)
+(  634)     case(log_debug)
+(  635)        log_level = Log_Level_Debug
+(  636)     case(log_info)
+(  637)        log_level = Log_Level_Info
+(  638)     case(log_progress)
+(  639)        log_level = Log_Level_Progress
+(  640)     case(log_warn)
+(  641)        log_level = Log_Level_Warning
+(  642)     case(log_error)
+(  643)        log_level = Log_Level_Error
+(  644)        IF (do_SignalFatalError) THEN
+(  645)           FatalErrorOccurred = .true.
+(  646)           Error_That_Caused_This_Fatality = which_FatalError
+(  647)        End IF
+(  648)     case default
+(  649)        ! this code should never be reached
+(  650)        total_log_msg = trim(total_log_msg)//" ERROR in logmsg():"//&
+(  651)             " unknown msg_type: "//trim(msg_type_copy)
+(  652)        log_level = Log_Level_Default
+(  653)        ! no return here otherwise the msg is not printed !
+(  654)     end select
+(  655) 
+(  656)     IF (log_level .ge. Stdout_Log_Level) THEN
+(  657)        ! write the log message to stdout
+(  658)        IF (do_realacc) &
+(  659)           write(stdout,*,err=994) "REALACC("//trim(str_realacc_precision)//")"
+(  660)        write(stdout,"(a)",err=995) trim(total_log_msg)
+(  661)        IF (do_realacc) &
+(  662)           write(stdout,*,err=994) "ENDREALACC"
+(  663)        ! remind that flushing the output is a thinLayer requirement!
+(  664)        ! (see section 4.5.4 of the inferface guidelines document)
+(  665)        call flush_aeolus(stdout)
+(  666)     END IF
+(  667) 
+(  668)     IF (log_level .ge. Stderr_Log_Level) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 14
+
+(  669)        ! write the log message to stderr
+(  670)        IF (do_realacc) &
+(  671)           write(stderr,*,err=996) "REALACC("//trim(str_realacc_precision)//")"
+(  672)        write(stderr,"(a)",err=997) trim(total_log_msg)
+(  673)        IF (do_realacc) &
+(  674)           write(stderr,*,err=996) "ENDREALACC"
+(  675)        ! remind that flushing the output is a thinLayer requirement!
+(  676)        ! (see section 4.5.4 of the inferface guidelines document)
+(  677)        call flush_aeolus(stderr)
+(  678)     END IF
+(  679) 
+(  680)     IF (UseOptionalLogFile) THEN
+(  681)        ! Write the log message to our private optional logfile.
+(  682)        ! Note that there are no ThinLayer requirements defined for
+(  683)        ! this one, so for now just use the same loglevel as is
+(  684)        ! used for stdout.
+(  685)        IF (log_level .ge. Stdout_Log_Level) THEN
+(  686)           IF (do_realacc) &
+(  687)                write(OptionalLogFileUnit,*,err=998) &
+(  688)                "REALACC("//trim(str_realacc_precision)//")"
+(  689)           write(OptionalLogFileUnit,"(a)",err=999) trim(total_log_msg)
+(  690)           IF (do_realacc) &
+(  691)                write(OptionalLogFileUnit,*,err=998) "ENDREALACC"
+(  692)        END IF
+(  693)     END IF
+(  694) 
+(  695)     return
+(  696) 
+(  697) 993 print *,"ERROR in logmsg(): could not write to the string total_log_msg"
+(  698)     return
+(  699) 
+(  700) 994 print *,"ERROR in logmsg(): could not write to stdout !!!"
+(  701)     return
+(  702) 
+(  703) 995 print *,"ERROR in logmsg(): could not write to stdout !!!"
+(  704)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  705)     ! so does it make sense to try and print a warning in this case?
+(  706)     return
+(  707) 
+(  708) 996 print *,"ERROR in logmsg(): could not write to stderr !!!"
+(  709)     return
+(  710) 
+(  711) 997 print *,"ERROR in logmsg(): could not write to stderr !!!"
+(  712)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  713)     return
+(  714) 
+(  715) 998 print *,"ERROR in logmsg(): could not write to the optional logfile "//&
+(  716)          "named: "//trim(OptionalLogFile)
+(  717)     return
+(  718) 
+(  719) 999 print *,"ERROR in logmsg(): could not write to the optional logfile "//&
+(  720)          "named: "//trim(OptionalLogFile)
+(  721)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  722)     return
+(  723) 
+(  724)   end subroutine logmsg
+(  725)     !  #]
+(  726)   function CheckIfFatalErrorOccurred() result(FatalErrorOcc)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 15
+
+(  727)     !  #[
+(  728)     logical :: FatalErrorOcc ! result
+(  729)     FatalErrorOcc = FatalErrorOccurred
+(  730)     return
+(  731)   end function CheckIfFatalErrorOccurred
+(  732)     !  #]
+(  733)   subroutine resetFatalErrorOccurredFlag()
+(  734)     !  #[
+(  735)     FatalErrorOccurred = .false.
+(  736)   end subroutine resetFatalErrorOccurredFlag
+(  737)     !  #]
+(  738)   function GetFatalError() result(error)
+(  739)     !  #[
+(  740)     integer :: error ! result
+(  741)     error=Error_That_Caused_This_Fatality
+(  742)     return
+(  743)   end function GetFatalError
+(  744)     !  #]
+(  745)   subroutine program_abort(error_flag,subroutine_name)
+(  746)     !  #[
+(  747)     ! (same as the copy in errorhandler, but now write the text output 
+(  748)     ! in logging formatting and if needed to the logfile before aborting)
+(  749)     !  This is the recommended way of exiting our code and should always 
+(  750)     !  be used if possible. The copy in errorhandler should only be used
+(  751)     !  by those modules that cannot use the logging module
+(  752)     !  (due to possibly circular dependency problems))
+(  753) 
+(  754)     integer,          intent(in) :: error_flag
+(  755)     character(len=*), intent(in) :: subroutine_name
+(  756) 
+(  757)     ! local variable
+(  758)     character(len=512) :: error_text
+(  759)     character(len=50)  :: code_text
+(  760)     integer :: code
+(  761)     
+(  762)     error_text = get_error_text(error_flag,subroutine_name)
+(  763)     call logmsg(log_error,trim(error_text))
+(  764) 
+(  765)     code = request_exit_code(error_flag)
+(  766)     write(code_text,*,err=999) code
+(  767) 
+(  768)     call logmsg(log_error,"program will stop now with exit code: "//&
+(  769)          trim(adjustl(code_text)))
+(  770)     
+(  771)     IF (error_flag .eq. request_program_to_stop) THEN
+(  772)        ! properly close this logging module
+(  773)        ! and flush any messages that might be buffered
+(  774)        call Close_Logging()
+(  775)        !stop 0 ! normal exit
+(  776)        call abort_with_given_code(error_flag)
+(  777)     END IF
+(  778) 
+(  779)     IF (do_abort_on_error) THEN
+(  780)        ! properly close this logging module
+(  781)        ! and flush any messages that might be buffered
+(  782)        call Close_Logging()
+(  783)        ! make sure the exit status of the program will have different
+(  784)        ! values on different error conditions
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 16
+
+(  785)        call abort_with_given_code(error_flag)
+(  786)     ELSE
+(  787)        call logmsg(log_warn,"==> trying to resume the program ...")
+(  788)        return
+(  789)     END IF
+(  790) 
+(  791)     return
+(  792) 
+(  793) 999 call logmsg(log_error,"ERROR inside program_abort: could not convert "//&
+(  794)          "the exit code reported by the program to a text string. "//&
+(  795)          "This is a programming error.")
+(  796)     call abort_with_given_code(error_flag)
+(  797)     
+(  798)   end subroutine program_abort
+(  799)   !  #]
+(  800)   subroutine catch_error(error_flag,subroutine_name)
+(  801)     !  #[
+(  802)     ! (same as the copy in errorhandler, but now write the text output 
+(  803)     !  in logging formatting and if needed to the logfile before aborting.
+(  804)     !  This is the recommended way of exiting our code and should always 
+(  805)     !  be used if possible. The copy in errorhandler should only be used
+(  806)     !  by those modules that cannot use the logging module
+(  807)     !  (due to possibly circular dependency problems))
+(  808)     integer,          intent(in) :: error_flag
+(  809)     character(len=*), intent(in) :: subroutine_name
+(  810) 
+(  811)     IF (error_flag .ne. no_error) THEN
+(  812)        call logmsg(log_error,"aborted "//trim(subroutine_name))
+(  813)        call program_abort(error_flag,subroutine_name)
+(  814)     END IF
+(  815) 
+(  816)   end subroutine catch_error
+(  817)     !  #]
+(  818)   subroutine start_buffering_logmsgs()
+(  819)     !  #[
+(  820)     ! set the global module switch
+(  821)     buffer_logging_output = .true.
+(  822) 
+(  823)     ! init the buffer
+(  824) 
+(  825)   end subroutine start_buffering_logmsgs
+(  826)     !  #]
+(  827)   subroutine stop_buffering_logmsgs()
+(  828)     !  #[
+(  829) 
+(  830)     ! local variables
+(  831)     type(logbuffer_type), pointer :: extracted_logmsg
+(  832) 
+(  833)     ! set the global module switch
+(  834)     buffer_logging_output = .false.
+(  835) 
+(  836)     ! retrieve all log msgs from the buffer (if any) and 
+(  837)     ! write them to file or stderr/stdout as requested
+(  838)     logmsg_loop: do while (associated(first_buffered_logmsg))
+(  839)        call get_from_logbuffer(extracted_logmsg)
+(  840)        if (extracted_logmsg%do_realacc) then
+(  841)           call logmsg(msg_type = extracted_logmsg%msg_type, &
+(  842)                   msg_text = buffered_warning//&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 17
+
+(  843)                   chararray2string(extracted_logmsg%msg_text), &
+(  844)                   realacc_on =  extracted_logmsg%do_realacc, &
+(  845)                   realacc_precision = extracted_logmsg%do_realacc_precision,& 
+(  846)                   SignalFatalError = extracted_logmsg%do_SignalFatalError, &
+(  847)                   FatalError = extracted_logmsg%which_FatalError)
+(  848)        else
+(  849)           call logmsg(msg_type = extracted_logmsg%msg_type, &
+(  850)                   msg_text = buffered_warning//&
+(  851)                   chararray2string(extracted_logmsg%msg_text), &
+(  852)                   SignalFatalError = extracted_logmsg%do_SignalFatalError, &
+(  853)                   FatalError = extracted_logmsg%which_FatalError)
+(  854)        end if
+(  855) 
+(  856)        if (associated(extracted_logmsg%msg_text)) &
+(  857)             deallocate(extracted_logmsg%msg_text)
+(  858)        if (associated(extracted_logmsg)) &
+(  859)             deallocate(extracted_logmsg)
+(  860)     
+(  861)     end do logmsg_loop
+(  862) 
+(  863)   end subroutine stop_buffering_logmsgs
+(  864)     !  #]
+(  865)   subroutine return_log_level(log_lev)
+(  866)     !  #[
+(  867)     integer, intent(out) :: log_lev
+(  868) 
+(  869)     log_lev = Stdout_Log_Level  
+(  870) 
+(  871)   end subroutine return_log_level
+(  872)     !  #]
+(  873)   !--------------------------------
+(  874) end MODULE Logging
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 18
+
+(    1) # 1 "logging.F90"
+(    1) MODULE Logging
+(    2)   !  #[ Description
+(    3)   !---------------------------------------------------
+(    4)   ! a module to handle the production of log-messages
+(    5)   ! which is one of the required interfaces of the Thin Layer.
+(    6)   ! 
+(    7)   ! See: ESA-ID-ACS-GS-001_PDS-GENERIC-IF-GUIDELINES_Iss_1.1_040220.pdf
+(    8)   ! section 4.5, p.56-60 for specific details on this interfaces
+(    9)   !---------------------------------------------------
+(   10)   ! conventions:
+(   11)   ! a log messages is a one line message terminated by a newline character
+(   12)   ! and containing the following 8 elements (which may be of variable length),
+(   13)   ! separated by a single space:
+(   14)   ! 1->DateTime (format YYYY-MM-ddThh:mm:ss.nnnnnn)
+(   15)   ! 2->Node Name (string without whitespaces)
+(   16)   ! 3->Processor Name  (string without whitespaces)
+(   17)   ! 4->Processor version (format nn.nn)
+(   18)   ! 5->Process-ID (10 character integer enclosed by square brackets,
+(   19)   !                format [nnnnnnnnnn])
+(   20)   ! 6->Header Separator (a single colon character
+(   21)   ! 7->Message Type, one of: D,I,P,W,E enclosed by square brackets
+(   22)   ! 8->the actual message text
+(   23)   ! Log messages are written to stdout, and for some types to stderr
+(   24)   !
+(   25)   ! Remark: the logmsg() routine will be frequently called when reporting
+(   26)   !         a warning or an error. Therefore it is not very usefull to let
+(   27)   !         it report an error_flag if something goes wrong inside it.
+(   28)   !         In stead I choose to change the msg_type into an error
+(   29)   !         in case something goes wrong inside this routine.
+(   30)   !         (usually this indicates a programming error), and add some
+(   31)   !         text describing the problem to the msg_text string
+(   32)   !---------------------------------------------------
+(   33)   ! Written by:  Jos de Kloe.
+(   34)   ! created:     03-04-2006
+(   35)   !
+(   36)   ! Modifications:
+(   37)   ! 07-Aug-2006 J. de Kloe added init routine, to allow control by
+(   38)   !                        the ThinLayer/JobOrder system
+(   39)   ! 27-Jul-2006 P. Poli    Added by default REALACC(6) to all logmsg 
+(   40)   !                        outputs.
+(   41)   !                        Optional input arguments realacc_precision 
+(   42)   !                        and realacc_off to subroutine logmsg enable
+(   43)   !                        to change precision or to turn off REALACC 
+(   44)   !                        output.
+(   45)   ! 08-Aug-2006 D. Tan     Change default to no REALACC, allow realacc_on
+(   46)   !                        or precision
+(   47)   ! 17-Aug-2006 P. Poli    Added parameter Log_Level_Default
+(   48)   ! 15-Feb-2007 J. de Kloe Added mechanism to abort and report fatal errors
+(   49)   !                        from within functions that have no error_flag
+(   50)   ! 01-Mar-2007 J. de Kloe Added mechanism to export the log messages to
+(   51)   !                        a private log file, independant of the ThinLayer
+(   52)   !                        logging mechanism (which seems to be an 
+(   53)   !                        additional new requirement for us?)
+(   54)   !    Dec-2007 P. Poli    added GetFatalError() function
+(   55)   ! 16-Jan-2008 J. de Kloe phase out integer kind i_ 
+(   56)   ! 27-Jan-2009 J. de Kloe apply Stdout_Log_Level to the logfile as well
+(   57)   ! 15-Jul-2010 J. de Kloe some sanity checks added on logmsg()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 19
+
+(   58)   ! 02-Aug-2010 J. de Kloe added a program_abort subroutine that writes 
+(   59)   !                        its error message to the logging system in 
+(   60)   !                        stead of to stdout
+(   61)   ! 02-Feb-2011 J. de Kloe add initialisation for total_log_msg in logmsg()
+(   62)   ! 24-May-2011 J. de Kloe add buffering capability to the logging module
+(   63)   ! 01-Jun-2011 J. de Kloe added the buffered_warning parameter and inserted
+(   64)   !                        its text into buffered log messages
+(   65)   ! 22-Jun-2011 J. de Kloe add flushing buffered log msgs in case the
+(   66)   !                        request_program_to_stop signal is used
+(   67)   ! 26-Jun-2012 M. Rennie  added return_log_level subroutine
+(   68)   ! 07-Dec-2012 J. de Kloe added more fine grained error messages in logmsg()
+(   69)   ! 25-Feb-2014 J. de Kloe add some exceptions in the additional error check
+(   70)   ! 26-Feb-2015 J. de Kloe report exit code of the program in a log message
+(   71)   !                        during program_abort, before stopping the program
+(   72)   ! 24-Jun-2015 J. de Kloe add an extra exception in logmsg()
+(   73)   ! 06-Oct-2015 J. de Kloe add another extra exception in logmsg()
+(   74)   ! 06-Nov-2015 J. de Kloe implement the custom log_science_warn type
+(   75)   ! 19-Nov-2015 J. de Kloe change log levels as suggested by PDGS
+(   76)   ! 14-Sep-2016 J. de Kloe add resetFatalErrorOccurredFlag routine
+(   77)   ! 12-Oct-2016 J. de Kloe add exception for additional warning message
+(   78)   ! 12-Sep-2016 J. de Kloe use wrapper for 'stop 0'
+(   79)   ! 01-Oct-2018 J. de Kloe little bug fix in warning handling
+(   80)   !
+(   81)   !---------------------------------------------------
+(   82)   !  #]
+(   83)   !  #[ modules used
+(   84)   USE ErrorHandler, only: no_error, error_programming, error_opening_file, &
+(   85)                           get_error_text, abort_with_given_code, &
+(   86)                           request_program_to_stop, do_abort_on_error, &
+(   87)                           error_allocate, request_exit_code
+(   88)   USE StringTools, only: space,contains_spaces,contains_crnl, &
+(   89)                          to_lowercase,string2chararray,chararray2string
+(   90)   USE LunManager, only: stdout, stderr, get_lun, free_lun
+(   91)   USE DateTimeMod, only: date_type, time_type, get_current_date_time,&
+(   92)                          date2string_sep,time2string_sep_ms
+(   93)   USE AeolusConstants, only: software_version,software_ProcName
+(   94)   USE Compiler_Features, only: flush_aeolus
+(   95)   USE c_support, only: get_hostname, get_process_id
+(   96)   USE numerics, only: r8_
+(   97)   !  #]
+(   98)   !  #[ Variables and parameters
+(   99)   IMPLICIT NONE
+(  100) # 101 "logging.F90"
+(  101)   ! types of log messages
+(  102)   character(len=1), parameter :: log_debug    = "D"
+(  103)   character(len=1), parameter :: log_info     = "I"
+(  104)   character(len=1), parameter :: log_progress = "P"
+(  105)   character(len=1), parameter :: log_warn     = "W"
+(  106)   character(len=1), parameter :: log_error    = "E"
+(  107) # 108 "logging.F90"
+(  108)   ! a custom warning type for science warnings.
+(  109)   ! this is not part of the ESA interface, but purely for science use.
+(  110)   ! It translates to log_info and prepends the text "Science Warning"
+(  111)   ! to the log message.
+(  112)   ! (this is according to what was agreed between Jos de Kloe, and
+(  113)   !  Fabio Buscaglione in a discussion following the L2B PM35
+(  114)   !  on 28-Oct-2015 at ESRIN/Frascati.)
+(  115)   character(len=1), parameter :: log_science_warn = "S"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 20
+
+(  116)   
+(  117)   ! possible log levels
+(  118)   integer, parameter :: Log_Level_Debug    = 1
+(  119)   integer, parameter :: Log_Level_Info     = 2
+(  120)   integer, parameter :: Log_Level_Progress = 3
+(  121)   integer, parameter :: Log_Level_Warning  = 4
+(  122)   integer, parameter :: Log_Level_Error    = 5
+(  123)   integer, parameter :: Log_Level_Noop     = 99
+(  124)   integer, parameter :: Log_Level_Default  = Log_Level_Debug
+(  125) # 126 "logging.F90"
+(  126)   ! defaults
+(  127)   integer, save :: Stdout_Log_Level   = Log_Level_Info
+(  128)   integer, save :: Stderr_Log_Level   = Log_Level_Noop
+(  129)   
+(  130)   ! This string is mainly for our own use, and can be disabled in
+(  131)   ! delivered software versions if it confuses ESA or other users.
+(  132)   ! This string will be inserted in log messages that have been
+(  133)   ! buffered, and thus are printed later than the actual event occurred
+(  134)   ! (even though the timestamp should still be accurate).
+(  135)   ! While debugging, it is often essential to know the order in which
+(  136)   ! events occurred, which is why we should have a warning like this
+(  137)   ! in the output.
+(  138)   character(len=*), parameter :: buffered_warning = "(BUFFERED) "
+(  139)   !character(len=*), parameter :: buffered_warning = ""
+(  140) # 141 "logging.F90"
+(  141)   ! To enable signalling of serious errors/showstoppers from within
+(  142)   ! functions that cannot return an error_flag, the following flag may be
+(  143)   ! set to true. The program can check at a later time if this did occur
+(  144)   ! and take appropriate actions to terminate processing.
+(  145)   ! This should only be used with fatal-errors.
+(  146)   ! To activate it, use the optional flag SignalFatalError
+(  147)   ! in the logmsg() call
+(  148)   logical, save :: FatalErrorOccurred              = .false.
+(  149)   integer, save :: Error_That_Caused_This_Fatality = no_error
+(  150) # 151 "logging.F90"
+(  151)   ! some variables to enable using a private logfile
+(  152)   logical,            save :: UseOptionalLogFile  = .false.
+(  153)   integer,            save :: OptionalLogFileUnit = -1
+(  154)   character(len=256), save :: OptionalLogFile
+(  155) # 156 "logging.F90"
+(  156)   ! a switch to remember wether logging output must be buffered or not
+(  157)   logical, save :: buffer_logging_output = .false.
+(  158)   ! NOTE: this is intended for use in the main L2B_module executable
+(  159)   ! since this program only knows how to handle log messages after it has
+(  160)   ! succesfully read and interpreted the JobOrder file. However, it is
+(  161)   ! possible that log messages (progress, warnings, info, debug) have
+(  162)   ! been issued at earlier stages. This switch allows to postpone output
+(  163)   ! of these log messages untill it is clear how they should be handled.
+(  164) # 165 "logging.F90"
+(  165)   ! this datastructure will hold buffered log messages
+(  166)   ! it is implemented as a simple single-linked list that operates
+(  167)   ! as a fifo (first-in-first-out)
+(  168)   type logbuffer_type
+(  169)      character(len=1)                        :: msg_type
+(  170)      character(len=1), dimension(:), pointer :: msg_text
+(  171)      logical :: do_realacc           ! realacc_on
+(  172)      integer :: do_realacc_precision ! realacc_precision
+(  173)      logical :: do_SignalFatalError  ! SignalFatalError
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 21
+
+(  174)      integer :: which_FatalError     ! FatalError
+(  175)      type(logbuffer_type), pointer :: next_buffered_logmsg
+(  176)   end type logbuffer_type
+(  177) # 178 "logging.F90"
+(  178)   ! keep pointers to the first and last log in the logbuffer
+(  179)   type(logbuffer_type), pointer :: first_buffered_logmsg
+(  180)   type(logbuffer_type), pointer :: last_buffered_logmsg
+(  181) # 182 "logging.F90"
+(  182)   ! since Fortran90 does not allow nullifying pointers in the
+(  183)   ! module header, use this switch to ensure they will be defined
+(  184)   logical, save :: logging_buffer_initialised = .false.
+(  185)   
+(  186)   !  #]
+(  187) contains
+(  188)   !--------------------------------
+(  189)   subroutine add_to_logbuffer(msg_type,msg_text,do_realacc,&
+(  190)                  do_realacc_precision,do_SignalFatalError,which_FatalError)
+(  191)     !  #[
+(  192)     character(len=1), intent(in) :: msg_type
+(  193)     character(len=*), intent(in) :: msg_text
+(  194)     logical,          intent(in) :: do_realacc           ! realacc_on
+(  195)     integer,          intent(in) :: do_realacc_precision ! realacc_precision
+(  196)     logical,          intent(in) :: do_SignalFatalError  ! SignalFatalError
+(  197)     integer,          intent(in) :: which_FatalError     ! FatalError
+(  198) # 199 "logging.F90"
+(  199)     ! local variables
+(  200)     type(logbuffer_type), pointer :: new_buffered_logmsg
+(  201)     integer :: status, n
+(  202) # 203 "logging.F90"
+(  203)     if (.not. logging_buffer_initialised) then
+(  204)        nullify(first_buffered_logmsg)
+(  205)        nullify(last_buffered_logmsg)
+(  206)        logging_buffer_initialised = .true.
+(  207)     end if
+(  208) # 209 "logging.F90"
+(  209)     ! allocate a new buffer entry
+(  210)     allocate(new_buffered_logmsg,stat=status)
+(  211)     if (status .ne. 0) goto 999
+(  212) # 213 "logging.F90"
+(  213)     ! allocate the char array, needed to store the text
+(  214)     n = len_trim(msg_text)
+(  215)     allocate(new_buffered_logmsg%msg_text(n),stat=status)
+(  216)     if (status .ne. 0) goto 999
+(  217) # 218 "logging.F90"
+(  218)     ! fill the new buffer entry
+(  219)     new_buffered_logmsg%msg_type             = msg_type
+(  220)     new_buffered_logmsg%msg_text             = string2chararray(trim(msg_text))
+(  221)     new_buffered_logmsg%do_realacc           = do_realacc
+(  222)     new_buffered_logmsg%do_realacc_precision = do_realacc_precision
+(  223)     new_buffered_logmsg%do_SignalFatalError  = do_SignalFatalError
+(  224)     new_buffered_logmsg%which_FatalError     = which_FatalError
+(  225)     nullify(new_buffered_logmsg%next_buffered_logmsg)
+(  226)     
+(  227)     ! update the 2 global pointers
+(  228)     if (.not. associated(first_buffered_logmsg)) then
+(  229)        first_buffered_logmsg => new_buffered_logmsg
+(  230)     end if
+(  231)     if (associated(last_buffered_logmsg)) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 22
+
+(  232)        last_buffered_logmsg%next_buffered_logmsg => new_buffered_logmsg
+(  233)     end if
+(  234)     last_buffered_logmsg => new_buffered_logmsg
+(  235) # 236 "logging.F90"
+(  236)     return
+(  237) # 238 "logging.F90"
+(  238)     ! first print to stdout to ensure the user has some feedback
+(  239)     ! even if one of the next 3 calls fail (which is likely since we
+(  240)     ! are in a situation where the stack is at its limit ...)
+(  241) 999 print *,'ERROR in add_to_logbuffer: allocation failed!'
+(  242)     ! then try to flush all logged messages
+(  243)     call stop_buffering_logmsgs()
+(  244)     ! finally issue the warning on this allocation problem and abort
+(  245)     call logmsg(log_error,'allocation problem in add_to_logbuffer')
+(  246)     call program_abort(error_allocate,'add_to_logbuffer')
+(  247)     
+(  248)   end subroutine add_to_logbuffer
+(  249)     !  #]
+(  250)   subroutine get_from_logbuffer(extracted_logmsg)
+(  251)     !  #[
+(  252)     type(logbuffer_type), pointer :: extracted_logmsg
+(  253)     
+(  254)     extracted_logmsg => first_buffered_logmsg
+(  255)     
+(  256)     first_buffered_logmsg => first_buffered_logmsg%next_buffered_logmsg
+(  257)     if (.not. associated(first_buffered_logmsg)) then
+(  258)        nullify(last_buffered_logmsg)
+(  259)     end if
+(  260)     
+(  261)   end subroutine get_from_logbuffer
+(  262)     !  #]
+(  263)   !--------------------------------
+(  264)   subroutine Init_Logging(Stdout_Log_Level_txt,Stderr_Log_Level_txt,&
+(  265)                           error_flag,OptionalLogFile_in)
+(  266)     !  #[
+(  267)     character(len=*), intent(in)  :: Stdout_Log_Level_txt
+(  268)     character(len=*), intent(in)  :: Stderr_Log_Level_txt
+(  269)     integer,          intent(out) :: error_flag
+(  270)     character(len=*), optional, intent(in) :: OptionalLogFile_in
+(  271) # 272 "logging.F90"
+(  272)     error_flag = no_error
+(  273)     FatalErrorOccurred = .false.
+(  274) # 275 "logging.F90"
+(  275)     IF (present(OptionalLogFile_in)) THEN
+(  276)        UseOptionalLogFile = .true.
+(  277)        OptionalLogFile = OptionalLogFile_in
+(  278)        OptionalLogFileUnit = get_lun()
+(  279)        open(unit=OptionalLogFileUnit,file=OptionalLogFile,status="replace",&
+(  280)             action="write",form="FORMATTED",ERR=999)
+(  281)     END IF
+(  282) # 283 "logging.F90"
+(  283)     ! define what log messages should be printed on what channel
+(  284)     select case (trim(Stdout_Log_Level_txt))
+(  285)     case("DEBUG")
+(  286)        Stdout_Log_Level = Log_Level_Debug
+(  287)     case("INFO")
+(  288)        Stdout_Log_Level = Log_Level_Info
+(  289)     case("PROGRESS")
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 23
+
+(  290)        Stdout_Log_Level = Log_Level_Progress
+(  291)     case("WARNING")
+(  292)        Stdout_Log_Level = Log_Level_Warning
+(  293)     case("ERROR")
+(  294)        Stdout_Log_Level = Log_Level_Error
+(  295)     case("NOOP")
+(  296)        Stdout_Log_Level = Log_Level_Noop
+(  297)     case default
+(  298)        ! this code should never be reached
+(  299)        call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  300)              " unknown Stdout log level: "//trim(Stdout_Log_Level_txt)//&
+(  301)              " This should have been handled in the"//&
+(  302)              " readjoborderdata() routine.")
+(  303)        error_flag = error_programming
+(  304)        return
+(  305)     end select
+(  306)     call logmsg(log_progress, "In Init_Logging():"//&
+(  307)              " Stdout log level set to: "//trim(Stdout_Log_Level_txt))
+(  308) # 309 "logging.F90"
+(  309)     select case (trim(Stderr_Log_Level_txt))
+(  310)     case("DEBUG")
+(  311)        Stderr_Log_Level = Log_Level_Debug
+(  312)     case("INFO")
+(  313)        Stderr_Log_Level = Log_Level_Info
+(  314)     case("PROGRESS")
+(  315)        Stderr_Log_Level = Log_Level_Progress
+(  316)     case("WARNING")
+(  317)        Stderr_Log_Level = Log_Level_Warning
+(  318)     case("ERROR")
+(  319)        Stderr_Log_Level = Log_Level_Error
+(  320)     case("NOOP")
+(  321)        Stderr_Log_Level = Log_Level_Noop
+(  322)     case default
+(  323)        ! this code should never be reached
+(  324)        call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  325)              " unknown Stderr log level: "//trim(Stderr_Log_Level_txt)//&
+(  326)              " This should have been handled in the"//&
+(  327)              " readjoborderdata() routine.")
+(  328)        error_flag = error_programming
+(  329)        return
+(  330)     end select
+(  331)     call logmsg(log_progress, "In Init_Logging():"//&
+(  332)              " Stderr log level set to: "//&
+(  333)              trim(Stderr_Log_Level_txt))
+(  334) # 335 "logging.F90"
+(  335)     return
+(  336) # 337 "logging.F90"
+(  337) 999 call logmsg(log_error,"ERROR in Init_Logging():"//&
+(  338)              " opening optional logfile failed: "//trim(OptionalLogFile))
+(  339)     error_flag = error_opening_file
+(  340)     return
+(  341) # 342 "logging.F90"
+(  342)   end subroutine Init_Logging
+(  343)     !  #]
+(  344)   subroutine Close_Logging()
+(  345)     !  #[
+(  346)     if (buffer_logging_output) then
+(  347)        ! this should flush any buffered logmsgs
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 24
+
+(  348)        call stop_buffering_logmsgs()
+(  349)     end if
+(  350) # 351 "logging.F90"
+(  351)     IF (UseOptionalLogFile) THEN
+(  352)        close(unit=OptionalLogFileUnit)
+(  353)        call free_lun(OptionalLogFileUnit)
+(  354)     END IF
+(  355) # 356 "logging.F90"
+(  356)   end subroutine Close_Logging
+(  357)     !  #]
+(  358)   subroutine logmsg(msg_type,msg_text,realacc_on,realacc_precision,&
+(  359)                     SignalFatalError,FatalError)
+(  360)     !  #[
+(  361)     character(len=1),     intent(in) :: msg_type
+(  362)     character(len=*),     intent(in) :: msg_text
+(  363)     logical,    optional, intent(in) :: realacc_on
+(  364)     integer,    optional, intent(in) :: realacc_precision
+(  365)     logical,    optional, intent(in) :: SignalFatalError
+(  366)     integer,    optional, intent(in) :: FatalError
+(  367) # 368 "logging.F90"
+(  368)     ! local variables
+(  369)     integer                          :: pos, exc_pos
+(  370)     integer                          :: ios, log_level
+(  371)     character(len=1)                 :: msg_type_copy
+(  372)     character(len=len(msg_text)+256) :: msg_text_copy
+(  373)     character(len=len(msg_text)+256) :: tmp_txt
+(  374)     character(len=len(msg_text)+512) :: total_log_msg
+(  375)     ! max expected length is: 26+1+20+1+20+1+5+1+12+1+3+1+len(msg_text)+256
+(  376)     ! 92+len(msg_txt)+256  (+256 in case of added error texts)
+(  377)     ! so 512 extra bytes should be a safe margin
+(  378)     logical                          :: do_realacc
+(  379)     integer                          :: do_realacc_precision
+(  380)     character(len=2)                 :: str_realacc_precision
+(  381) # 382 "logging.F90"
+(  382)     type(date_type)   :: date_current
+(  383)     type(time_type)   :: time_current
+(  384)     character(len=26) :: DateTimeString
+(  385)     character(len=10) :: datestring ! 10 chars, format: yyyy-mm-dd  
+(  386)     character(len=15) :: timestring ! 15 chars, format: hh:mm:ss.nnnnnn
+(  387)     logical, save :: first_call = .true.
+(  388)     character(len=20) :: txt
+(  389)     character(len=25), save :: NodeName
+(  390)     character(len=20), save :: ProcName
+(  391)     character(len=5),  save :: ProcVersion
+(  392)     integer                 :: ProcID_nr
+(  393)     character(len=12), save :: ProcID
+(  394)     real(r8_)               :: version_nr
+(  395)     logical                 :: do_SignalFatalError
+(  396)     logical                 :: exception_found
+(  397)     integer                 :: which_FatalError
+(  398) # 399 "logging.F90"
+(  399)     ! is REALACC required ?
+(  400)     do_realacc=.false.
+(  401)     IF (present(realacc_on)) do_realacc=realacc_on
+(  402)     do_realacc_precision=6
+(  403)     IF (present(realacc_precision)) THEN
+(  404)        do_realacc=.true.
+(  405)        IF (realacc_precision .ge. 0 .and. &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 25
+
+(  406)          & realacc_precision .le. 20) THEN
+(  407)           do_realacc_precision=realacc_precision
+(  408)        ELSE
+(  409)           write(stdout,*,err=998) &
+(  410)           "logmsg: WARNING: realacc_precision argument out of bounds (", &
+(  411)           realacc_precision,"). Setting to ",do_realacc_precision
+(  412)        ENDIF
+(  413)     ENDIF
+(  414)     str_realacc_precision="  "
+(  415)     IF (do_realacc_precision .ge. 10) THEN
+(  416)        write(str_realacc_precision,"(I2)") do_realacc_precision
+(  417)     ELSE
+(  418)        write(str_realacc_precision(1:1),"(I1)") do_realacc_precision
+(  419)     ENDIF
+(  420) # 421 "logging.F90"
+(  421)     do_SignalFatalError = .false.
+(  422)     which_FatalError = no_error
+(  423)     if (present(SignalFatalError)) then
+(  424)        do_SignalFatalError = SignalFatalError
+(  425)        if (present(FatalError)) then
+(  426)           which_FatalError = FatalError
+(  427)        else
+(  428)           which_FatalError = error_programming
+(  429)        end if
+(  430)     end if
+(  431) # 432 "logging.F90"
+(  432)     ! allow the log message to be buffered if needed
+(  433)     if (buffer_logging_output) then
+(  434)        call add_to_logbuffer(msg_type,msg_text,do_realacc,&
+(  435)                do_realacc_precision,do_SignalFatalError,which_FatalError)
+(  436)        return
+(  437)     end if
+(  438) # 439 "logging.F90"
+(  439)     ! copy the type, to be able to switch it to "error"
+(  440)     ! in case something goes wrong inside this routine
+(  441)     ! or to info in case of science warnings
+(  442)     msg_type_copy = msg_type
+(  443) # 444 "logging.F90"
+(  444)     ! copy the msg_text to be able to add some text to it in case
+(  445)     ! something goes wrong inside this routine
+(  446)     ! or in case of science warnings
+(  447)     msg_text_copy = msg_text
+(  448) # 449 "logging.F90"
+(  449)     tmp_txt = to_lowercase(msg_text)
+(  450)     
+(  451)     ! sanity check: warn if the string "error" occurs in log msgs
+(  452)     ! that are not of type log_error:
+(  453)     if (msg_type .ne. log_error) then
+(  454)        pos = index(tmp_txt,"error")
+(  455) # 456 "logging.F90"
+(  456)        ! define some exceptions that should not trigger this 
+(  457)        ! special error case. Beware to translate the text to lowercase
+(  458)        ! first, before including it below as an exception.
+(  459)        exception_found = .false.
+(  460)        exc_pos = index(tmp_txt,"velocity_of_attitude_uncertainty_error")
+(  461)        if (exc_pos .gt. 0) exception_found = .true.
+(  462)        exc_pos = index(tmp_txt,"errorquantmie")
+(  463)        if (exc_pos .gt. 0) exception_found = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 26
+
+(  464)        exc_pos = index(tmp_txt,"errorquantray")
+(  465)        if (exc_pos .gt. 0) exception_found = .true.
+(  466)        exc_pos = index(tmp_txt,"error estimate of")
+(  467)        if (exc_pos .gt. 0) exception_found = .true.
+(  468) # 469 "logging.F90"
+(  469)        ! 'Stdout log level set to: ERROR' is logged in case a user only
+(  470)        ! wants to see error messages in the log.
+(  471)        exc_pos = index(tmp_txt,"stdout log level set to: error")
+(  472)        if (exc_pos .gt. 0) exception_found = .true.
+(  473)        exc_pos = index(tmp_txt,"stderr log level set to: error")
+(  474)        if (exc_pos .gt. 0) exception_found = .true.
+(  475) # 476 "logging.F90"
+(  476)        if ((pos .gt. 0) .and. (.not. exception_found)) then
+(  477)           msg_text_copy = trim(msg_text_copy)//" ADDITIONAL ERROR: "//&
+(  478)                "This message contains the word 'error'. This should not "//&
+(  479)                "occur unless the error type is log_error !!!!"
+(  480)           msg_type_copy = log_error
+(  481)        end if
+(  482)     end if
+(  483) # 484 "logging.F90"
+(  484)     ! sanity check: warn if the string "warn" occurs in log msgs
+(  485)     ! that are not of type log_warn:
+(  486)     if ( (msg_type .ne. log_warn)        .and. &
+(  487)          (msg_type .ne. log_science_warn)      ) then
+(  488)        pos = index(tmp_txt,"warn")
+(  489) # 490 "logging.F90"
+(  490)        ! define some exceptions that should not trigger this 
+(  491)        ! special warning case. Beware to translate the text to lowercase
+(  492)        ! first, before including it below as an exception.
+(  493)        exception_found = .false.
+(  494) # 495 "logging.F90"
+(  495)        ! Stdout log level set to: WARNING" is logged in case a user
+(  496)        ! wants to see error and warning messages in the log.
+(  497)        exc_pos = index(tmp_txt,"stdout log level set to: warning")
+(  498)        if (exc_pos .gt. 0) exception_found = .true.
+(  499)        exc_pos = index(tmp_txt,"stderr log level set to: warning")
+(  500)        if (exc_pos .gt. 0) exception_found = .true.
+(  501)        
+(  502)        if ((pos .gt. 0) .and. (.not. exception_found)) then
+(  503)           msg_text_copy = trim(msg_text_copy)//" ADDITIONAL WARNING: "//&
+(  504)                "This message contains the word 'warn'. This should not "//&
+(  505)                "occur unless the error type is log_warn !!!!"
+(  506)           ! only change the msg type if it is not an errpr
+(  507)           ! (which is more severe ofcourse)
+(  508)           if  (msg_type .ne. log_error) then
+(  509)              msg_type_copy = log_warn
+(  510)           end if
+(  511)        end if
+(  512)     end if
+(  513) # 514 "logging.F90"
+(  514)     if (msg_type .eq. log_science_warn) then
+(  515)        msg_text_copy = "Science Warning: "//&
+(  516)             trim(msg_text_copy(1:len(msg_text)+238))
+(  517)        msg_type_copy = log_info
+(  518)     end if
+(  519)     
+(  520)     ! get the current date and time and construct a DateTimeString from them
+(  521)     ! remark: the used stringformat for datetime is yet a little different
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 27
+
+(  522)     ! from the already defined XML adn KVT formats, so I can't reuse 
+(  523)     ! those here
+(  524)     call get_current_date_time(date_current,time_current)
+(  525)     datestring = date2string_sep(   date_current,"-")
+(  526)     timestring = time2string_sep_ms(time_current,":")
+(  527) # 528 "logging.F90"
+(  528)     DateTimeString = trim(datestring)//'T'//trim(timestring)
+(  529)     
+(  530)     ! set some variables at the first call only to save time
+(  531)     IF (first_call) THEN
+(  532)        first_call = .false.
+(  533)        ! get the nodename
+(  534)        NodeName = get_hostname()
+(  535)        ! make sure it contains no spaces !
+(  536)        IF (contains_spaces(NodeName)) THEN
+(  537)           msg_text_copy = trim(msg_text)//&
+(  538)                " ERROR in logmsg(): "//&
+(  539)                "NodeName ["//trim(NodeName)//"] contains one or more spaces"//&
+(  540)                "this is not allowed !!!"
+(  541)           msg_type_copy = log_error
+(  542)        END IF
+(  543) # 544 "logging.F90"
+(  544)        ! get the procname
+(  545)        ProcName = software_ProcName
+(  546)        ! make sure it contains no spaces !
+(  547)        IF (contains_spaces(ProcName)) THEN 
+(  548)           msg_text_copy = trim(msg_text)//&
+(  549)                " ERROR in logmsg(): "//&
+(  550)                "ProcName ["//trim(ProcName)//"] contains one or more spaces"//&
+(  551)                "this is not allowed !!!"
+(  552)           msg_type_copy = log_error
+(  553)        END IF
+(  554)        
+(  555)        ! get the Proc version
+(  556)        ! convert from "0.2" to "00.20"
+(  557)        txt = software_version
+(  558)        read(txt,*,iostat=ios) version_nr
+(  559)        IF (ios .ne.0) THEN
+(  560)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  561)                "conversion of software_version to integer string failed ..."
+(  562)           msg_type_copy = log_error
+(  563)        END IF
+(  564)        write(ProcVersion,"(f5.2)",iostat=ios) version_nr
+(  565)        IF (ios .ne.0) THEN
+(  566)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  567)                "conversion of version_nr to string failed ..."
+(  568)           msg_type_copy = log_error
+(  569)        END IF
+(  570) # 571 "logging.F90"
+(  571)        ! make sure the first char is a zero if it is not filled
+(  572)        if (ProcVersion(1:1) .eq. space) ProcVersion(1:1)="0"
+(  573) # 574 "logging.F90"
+(  574)        ! get the PID
+(  575)        ProcID_nr = get_process_id()
+(  576)        write(ProcID,"('[',i10.10,']')",iostat=ios) ProcID_nr
+(  577)        IF (ios .ne.0) THEN
+(  578)           msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  579)                "conversion of PID to string failed ..."
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 28
+
+(  580)           msg_type_copy = log_error
+(  581)        END IF
+(  582)     END IF
+(  583) # 584 "logging.F90"
+(  584)     ! verify that msg_type is one of the allowed types:
+(  585)     pos = verify(msg_type,"DIPWES")
+(  586)     IF (pos .ne. 0) THEN
+(  587)        msg_text_copy = trim(msg_text_copy)//" ERROR in logmsg(): "//&
+(  588)             "msg_type ["//msg_type//"] is not one of the allowed "//&
+(  589)             "types [DIPWES], this is a programming error ..."
+(  590)        msg_type_copy = log_error
+(  591)     END IF
+(  592) # 593 "logging.F90"
+(  593)     ! msg_type_copy may have been altered by one of the above checks
+(  594)     ! so also checl the copied variable msg_type_copy
+(  595)     pos = verify(msg_type_copy,"DIPWES")
+(  596)     IF (pos .ne. 0) THEN
+(  597)        msg_text_copy = trim(msg_text_copy)//" ERROR in logmsg(): "//&
+(  598)             "msg_type ["//msg_type_copy//"] is not one of the allowed "//&
+(  599)             "types [DIPWES], this is a programming error ..."
+(  600)        msg_type_copy = log_error
+(  601)     END IF
+(  602) # 603 "logging.F90"
+(  603)     ! verify that there are no illegal characters in the msg string 
+(  604)     ! (like return and newline characters ...)
+(  605)     IF (contains_crnl(msg_text_copy)) THEN
+(  606)        msg_text_copy = trim(msg_text)//" ERROR in logmsg(): "//&
+(  607)             "msg_text contains one or more "//&
+(  608)             "carriage-return or newline characters, this is not allowed !!!"
+(  609)        msg_type_copy = log_error
+(  610)     END IF
+(  611) # 612 "logging.F90"
+(  612)     ! construct the message line
+(  613)     total_log_msg(:) = ' '
+(  614)     write(total_log_msg,"(a)",err=993) &
+(  615)          DateTimeString//space//&
+(  616)          trim(Nodename)//space//&
+(  617)          trim(ProcName)//space//&
+(  618)          trim(ProcVersion)//space//&
+(  619)          trim(ProcID)//& ! no space here !!!!!
+(  620)          ":"//space//&
+(  621)          "["//msg_type_copy//"]"//space//&
+(  622)          trim(adjustl(msg_text_copy))
+(  623) # 624 "logging.F90"
+(  624)     ! there should be no space after the ProcID field.
+(  625)     ! see email of Christophe Caspar, 3-apr-2006
+(  626) # 627 "logging.F90"
+(  627)     ! Poli: set log_level to default to prevent
+(  628)     ! "warning: 'log_level' may be used uninitialized in this function"
+(  629)     ! with g95
+(  630) # 631 "logging.F90"
+(  631)     log_level = Log_Level_Default
+(  632) # 633 "logging.F90"
+(  633)     select case (msg_type_copy)
+(  634)     case(log_debug)
+(  635)        log_level = Log_Level_Debug
+(  636)     case(log_info)
+(  637)        log_level = Log_Level_Info
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 29
+
+(  638)     case(log_progress)
+(  639)        log_level = Log_Level_Progress
+(  640)     case(log_warn)
+(  641)        log_level = Log_Level_Warning
+(  642)     case(log_error)
+(  643)        log_level = Log_Level_Error
+(  644)        IF (do_SignalFatalError) THEN
+(  645)           FatalErrorOccurred = .true.
+(  646)           Error_That_Caused_This_Fatality = which_FatalError
+(  647)        End IF
+(  648)     case default
+(  649)        ! this code should never be reached
+(  650)        total_log_msg = trim(total_log_msg)//" ERROR in logmsg():"//&
+(  651)             " unknown msg_type: "//trim(msg_type_copy)
+(  652)        log_level = Log_Level_Default
+(  653)        ! no return here otherwise the msg is not printed !
+(  654)     end select
+(  655) # 656 "logging.F90"
+(  656)     IF (log_level .ge. Stdout_Log_Level) THEN
+(  657)        ! write the log message to stdout
+(  658)        IF (do_realacc) &
+(  659)           write(stdout,*,err=994) "REALACC("//trim(str_realacc_precision)//")"
+(  660)        write(stdout,"(a)",err=995) trim(total_log_msg)
+(  661)        IF (do_realacc) &
+(  662)           write(stdout,*,err=994) "ENDREALACC"
+(  663)        ! remind that flushing the output is a thinLayer requirement!
+(  664)        ! (see section 4.5.4 of the inferface guidelines document)
+(  665)        call flush_aeolus(stdout)
+(  666)     END IF
+(  667) # 668 "logging.F90"
+(  668)     IF (log_level .ge. Stderr_Log_Level) THEN
+(  669)        ! write the log message to stderr
+(  670)        IF (do_realacc) &
+(  671)           write(stderr,*,err=996) "REALACC("//trim(str_realacc_precision)//")"
+(  672)        write(stderr,"(a)",err=997) trim(total_log_msg)
+(  673)        IF (do_realacc) &
+(  674)           write(stderr,*,err=996) "ENDREALACC"
+(  675)        ! remind that flushing the output is a thinLayer requirement!
+(  676)        ! (see section 4.5.4 of the inferface guidelines document)
+(  677)        call flush_aeolus(stderr)
+(  678)     END IF
+(  679) # 680 "logging.F90"
+(  680)     IF (UseOptionalLogFile) THEN
+(  681)        ! Write the log message to our private optional logfile.
+(  682)        ! Note that there are no ThinLayer requirements defined for
+(  683)        ! this one, so for now just use the same loglevel as is
+(  684)        ! used for stdout.
+(  685)        IF (log_level .ge. Stdout_Log_Level) THEN
+(  686)           IF (do_realacc) &
+(  687)                write(OptionalLogFileUnit,*,err=998) &
+(  688)                "REALACC("//trim(str_realacc_precision)//")"
+(  689)           write(OptionalLogFileUnit,"(a)",err=999) trim(total_log_msg)
+(  690)           IF (do_realacc) &
+(  691)                write(OptionalLogFileUnit,*,err=998) "ENDREALACC"
+(  692)        END IF
+(  693)     END IF
+(  694) # 695 "logging.F90"
+(  695)     return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 30
+
+(  696) # 697 "logging.F90"
+(  697) 993 print *,"ERROR in logmsg(): could not write to the string total_log_msg"
+(  698)     return
+(  699) # 700 "logging.F90"
+(  700) 994 print *,"ERROR in logmsg(): could not write to stdout !!!"
+(  701)     return
+(  702) # 703 "logging.F90"
+(  703) 995 print *,"ERROR in logmsg(): could not write to stdout !!!"
+(  704)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  705)     ! so does it make sense to try and print a warning in this case?
+(  706)     return
+(  707) # 708 "logging.F90"
+(  708) 996 print *,"ERROR in logmsg(): could not write to stderr !!!"
+(  709)     return
+(  710) # 711 "logging.F90"
+(  711) 997 print *,"ERROR in logmsg(): could not write to stderr !!!"
+(  712)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  713)     return
+(  714) # 715 "logging.F90"
+(  715) 998 print *,"ERROR in logmsg(): could not write to the optional logfile "//&
+(  716)          "named: "//trim(OptionalLogFile)
+(  717)     return
+(  718) # 719 "logging.F90"
+(  719) 999 print *,"ERROR in logmsg(): could not write to the optional logfile "//&
+(  720)          "named: "//trim(OptionalLogFile)
+(  721)     print *,"len_trim(total_log_msg) = ",len_trim(total_log_msg)
+(  722)     return
+(  723) # 724 "logging.F90"
+(  724)   end subroutine logmsg
+(  725)     !  #]
+(  726)   function CheckIfFatalErrorOccurred() result(FatalErrorOcc)
+(  727)     !  #[
+(  728)     logical :: FatalErrorOcc ! result
+(  729)     FatalErrorOcc = FatalErrorOccurred
+(  730)     return
+(  731)   end function CheckIfFatalErrorOccurred
+(  732)     !  #]
+(  733)   subroutine resetFatalErrorOccurredFlag()
+(  734)     !  #[
+(  735)     FatalErrorOccurred = .false.
+(  736)   end subroutine resetFatalErrorOccurredFlag
+(  737)     !  #]
+(  738)   function GetFatalError() result(error)
+(  739)     !  #[
+(  740)     integer :: error ! result
+(  741)     error=Error_That_Caused_This_Fatality
+(  742)     return
+(  743)   end function GetFatalError
+(  744)     !  #]
+(  745)   subroutine program_abort(error_flag,subroutine_name)
+(  746)     !  #[
+(  747)     ! (same as the copy in errorhandler, but now write the text output 
+(  748)     ! in logging formatting and if needed to the logfile before aborting)
+(  749)     !  This is the recommended way of exiting our code and should always 
+(  750)     !  be used if possible. The copy in errorhandler should only be used
+(  751)     !  by those modules that cannot use the logging module
+(  752)     !  (due to possibly circular dependency problems))
+(  753) # 754 "logging.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 31
+
+(  754)     integer,          intent(in) :: error_flag
+(  755)     character(len=*), intent(in) :: subroutine_name
+(  756) # 757 "logging.F90"
+(  757)     ! local variable
+(  758)     character(len=512) :: error_text
+(  759)     character(len=50)  :: code_text
+(  760)     integer :: code
+(  761)     
+(  762)     error_text = get_error_text(error_flag,subroutine_name)
+(  763)     call logmsg(log_error,trim(error_text))
+(  764) # 765 "logging.F90"
+(  765)     code = request_exit_code(error_flag)
+(  766)     write(code_text,*,err=999) code
+(  767) # 768 "logging.F90"
+(  768)     call logmsg(log_error,"program will stop now with exit code: "//&
+(  769)          trim(adjustl(code_text)))
+(  770)     
+(  771)     IF (error_flag .eq. request_program_to_stop) THEN
+(  772)        ! properly close this logging module
+(  773)        ! and flush any messages that might be buffered
+(  774)        call Close_Logging()
+(  775)        !stop 0 ! normal exit
+(  776)        call abort_with_given_code(error_flag)
+(  777)     END IF
+(  778) # 779 "logging.F90"
+(  779)     IF (do_abort_on_error) THEN
+(  780)        ! properly close this logging module
+(  781)        ! and flush any messages that might be buffered
+(  782)        call Close_Logging()
+(  783)        ! make sure the exit status of the program will have different
+(  784)        ! values on different error conditions
+(  785)        call abort_with_given_code(error_flag)
+(  786)     ELSE
+(  787)        call logmsg(log_warn,"==> trying to resume the program ...")
+(  788)        return
+(  789)     END IF
+(  790) # 791 "logging.F90"
+(  791)     return
+(  792) # 793 "logging.F90"
+(  793) 999 call logmsg(log_error,"ERROR inside program_abort: could not convert "//&
+(  794)          "the exit code reported by the program to a text string. "//&
+(  795)          "This is a programming error.")
+(  796)     call abort_with_given_code(error_flag)
+(  797)     
+(  798)   end subroutine program_abort
+(  799)   !  #]
+(  800)   subroutine catch_error(error_flag,subroutine_name)
+(  801)     !  #[
+(  802)     ! (same as the copy in errorhandler, but now write the text output 
+(  803)     !  in logging formatting and if needed to the logfile before aborting.
+(  804)     !  This is the recommended way of exiting our code and should always 
+(  805)     !  be used if possible. The copy in errorhandler should only be used
+(  806)     !  by those modules that cannot use the logging module
+(  807)     !  (due to possibly circular dependency problems))
+(  808)     integer,          intent(in) :: error_flag
+(  809)     character(len=*), intent(in) :: subroutine_name
+(  810) # 811 "logging.F90"
+(  811)     IF (error_flag .ne. no_error) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 32
+
+(  812)        call logmsg(log_error,"aborted "//trim(subroutine_name))
+(  813)        call program_abort(error_flag,subroutine_name)
+(  814)     END IF
+(  815) # 816 "logging.F90"
+(  816)   end subroutine catch_error
+(  817)     !  #]
+(  818)   subroutine start_buffering_logmsgs()
+(  819)     !  #[
+(  820)     ! set the global module switch
+(  821)     buffer_logging_output = .true.
+(  822) # 823 "logging.F90"
+(  823)     ! init the buffer
+(  824) # 825 "logging.F90"
+(  825)   end subroutine start_buffering_logmsgs
+(  826)     !  #]
+(  827)   subroutine stop_buffering_logmsgs()
+(  828)     !  #[
+(  829) # 830 "logging.F90"
+(  830)     ! local variables
+(  831)     type(logbuffer_type), pointer :: extracted_logmsg
+(  832) # 833 "logging.F90"
+(  833)     ! set the global module switch
+(  834)     buffer_logging_output = .false.
+(  835) # 836 "logging.F90"
+(  836)     ! retrieve all log msgs from the buffer (if any) and 
+(  837)     ! write them to file or stderr/stdout as requested
+(  838)     logmsg_loop: do while (associated(first_buffered_logmsg))
+(  839)        call get_from_logbuffer(extracted_logmsg)
+(  840)        if (extracted_logmsg%do_realacc) then
+(  841)           call logmsg(msg_type = extracted_logmsg%msg_type, &
+(  842)                   msg_text = buffered_warning//&
+(  843)                   chararray2string(extracted_logmsg%msg_text), &
+(  844)                   realacc_on =  extracted_logmsg%do_realacc, &
+(  845)                   realacc_precision = extracted_logmsg%do_realacc_precision,& 
+(  846)                   SignalFatalError = extracted_logmsg%do_SignalFatalError, &
+(  847)                   FatalError = extracted_logmsg%which_FatalError)
+(  848)        else
+(  849)           call logmsg(msg_type = extracted_logmsg%msg_type, &
+(  850)                   msg_text = buffered_warning//&
+(  851)                   chararray2string(extracted_logmsg%msg_text), &
+(  852)                   SignalFatalError = extracted_logmsg%do_SignalFatalError, &
+(  853)                   FatalError = extracted_logmsg%which_FatalError)
+(  854)        end if
+(  855) # 856 "logging.F90"
+(  856)        if (associated(extracted_logmsg%msg_text)) &
+(  857)             deallocate(extracted_logmsg%msg_text)
+(  858)        if (associated(extracted_logmsg)) &
+(  859)             deallocate(extracted_logmsg)
+(  860)     
+(  861)     end do logmsg_loop
+(  862) # 863 "logging.F90"
+(  863)   end subroutine stop_buffering_logmsgs
+(  864)     !  #]
+(  865)   subroutine return_log_level(log_lev)
+(  866)     !  #[
+(  867)     integer, intent(out) :: log_lev
+(  868) # 869 "logging.F90"
+(  869)     log_lev = Stdout_Log_Level  
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:04      page 33
+
+(  870) # 871 "logging.F90"
+(  871)   end subroutine return_log_level
+(  872)     !  #]
+(  873)   !--------------------------------
+(  874) end MODULE Logging

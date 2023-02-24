@@ -1,0 +1,15 @@
+!depfile:ini_data_rootfrac.F90
+MODULE MODI_INI_DATA_ROOTFRAC
+INTERFACE
+      SUBROUTINE INI_DATA_ROOTFRAC( PDG, PROOTDEPTH, PROOT_EXT, PROOT_LIN,  &
+                                    PROOTFRAC, OGV                          )
+REAL,    DIMENSION(:,:), INTENT(IN) :: PDG         ! depth of base of soil layers (m)
+REAL,    DIMENSION(:),   INTENT(IN) :: PROOTDEPTH  ! effective root depth         (m)
+REAL, DIMENSION(:), INTENT(IN)     :: PROOT_EXT
+REAL, DIMENSION(:), INTENT(IN)     :: PROOT_LIN
+LOGICAL, OPTIONAL, INTENT(IN)        :: OGV
+REAL, DIMENSION(:,:), INTENT(OUT)  :: PROOTFRAC
+END SUBROUTINE INI_DATA_ROOTFRAC
+
+END INTERFACE
+END MODULE MODI_INI_DATA_ROOTFRAC

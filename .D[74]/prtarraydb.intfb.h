@@ -1,0 +1,7 @@
+INTERFACE
+SUBROUTINE prtarraydb(kio)
+USE PARKIND1 ,ONLY : JPIM ,JPRD
+USE yomdb
+INTEGER(KIND=JPIM), intent(in) :: kio
+END SUBROUTINE prtarraydb
+END INTERFACE

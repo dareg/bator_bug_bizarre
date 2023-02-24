@@ -1,0 +1,3285 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: profileinterpolate.F90
+
+(    1) !  #[ TODO:
+(    2) ! maybe later I could change the interpolate module to accept
+(    3) ! log values and store them as such, to have better performance
+(    4) ! when doing log interpolation, or to change on the fly to
+(    5) ! normal values in case of linear interpolation.
+(    6) ! dito for dB values
+(    7) !
+(    8) ! TODO:
+(    9) ! add possibility to reduce the data inside the interpolate module
+(   10) ! by eliminating sequences of equal numbers, since 1,3,3,3,3,3,3,5
+(   11) ! yields the same result as 1,3,3,5 provided that the z values
+(   12) ! are correct
+(   13) ! This would largely reduce the amount of data for constant profiles,
+(   14) ! or profiles that have a part that goes to zero (or is missing)
+(   15) ! (like aerosol backscatter above ca. 30km, etc.)
+(   16) !  #]  
+(   17) module ProfileInterpolate
+(   18)   !---------------------------------------------
+(   19)   !  #[ Description
+(   20)   !---------------------------------------------------
+(   21)   ! purpose: a module to perform interpolation in between points of 
+(   22)   !          profiles that are defined on irregular intervals, using 
+(   23)   !          linear or logarithmic interpolation, and if wanted doing 
+(   24)   !          also extrapolation
+(   25)   !
+(   26)   !    Written by:  Jos de Kloe.
+(   27)   !    created:     11-11-2004
+(   28)   !
+(   29)   ! Modifications:
+(   30)   !    18-May-2006 J. de Kloe converted from r_ to r8_ type
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 3
+
+(   31)   !    25-Jul-2006 J. de Kloe bugfix: added initialisation for
+(   32)   !                           IsDirectionData and DirectionJump fields
+(   33)   !    06-Oct-2006 J. de Kloe added extra NaN/Inf checks on wanted_z
+(   34)   !    16-Oct-2007 J. de Kloe added handling for cases with zero or 1
+(   35)   !                           valid datapoints in the profile
+(   36)   !    04-Feb-2009 J. de Kloe added get_arrays() and get_profile_size()
+(   37)   !    15-Jul-2009 J. de Kloe added a safety check before entering
+(   38)   !                           the spline initialisation
+(   39)   !    31-Mar-2010 J. de Kloe added subroutines AsciiWriteProfile
+(   40)   !                           and PrintProfile
+(   41)   !    19-Nov-2015 J. de Kloe make it an error if a profile is not
+(   42)   !                           initialised before use in AsciiWriteProfile
+(   43)   !                           and delete_profile.
+(   44)   !    03-Dec-2015 J. de Kloe little bugfix in print routine
+(   45)   !    21-Jun-2016 M. Rennie  Avoid use of zeroes in log interpolation
+(   46)   !    21-Jun-2016 J. de Kloe and avoid negative values to enter log10()
+(   47)   !    27-Oct-2017 J. de Kloe phase out use of verbosity module
+(   48)   !    06-Jun-2018 M. Rennie  Ensure check for ascending/descending 
+(   49)   !                           avoids missing data
+(   50)   !    06-Jun-2018 J. de Kloe rewritten fix for asc/desc to be more robust
+(   51)   !
+(   52)   !---------------------------------------------------
+(   53)   !  #]
+(   54)   !  #[ Used modules
+(   55)   USE Interp1, only: Spline_Init
+(   56)   USE Logging, only: logmsg,log_debug,log_info,log_progress,log_warn,&
+(   57)        log_science_warn, log_error
+(   58)   USE ErrorHandler, only: no_error, error_programming, error_allocate, &
+(   59)                           error_writing_file
+(   60)   USE numerics, only: r8_, missing_indicator_real, missing_real,&
+(   61)        is_NaN, is_PosInf, is_NegInf
+(   62)   USE LunManager, only: fileunit_stdout
+(   63)   !  #]
+(   64)   !  #[ Variables, types and parameters
+(   65) 
+(   66)   IMPLICIT NONE
+(   67) 
+(   68)   ! define a canary parameter, which helps tracking the mistake
+(   69)   ! of using an uninitialised profile struct
+(   70)   integer, parameter :: profile_canary = 789456123
+(   71) 
+(   72)   ! define the allowed interpolation types
+(   73)   integer, parameter :: interp_type_linear = 1
+(   74)   integer, parameter :: interp_type_log    = 2
+(   75)   integer, parameter :: interp_type_spline = 3
+(   76) 
+(   77)   ! define the allowed extrapolation types
+(   78)   integer, parameter :: extrap_type_none    = 0
+(   79)   integer, parameter :: extrap_type_linear  = 1 
+(   80)   integer, parameter :: extrap_type_log     = 2
+(   81)   integer, parameter :: extrap_type_edgeval = 3
+(   82)   integer, parameter :: extrap_type_z_sq    = 4 ! 1/(1+z^2)
+(   83) 
+(   84)   ! test for zeroes
+(   85)   real(r8_), parameter :: ZeroEpsilon = 0.0000000000001_r8_
+(   86) 
+(   87)   type profile_type
+(   88)      private
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 4
+
+(   89)      integer   :: size
+(   90)      real(r8_), dimension(:), pointer :: z
+(   91)      real(r8_), dimension(:), pointer :: data 
+(   92)      integer   :: last_used_level
+(   93)      real(r8_) :: last_used_z
+(   94)      integer   :: interpolation_type
+(   95)      ! coefficients used only by spline interpolation:
+(   96)      real(r8_), dimension(:), pointer :: b,c,d
+(   97)      integer   :: extrapolation_type_up
+(   98)      integer   :: extrapolation_type_down
+(   99)      real(r8_) :: max_extrapolation_z
+(  100)      real(r8_) :: min_extrapolation_z
+(  101)      real(r8_) :: z_scale_down
+(  102)      real(r8_) :: z_scale_up
+(  103)      logical   :: IsDirectionData
+(  104)      real(r8_) :: DirectionJump
+(  105)      integer   :: struct_was_properly_initialised 
+(  106)      character(len=30) :: name ! very usefull for debugging !!
+(  107)      logical   :: debug_prints ! dito
+(  108)   end type profile_type
+(  109) 
+(  110)   !  #]
+(  111) contains 
+(  112)   !------------------------------------------------
+(  113)   subroutine init_profile(profile,                & ! output
+(  114)                           z, data, size, name,    & ! input
+(  115)                           error_flag,             & ! output
+(  116)                           interpolation_type,     & ! optional input
+(  117)                           extrapolation_type_up,  & ! optional input
+(  118)                           extrapolation_type_down,& ! optional input
+(  119)                           min_extrapolation_z,    & ! optional input
+(  120)                           max_extrapolation_z,    & ! optional input
+(  121)                           z_scale_down,           & ! optional input
+(  122)                           z_scale_up,             & ! optional input
+(  123)                           DirectionData,          & ! optional input
+(  124)                           DirectionJump,          & ! optional input
+(  125)                           SkipMissingData,        & ! optional input
+(  126)                           debug_prints            ) ! optional input
+(  127)     !  #[
+(  128)     type(profile_type),      intent(out) :: profile
+(  129)     real(r8_), dimension(:), intent(in)  :: z
+(  130)     real(r8_), dimension(:), intent(in)  :: data
+(  131)     integer,                 intent(in)  :: size
+(  132)     character(len=*),        intent(in)  :: name ! very usefull for debugging
+(  133)     integer,                 intent(out) :: error_flag
+(  134)     integer,   optional,     intent(in)  :: interpolation_type
+(  135)     integer,   optional,     intent(in)  :: extrapolation_type_up
+(  136)     integer,   optional,     intent(in)  :: extrapolation_type_down
+(  137)     real(r8_), optional,     intent(in)  :: min_extrapolation_z
+(  138)     real(r8_), optional,     intent(in)  :: max_extrapolation_z
+(  139)     real(r8_), optional,     intent(in)  :: z_scale_down
+(  140)     real(r8_), optional,     intent(in)  :: z_scale_up
+(  141)     logical,   optional,     intent(in)  :: DirectionData
+(  142)     real(r8_), optional,     intent(in)  :: DirectionJump
+(  143)     logical,   optional,     intent(in)  :: SkipMissingData
+(  144)     logical,   optional,     intent(in)  :: debug_prints
+(  145) 
+(  146)     ! local variables
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 5
+
+(  147)     integer :: AllocStatus, i, j, counter, n_valid_points
+(  148)     logical :: do_SkipMissingData, descending
+(  149)     real(r8_) :: first_valid_z, second_valid_z
+(  150)     
+(  151)     error_flag = no_error
+(  152) 
+(  153)     profile%name = name
+(  154) 
+(  155)     do_SkipMissingData = .false.
+(  156)     IF (present(SkipMissingData)) do_SkipMissingData=SkipMissingData
+(  157) 
+(  158)     n_valid_points = size
+(  159)     IF (do_SkipMissingData) THEN
+(  160)        n_valid_points = 0
+(  161)        DO i=1,size
+(  162)           IF ( .not. missing_real(z(   i)) .and. &
+(  163)                .not. missing_real(data(i))       ) THEN
+(  164)              n_valid_points = n_valid_points+1
+(  165)           END IF
+(  166)        END DO
+(  167)        !print *,"n_valid_points = ",n_valid_points,&
+(  168)        !     " n_missing_data_points = ",size-n_valid_points
+(  169)     END IF
+(  170) 
+(  171)     IF (n_valid_points .eq. 0) THEN
+(  172)        ! we have no valid data at all in this case
+(  173)        nullify(profile%z,profile%data)
+(  174)     ELSE
+(  175)        allocate(profile%z(n_valid_points),stat=AllocStatus)
+(  176)        if (AllocStatus .ne. 0) then
+(  177)           call logmsg(log_error, "allocation problem in init_profile() (z)"//&
+(  178)                "for profile: "//trim(profile%name))
+(  179)           error_flag = error_allocate
+(  180)           return
+(  181)        endif
+(  182)        
+(  183)        allocate(profile%data(n_valid_points),stat=AllocStatus)
+(  184)        if (AllocStatus .ne. 0) then
+(  185)           call logmsg(log_error, "allocation problem in init_profile() "//&
+(  186)                "(data) for profile: "//trim(profile%name))
+(  187)           error_flag = error_allocate
+(  188)           return
+(  189)        endif
+(  190)     END IF
+(  191) 
+(  192)     profile%size = n_valid_points
+(  193) 
+(  194)     ! check whether the profile is descending or ascending
+(  195)     descending = .false.
+(  196)     if (size .gt. 1) then
+(  197) 
+(  198)        ! first try by Mike, not robust for all missing profile
+(  199)        !allocate (z_non_missing(n_valid_points),stat=AllocStatus)
+(  200)        !z_non_missing = PACK(z, mask=(abs(z - missing_indicator_real) .gt. &
+(  201)        !                              ZeroEpsilon))
+(  202)        !if (z_non_missing(1) .gt. z_non_missing(n_valid_points)) then
+(  203)        !  descending = .true.
+(  204)        !end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 6
+
+(  205) 
+(  206)        ! replacement code by Jos to fix AE-IPF-319
+(  207)        first_valid_z = missing_indicator_real
+(  208)        second_valid_z = missing_indicator_real
+(  209) 
+(  210)        ! this should check first aganst second non-zero value
+(  211)        ! and not just the first 2 elements!
+(  212)        search_for_valid_z: do i=1,size
+(  213)           if (.not. missing_real(z(i))) then
+(  214)              if (missing_real(first_valid_z)) then
+(  215)                 first_valid_z = z(i)
+(  216)              else
+(  217)                 if (missing_real(second_valid_z)) then
+(  218)                    second_valid_z = z(i)
+(  219)                    exit search_for_valid_z
+(  220)                 end if
+(  221)              end if
+(  222)           end if
+(  223)        end do search_for_valid_z
+(  224) 
+(  225)        if (.not. (missing_real(first_valid_z))) then
+(  226)           if (.not. (missing_real(second_valid_z))) then
+(  227)              if (first_valid_z .gt. second_valid_z) then
+(  228)                 descending = .true.
+(  229)              end if
+(  230)           end if
+(  231)        end if
+(  232) 
+(  233)     end if
+(  234) 
+(  235)     if (descending) then
+(  236)        ! profile seems to be descending, so reverse it to make
+(  237)        ! the remainder of this module simpeler
+(  238) 
+(  239)        ! copy the data reversed into the profile
+(  240)        counter=0
+(  241)        DO i=1,size
+(  242)           j=size+1-i
+(  243)           IF (do_SkipMissingData) THEN
+(  244)              IF ( .not. missing_real(z(   j)) .and. &
+(  245)                   .not. missing_real(data(j))       ) THEN
+(  246)                 counter = counter+1
+(  247)                 profile%z(   counter) = z(   j)
+(  248)                 profile%data(counter) = data(j)
+(  249)              END IF
+(  250)           ELSE ! just copy all data
+(  251)              counter = counter+1
+(  252)              profile%z(   counter) = z(   j)
+(  253)              profile%data(counter) = data(j)
+(  254)           END IF
+(  255)        END DO
+(  256)     else       
+(  257)        ! copy the data into the profile
+(  258)        counter=0
+(  259)        DO i=1,size
+(  260)            IF (do_SkipMissingData) THEN
+(  261)              IF ( .not. missing_real(z(   i)) .and. &
+(  262)                   .not. missing_real(data(i))       ) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 7
+
+(  263)                 counter = counter+1
+(  264)                 profile%z(   counter) = z(   i)
+(  265)                 profile%data(counter) = data(i)
+(  266)              END IF
+(  267)           ELSE ! just copy all data
+(  268)              counter = counter+1
+(  269)              profile%z(   i) = z(   i)
+(  270)              profile%data(i) = data(i)
+(  271)           END IF
+(  272)        END DO
+(  273)     endif
+(  274) 
+(  275)     profile%interpolation_type = interp_type_linear ! set the default
+(  276)     if (present(interpolation_type)) then
+(  277)        profile%interpolation_type = interpolation_type
+(  278)     end if
+(  279) 
+(  280)     nullify(profile%b,profile%c,profile%d)
+(  281) 
+(  282)     if(profile%interpolation_type .eq. interp_type_spline) then
+(  283)        ! sanity check
+(  284)        do i=1,n_valid_points
+(  285)           if (missing_real(profile%data(i))) then
+(  286)              call logmsg(log_error, "ERROR in init_profile: "//&
+(  287)                   "The current implementation of spline interpolation "//&
+(  288)                   "cannot gracefully handle missing data within the "//&
+(  289)                   "profile to be interpolated !!!! "//&
+(  290)                   "Please switch on the SkipMissingData switch to "//&
+(  291)                   "prevent these numbers from entering the spline algorithm")
+(  292)              error_flag = error_programming
+(  293)              return
+(  294)           end if
+(  295)        end do
+(  296) 
+(  297)        IF (n_valid_points .le. 1) THEN
+(  298)           ! we have not enough valid data in this case
+(  299)           ! to do a usefull spline interpolation
+(  300)           nullify(profile%b,profile%c,profile%d)
+(  301)        ELSE
+(  302)           allocate(profile%b(n_valid_points),&
+(  303)                    profile%c(n_valid_points),&
+(  304)                    profile%d(n_valid_points),stat=AllocStatus)
+(  305)           if (AllocStatus .ne. 0) then
+(  306)              call logmsg(log_error, &
+(  307)                   "allocation problem in init_profile() (a,b,c) "//&
+(  308)                   "for profile: "//trim(profile%name))
+(  309)              error_flag = error_allocate
+(  310)              return
+(  311)           endif
+(  312)           ! calculate the spline coefficients. This needs to be done only once.
+(  313)           !print *,"calculating spline coefficients ..."
+(  314)           call Spline_Init(n_valid_points,&
+(  315)                            profile%z,profile%data,&
+(  316)                            profile%b,profile%c,profile%d,error_flag)
+(  317)           IF (error_flag .ne. no_error) return
+(  318)           !print *,"done calculating spline coefficients ..."
+(  319)           !print *,"b=",profile%b
+(  320)           !print *,"c=",profile%c
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 8
+
+(  321)           !print *,"d=",profile%d
+(  322)        END IF
+(  323)     endif
+(  324) 
+(  325)     profile%extrapolation_type_up = extrap_type_none ! set the default
+(  326)     if (present(extrapolation_type_up)) then
+(  327)        profile%extrapolation_type_up = extrapolation_type_up
+(  328)     end if
+(  329) 
+(  330)     profile%extrapolation_type_down = extrap_type_none ! set the default
+(  331)     if (present(extrapolation_type_down)) then
+(  332)        profile%extrapolation_type_down = extrapolation_type_down
+(  333)     end if
+(  334) 
+(  335)     profile%min_extrapolation_z = missing_indicator_real ! set the default
+(  336)     if (present(min_extrapolation_z)) then
+(  337)        profile%min_extrapolation_z = min_extrapolation_z
+(  338)     end if
+(  339) 
+(  340)     profile%max_extrapolation_z = missing_indicator_real ! set the default
+(  341)     if (present(max_extrapolation_z)) then
+(  342)        profile%max_extrapolation_z = max_extrapolation_z
+(  343)     end if
+(  344) 
+(  345)     profile%z_scale_down = 1.0_r8_
+(  346)     if (present(z_scale_down)) then
+(  347)        if (profile%extrapolation_type_down .eq. extrap_type_z_sq) then
+(  348)           profile%z_scale_down = z_scale_down
+(  349)        else
+(  350)           call logmsg(log_error,&
+(  351)                "ERROR in init_profile():the optional z_scale_down parameter "//&
+(  352)                "is only usefull is case of downward z_sq extrapolation "//&
+(  353)                "for profile: "//trim(profile%name))
+(  354)           error_flag = error_programming
+(  355)           return
+(  356)        endif
+(  357)     endif
+(  358) 
+(  359)     profile%z_scale_up   = 1.0_r8_
+(  360)     if (present(z_scale_up)) then
+(  361)        if (profile%extrapolation_type_up .eq. extrap_type_z_sq) then
+(  362)           profile%z_scale_up = z_scale_up
+(  363)        else
+(  364)           call logmsg(log_error, &
+(  365)                "ERROR in init_profile(): the optional z_scale_up parameter "//&
+(  366)                "is only usefull is case of upward z_sq extrapolation "//&
+(  367)                "for profile: "//trim(profile%name))
+(  368)           error_flag = error_programming
+(  369)           return
+(  370)        endif
+(  371)     endif
+(  372) 
+(  373)     profile%debug_prints = .false.
+(  374)     if (present(debug_prints)) then
+(  375)        profile%debug_prints = debug_prints
+(  376)     end if
+(  377) 
+(  378)     profile%IsDirectionData = .false.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 9
+
+(  379)     profile%DirectionJump   = missing_indicator_real
+(  380)     IF (present(DirectionData)) THEN
+(  381)        profile%IsDirectionData = DirectionData
+(  382)        profile%DirectionJump = 360._r8_ ! default
+(  383)        IF (present(DirectionJump)) THEN
+(  384)           profile%DirectionJump = DirectionJump
+(  385)        END IF
+(  386) 
+(  387)        IF (profile%interpolation_type .eq. interp_type_log) THEN
+(  388)           call logmsg(log_error, &
+(  389)                "ERROR: you are trying to use a log interpolation on "//&
+(  390)                "direction data, which makes no sense ...")
+(  391)           error_flag = error_programming
+(  392)           return
+(  393)        END IF
+(  394) 
+(  395)        IF (profile%extrapolation_type_down .eq. extrap_type_log) THEN
+(  396)           call logmsg(log_error, &
+(  397)                "ERROR: you are trying to use a downward log extrapolation "//&
+(  398)                "on direction data, which makes no sense ...")
+(  399)           error_flag = error_programming
+(  400)           return
+(  401)        END IF
+(  402) 
+(  403)        IF (profile%extrapolation_type_up .eq. extrap_type_log) THEN
+(  404)           call logmsg(log_error, &
+(  405)                "ERROR: you are trying to use an upward log extrapolation "//&
+(  406)                "on direction data, which makes no sense ...")
+(  407)           error_flag = error_programming
+(  408)           return
+(  409)        END IF
+(  410) 
+(  411)     ELSE
+(  412)        IF (present(DirectionJump)) THEN
+(  413)           IF (profile%debug_prints) THEN
+(  414)              call logmsg(log_science_warn, &
+(  415)                   "WARNING: option DirectionJump is set for this profile "//&
+(  416)                   "but this has no effect without setting "//&
+(  417)                   "the option DirectionData...")
+(  418)           END IF
+(  419)        END IF
+(  420)     ENDIF
+(  421) 
+(  422)     ! init to -1 (= yet unused)
+(  423)     profile%last_used_level = -1
+(  424)     profile%last_used_z     = -9999._r8_
+(  425) 
+(  426)     ! initialise the profile struct
+(  427)     profile%struct_was_properly_initialised = profile_canary
+(  428)     
+(  429)   end subroutine init_profile
+(  430)     !  #]
+(  431)   subroutine delete_profile(profile, error_flag)
+(  432)     !  #[
+(  433)     type(profile_type), intent(inout) :: profile
+(  434)     integer, intent(out) :: error_flag
+(  435)     
+(  436)     error_flag = no_error
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 10
+
+(  437) 
+(  438)     ! check the canary !
+(  439)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  440)        ! profile%debug_prints is also undefined now, so I cannot use this here
+(  441)        call logmsg(log_error,&
+(  442)             "ERROR in delete_profile: "//&
+(  443)             "this profile was not properly initialised "//&
+(  444)             "for profile: "//trim(profile%name))
+(  445)        error_flag = error_programming
+(  446)     else
+(  447)        !print *,"deallocating the components of this profile ..."
+(  448)        if (associated(profile%z   )) deallocate(profile%z   )
+(  449)        if (associated(profile%data)) deallocate(profile%data)
+(  450)        if (associated(profile%b)) deallocate(profile%b)
+(  451)        if (associated(profile%c)) deallocate(profile%c)
+(  452)        if (associated(profile%d)) deallocate(profile%d)
+(  453)     end if
+(  454) 
+(  455)     profile%name = "(deleted profile)"
+(  456)     nullify(profile%z)
+(  457)     nullify(profile%data)
+(  458)     nullify(profile%b)
+(  459)     nullify(profile%c)
+(  460)     nullify(profile%d)
+(  461) 
+(  462)     profile%size            = -1
+(  463)     profile%last_used_level = -1
+(  464)     profile%last_used_z     = -9999._r8_
+(  465)     profile%struct_was_properly_initialised = 0
+(  466) 
+(  467)   end subroutine delete_profile
+(  468)     !  #]
+(  469)   subroutine AsciiWriteProfile(profile,fileunit,prefix,PrintAll,error_flag)
+(  470)     !  #[
+(  471)     type(profile_type), intent(in)  :: profile    ! input
+(  472)     integer,            intent(in)  :: fileunit   ! input
+(  473)     character(len=*),   intent(in)  :: prefix     ! input
+(  474)     logical,            intent(in)  :: PrintAll   ! input
+(  475)     integer,            intent(out) :: error_flag ! output
+(  476) 
+(  477)     ! local variables
+(  478)     integer :: i,s,step
+(  479)     character(len=256) :: txt
+(  480)     character(len=256) :: txt2
+(  481)     character(len=256) :: txt3
+(  482)     character(len=256) :: txt4
+(  483) 
+(  484)     ! init
+(  485)     error_flag = no_error
+(  486) 
+(  487)     ! check the canary !
+(  488)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  489)        ! profile%debug_prints is also undefined now, so I cannot use this here
+(  490)        call logmsg(log_error,&
+(  491)             "WARNING: this profile was not properly initialised "//&
+(  492)             "for profile: "//trim(profile%name)//&
+(  493)             "; This is a programming error! Not printing it ....")
+(  494)        error_flag = error_programming
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 11
+
+(  495)        return
+(  496)     end if
+(  497) 
+(  498)     write(fileunit,"(a)",err=999) "REALACC(12)"
+(  499) 
+(  500)     write(txt,*,err=998) profile%size
+(  501)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  502)          "%size                   = "//trim(adjustl(txt))
+(  503) 
+(  504)     s=profile%size
+(  505)     if (s .eq. 0) then
+(  506)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  507)             "profile%z [contains no data]"
+(  508)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  509)             "profile%data [contains no data]"
+(  510)     else
+(  511)        if (PrintAll .or. (s .le. 1)) then
+(  512)           step=1
+(  513)        else
+(  514)           step = s - 1
+(  515)        end if
+(  516)        DO i=1,s,step
+(  517)           write(txt,*,err=998) i
+(  518)           write(txt2,*,err=998) profile%z(i)
+(  519)           write(txt3,*,err=998) profile%data(i)
+(  520)           
+(  521)           write(fileunit,"(a)",err=999) trim(prefix)//&
+(  522)                "%z("//trim(adjustl(txt))//") = "//trim(adjustl(txt2))//&
+(  523)                " "//trim(prefix)//&
+(  524)                "%data("//trim(adjustl(txt))//") = "//trim(adjustl(txt3))
+(  525)        END DO
+(  526)     END if
+(  527)     write(txt,*,err=998) profile%last_used_level
+(  528)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  529)          "%last_used_level        = "//trim(adjustl(txt))
+(  530) 
+(  531)     write(txt,*,err=998) profile%last_used_z
+(  532)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  533)          "%last_used_z            = "//trim(adjustl(txt))
+(  534) 
+(  535)     write(txt,*,err=998) profile%interpolation_type
+(  536)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  537)          "%interpolation_type     = "//trim(adjustl(txt))
+(  538) !todo: add select-case here
+(  539) 
+(  540)     if (profile%interpolation_type .eq. interp_type_spline) then
+(  541)        IF (associated(profile%b)) THEN
+(  542)           s=size(profile%b)
+(  543)           if (PrintAll .or. (s .le. 1)) then
+(  544)              step=1
+(  545)           else
+(  546)              step = s - 1
+(  547)           end if
+(  548)           DO i=1,step
+(  549)              write(txt, *,err=998) i
+(  550)              write(txt2,*,err=998) profile%b(i)
+(  551)              write(txt3,*,err=998) profile%c(i)
+(  552)              write(txt4,*,err=998) profile%d(i)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 12
+
+(  553) 
+(  554)              write(fileunit,"(a)",err=999) &
+(  555)                   trim(prefix)//"%b("//trim(adjustl(txt))//") = "//&
+(  556)                   trim(adjustl(txt2))//&
+(  557)                   "; "//trim(prefix)//"c("//trim(adjustl(txt))//") = "//&
+(  558)                   trim(adjustl(txt3))//&
+(  559)                   "; "//trim(prefix)//"d("//trim(adjustl(txt))//") = "//&
+(  560)                   trim(adjustl(txt4))
+(  561)           END DO
+(  562)        ELSE
+(  563)           write(fileunit,"(a)",err=999) &
+(  564)                trim(prefix)//"b [seems not associated]"
+(  565)           write(fileunit,"(a)",err=999) &
+(  566)                trim(prefix)//"c [seems not associated]"
+(  567)           write(fileunit,"(a)",err=999) &
+(  568)                trim(prefix)//"d [seems not associated]"
+(  569)        END IF
+(  570)     end if
+(  571) 
+(  572)     write(txt,*,err=998) profile%extrapolation_type_up
+(  573)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  574)          "%extrapolation_type_up   = "//trim(adjustl(txt))
+(  575) !todo: add select-case here
+(  576) 
+(  577)     write(txt,*,err=998) profile%extrapolation_type_down
+(  578)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  579)          "%extrapolation_type_down = "//trim(adjustl(txt))
+(  580) !todo: add select-case here
+(  581) 
+(  582)     write(txt,*,err=998) profile%max_extrapolation_z
+(  583)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  584)          "%max_extrapolation_z     = "//trim(adjustl(txt))
+(  585) 
+(  586)     write(txt,*,err=998) profile%min_extrapolation_z
+(  587)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  588)          "%min_extrapolation_z     = "//trim(adjustl(txt))
+(  589) 
+(  590)     write(txt,*,err=998) profile%z_scale_down
+(  591)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  592)          "%z_scale_down            = "//trim(adjustl(txt))
+(  593) 
+(  594)     write(txt,*,err=998) profile%z_scale_up
+(  595)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  596)          "%z_scale_up              = "//trim(adjustl(txt))
+(  597) 
+(  598)     if (profile%IsDirectionData) then
+(  599)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  600)             "%IsDirectionData         = .true."
+(  601)     else
+(  602)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  603)             "%IsDirectionData         = .false."
+(  604)     end if
+(  605) 
+(  606)     write(txt,*,err=998) profile%DirectionJump
+(  607)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  608)          "%DirectionJump           = "//trim(adjustl(txt))
+(  609) 
+(  610)     write(fileunit,"(a)",err=999) trim(prefix)//&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 13
+
+(  611)          "%name                    = "//trim(profile%name)
+(  612) 
+(  613)     if (profile%debug_prints) then
+(  614)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  615)             "%debug_prints         = true"
+(  616)     else
+(  617)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  618)             "%debug_prints         = false"
+(  619)     end if
+(  620) 
+(  621)     write(fileunit,"(a)",err=999) "ENDREALACC"
+(  622) 
+(  623)     return
+(  624) 
+(  625) 998 call logmsg(log_error,"ERROR in AsciiWriteProfile: "//&
+(  626)                 "error while converting number to text")
+(  627)     error_flag = error_writing_file
+(  628)     return
+(  629) 
+(  630) 999 call logmsg(log_error,"ERROR in AsciiWriteProfile: "//&
+(  631)                 "error while writing to outputfile")
+(  632)     error_flag = error_writing_file
+(  633)     return
+(  634) 
+(  635)   end subroutine AsciiWriteProfile
+(  636)     !  #]
+(  637)   subroutine PrintProfile(profile,prefix,PrintAll,error_flag)
+(  638)     !  #[
+(  639)     type(profile_type), intent(in)  :: profile    ! input
+(  640)     character(len=*),   intent(in)  :: prefix     ! input
+(  641)     logical,            intent(in)  :: PrintAll   ! input
+(  642)     integer,            intent(out) :: error_flag ! output
+(  643) 
+(  644)     call AsciiWriteProfile(profile,fileunit_stdout,prefix,PrintAll,error_flag)
+(  645) 
+(  646)   end subroutine PrintProfile
+(  647)     !  #]
+(  648)   subroutine convert_log_to_normal(profile, error_flag, below_this_is_zero)
+(  649)     !  #[
+(  650)     type(profile_type),  intent(inout) :: profile    ! input/output
+(  651)     integer,             intent(out)   :: error_flag ! output
+(  652)     real(r8_), optional, intent(in)    :: below_this_is_zero ! optional input
+(  653) 
+(  654)     ! local variable
+(  655)     integer :: i
+(  656) 
+(  657)     error_flag = no_error
+(  658) 
+(  659)     ! check the canary
+(  660)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  661)        print *,"ERROR: this profile was not properly initialised"
+(  662)        print *,"profile: "//trim(profile%name)
+(  663)        error_flag = error_programming
+(  664)        return
+(  665)     end if
+(  666) 
+(  667)     ! convert the log values to a real value
+(  668)     DO i=1,profile%size 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 14
+
+(  669)        IF (present(below_this_is_zero)) THEN
+(  670)           IF (profile%data(i) .le. below_this_is_zero) THEN
+(  671)              profile%data(i) = 0._r8_
+(  672)           ELSE
+(  673)              profile%data(i) = 10._r8_**profile%data(i)
+(  674)           ENDIF
+(  675)        ELSE
+(  676)           profile%data(i) = 10._r8_**profile%data(i)
+(  677)        END IF
+(  678)     END DO
+(  679) 
+(  680)   end subroutine convert_log_to_normal
+(  681)     !  #]
+(  682)   subroutine correct_bias(profile, bias, error_flag)
+(  683)     !  #[
+(  684)     type(profile_type), intent(inout) :: profile    ! input/output
+(  685)     real(r8_),          intent(in)    :: bias       ! input
+(  686)     integer,            intent(out)   :: error_flag ! output
+(  687) 
+(  688)     ! local variable
+(  689)     integer :: i
+(  690) 
+(  691)     error_flag = no_error
+(  692) 
+(  693)     ! check the canary
+(  694)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  695)        print *,"ERROR: this profile was not properly initialised"
+(  696)        print *,"profile: "//trim(profile%name)
+(  697)        error_flag = error_programming
+(  698)        return
+(  699)     end if
+(  700) 
+(  701)     ! subtract the bias from all profiles elements
+(  702)     DO i=1,profile%size 
+(  703)        profile%data(i) = profile%data(i) - bias
+(  704)     END DO
+(  705) 
+(  706)   end subroutine correct_bias
+(  707)     !  #]
+(  708)   function interpolate(profile,wanted_z) result(value)
+(  709)     !  #[
+(  710)     type(profile_type) :: profile  ! input
+(  711)     real(r8_)          :: wanted_z ! input
+(  712)     real(r8_)          :: value    ! output
+(  713) 
+(  714)     ! local variables
+(  715)     integer   :: SceneLevel
+(  716)     real(r8_) :: z_below, z_above, delta_z
+(  717)     real(r8_) :: data_below, data_above, delta_data
+(  718)     real(r8_) :: log_data_below, log_data_above, delta_log_data
+(  719)     real(r8_) :: log_value, factor, dx
+(  720) 
+(  721)     integer :: ScanningDirection
+(  722)     integer, parameter :: scanning_upward   = 1
+(  723)     integer, parameter :: scanning_downward = 2
+(  724) 
+(  725)     logical :: extrapolation_copy_edgeval 
+(  726)     logical :: extrapolation_z_sq
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 15
+
+(  727) 
+(  728)     ! check the canary
+(  729)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  730)        print *,"ERROR: this profile was not properly initialised"
+(  731)        print *,"profile: "//trim(profile%name)
+(  732)        value = missing_indicator_real
+(  733)        return
+(  734)     end if
+(  735) 
+(  736)     ! check wanted_z for missing, NaN or Inf 
+(  737)     if ( missing_real(wanted_z) .or. &
+(  738)          is_NaN(      wanted_z) .or. &
+(  739)          is_PosInf(   wanted_z) .or. &
+(  740)          is_NegInf(   wanted_z)      ) then
+(  741)        value = missing_indicator_real
+(  742)        return
+(  743)     end if
+(  744) 
+(  745)     ! this may happen if all input values are missing,
+(  746)     ! combined with the SkipMissingData flag
+(  747)     if ( (.not. associated(profile%z)   ) .or. &
+(  748)          (.not. associated(profile%data))      ) then
+(  749)        value = missing_indicator_real
+(  750)        return
+(  751)     end if
+(  752) 
+(  753)     ! if this is not the first call for this profile, start at the 
+(  754)     ! previously found SceneLevel. This will probably save a lot of work
+(  755)     ! because this routine is probably called many times with a monotonic
+(  756)     ! increasing or decreasing z
+(  757) 
+(  758)     if (profile%last_used_level .ne. -1) then
+(  759)        SceneLevel = profile%last_used_level
+(  760) 
+(  761)        if ( wanted_z .gt. profile%z(SceneLevel) ) then
+(  762)           ! we are still extrapolating above the defined profile
+(  763)           ! so goto the upward scan to get the edge values
+(  764)           ScanningDirection = scanning_upward
+(  765)        else
+(  766)           if (wanted_z .ge. profile%last_used_z) then
+(  767)              ScanningDirection = scanning_upward
+(  768)           else
+(  769)              ScanningDirection = scanning_downward
+(  770)           end if
+(  771)        endif
+(  772)     else
+(  773)        SceneLevel        = 1
+(  774)        ScanningDirection = scanning_upward
+(  775)     end if
+(  776) 
+(  777)     extrapolation_copy_edgeval = .false. ! set to default
+(  778)     extrapolation_z_sq         = .false. ! set to default
+(  779) 
+(  780)     if (ScanningDirection .eq. scanning_upward) then
+(  781)        !  #[
+(  782)        ! ascend up the scene levels untill the requested level is
+(  783)        ! in between this scene level and the next scene level
+(  784)        uploop: DO 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 16
+
+(  785)           !print *,"uploop: SceneLevel=",SceneLevel
+(  786)           IF (profile%size .eq. 1) THEN
+(  787)              IF (wanted_z .gt. profile%z(1)) THEN
+(  788)                 ! this 2 forces the code to enter the upwards block below
+(  789)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  790)                 SceneLevel = 2 
+(  791)              ELSE
+(  792)                 ! this 0 forces the code to enter the downwards block below
+(  793)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  794)                 SceneLevel = 0
+(  795)              END IF
+(  796)              ! OK, correct SceneLevel found
+(  797)              exit uploop
+(  798)           END IF
+(  799) 
+(  800)           IF ( (wanted_z .ge. profile%z(SceneLevel  ) ) .and. &
+(  801)                (wanted_z .le. profile%z(SceneLevel+1) )       ) THEN
+(  802)              ! OK, correct SceneLevel found
+(  803)              exit uploop
+(  804)           END IF
+(  805) 
+(  806)           IF ( wanted_z .gt. profile%z(SceneLevel+1) ) THEN
+(  807)              ! step one scenelevel up
+(  808)              SceneLevel = SceneLevel + 1
+(  809)           END IF
+(  810) 
+(  811)           IF ( wanted_z .lt. profile%z(SceneLevel) ) THEN
+(  812)              ! goto the downward scan
+(  813)              ScanningDirection = scanning_downward
+(  814)              exit uploop
+(  815)           END IF
+(  816)           
+(  817)           IF (SceneLevel .gt. profile%size-1) exit uploop
+(  818)        END DO uploop
+(  819)        !  #]
+(  820)     end if
+(  821) 
+(  822)     if (ScanningDirection .eq. scanning_downward) then
+(  823)        !  #[
+(  824)        ! descend down the scene levels untill the requested level is
+(  825)        ! in between this scene level and the next scene level
+(  826)        downloop: DO 
+(  827)           !print *,"downloop: SceneLevel=",SceneLevel
+(  828)           IF (profile%size .eq. 1) THEN
+(  829)              IF (wanted_z .gt. profile%z(1)) THEN
+(  830)                 ! this 2 forces the code to enter the upwards block below
+(  831)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  832)                 SceneLevel = 2 
+(  833)              ELSE
+(  834)                 ! this 0 forces the code to enter the downwards block below
+(  835)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  836)                 SceneLevel = 0
+(  837)              END IF
+(  838)              ! OK, correct SceneLevel found
+(  839)              exit downloop
+(  840)           END IF
+(  841) 
+(  842)           IF ( (wanted_z .ge. profile%z(SceneLevel  ) ) .and. &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 17
+
+(  843)                (wanted_z .le. profile%z(SceneLevel+1) )       ) THEN
+(  844)              ! OK, correct SceneLevel found
+(  845)              exit downloop
+(  846)           END IF
+(  847) 
+(  848)           IF ( wanted_z .lt. profile%z(SceneLevel) ) THEN
+(  849)              ! step one scenelevel down
+(  850)              SceneLevel = SceneLevel - 1
+(  851)           END IF
+(  852) 
+(  853)           if (SceneLevel .lt. 1) exit downloop
+(  854)        END DO downloop
+(  855)        !  #]
+(  856)     end if
+(  857) 
+(  858)     upwards: IF (SceneLevel .gt. profile%size-1) THEN
+(  859)        !  #[ we are extrapolating upwards
+(  860)        extrapolation_copy_edgeval = .false.
+(  861)        extrapolation_z_sq = .false.
+(  862)        select case(profile%extrapolation_type_up)
+(  863)        case(extrap_type_none)
+(  864)           if (profile%debug_prints) then
+(  865)              print *,"WARNING: requested z-value is outside defined scene"
+(  866)              print *,"and extrapolation is disabled for this profile ..."
+(  867)              print *,"profile: "//trim(profile%name)
+(  868)              print *,"returning with missing value"
+(  869)           end if
+(  870)           value = missing_indicator_real
+(  871)           return
+(  872)        case(extrap_type_linear)
+(  873)           SceneLevel = profile%size-1
+(  874)        case(extrap_type_log)
+(  875)           SceneLevel = profile%size-1
+(  876)        case(extrap_type_z_sq)
+(  877)           ! setting this is needed for the saving of the level
+(  878)           SceneLevel = profile%size-1
+(  879)           extrapolation_z_sq = .true.
+(  880)        case(extrap_type_edgeval)
+(  881)           ! setting this is needed for the saving of the level
+(  882)           SceneLevel = profile%size-1
+(  883)           extrapolation_copy_edgeval = .true.
+(  884)        case default
+(  885)           print *,"ERROR: unknown extrapolation type ..."
+(  886)           print *,"for profile: "//trim(profile%name)
+(  887)           value = missing_indicator_real
+(  888)           return
+(  889)        end select
+(  890)        
+(  891)        ! check if we are not outside the allowed range for extrapolation
+(  892)        if (.not. missing_real(profile%max_extrapolation_z)) then
+(  893)           if (wanted_z .gt. profile%max_extrapolation_z) then
+(  894)              if (profile%debug_prints) then
+(  895)                 print *,"WARNING in interpolate()"
+(  896)                 print *,"wanted_z = ",wanted_z,&
+(  897)                      " is above the allowed maximum"
+(  898)                 print *,"height for extrapolating this profile"
+(  899)                 print *,"max_extrapolation_z = ",&
+(  900)                      profile%max_extrapolation_z
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 18
+
+(  901)                 print *,"for profile: "//trim(profile%name)
+(  902)                 print *,"returning with missing value"
+(  903)              end if
+(  904)              value = missing_indicator_real
+(  905)              return
+(  906)           end if
+(  907)        end if
+(  908)        !  #]
+(  909)     ELSE
+(  910)        downwards: IF (SceneLevel .lt. 1) THEN
+(  911)           !  #[ we are extrapolating downwards
+(  912)           extrapolation_copy_edgeval = .false.
+(  913)           extrapolation_z_sq = .false.
+(  914)           select case(profile%extrapolation_type_down)
+(  915)           case(extrap_type_none)
+(  916)              if (profile%debug_prints) then
+(  917)                 print *,"WARNING: requested z-value is outside defined scene"
+(  918)                 print *,"and extrapolation is disabled for this profile ..."
+(  919)                 print *,"for profile: "//trim(profile%name)
+(  920)                 print *,"returning with missing value"
+(  921)              end if
+(  922)              value = missing_indicator_real
+(  923)              return
+(  924)           case(extrap_type_linear)
+(  925)              SceneLevel = 1
+(  926)           case(extrap_type_log)
+(  927)              SceneLevel = 1
+(  928)           case(extrap_type_z_sq)
+(  929)              ! setting this is needed for the saving of the level
+(  930)              SceneLevel = 1
+(  931)              extrapolation_z_sq = .true.
+(  932)           case(extrap_type_edgeval)
+(  933)              ! setting this is needed for the saving of the level
+(  934)              SceneLevel = 1
+(  935)              extrapolation_copy_edgeval = .true.
+(  936)           case default
+(  937)              print *,"ERROR: unknown extrapolation type ..."
+(  938)              print *,"for profile: "//trim(profile%name)
+(  939)              value = missing_indicator_real
+(  940)              return
+(  941)           end select
+(  942)           
+(  943)           ! check if we are not outside the allowed range for extrapolation
+(  944)           if (.not. missing_real(profile%min_extrapolation_z)) then
+(  945)              if (wanted_z .lt. profile%min_extrapolation_z) then
+(  946)                 if (profile%debug_prints) then
+(  947)                    print *,"WARNING in interpolate()"
+(  948)                    print *,"wanted_z = ",wanted_z,&
+(  949)                         " is below the allowed minimum"
+(  950)                    print *,"height for extrapolating this profile"
+(  951)                    print *,"min_extrapolation_z = ",&
+(  952)                         profile%min_extrapolation_z
+(  953)                    print *,"for profile: "//trim(profile%name)
+(  954)                    print *,"returning with missing value"
+(  955)                 end if
+(  956)                 value = missing_indicator_real
+(  957)                 return
+(  958)              end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 19
+
+(  959)           end if
+(  960)           !  #]
+(  961)        END IF downwards
+(  962)     END IF upwards
+(  963) 
+(  964)     ! if we have just a single valid datapoint, interpolation
+(  965)     ! is not possible, and only 2 types of extrapolation are possible
+(  966)     if (profile%size .eq. 1) SceneLevel = 1
+(  967) 
+(  968)     ! ok, the requested level is found now
+(  969) 
+(  970)     ! save the level and z values, for use in the next call
+(  971)     profile%last_used_level = SceneLevel
+(  972)     profile%last_used_z     = wanted_z
+(  973) 
+(  974)     if (extrapolation_copy_edgeval) then
+(  975)        !  #[
+(  976)        ! this is the simplest extrapolation case,
+(  977)        ! just copy the edge value of the profile
+(  978) 
+(  979)        ! just copy the lower edge of the defined profile
+(  980)        ! the extra z-check is needed for a profile with just 2 defined points
+(  981)        ! because then size-1 .eq. 1
+(  982)        if ( (SceneLevel .eq. 1)         .and. &
+(  983)             (wanted_z .lt. profile%z(1))      )then
+(  984)           value = profile%data(1)
+(  985)           return
+(  986)        end if
+(  987) 
+(  988)        ! just copy the upper edge of the defined profile
+(  989)        if ( (SceneLevel .eq. profile%size-1) .and. &
+(  990)             (wanted_z .gt. profile%z(profile%size)) )then
+(  991)           value = profile%data(profile%size)
+(  992)           return
+(  993)        end if
+(  994) 
+(  995)        ! if we have just a single valid datapoint, just copy it
+(  996)        if (profile%size .eq. 1) then
+(  997)           value = profile%data(1)
+(  998)           return
+(  999)        end if
+( 1000) 
+( 1001)        ! this point should never be reached
+( 1002)        print *,"ERROR: programming error in interpolate() !!!!"
+( 1003)        print *,"ERROR: for profile: "//trim(profile%name)
+( 1004)        value = missing_indicator_real
+( 1005)        return
+( 1006)        !  #]
+( 1007)     end if
+( 1008) 
+( 1009)     if (extrapolation_z_sq) then
+( 1010)        !  #[
+( 1011)        ! the extra z-check is needed for a profile with just 2 defined points
+( 1012)        ! because then size-1 .eq. 1
+( 1013)        if ( (SceneLevel .eq. 1)         .and. &
+( 1014)             (wanted_z .lt. profile%z(1))      )then
+( 1015) 
+( 1016)           ! if the edge value is missing, the extrapolated value should 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 20
+
+( 1017)           ! be missing too
+( 1018)           IF ( missing_real(profile%data(1))) THEN
+( 1019)              value = missing_indicator_real
+( 1020)              return
+( 1021)           END IF
+( 1022) 
+( 1023)           delta_z = wanted_z - profile%z(1)
+( 1024)           factor = delta_z/profile%z_scale_down
+( 1025)           value = profile%data(1)/(1._r8_+factor*factor)
+( 1026)           return
+( 1027)        end if
+( 1028) 
+( 1029)        if ( (SceneLevel .eq. profile%size-1) .and. &
+( 1030)             (wanted_z .gt. profile%z(profile%size)) )then
+( 1031) 
+( 1032)           ! if the edge value is missing, the extrapolated value should 
+( 1033)           ! be missing too
+( 1034)           IF ( missing_real(profile%data(profile%size))) THEN
+( 1035)              value = missing_indicator_real
+( 1036)              return
+( 1037)           END IF
+( 1038) 
+( 1039)           delta_z = profile%z(profile%size) - wanted_z
+( 1040)           factor = delta_z/profile%z_scale_up
+( 1041)           value = profile%data(profile%size)/(1._r8_+factor*factor)
+( 1042)           return
+( 1043)        end if
+( 1044)        
+( 1045)        ! exception in case we have just a single valid datapoint
+( 1046)        if (profile%size .eq. 1) then
+( 1047)           ! if the edge value is missing, the extrapolated value should 
+( 1048)           ! be missing too
+( 1049)           IF ( missing_real(profile%data(1))) THEN
+( 1050)              value = missing_indicator_real
+( 1051)              return
+( 1052)           END IF
+( 1053) 
+( 1054)           ! sign doesn't matter, because factor is squared below,
+( 1055)           ! so this works both upward and downward.
+( 1056)           delta_z = profile%z(1) - wanted_z
+( 1057) 
+( 1058)           factor = delta_z/profile%z_scale_up
+( 1059)           value = profile%data(profile%size)/(1._r8_+factor*factor)
+( 1060)           return
+( 1061)        end if
+( 1062) 
+( 1063)        ! this point should never be reached
+( 1064)        print *,"programming error in interpolate() !!!!"
+( 1065)        print *,"for profile: "//trim(profile%name)
+( 1066)        value = missing_indicator_real
+( 1067)        return
+( 1068)        !  #]
+( 1069)     end if
+( 1070) 
+( 1071)     ! after this point all extrapolations use 2 or more points
+( 1072)     ! so if we have just one valid point, there is nothing more
+( 1073)     ! to do than reporting missing ...
+( 1074)     if (profile%size .eq. 1) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 21
+
+( 1075)        value = missing_indicator_real
+( 1076)        return
+( 1077)     end if
+( 1078) 
+( 1079)     ! save altitude low and high edge of level bin
+( 1080)     z_below = profile%z(SceneLevel  )
+( 1081)     z_above = profile%z(SceneLevel+1)
+( 1082) 
+( 1083)     ! save datavalue at low and high edge of level bin
+( 1084)     data_below = profile%data(SceneLevel  )
+( 1085)     data_above = profile%data(SceneLevel+1)
+( 1086) 
+( 1087)     ! if either the data below or the data above is missing,
+( 1088)     ! interpolation is not possible, so set the result to missing too
+( 1089)     IF ( missing_real(data_below) .or. missing_real(data_above)) THEN
+( 1090)        value = missing_indicator_real
+( 1091)        return
+( 1092)     END IF
+( 1093) 
+( 1094)     ! calculate the z delta
+( 1095)     delta_z    = z_above    - z_below    ! level bin size
+( 1096) 
+( 1097)     select case (profile%interpolation_type)
+( 1098)     case(interp_type_linear)
+( 1099)        !  #[
+( 1100)        ! calculate the data delta
+( 1101)        delta_data = data_above - data_below ! data difference
+( 1102) 
+( 1103)        ! take the exception into account for directions in which case
+( 1104)        ! 1 degree and 359 degrees are infact very close to each other
+( 1105)        IF (profile%IsDirectionData) THEN
+( 1106)           IF ( delta_data .gt. profile%DirectionJump/2) THEN
+( 1107)              delta_data = delta_data - profile%DirectionJump
+( 1108)           END IF
+( 1109)           IF ( delta_data .lt. -1._r8_*profile%DirectionJump/2._r8_) THEN
+( 1110)              delta_data = delta_data + profile%DirectionJump
+( 1111)           END IF
+( 1112)        END IF
+( 1113) 
+( 1114)        ! do the actual interpolation
+( 1115)        value =  data_below + (wanted_z - z_below)*delta_data/delta_z
+( 1116)        !  #]
+( 1117)     case(interp_type_log)
+( 1118)        !  #[
+( 1119)        ! check for zeroes or negatives in values for interpolation
+( 1120)        if ((data_below .lt. ZeroEpsilon) .or. &
+( 1121)            (data_above .lt. ZeroEpsilon)) then
+( 1122)           print *,"ERROR in interpolate()"
+( 1123)           print *,"encountered (allmost) zero or negative numbers"
+( 1124)           print *,"for profile: "//trim(profile%name)
+( 1125)           print *,"This is not allowed for interpolation type: interp_type_log"
+( 1126)           print *,"Returning with missing value"
+( 1127)           value = missing_indicator_real
+( 1128)           return
+( 1129)        end if
+( 1130)        
+( 1131)        log_data_below = LOG10(data_below)
+( 1132)        log_data_above = LOG10(data_above)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 22
+
+( 1133)        
+( 1134)        ! calculate the log data delta
+( 1135)        delta_log_data = log_data_above - log_data_below ! log data difference
+( 1136)        
+( 1137)        ! do the actual interpolation on the log10 values
+( 1138)        log_value = log_data_below + (wanted_z - z_below)*delta_log_data/delta_z
+( 1139)        
+( 1140)        ! check for underflow problems
+( 1141)        if (log_value .lt. -37._r8_) then
+( 1142)           if (profile%debug_prints) then
+( 1143)              print *,"WARNING in interpolate():"
+( 1144)              print *,"log_value of ",log_value," may cause arithmatic underflow"
+( 1145)              print *,"for profile: "//trim(profile%name)
+( 1146)           end if
+( 1147)        endif
+( 1148)        
+( 1149)        ! and convert to the normal nonlog value
+( 1150)        value = 10._r8_**log_value
+( 1151)        !  #]
+( 1152)     case(interp_type_spline)
+( 1153)        !  #[
+( 1154)        ! this does basically the same as Spline_Calc in interp1.F90 but without
+( 1155)        ! calling the numerical recipes hunt function
+( 1156)        dx=wanted_z-z_below
+( 1157)        value = data_below + dx*(          profile%b(SceneLevel) + &
+( 1158)                                  dx*(     profile%c(SceneLevel) + &
+( 1159)                                       dx* profile%d(SceneLevel)    ) )
+( 1160)        !  #]
+( 1161)     case default
+( 1162)        !  #[
+( 1163)        print *,"ERROR in interpolate()"
+( 1164)        print *,"unknown interpolation type: ",profile%interpolation_type
+( 1165)        print *,"for profile: "//trim(profile%name)
+( 1166)        value = missing_indicator_real
+( 1167)        return
+( 1168)        !  #]
+( 1169)     end select
+( 1170) 
+( 1171)   end function interpolate
+( 1172)   !  #]
+( 1173)   function IntegrateInterpolatedProfile(profile,level_start,level_end,&
+( 1174)                          step,divide_by_int_length) result(value)
+( 1175)     !  #[
+( 1176)     ! integrate a profile between level_start and level_end
+( 1177)     ! and if selected, devide by the int_length 
+( 1178)     ! which basically converts the result into an average over the 
+( 1179)     ! selected range.
+( 1180) 
+( 1181)     type(profile_type) :: profile     ! input
+( 1182)     real(r8_)          :: level_start ! input
+( 1183)     real(r8_)          :: level_end   ! input
+( 1184)     real(r8_)          :: step        ! input
+( 1185)     logical, optional  :: divide_by_int_length ! optional input
+( 1186) 
+( 1187)     real(r8_)          :: value       ! output
+( 1188)     
+( 1189)     ! local variables
+( 1190)     real(r8_) :: int_length, step_size
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 23
+
+( 1191)     real(r8_) :: wanted_z1, wanted_z2, val1, val2, sum
+( 1192) 
+( 1193)     ! check the canary
+( 1194)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1195)        print *,"ERROR: this profile was not properly initialised"
+( 1196)        print *,"profile: "//trim(profile%name)
+( 1197)        value = missing_indicator_real
+( 1198)        return
+( 1199)     end if
+( 1200) 
+( 1201)     ! some sanity checks
+( 1202)     IF (step .le. 0._r8_) THEN
+( 1203)        print *,"ERROR in IntegrateInterpolatedProfile():"
+( 1204)        print *,"step is supposed to be positive, but it was: ",step
+( 1205)        value = missing_indicator_real
+( 1206)        return
+( 1207)     ENDIF
+( 1208) 
+( 1209)     IF (level_start .ge. level_end) THEN
+( 1210)        print *,"ERROR in IntegrateInterpolatedProfile():"
+( 1211)        print *,"level_start is supposed to be below level_end, however"
+( 1212)        print *,"level_start = ",level_start
+( 1213)        print *,"level_end = ",level_end
+( 1214)        value = missing_indicator_real
+( 1215)        return
+( 1216)     END IF
+( 1217) 
+( 1218)     step_size  = step ! might be changed for the last step !
+( 1219)     sum        = 0._r8_
+( 1220)     int_length = 0._r8_
+( 1221)     wanted_z1  = level_start
+( 1222)     val1       = interpolate(profile,wanted_z1)
+( 1223)     integration_loop: DO 
+( 1224)        wanted_z2 = wanted_z1 + step_size
+( 1225)        IF (wanted_z2 .ge. level_end) THEN
+( 1226)           wanted_z2 = level_end
+( 1227)           step_size = wanted_z2 - wanted_z1
+( 1228)           val2 = interpolate(profile,wanted_z2)
+( 1229) 
+( 1230)           IF ( (.not. missing_real(val1)) .and. &
+( 1231)                (.not. missing_real(val2))       ) THEN
+( 1232)              sum = sum + step_size*(val1+val2)/2._r8_
+( 1233)              int_length = int_length + step_size
+( 1234)           ELSE
+( 1235)              IF (profile%debug_prints) &
+( 1236)                   print *," val1 = ",val1," val2 = ",val2,&
+( 1237)                           " nothing added due to missing values"
+( 1238)           END IF
+( 1239)           exit integration_loop
+( 1240)        ELSE
+( 1241)           val2 = interpolate(profile,wanted_z2)
+( 1242) 
+( 1243)           IF ( (.not. missing_real(val1)) .and. &
+( 1244)                (.not. missing_real(val2))       ) THEN
+( 1245)              sum = sum + step_size*(val1+val2)/2._r8_
+( 1246)              int_length = int_length + step_size
+( 1247)           ELSE
+( 1248)              IF (profile%debug_prints) &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 24
+
+( 1249)                   print *," val1 = ",val1," val2 = ",val2,&
+( 1250)                           " nothing added due to missing values"
+( 1251)           END IF
+( 1252)        END IF
+( 1253) 
+( 1254)        ! copy data to be remembered for the next step
+( 1255)        wanted_z1 = wanted_z2
+( 1256)        val1      = val2
+( 1257)     END DO integration_loop
+( 1258) 
+( 1259)     IF (profile%debug_prints) THEN
+( 1260)        print *,"result: "
+( 1261)        print *,"sum = ",sum
+( 1262)        print *,"int_length = ",int_length
+( 1263)     END IF
+( 1264) 
+( 1265)     IF (int_length .gt. 0._r8_) THEN
+( 1266)        value = sum
+( 1267)        IF (present(divide_by_int_length)) THEN
+( 1268)           IF (divide_by_int_length) value = sum/int_length
+( 1269)        END IF
+( 1270)     ELSE
+( 1271)        ! probably all needed values were missing, 
+( 1272)        ! so set the integral to missing too
+( 1273)        value = missing_indicator_real
+( 1274)     END IF
+( 1275) 
+( 1276)     IF (profile%debug_prints) &
+( 1277)          print *,"end result: value = ",value
+( 1278) 
+( 1279)   end function IntegrateInterpolatedProfile
+( 1280)   !  #]
+( 1281)   function get_min_alt_profile(profile) result(min_alt)
+( 1282)     !  #[
+( 1283)     type(profile_type), intent(in) :: profile  ! input
+( 1284)     real(r8_)                      :: min_alt  ! output
+( 1285)     
+( 1286)     ! check the canary
+( 1287)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1288)        print *,"ERROR in get_min_alt_profile():"
+( 1289)        print *,"ERROR: this profile was not properly initialised"
+( 1290)        print *,"profile: "//trim(profile%name)
+( 1291)        min_alt = missing_indicator_real
+( 1292)        return
+( 1293)     end if
+( 1294) 
+( 1295)     min_alt = missing_indicator_real
+( 1296)     IF (associated(profile%z)) min_alt = profile%z(1)
+( 1297) 
+( 1298)     return
+( 1299) 
+( 1300)   end function get_min_alt_profile
+( 1301)     !  #]
+( 1302)   function get_max_alt_profile(profile) result(max_alt)
+( 1303)     !  #[
+( 1304)     type(profile_type), intent(in) :: profile  ! input
+( 1305)     real(r8_)                      :: max_alt  ! output
+( 1306)     
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 25
+
+( 1307)     ! check the canary
+( 1308)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1309)        print *,"ERROR in get_max_alt_profile():"
+( 1310)        print *,"ERROR: this profile was not properly initialised"
+( 1311)        print *,"profile: "//trim(profile%name)
+( 1312)        max_alt = missing_indicator_real
+( 1313)        return
+( 1314)     end if
+( 1315) 
+( 1316)     max_alt = missing_indicator_real
+( 1317)     if (associated(profile%z)) max_alt = profile%z(profile%size)
+( 1318) 
+( 1319)     return
+( 1320) 
+( 1321)   end function get_max_alt_profile
+( 1322)     !  #]
+( 1323)   subroutine get_arrays(profile,z,data,error_flag)
+( 1324)     !  #[
+( 1325)     type(profile_type),      intent(in)  :: profile    ! input
+( 1326)     real(r8_), dimension(:), intent(out) :: z          ! output
+( 1327)     real(r8_), dimension(:), intent(out) :: data       ! output
+( 1328)     integer,                 intent(out) :: error_flag ! output
+( 1329) 
+( 1330)     ! check the canary
+( 1331)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1332)        print *,"ERROR in get_arrays():"
+( 1333)        print *,"ERROR: this profile was not properly initialised"
+( 1334)        print *,"profile: "//trim(profile%name)
+( 1335)        error_flag = error_programming
+( 1336)        return
+( 1337)     end if
+( 1338) 
+( 1339)     if (size(data) .ne. profile%size) then
+( 1340)        print *,"ERROR in get_arrays():"
+( 1341)        print *,"ERROR: provided z and data arrays must have proper size!"
+( 1342)        print *,"profile: "//trim(profile%name)
+( 1343)        print *,"profile size is: ",profile%size
+( 1344)        print *,"size of provided data array is ",size(data)
+( 1345)        print *,"size of provided data z     is ",size(z)
+( 1346)        error_flag = error_programming
+( 1347)        return
+( 1348)     end if
+( 1349) 
+( 1350)     z(:)    = profile%z(:)
+( 1351)     data(:) = profile%data(:)
+( 1352) 
+( 1353)     return
+( 1354) 
+( 1355)   end subroutine get_arrays
+( 1356)     !  #]
+( 1357)   function get_profile_size(profile) result (size)
+( 1358)     !  #[
+( 1359)     type(profile_type), intent(in) :: profile ! input
+( 1360)     integer                        :: size    ! output
+( 1361) 
+( 1362)     ! check the canary
+( 1363)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1364)        print *,"ERROR in get_profile_size():"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 26
+
+( 1365)        print *,"ERROR: this profile was not properly initialised"
+( 1366)        print *,"profile: "//trim(profile%name)
+( 1367)        size = -1
+( 1368)        return
+( 1369)     end if
+( 1370) 
+( 1371)     size = profile%size
+( 1372) 
+( 1373)     return
+( 1374) 
+( 1375)   end function get_profile_size
+( 1376)     !  #]
+( 1377)   !------------------------------------------------
+( 1378) end module ProfileInterpolate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 27
+
+(    1) # 1 "profileinterpolate.F90"
+(    1) !  #[ TODO:
+(    2) ! maybe later I could change the interpolate module to accept
+(    3) ! log values and store them as such, to have better performance
+(    4) ! when doing log interpolation, or to change on the fly to
+(    5) ! normal values in case of linear interpolation.
+(    6) ! dito for dB values
+(    7) !
+(    8) ! TODO:
+(    9) ! add possibility to reduce the data inside the interpolate module
+(   10) ! by eliminating sequences of equal numbers, since 1,3,3,3,3,3,3,5
+(   11) ! yields the same result as 1,3,3,5 provided that the z values
+(   12) ! are correct
+(   13) ! This would largely reduce the amount of data for constant profiles,
+(   14) ! or profiles that have a part that goes to zero (or is missing)
+(   15) ! (like aerosol backscatter above ca. 30km, etc.)
+(   16) !  #]  
+(   17) module ProfileInterpolate
+(   18)   !---------------------------------------------
+(   19)   !  #[ Description
+(   20)   !---------------------------------------------------
+(   21)   ! purpose: a module to perform interpolation in between points of 
+(   22)   !          profiles that are defined on irregular intervals, using 
+(   23)   !          linear or logarithmic interpolation, and if wanted doing 
+(   24)   !          also extrapolation
+(   25)   !
+(   26)   !    Written by:  Jos de Kloe.
+(   27)   !    created:     11-11-2004
+(   28)   !
+(   29)   ! Modifications:
+(   30)   !    18-May-2006 J. de Kloe converted from r_ to r8_ type
+(   31)   !    25-Jul-2006 J. de Kloe bugfix: added initialisation for
+(   32)   !                           IsDirectionData and DirectionJump fields
+(   33)   !    06-Oct-2006 J. de Kloe added extra NaN/Inf checks on wanted_z
+(   34)   !    16-Oct-2007 J. de Kloe added handling for cases with zero or 1
+(   35)   !                           valid datapoints in the profile
+(   36)   !    04-Feb-2009 J. de Kloe added get_arrays() and get_profile_size()
+(   37)   !    15-Jul-2009 J. de Kloe added a safety check before entering
+(   38)   !                           the spline initialisation
+(   39)   !    31-Mar-2010 J. de Kloe added subroutines AsciiWriteProfile
+(   40)   !                           and PrintProfile
+(   41)   !    19-Nov-2015 J. de Kloe make it an error if a profile is not
+(   42)   !                           initialised before use in AsciiWriteProfile
+(   43)   !                           and delete_profile.
+(   44)   !    03-Dec-2015 J. de Kloe little bugfix in print routine
+(   45)   !    21-Jun-2016 M. Rennie  Avoid use of zeroes in log interpolation
+(   46)   !    21-Jun-2016 J. de Kloe and avoid negative values to enter log10()
+(   47)   !    27-Oct-2017 J. de Kloe phase out use of verbosity module
+(   48)   !    06-Jun-2018 M. Rennie  Ensure check for ascending/descending 
+(   49)   !                           avoids missing data
+(   50)   !    06-Jun-2018 J. de Kloe rewritten fix for asc/desc to be more robust
+(   51)   !
+(   52)   !---------------------------------------------------
+(   53)   !  #]
+(   54)   !  #[ Used modules
+(   55)   USE Interp1, only: Spline_Init
+(   56)   USE Logging, only: logmsg,log_debug,log_info,log_progress,log_warn,&
+(   57)        log_science_warn, log_error
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 28
+
+(   58)   USE ErrorHandler, only: no_error, error_programming, error_allocate, &
+(   59)                           error_writing_file
+(   60)   USE numerics, only: r8_, missing_indicator_real, missing_real,&
+(   61)        is_NaN, is_PosInf, is_NegInf
+(   62)   USE LunManager, only: fileunit_stdout
+(   63)   !  #]
+(   64)   !  #[ Variables, types and parameters
+(   65) # 66 "profileinterpolate.F90"
+(   66)   IMPLICIT NONE
+(   67) # 68 "profileinterpolate.F90"
+(   68)   ! define a canary parameter, which helps tracking the mistake
+(   69)   ! of using an uninitialised profile struct
+(   70)   integer, parameter :: profile_canary = 789456123
+(   71) # 72 "profileinterpolate.F90"
+(   72)   ! define the allowed interpolation types
+(   73)   integer, parameter :: interp_type_linear = 1
+(   74)   integer, parameter :: interp_type_log    = 2
+(   75)   integer, parameter :: interp_type_spline = 3
+(   76) # 77 "profileinterpolate.F90"
+(   77)   ! define the allowed extrapolation types
+(   78)   integer, parameter :: extrap_type_none    = 0
+(   79)   integer, parameter :: extrap_type_linear  = 1 
+(   80)   integer, parameter :: extrap_type_log     = 2
+(   81)   integer, parameter :: extrap_type_edgeval = 3
+(   82)   integer, parameter :: extrap_type_z_sq    = 4 ! 1/(1+z^2)
+(   83) # 84 "profileinterpolate.F90"
+(   84)   ! test for zeroes
+(   85)   real(r8_), parameter :: ZeroEpsilon = 0.0000000000001_r8_
+(   86) # 87 "profileinterpolate.F90"
+(   87)   type profile_type
+(   88)      private
+(   89)      integer   :: size
+(   90)      real(r8_), dimension(:), pointer :: z
+(   91)      real(r8_), dimension(:), pointer :: data 
+(   92)      integer   :: last_used_level
+(   93)      real(r8_) :: last_used_z
+(   94)      integer   :: interpolation_type
+(   95)      ! coefficients used only by spline interpolation:
+(   96)      real(r8_), dimension(:), pointer :: b,c,d
+(   97)      integer   :: extrapolation_type_up
+(   98)      integer   :: extrapolation_type_down
+(   99)      real(r8_) :: max_extrapolation_z
+(  100)      real(r8_) :: min_extrapolation_z
+(  101)      real(r8_) :: z_scale_down
+(  102)      real(r8_) :: z_scale_up
+(  103)      logical   :: IsDirectionData
+(  104)      real(r8_) :: DirectionJump
+(  105)      integer   :: struct_was_properly_initialised 
+(  106)      character(len=30) :: name ! very usefull for debugging !!
+(  107)      logical   :: debug_prints ! dito
+(  108)   end type profile_type
+(  109) # 110 "profileinterpolate.F90"
+(  110)   !  #]
+(  111) contains 
+(  112)   !------------------------------------------------
+(  113)   subroutine init_profile(profile,                & ! output
+(  114)                           z, data, size, name,    & ! input
+(  115)                           error_flag,             & ! output
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 29
+
+(  116)                           interpolation_type,     & ! optional input
+(  117)                           extrapolation_type_up,  & ! optional input
+(  118)                           extrapolation_type_down,& ! optional input
+(  119)                           min_extrapolation_z,    & ! optional input
+(  120)                           max_extrapolation_z,    & ! optional input
+(  121)                           z_scale_down,           & ! optional input
+(  122)                           z_scale_up,             & ! optional input
+(  123)                           DirectionData,          & ! optional input
+(  124)                           DirectionJump,          & ! optional input
+(  125)                           SkipMissingData,        & ! optional input
+(  126)                           debug_prints            ) ! optional input
+(  127)     !  #[
+(  128)     type(profile_type),      intent(out) :: profile
+(  129)     real(r8_), dimension(:), intent(in)  :: z
+(  130)     real(r8_), dimension(:), intent(in)  :: data
+(  131)     integer,                 intent(in)  :: size
+(  132)     character(len=*),        intent(in)  :: name ! very usefull for debugging
+(  133)     integer,                 intent(out) :: error_flag
+(  134)     integer,   optional,     intent(in)  :: interpolation_type
+(  135)     integer,   optional,     intent(in)  :: extrapolation_type_up
+(  136)     integer,   optional,     intent(in)  :: extrapolation_type_down
+(  137)     real(r8_), optional,     intent(in)  :: min_extrapolation_z
+(  138)     real(r8_), optional,     intent(in)  :: max_extrapolation_z
+(  139)     real(r8_), optional,     intent(in)  :: z_scale_down
+(  140)     real(r8_), optional,     intent(in)  :: z_scale_up
+(  141)     logical,   optional,     intent(in)  :: DirectionData
+(  142)     real(r8_), optional,     intent(in)  :: DirectionJump
+(  143)     logical,   optional,     intent(in)  :: SkipMissingData
+(  144)     logical,   optional,     intent(in)  :: debug_prints
+(  145) # 146 "profileinterpolate.F90"
+(  146)     ! local variables
+(  147)     integer :: AllocStatus, i, j, counter, n_valid_points
+(  148)     logical :: do_SkipMissingData, descending
+(  149)     real(r8_) :: first_valid_z, second_valid_z
+(  150)     
+(  151)     error_flag = no_error
+(  152) # 153 "profileinterpolate.F90"
+(  153)     profile%name = name
+(  154) # 155 "profileinterpolate.F90"
+(  155)     do_SkipMissingData = .false.
+(  156)     IF (present(SkipMissingData)) do_SkipMissingData=SkipMissingData
+(  157) # 158 "profileinterpolate.F90"
+(  158)     n_valid_points = size
+(  159)     IF (do_SkipMissingData) THEN
+(  160)        n_valid_points = 0
+(  161)        DO i=1,size
+(  162)           IF ( .not. missing_real(z(   i)) .and. &
+(  163)                .not. missing_real(data(i))       ) THEN
+(  164)              n_valid_points = n_valid_points+1
+(  165)           END IF
+(  166)        END DO
+(  167)        !print *,"n_valid_points = ",n_valid_points,&
+(  168)        !     " n_missing_data_points = ",size-n_valid_points
+(  169)     END IF
+(  170) # 171 "profileinterpolate.F90"
+(  171)     IF (n_valid_points .eq. 0) THEN
+(  172)        ! we have no valid data at all in this case
+(  173)        nullify(profile%z,profile%data)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 30
+
+(  174)     ELSE
+(  175)        allocate(profile%z(n_valid_points),stat=AllocStatus)
+(  176)        if (AllocStatus .ne. 0) then
+(  177)           call logmsg(log_error, "allocation problem in init_profile() (z)"//&
+(  178)                "for profile: "//trim(profile%name))
+(  179)           error_flag = error_allocate
+(  180)           return
+(  181)        endif
+(  182)        
+(  183)        allocate(profile%data(n_valid_points),stat=AllocStatus)
+(  184)        if (AllocStatus .ne. 0) then
+(  185)           call logmsg(log_error, "allocation problem in init_profile() "//&
+(  186)                "(data) for profile: "//trim(profile%name))
+(  187)           error_flag = error_allocate
+(  188)           return
+(  189)        endif
+(  190)     END IF
+(  191) # 192 "profileinterpolate.F90"
+(  192)     profile%size = n_valid_points
+(  193) # 194 "profileinterpolate.F90"
+(  194)     ! check whether the profile is descending or ascending
+(  195)     descending = .false.
+(  196)     if (size .gt. 1) then
+(  197) # 198 "profileinterpolate.F90"
+(  198)        ! first try by Mike, not robust for all missing profile
+(  199)        !allocate (z_non_missing(n_valid_points),stat=AllocStatus)
+(  200)        !z_non_missing = PACK(z, mask=(abs(z - missing_indicator_real) .gt. &
+(  201)        !                              ZeroEpsilon))
+(  202)        !if (z_non_missing(1) .gt. z_non_missing(n_valid_points)) then
+(  203)        !  descending = .true.
+(  204)        !end if
+(  205) # 206 "profileinterpolate.F90"
+(  206)        ! replacement code by Jos to fix AE-IPF-319
+(  207)        first_valid_z = missing_indicator_real
+(  208)        second_valid_z = missing_indicator_real
+(  209) # 210 "profileinterpolate.F90"
+(  210)        ! this should check first aganst second non-zero value
+(  211)        ! and not just the first 2 elements!
+(  212)        search_for_valid_z: do i=1,size
+(  213)           if (.not. missing_real(z(i))) then
+(  214)              if (missing_real(first_valid_z)) then
+(  215)                 first_valid_z = z(i)
+(  216)              else
+(  217)                 if (missing_real(second_valid_z)) then
+(  218)                    second_valid_z = z(i)
+(  219)                    exit search_for_valid_z
+(  220)                 end if
+(  221)              end if
+(  222)           end if
+(  223)        end do search_for_valid_z
+(  224) # 225 "profileinterpolate.F90"
+(  225)        if (.not. (missing_real(first_valid_z))) then
+(  226)           if (.not. (missing_real(second_valid_z))) then
+(  227)              if (first_valid_z .gt. second_valid_z) then
+(  228)                 descending = .true.
+(  229)              end if
+(  230)           end if
+(  231)        end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 31
+
+(  232) # 233 "profileinterpolate.F90"
+(  233)     end if
+(  234) # 235 "profileinterpolate.F90"
+(  235)     if (descending) then
+(  236)        ! profile seems to be descending, so reverse it to make
+(  237)        ! the remainder of this module simpeler
+(  238) # 239 "profileinterpolate.F90"
+(  239)        ! copy the data reversed into the profile
+(  240)        counter=0
+(  241)        DO i=1,size
+(  242)           j=size+1-i
+(  243)           IF (do_SkipMissingData) THEN
+(  244)              IF ( .not. missing_real(z(   j)) .and. &
+(  245)                   .not. missing_real(data(j))       ) THEN
+(  246)                 counter = counter+1
+(  247)                 profile%z(   counter) = z(   j)
+(  248)                 profile%data(counter) = data(j)
+(  249)              END IF
+(  250)           ELSE ! just copy all data
+(  251)              counter = counter+1
+(  252)              profile%z(   counter) = z(   j)
+(  253)              profile%data(counter) = data(j)
+(  254)           END IF
+(  255)        END DO
+(  256)     else       
+(  257)        ! copy the data into the profile
+(  258)        counter=0
+(  259)        DO i=1,size
+(  260)            IF (do_SkipMissingData) THEN
+(  261)              IF ( .not. missing_real(z(   i)) .and. &
+(  262)                   .not. missing_real(data(i))       ) THEN
+(  263)                 counter = counter+1
+(  264)                 profile%z(   counter) = z(   i)
+(  265)                 profile%data(counter) = data(i)
+(  266)              END IF
+(  267)           ELSE ! just copy all data
+(  268)              counter = counter+1
+(  269)              profile%z(   i) = z(   i)
+(  270)              profile%data(i) = data(i)
+(  271)           END IF
+(  272)        END DO
+(  273)     endif
+(  274) # 275 "profileinterpolate.F90"
+(  275)     profile%interpolation_type = interp_type_linear ! set the default
+(  276)     if (present(interpolation_type)) then
+(  277)        profile%interpolation_type = interpolation_type
+(  278)     end if
+(  279) # 280 "profileinterpolate.F90"
+(  280)     nullify(profile%b,profile%c,profile%d)
+(  281) # 282 "profileinterpolate.F90"
+(  282)     if(profile%interpolation_type .eq. interp_type_spline) then
+(  283)        ! sanity check
+(  284)        do i=1,n_valid_points
+(  285)           if (missing_real(profile%data(i))) then
+(  286)              call logmsg(log_error, "ERROR in init_profile: "//&
+(  287)                   "The current implementation of spline interpolation "//&
+(  288)                   "cannot gracefully handle missing data within the "//&
+(  289)                   "profile to be interpolated !!!! "//&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 32
+
+(  290)                   "Please switch on the SkipMissingData switch to "//&
+(  291)                   "prevent these numbers from entering the spline algorithm")
+(  292)              error_flag = error_programming
+(  293)              return
+(  294)           end if
+(  295)        end do
+(  296) # 297 "profileinterpolate.F90"
+(  297)        IF (n_valid_points .le. 1) THEN
+(  298)           ! we have not enough valid data in this case
+(  299)           ! to do a usefull spline interpolation
+(  300)           nullify(profile%b,profile%c,profile%d)
+(  301)        ELSE
+(  302)           allocate(profile%b(n_valid_points),&
+(  303)                    profile%c(n_valid_points),&
+(  304)                    profile%d(n_valid_points),stat=AllocStatus)
+(  305)           if (AllocStatus .ne. 0) then
+(  306)              call logmsg(log_error, &
+(  307)                   "allocation problem in init_profile() (a,b,c) "//&
+(  308)                   "for profile: "//trim(profile%name))
+(  309)              error_flag = error_allocate
+(  310)              return
+(  311)           endif
+(  312)           ! calculate the spline coefficients. This needs to be done only once.
+(  313)           !print *,"calculating spline coefficients ..."
+(  314)           call Spline_Init(n_valid_points,&
+(  315)                            profile%z,profile%data,&
+(  316)                            profile%b,profile%c,profile%d,error_flag)
+(  317)           IF (error_flag .ne. no_error) return
+(  318)           !print *,"done calculating spline coefficients ..."
+(  319)           !print *,"b=",profile%b
+(  320)           !print *,"c=",profile%c
+(  321)           !print *,"d=",profile%d
+(  322)        END IF
+(  323)     endif
+(  324) # 325 "profileinterpolate.F90"
+(  325)     profile%extrapolation_type_up = extrap_type_none ! set the default
+(  326)     if (present(extrapolation_type_up)) then
+(  327)        profile%extrapolation_type_up = extrapolation_type_up
+(  328)     end if
+(  329) # 330 "profileinterpolate.F90"
+(  330)     profile%extrapolation_type_down = extrap_type_none ! set the default
+(  331)     if (present(extrapolation_type_down)) then
+(  332)        profile%extrapolation_type_down = extrapolation_type_down
+(  333)     end if
+(  334) # 335 "profileinterpolate.F90"
+(  335)     profile%min_extrapolation_z = missing_indicator_real ! set the default
+(  336)     if (present(min_extrapolation_z)) then
+(  337)        profile%min_extrapolation_z = min_extrapolation_z
+(  338)     end if
+(  339) # 340 "profileinterpolate.F90"
+(  340)     profile%max_extrapolation_z = missing_indicator_real ! set the default
+(  341)     if (present(max_extrapolation_z)) then
+(  342)        profile%max_extrapolation_z = max_extrapolation_z
+(  343)     end if
+(  344) # 345 "profileinterpolate.F90"
+(  345)     profile%z_scale_down = 1.0_r8_
+(  346)     if (present(z_scale_down)) then
+(  347)        if (profile%extrapolation_type_down .eq. extrap_type_z_sq) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 33
+
+(  348)           profile%z_scale_down = z_scale_down
+(  349)        else
+(  350)           call logmsg(log_error,&
+(  351)                "ERROR in init_profile():the optional z_scale_down parameter "//&
+(  352)                "is only usefull is case of downward z_sq extrapolation "//&
+(  353)                "for profile: "//trim(profile%name))
+(  354)           error_flag = error_programming
+(  355)           return
+(  356)        endif
+(  357)     endif
+(  358) # 359 "profileinterpolate.F90"
+(  359)     profile%z_scale_up   = 1.0_r8_
+(  360)     if (present(z_scale_up)) then
+(  361)        if (profile%extrapolation_type_up .eq. extrap_type_z_sq) then
+(  362)           profile%z_scale_up = z_scale_up
+(  363)        else
+(  364)           call logmsg(log_error, &
+(  365)                "ERROR in init_profile(): the optional z_scale_up parameter "//&
+(  366)                "is only usefull is case of upward z_sq extrapolation "//&
+(  367)                "for profile: "//trim(profile%name))
+(  368)           error_flag = error_programming
+(  369)           return
+(  370)        endif
+(  371)     endif
+(  372) # 373 "profileinterpolate.F90"
+(  373)     profile%debug_prints = .false.
+(  374)     if (present(debug_prints)) then
+(  375)        profile%debug_prints = debug_prints
+(  376)     end if
+(  377) # 378 "profileinterpolate.F90"
+(  378)     profile%IsDirectionData = .false.
+(  379)     profile%DirectionJump   = missing_indicator_real
+(  380)     IF (present(DirectionData)) THEN
+(  381)        profile%IsDirectionData = DirectionData
+(  382)        profile%DirectionJump = 360._r8_ ! default
+(  383)        IF (present(DirectionJump)) THEN
+(  384)           profile%DirectionJump = DirectionJump
+(  385)        END IF
+(  386) # 387 "profileinterpolate.F90"
+(  387)        IF (profile%interpolation_type .eq. interp_type_log) THEN
+(  388)           call logmsg(log_error, &
+(  389)                "ERROR: you are trying to use a log interpolation on "//&
+(  390)                "direction data, which makes no sense ...")
+(  391)           error_flag = error_programming
+(  392)           return
+(  393)        END IF
+(  394) # 395 "profileinterpolate.F90"
+(  395)        IF (profile%extrapolation_type_down .eq. extrap_type_log) THEN
+(  396)           call logmsg(log_error, &
+(  397)                "ERROR: you are trying to use a downward log extrapolation "//&
+(  398)                "on direction data, which makes no sense ...")
+(  399)           error_flag = error_programming
+(  400)           return
+(  401)        END IF
+(  402) # 403 "profileinterpolate.F90"
+(  403)        IF (profile%extrapolation_type_up .eq. extrap_type_log) THEN
+(  404)           call logmsg(log_error, &
+(  405)                "ERROR: you are trying to use an upward log extrapolation "//&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 34
+
+(  406)                "on direction data, which makes no sense ...")
+(  407)           error_flag = error_programming
+(  408)           return
+(  409)        END IF
+(  410) # 411 "profileinterpolate.F90"
+(  411)     ELSE
+(  412)        IF (present(DirectionJump)) THEN
+(  413)           IF (profile%debug_prints) THEN
+(  414)              call logmsg(log_science_warn, &
+(  415)                   "WARNING: option DirectionJump is set for this profile "//&
+(  416)                   "but this has no effect without setting "//&
+(  417)                   "the option DirectionData...")
+(  418)           END IF
+(  419)        END IF
+(  420)     ENDIF
+(  421) # 422 "profileinterpolate.F90"
+(  422)     ! init to -1 (= yet unused)
+(  423)     profile%last_used_level = -1
+(  424)     profile%last_used_z     = -9999._r8_
+(  425) # 426 "profileinterpolate.F90"
+(  426)     ! initialise the profile struct
+(  427)     profile%struct_was_properly_initialised = profile_canary
+(  428)     
+(  429)   end subroutine init_profile
+(  430)     !  #]
+(  431)   subroutine delete_profile(profile, error_flag)
+(  432)     !  #[
+(  433)     type(profile_type), intent(inout) :: profile
+(  434)     integer, intent(out) :: error_flag
+(  435)     
+(  436)     error_flag = no_error
+(  437) # 438 "profileinterpolate.F90"
+(  438)     ! check the canary !
+(  439)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  440)        ! profile%debug_prints is also undefined now, so I cannot use this here
+(  441)        call logmsg(log_error,&
+(  442)             "ERROR in delete_profile: "//&
+(  443)             "this profile was not properly initialised "//&
+(  444)             "for profile: "//trim(profile%name))
+(  445)        error_flag = error_programming
+(  446)     else
+(  447)        !print *,"deallocating the components of this profile ..."
+(  448)        if (associated(profile%z   )) deallocate(profile%z   )
+(  449)        if (associated(profile%data)) deallocate(profile%data)
+(  450)        if (associated(profile%b)) deallocate(profile%b)
+(  451)        if (associated(profile%c)) deallocate(profile%c)
+(  452)        if (associated(profile%d)) deallocate(profile%d)
+(  453)     end if
+(  454) # 455 "profileinterpolate.F90"
+(  455)     profile%name = "(deleted profile)"
+(  456)     nullify(profile%z)
+(  457)     nullify(profile%data)
+(  458)     nullify(profile%b)
+(  459)     nullify(profile%c)
+(  460)     nullify(profile%d)
+(  461) # 462 "profileinterpolate.F90"
+(  462)     profile%size            = -1
+(  463)     profile%last_used_level = -1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 35
+
+(  464)     profile%last_used_z     = -9999._r8_
+(  465)     profile%struct_was_properly_initialised = 0
+(  466) # 467 "profileinterpolate.F90"
+(  467)   end subroutine delete_profile
+(  468)     !  #]
+(  469)   subroutine AsciiWriteProfile(profile,fileunit,prefix,PrintAll,error_flag)
+(  470)     !  #[
+(  471)     type(profile_type), intent(in)  :: profile    ! input
+(  472)     integer,            intent(in)  :: fileunit   ! input
+(  473)     character(len=*),   intent(in)  :: prefix     ! input
+(  474)     logical,            intent(in)  :: PrintAll   ! input
+(  475)     integer,            intent(out) :: error_flag ! output
+(  476) # 477 "profileinterpolate.F90"
+(  477)     ! local variables
+(  478)     integer :: i,s,step
+(  479)     character(len=256) :: txt
+(  480)     character(len=256) :: txt2
+(  481)     character(len=256) :: txt3
+(  482)     character(len=256) :: txt4
+(  483) # 484 "profileinterpolate.F90"
+(  484)     ! init
+(  485)     error_flag = no_error
+(  486) # 487 "profileinterpolate.F90"
+(  487)     ! check the canary !
+(  488)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  489)        ! profile%debug_prints is also undefined now, so I cannot use this here
+(  490)        call logmsg(log_error,&
+(  491)             "WARNING: this profile was not properly initialised "//&
+(  492)             "for profile: "//trim(profile%name)//&
+(  493)             "; This is a programming error! Not printing it ....")
+(  494)        error_flag = error_programming
+(  495)        return
+(  496)     end if
+(  497) # 498 "profileinterpolate.F90"
+(  498)     write(fileunit,"(a)",err=999) "REALACC(12)"
+(  499) # 500 "profileinterpolate.F90"
+(  500)     write(txt,*,err=998) profile%size
+(  501)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  502)          "%size                   = "//trim(adjustl(txt))
+(  503) # 504 "profileinterpolate.F90"
+(  504)     s=profile%size
+(  505)     if (s .eq. 0) then
+(  506)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  507)             "profile%z [contains no data]"
+(  508)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  509)             "profile%data [contains no data]"
+(  510)     else
+(  511)        if (PrintAll .or. (s .le. 1)) then
+(  512)           step=1
+(  513)        else
+(  514)           step = s - 1
+(  515)        end if
+(  516)        DO i=1,s,step
+(  517)           write(txt,*,err=998) i
+(  518)           write(txt2,*,err=998) profile%z(i)
+(  519)           write(txt3,*,err=998) profile%data(i)
+(  520)           
+(  521)           write(fileunit,"(a)",err=999) trim(prefix)//&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 36
+
+(  522)                "%z("//trim(adjustl(txt))//") = "//trim(adjustl(txt2))//&
+(  523)                " "//trim(prefix)//&
+(  524)                "%data("//trim(adjustl(txt))//") = "//trim(adjustl(txt3))
+(  525)        END DO
+(  526)     END if
+(  527)     write(txt,*,err=998) profile%last_used_level
+(  528)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  529)          "%last_used_level        = "//trim(adjustl(txt))
+(  530) # 531 "profileinterpolate.F90"
+(  531)     write(txt,*,err=998) profile%last_used_z
+(  532)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  533)          "%last_used_z            = "//trim(adjustl(txt))
+(  534) # 535 "profileinterpolate.F90"
+(  535)     write(txt,*,err=998) profile%interpolation_type
+(  536)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  537)          "%interpolation_type     = "//trim(adjustl(txt))
+(  538) !todo: add select-case here
+(  539) # 540 "profileinterpolate.F90"
+(  540)     if (profile%interpolation_type .eq. interp_type_spline) then
+(  541)        IF (associated(profile%b)) THEN
+(  542)           s=size(profile%b)
+(  543)           if (PrintAll .or. (s .le. 1)) then
+(  544)              step=1
+(  545)           else
+(  546)              step = s - 1
+(  547)           end if
+(  548)           DO i=1,step
+(  549)              write(txt, *,err=998) i
+(  550)              write(txt2,*,err=998) profile%b(i)
+(  551)              write(txt3,*,err=998) profile%c(i)
+(  552)              write(txt4,*,err=998) profile%d(i)
+(  553) # 554 "profileinterpolate.F90"
+(  554)              write(fileunit,"(a)",err=999) &
+(  555)                   trim(prefix)//"%b("//trim(adjustl(txt))//") = "//&
+(  556)                   trim(adjustl(txt2))//&
+(  557)                   "; "//trim(prefix)//"c("//trim(adjustl(txt))//") = "//&
+(  558)                   trim(adjustl(txt3))//&
+(  559)                   "; "//trim(prefix)//"d("//trim(adjustl(txt))//") = "//&
+(  560)                   trim(adjustl(txt4))
+(  561)           END DO
+(  562)        ELSE
+(  563)           write(fileunit,"(a)",err=999) &
+(  564)                trim(prefix)//"b [seems not associated]"
+(  565)           write(fileunit,"(a)",err=999) &
+(  566)                trim(prefix)//"c [seems not associated]"
+(  567)           write(fileunit,"(a)",err=999) &
+(  568)                trim(prefix)//"d [seems not associated]"
+(  569)        END IF
+(  570)     end if
+(  571) # 572 "profileinterpolate.F90"
+(  572)     write(txt,*,err=998) profile%extrapolation_type_up
+(  573)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  574)          "%extrapolation_type_up   = "//trim(adjustl(txt))
+(  575) !todo: add select-case here
+(  576) # 577 "profileinterpolate.F90"
+(  577)     write(txt,*,err=998) profile%extrapolation_type_down
+(  578)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  579)          "%extrapolation_type_down = "//trim(adjustl(txt))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 37
+
+(  580) !todo: add select-case here
+(  581) # 582 "profileinterpolate.F90"
+(  582)     write(txt,*,err=998) profile%max_extrapolation_z
+(  583)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  584)          "%max_extrapolation_z     = "//trim(adjustl(txt))
+(  585) # 586 "profileinterpolate.F90"
+(  586)     write(txt,*,err=998) profile%min_extrapolation_z
+(  587)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  588)          "%min_extrapolation_z     = "//trim(adjustl(txt))
+(  589) # 590 "profileinterpolate.F90"
+(  590)     write(txt,*,err=998) profile%z_scale_down
+(  591)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  592)          "%z_scale_down            = "//trim(adjustl(txt))
+(  593) # 594 "profileinterpolate.F90"
+(  594)     write(txt,*,err=998) profile%z_scale_up
+(  595)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  596)          "%z_scale_up              = "//trim(adjustl(txt))
+(  597) # 598 "profileinterpolate.F90"
+(  598)     if (profile%IsDirectionData) then
+(  599)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  600)             "%IsDirectionData         = .true."
+(  601)     else
+(  602)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  603)             "%IsDirectionData         = .false."
+(  604)     end if
+(  605) # 606 "profileinterpolate.F90"
+(  606)     write(txt,*,err=998) profile%DirectionJump
+(  607)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  608)          "%DirectionJump           = "//trim(adjustl(txt))
+(  609) # 610 "profileinterpolate.F90"
+(  610)     write(fileunit,"(a)",err=999) trim(prefix)//&
+(  611)          "%name                    = "//trim(profile%name)
+(  612) # 613 "profileinterpolate.F90"
+(  613)     if (profile%debug_prints) then
+(  614)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  615)             "%debug_prints         = true"
+(  616)     else
+(  617)        write(fileunit,"(a)",err=999) trim(prefix)//&
+(  618)             "%debug_prints         = false"
+(  619)     end if
+(  620) # 621 "profileinterpolate.F90"
+(  621)     write(fileunit,"(a)",err=999) "ENDREALACC"
+(  622) # 623 "profileinterpolate.F90"
+(  623)     return
+(  624) # 625 "profileinterpolate.F90"
+(  625) 998 call logmsg(log_error,"ERROR in AsciiWriteProfile: "//&
+(  626)                 "error while converting number to text")
+(  627)     error_flag = error_writing_file
+(  628)     return
+(  629) # 630 "profileinterpolate.F90"
+(  630) 999 call logmsg(log_error,"ERROR in AsciiWriteProfile: "//&
+(  631)                 "error while writing to outputfile")
+(  632)     error_flag = error_writing_file
+(  633)     return
+(  634) # 635 "profileinterpolate.F90"
+(  635)   end subroutine AsciiWriteProfile
+(  636)     !  #]
+(  637)   subroutine PrintProfile(profile,prefix,PrintAll,error_flag)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 38
+
+(  638)     !  #[
+(  639)     type(profile_type), intent(in)  :: profile    ! input
+(  640)     character(len=*),   intent(in)  :: prefix     ! input
+(  641)     logical,            intent(in)  :: PrintAll   ! input
+(  642)     integer,            intent(out) :: error_flag ! output
+(  643) # 644 "profileinterpolate.F90"
+(  644)     call AsciiWriteProfile(profile,fileunit_stdout,prefix,PrintAll,error_flag)
+(  645) # 646 "profileinterpolate.F90"
+(  646)   end subroutine PrintProfile
+(  647)     !  #]
+(  648)   subroutine convert_log_to_normal(profile, error_flag, below_this_is_zero)
+(  649)     !  #[
+(  650)     type(profile_type),  intent(inout) :: profile    ! input/output
+(  651)     integer,             intent(out)   :: error_flag ! output
+(  652)     real(r8_), optional, intent(in)    :: below_this_is_zero ! optional input
+(  653) # 654 "profileinterpolate.F90"
+(  654)     ! local variable
+(  655)     integer :: i
+(  656) # 657 "profileinterpolate.F90"
+(  657)     error_flag = no_error
+(  658) # 659 "profileinterpolate.F90"
+(  659)     ! check the canary
+(  660)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  661)        print *,"ERROR: this profile was not properly initialised"
+(  662)        print *,"profile: "//trim(profile%name)
+(  663)        error_flag = error_programming
+(  664)        return
+(  665)     end if
+(  666) # 667 "profileinterpolate.F90"
+(  667)     ! convert the log values to a real value
+(  668)     DO i=1,profile%size 
+(  669)        IF (present(below_this_is_zero)) THEN
+(  670)           IF (profile%data(i) .le. below_this_is_zero) THEN
+(  671)              profile%data(i) = 0._r8_
+(  672)           ELSE
+(  673)              profile%data(i) = 10._r8_**profile%data(i)
+(  674)           ENDIF
+(  675)        ELSE
+(  676)           profile%data(i) = 10._r8_**profile%data(i)
+(  677)        END IF
+(  678)     END DO
+(  679) # 680 "profileinterpolate.F90"
+(  680)   end subroutine convert_log_to_normal
+(  681)     !  #]
+(  682)   subroutine correct_bias(profile, bias, error_flag)
+(  683)     !  #[
+(  684)     type(profile_type), intent(inout) :: profile    ! input/output
+(  685)     real(r8_),          intent(in)    :: bias       ! input
+(  686)     integer,            intent(out)   :: error_flag ! output
+(  687) # 688 "profileinterpolate.F90"
+(  688)     ! local variable
+(  689)     integer :: i
+(  690) # 691 "profileinterpolate.F90"
+(  691)     error_flag = no_error
+(  692) # 693 "profileinterpolate.F90"
+(  693)     ! check the canary
+(  694)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  695)        print *,"ERROR: this profile was not properly initialised"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 39
+
+(  696)        print *,"profile: "//trim(profile%name)
+(  697)        error_flag = error_programming
+(  698)        return
+(  699)     end if
+(  700) # 701 "profileinterpolate.F90"
+(  701)     ! subtract the bias from all profiles elements
+(  702)     DO i=1,profile%size 
+(  703)        profile%data(i) = profile%data(i) - bias
+(  704)     END DO
+(  705) # 706 "profileinterpolate.F90"
+(  706)   end subroutine correct_bias
+(  707)     !  #]
+(  708)   function interpolate(profile,wanted_z) result(value)
+(  709)     !  #[
+(  710)     type(profile_type) :: profile  ! input
+(  711)     real(r8_)          :: wanted_z ! input
+(  712)     real(r8_)          :: value    ! output
+(  713) # 714 "profileinterpolate.F90"
+(  714)     ! local variables
+(  715)     integer   :: SceneLevel
+(  716)     real(r8_) :: z_below, z_above, delta_z
+(  717)     real(r8_) :: data_below, data_above, delta_data
+(  718)     real(r8_) :: log_data_below, log_data_above, delta_log_data
+(  719)     real(r8_) :: log_value, factor, dx
+(  720) # 721 "profileinterpolate.F90"
+(  721)     integer :: ScanningDirection
+(  722)     integer, parameter :: scanning_upward   = 1
+(  723)     integer, parameter :: scanning_downward = 2
+(  724) # 725 "profileinterpolate.F90"
+(  725)     logical :: extrapolation_copy_edgeval 
+(  726)     logical :: extrapolation_z_sq
+(  727) # 728 "profileinterpolate.F90"
+(  728)     ! check the canary
+(  729)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+(  730)        print *,"ERROR: this profile was not properly initialised"
+(  731)        print *,"profile: "//trim(profile%name)
+(  732)        value = missing_indicator_real
+(  733)        return
+(  734)     end if
+(  735) # 736 "profileinterpolate.F90"
+(  736)     ! check wanted_z for missing, NaN or Inf 
+(  737)     if ( missing_real(wanted_z) .or. &
+(  738)          is_NaN(      wanted_z) .or. &
+(  739)          is_PosInf(   wanted_z) .or. &
+(  740)          is_NegInf(   wanted_z)      ) then
+(  741)        value = missing_indicator_real
+(  742)        return
+(  743)     end if
+(  744) # 745 "profileinterpolate.F90"
+(  745)     ! this may happen if all input values are missing,
+(  746)     ! combined with the SkipMissingData flag
+(  747)     if ( (.not. associated(profile%z)   ) .or. &
+(  748)          (.not. associated(profile%data))      ) then
+(  749)        value = missing_indicator_real
+(  750)        return
+(  751)     end if
+(  752) # 753 "profileinterpolate.F90"
+(  753)     ! if this is not the first call for this profile, start at the 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 40
+
+(  754)     ! previously found SceneLevel. This will probably save a lot of work
+(  755)     ! because this routine is probably called many times with a monotonic
+(  756)     ! increasing or decreasing z
+(  757) # 758 "profileinterpolate.F90"
+(  758)     if (profile%last_used_level .ne. -1) then
+(  759)        SceneLevel = profile%last_used_level
+(  760) # 761 "profileinterpolate.F90"
+(  761)        if ( wanted_z .gt. profile%z(SceneLevel) ) then
+(  762)           ! we are still extrapolating above the defined profile
+(  763)           ! so goto the upward scan to get the edge values
+(  764)           ScanningDirection = scanning_upward
+(  765)        else
+(  766)           if (wanted_z .ge. profile%last_used_z) then
+(  767)              ScanningDirection = scanning_upward
+(  768)           else
+(  769)              ScanningDirection = scanning_downward
+(  770)           end if
+(  771)        endif
+(  772)     else
+(  773)        SceneLevel        = 1
+(  774)        ScanningDirection = scanning_upward
+(  775)     end if
+(  776) # 777 "profileinterpolate.F90"
+(  777)     extrapolation_copy_edgeval = .false. ! set to default
+(  778)     extrapolation_z_sq         = .false. ! set to default
+(  779) # 780 "profileinterpolate.F90"
+(  780)     if (ScanningDirection .eq. scanning_upward) then
+(  781)        !  #[
+(  782)        ! ascend up the scene levels untill the requested level is
+(  783)        ! in between this scene level and the next scene level
+(  784)        uploop: DO 
+(  785)           !print *,"uploop: SceneLevel=",SceneLevel
+(  786)           IF (profile%size .eq. 1) THEN
+(  787)              IF (wanted_z .gt. profile%z(1)) THEN
+(  788)                 ! this 2 forces the code to enter the upwards block below
+(  789)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  790)                 SceneLevel = 2 
+(  791)              ELSE
+(  792)                 ! this 0 forces the code to enter the downwards block below
+(  793)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  794)                 SceneLevel = 0
+(  795)              END IF
+(  796)              ! OK, correct SceneLevel found
+(  797)              exit uploop
+(  798)           END IF
+(  799) # 800 "profileinterpolate.F90"
+(  800)           IF ( (wanted_z .ge. profile%z(SceneLevel  ) ) .and. &
+(  801)                (wanted_z .le. profile%z(SceneLevel+1) )       ) THEN
+(  802)              ! OK, correct SceneLevel found
+(  803)              exit uploop
+(  804)           END IF
+(  805) # 806 "profileinterpolate.F90"
+(  806)           IF ( wanted_z .gt. profile%z(SceneLevel+1) ) THEN
+(  807)              ! step one scenelevel up
+(  808)              SceneLevel = SceneLevel + 1
+(  809)           END IF
+(  810) # 811 "profileinterpolate.F90"
+(  811)           IF ( wanted_z .lt. profile%z(SceneLevel) ) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 41
+
+(  812)              ! goto the downward scan
+(  813)              ScanningDirection = scanning_downward
+(  814)              exit uploop
+(  815)           END IF
+(  816)           
+(  817)           IF (SceneLevel .gt. profile%size-1) exit uploop
+(  818)        END DO uploop
+(  819)        !  #]
+(  820)     end if
+(  821) # 822 "profileinterpolate.F90"
+(  822)     if (ScanningDirection .eq. scanning_downward) then
+(  823)        !  #[
+(  824)        ! descend down the scene levels untill the requested level is
+(  825)        ! in between this scene level and the next scene level
+(  826)        downloop: DO 
+(  827)           !print *,"downloop: SceneLevel=",SceneLevel
+(  828)           IF (profile%size .eq. 1) THEN
+(  829)              IF (wanted_z .gt. profile%z(1)) THEN
+(  830)                 ! this 2 forces the code to enter the upwards block below
+(  831)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  832)                 SceneLevel = 2 
+(  833)              ELSE
+(  834)                 ! this 0 forces the code to enter the downwards block below
+(  835)                 ! the level is set to 1 afterwards, so it doesn't hurt
+(  836)                 SceneLevel = 0
+(  837)              END IF
+(  838)              ! OK, correct SceneLevel found
+(  839)              exit downloop
+(  840)           END IF
+(  841) # 842 "profileinterpolate.F90"
+(  842)           IF ( (wanted_z .ge. profile%z(SceneLevel  ) ) .and. &
+(  843)                (wanted_z .le. profile%z(SceneLevel+1) )       ) THEN
+(  844)              ! OK, correct SceneLevel found
+(  845)              exit downloop
+(  846)           END IF
+(  847) # 848 "profileinterpolate.F90"
+(  848)           IF ( wanted_z .lt. profile%z(SceneLevel) ) THEN
+(  849)              ! step one scenelevel down
+(  850)              SceneLevel = SceneLevel - 1
+(  851)           END IF
+(  852) # 853 "profileinterpolate.F90"
+(  853)           if (SceneLevel .lt. 1) exit downloop
+(  854)        END DO downloop
+(  855)        !  #]
+(  856)     end if
+(  857) # 858 "profileinterpolate.F90"
+(  858)     upwards: IF (SceneLevel .gt. profile%size-1) THEN
+(  859)        !  #[ we are extrapolating upwards
+(  860)        extrapolation_copy_edgeval = .false.
+(  861)        extrapolation_z_sq = .false.
+(  862)        select case(profile%extrapolation_type_up)
+(  863)        case(extrap_type_none)
+(  864)           if (profile%debug_prints) then
+(  865)              print *,"WARNING: requested z-value is outside defined scene"
+(  866)              print *,"and extrapolation is disabled for this profile ..."
+(  867)              print *,"profile: "//trim(profile%name)
+(  868)              print *,"returning with missing value"
+(  869)           end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 42
+
+(  870)           value = missing_indicator_real
+(  871)           return
+(  872)        case(extrap_type_linear)
+(  873)           SceneLevel = profile%size-1
+(  874)        case(extrap_type_log)
+(  875)           SceneLevel = profile%size-1
+(  876)        case(extrap_type_z_sq)
+(  877)           ! setting this is needed for the saving of the level
+(  878)           SceneLevel = profile%size-1
+(  879)           extrapolation_z_sq = .true.
+(  880)        case(extrap_type_edgeval)
+(  881)           ! setting this is needed for the saving of the level
+(  882)           SceneLevel = profile%size-1
+(  883)           extrapolation_copy_edgeval = .true.
+(  884)        case default
+(  885)           print *,"ERROR: unknown extrapolation type ..."
+(  886)           print *,"for profile: "//trim(profile%name)
+(  887)           value = missing_indicator_real
+(  888)           return
+(  889)        end select
+(  890)        
+(  891)        ! check if we are not outside the allowed range for extrapolation
+(  892)        if (.not. missing_real(profile%max_extrapolation_z)) then
+(  893)           if (wanted_z .gt. profile%max_extrapolation_z) then
+(  894)              if (profile%debug_prints) then
+(  895)                 print *,"WARNING in interpolate()"
+(  896)                 print *,"wanted_z = ",wanted_z,&
+(  897)                      " is above the allowed maximum"
+(  898)                 print *,"height for extrapolating this profile"
+(  899)                 print *,"max_extrapolation_z = ",&
+(  900)                      profile%max_extrapolation_z
+(  901)                 print *,"for profile: "//trim(profile%name)
+(  902)                 print *,"returning with missing value"
+(  903)              end if
+(  904)              value = missing_indicator_real
+(  905)              return
+(  906)           end if
+(  907)        end if
+(  908)        !  #]
+(  909)     ELSE
+(  910)        downwards: IF (SceneLevel .lt. 1) THEN
+(  911)           !  #[ we are extrapolating downwards
+(  912)           extrapolation_copy_edgeval = .false.
+(  913)           extrapolation_z_sq = .false.
+(  914)           select case(profile%extrapolation_type_down)
+(  915)           case(extrap_type_none)
+(  916)              if (profile%debug_prints) then
+(  917)                 print *,"WARNING: requested z-value is outside defined scene"
+(  918)                 print *,"and extrapolation is disabled for this profile ..."
+(  919)                 print *,"for profile: "//trim(profile%name)
+(  920)                 print *,"returning with missing value"
+(  921)              end if
+(  922)              value = missing_indicator_real
+(  923)              return
+(  924)           case(extrap_type_linear)
+(  925)              SceneLevel = 1
+(  926)           case(extrap_type_log)
+(  927)              SceneLevel = 1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 43
+
+(  928)           case(extrap_type_z_sq)
+(  929)              ! setting this is needed for the saving of the level
+(  930)              SceneLevel = 1
+(  931)              extrapolation_z_sq = .true.
+(  932)           case(extrap_type_edgeval)
+(  933)              ! setting this is needed for the saving of the level
+(  934)              SceneLevel = 1
+(  935)              extrapolation_copy_edgeval = .true.
+(  936)           case default
+(  937)              print *,"ERROR: unknown extrapolation type ..."
+(  938)              print *,"for profile: "//trim(profile%name)
+(  939)              value = missing_indicator_real
+(  940)              return
+(  941)           end select
+(  942)           
+(  943)           ! check if we are not outside the allowed range for extrapolation
+(  944)           if (.not. missing_real(profile%min_extrapolation_z)) then
+(  945)              if (wanted_z .lt. profile%min_extrapolation_z) then
+(  946)                 if (profile%debug_prints) then
+(  947)                    print *,"WARNING in interpolate()"
+(  948)                    print *,"wanted_z = ",wanted_z,&
+(  949)                         " is below the allowed minimum"
+(  950)                    print *,"height for extrapolating this profile"
+(  951)                    print *,"min_extrapolation_z = ",&
+(  952)                         profile%min_extrapolation_z
+(  953)                    print *,"for profile: "//trim(profile%name)
+(  954)                    print *,"returning with missing value"
+(  955)                 end if
+(  956)                 value = missing_indicator_real
+(  957)                 return
+(  958)              end if
+(  959)           end if
+(  960)           !  #]
+(  961)        END IF downwards
+(  962)     END IF upwards
+(  963) # 964 "profileinterpolate.F90"
+(  964)     ! if we have just a single valid datapoint, interpolation
+(  965)     ! is not possible, and only 2 types of extrapolation are possible
+(  966)     if (profile%size .eq. 1) SceneLevel = 1
+(  967) # 968 "profileinterpolate.F90"
+(  968)     ! ok, the requested level is found now
+(  969) # 970 "profileinterpolate.F90"
+(  970)     ! save the level and z values, for use in the next call
+(  971)     profile%last_used_level = SceneLevel
+(  972)     profile%last_used_z     = wanted_z
+(  973) # 974 "profileinterpolate.F90"
+(  974)     if (extrapolation_copy_edgeval) then
+(  975)        !  #[
+(  976)        ! this is the simplest extrapolation case,
+(  977)        ! just copy the edge value of the profile
+(  978) # 979 "profileinterpolate.F90"
+(  979)        ! just copy the lower edge of the defined profile
+(  980)        ! the extra z-check is needed for a profile with just 2 defined points
+(  981)        ! because then size-1 .eq. 1
+(  982)        if ( (SceneLevel .eq. 1)         .and. &
+(  983)             (wanted_z .lt. profile%z(1))      )then
+(  984)           value = profile%data(1)
+(  985)           return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 44
+
+(  986)        end if
+(  987) # 988 "profileinterpolate.F90"
+(  988)        ! just copy the upper edge of the defined profile
+(  989)        if ( (SceneLevel .eq. profile%size-1) .and. &
+(  990)             (wanted_z .gt. profile%z(profile%size)) )then
+(  991)           value = profile%data(profile%size)
+(  992)           return
+(  993)        end if
+(  994) # 995 "profileinterpolate.F90"
+(  995)        ! if we have just a single valid datapoint, just copy it
+(  996)        if (profile%size .eq. 1) then
+(  997)           value = profile%data(1)
+(  998)           return
+(  999)        end if
+( 1000) # 1001 "profileinterpolate.F90"
+( 1001)        ! this point should never be reached
+( 1002)        print *,"ERROR: programming error in interpolate() !!!!"
+( 1003)        print *,"ERROR: for profile: "//trim(profile%name)
+( 1004)        value = missing_indicator_real
+( 1005)        return
+( 1006)        !  #]
+( 1007)     end if
+( 1008) # 1009 "profileinterpolate.F90"
+( 1009)     if (extrapolation_z_sq) then
+( 1010)        !  #[
+( 1011)        ! the extra z-check is needed for a profile with just 2 defined points
+( 1012)        ! because then size-1 .eq. 1
+( 1013)        if ( (SceneLevel .eq. 1)         .and. &
+( 1014)             (wanted_z .lt. profile%z(1))      )then
+( 1015) # 1016 "profileinterpolate.F90"
+( 1016)           ! if the edge value is missing, the extrapolated value should 
+( 1017)           ! be missing too
+( 1018)           IF ( missing_real(profile%data(1))) THEN
+( 1019)              value = missing_indicator_real
+( 1020)              return
+( 1021)           END IF
+( 1022) # 1023 "profileinterpolate.F90"
+( 1023)           delta_z = wanted_z - profile%z(1)
+( 1024)           factor = delta_z/profile%z_scale_down
+( 1025)           value = profile%data(1)/(1._r8_+factor*factor)
+( 1026)           return
+( 1027)        end if
+( 1028) # 1029 "profileinterpolate.F90"
+( 1029)        if ( (SceneLevel .eq. profile%size-1) .and. &
+( 1030)             (wanted_z .gt. profile%z(profile%size)) )then
+( 1031) # 1032 "profileinterpolate.F90"
+( 1032)           ! if the edge value is missing, the extrapolated value should 
+( 1033)           ! be missing too
+( 1034)           IF ( missing_real(profile%data(profile%size))) THEN
+( 1035)              value = missing_indicator_real
+( 1036)              return
+( 1037)           END IF
+( 1038) # 1039 "profileinterpolate.F90"
+( 1039)           delta_z = profile%z(profile%size) - wanted_z
+( 1040)           factor = delta_z/profile%z_scale_up
+( 1041)           value = profile%data(profile%size)/(1._r8_+factor*factor)
+( 1042)           return
+( 1043)        end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 45
+
+( 1044)        
+( 1045)        ! exception in case we have just a single valid datapoint
+( 1046)        if (profile%size .eq. 1) then
+( 1047)           ! if the edge value is missing, the extrapolated value should 
+( 1048)           ! be missing too
+( 1049)           IF ( missing_real(profile%data(1))) THEN
+( 1050)              value = missing_indicator_real
+( 1051)              return
+( 1052)           END IF
+( 1053) # 1054 "profileinterpolate.F90"
+( 1054)           ! sign doesn't matter, because factor is squared below,
+( 1055)           ! so this works both upward and downward.
+( 1056)           delta_z = profile%z(1) - wanted_z
+( 1057) # 1058 "profileinterpolate.F90"
+( 1058)           factor = delta_z/profile%z_scale_up
+( 1059)           value = profile%data(profile%size)/(1._r8_+factor*factor)
+( 1060)           return
+( 1061)        end if
+( 1062) # 1063 "profileinterpolate.F90"
+( 1063)        ! this point should never be reached
+( 1064)        print *,"programming error in interpolate() !!!!"
+( 1065)        print *,"for profile: "//trim(profile%name)
+( 1066)        value = missing_indicator_real
+( 1067)        return
+( 1068)        !  #]
+( 1069)     end if
+( 1070) # 1071 "profileinterpolate.F90"
+( 1071)     ! after this point all extrapolations use 2 or more points
+( 1072)     ! so if we have just one valid point, there is nothing more
+( 1073)     ! to do than reporting missing ...
+( 1074)     if (profile%size .eq. 1) then
+( 1075)        value = missing_indicator_real
+( 1076)        return
+( 1077)     end if
+( 1078) # 1079 "profileinterpolate.F90"
+( 1079)     ! save altitude low and high edge of level bin
+( 1080)     z_below = profile%z(SceneLevel  )
+( 1081)     z_above = profile%z(SceneLevel+1)
+( 1082) # 1083 "profileinterpolate.F90"
+( 1083)     ! save datavalue at low and high edge of level bin
+( 1084)     data_below = profile%data(SceneLevel  )
+( 1085)     data_above = profile%data(SceneLevel+1)
+( 1086) # 1087 "profileinterpolate.F90"
+( 1087)     ! if either the data below or the data above is missing,
+( 1088)     ! interpolation is not possible, so set the result to missing too
+( 1089)     IF ( missing_real(data_below) .or. missing_real(data_above)) THEN
+( 1090)        value = missing_indicator_real
+( 1091)        return
+( 1092)     END IF
+( 1093) # 1094 "profileinterpolate.F90"
+( 1094)     ! calculate the z delta
+( 1095)     delta_z    = z_above    - z_below    ! level bin size
+( 1096) # 1097 "profileinterpolate.F90"
+( 1097)     select case (profile%interpolation_type)
+( 1098)     case(interp_type_linear)
+( 1099)        !  #[
+( 1100)        ! calculate the data delta
+( 1101)        delta_data = data_above - data_below ! data difference
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 46
+
+( 1102) # 1103 "profileinterpolate.F90"
+( 1103)        ! take the exception into account for directions in which case
+( 1104)        ! 1 degree and 359 degrees are infact very close to each other
+( 1105)        IF (profile%IsDirectionData) THEN
+( 1106)           IF ( delta_data .gt. profile%DirectionJump/2) THEN
+( 1107)              delta_data = delta_data - profile%DirectionJump
+( 1108)           END IF
+( 1109)           IF ( delta_data .lt. -1._r8_*profile%DirectionJump/2._r8_) THEN
+( 1110)              delta_data = delta_data + profile%DirectionJump
+( 1111)           END IF
+( 1112)        END IF
+( 1113) # 1114 "profileinterpolate.F90"
+( 1114)        ! do the actual interpolation
+( 1115)        value =  data_below + (wanted_z - z_below)*delta_data/delta_z
+( 1116)        !  #]
+( 1117)     case(interp_type_log)
+( 1118)        !  #[
+( 1119)        ! check for zeroes or negatives in values for interpolation
+( 1120)        if ((data_below .lt. ZeroEpsilon) .or. &
+( 1121)            (data_above .lt. ZeroEpsilon)) then
+( 1122)           print *,"ERROR in interpolate()"
+( 1123)           print *,"encountered (allmost) zero or negative numbers"
+( 1124)           print *,"for profile: "//trim(profile%name)
+( 1125)           print *,"This is not allowed for interpolation type: interp_type_log"
+( 1126)           print *,"Returning with missing value"
+( 1127)           value = missing_indicator_real
+( 1128)           return
+( 1129)        end if
+( 1130)        
+( 1131)        log_data_below = LOG10(data_below)
+( 1132)        log_data_above = LOG10(data_above)
+( 1133)        
+( 1134)        ! calculate the log data delta
+( 1135)        delta_log_data = log_data_above - log_data_below ! log data difference
+( 1136)        
+( 1137)        ! do the actual interpolation on the log10 values
+( 1138)        log_value = log_data_below + (wanted_z - z_below)*delta_log_data/delta_z
+( 1139)        
+( 1140)        ! check for underflow problems
+( 1141)        if (log_value .lt. -37._r8_) then
+( 1142)           if (profile%debug_prints) then
+( 1143)              print *,"WARNING in interpolate():"
+( 1144)              print *,"log_value of ",log_value," may cause arithmatic underflow"
+( 1145)              print *,"for profile: "//trim(profile%name)
+( 1146)           end if
+( 1147)        endif
+( 1148)        
+( 1149)        ! and convert to the normal nonlog value
+( 1150)        value = 10._r8_**log_value
+( 1151)        !  #]
+( 1152)     case(interp_type_spline)
+( 1153)        !  #[
+( 1154)        ! this does basically the same as Spline_Calc in interp1.F90 but without
+( 1155)        ! calling the numerical recipes hunt function
+( 1156)        dx=wanted_z-z_below
+( 1157)        value = data_below + dx*(          profile%b(SceneLevel) + &
+( 1158)                                  dx*(     profile%c(SceneLevel) + &
+( 1159)                                       dx* profile%d(SceneLevel)    ) )
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 47
+
+( 1160)        !  #]
+( 1161)     case default
+( 1162)        !  #[
+( 1163)        print *,"ERROR in interpolate()"
+( 1164)        print *,"unknown interpolation type: ",profile%interpolation_type
+( 1165)        print *,"for profile: "//trim(profile%name)
+( 1166)        value = missing_indicator_real
+( 1167)        return
+( 1168)        !  #]
+( 1169)     end select
+( 1170) # 1171 "profileinterpolate.F90"
+( 1171)   end function interpolate
+( 1172)   !  #]
+( 1173)   function IntegrateInterpolatedProfile(profile,level_start,level_end,&
+( 1174)                          step,divide_by_int_length) result(value)
+( 1175)     !  #[
+( 1176)     ! integrate a profile between level_start and level_end
+( 1177)     ! and if selected, devide by the int_length 
+( 1178)     ! which basically converts the result into an average over the 
+( 1179)     ! selected range.
+( 1180) # 1181 "profileinterpolate.F90"
+( 1181)     type(profile_type) :: profile     ! input
+( 1182)     real(r8_)          :: level_start ! input
+( 1183)     real(r8_)          :: level_end   ! input
+( 1184)     real(r8_)          :: step        ! input
+( 1185)     logical, optional  :: divide_by_int_length ! optional input
+( 1186) # 1187 "profileinterpolate.F90"
+( 1187)     real(r8_)          :: value       ! output
+( 1188)     
+( 1189)     ! local variables
+( 1190)     real(r8_) :: int_length, step_size
+( 1191)     real(r8_) :: wanted_z1, wanted_z2, val1, val2, sum
+( 1192) # 1193 "profileinterpolate.F90"
+( 1193)     ! check the canary
+( 1194)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1195)        print *,"ERROR: this profile was not properly initialised"
+( 1196)        print *,"profile: "//trim(profile%name)
+( 1197)        value = missing_indicator_real
+( 1198)        return
+( 1199)     end if
+( 1200) # 1201 "profileinterpolate.F90"
+( 1201)     ! some sanity checks
+( 1202)     IF (step .le. 0._r8_) THEN
+( 1203)        print *,"ERROR in IntegrateInterpolatedProfile():"
+( 1204)        print *,"step is supposed to be positive, but it was: ",step
+( 1205)        value = missing_indicator_real
+( 1206)        return
+( 1207)     ENDIF
+( 1208) # 1209 "profileinterpolate.F90"
+( 1209)     IF (level_start .ge. level_end) THEN
+( 1210)        print *,"ERROR in IntegrateInterpolatedProfile():"
+( 1211)        print *,"level_start is supposed to be below level_end, however"
+( 1212)        print *,"level_start = ",level_start
+( 1213)        print *,"level_end = ",level_end
+( 1214)        value = missing_indicator_real
+( 1215)        return
+( 1216)     END IF
+( 1217) # 1218 "profileinterpolate.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 48
+
+( 1218)     step_size  = step ! might be changed for the last step !
+( 1219)     sum        = 0._r8_
+( 1220)     int_length = 0._r8_
+( 1221)     wanted_z1  = level_start
+( 1222)     val1       = interpolate(profile,wanted_z1)
+( 1223)     integration_loop: DO 
+( 1224)        wanted_z2 = wanted_z1 + step_size
+( 1225)        IF (wanted_z2 .ge. level_end) THEN
+( 1226)           wanted_z2 = level_end
+( 1227)           step_size = wanted_z2 - wanted_z1
+( 1228)           val2 = interpolate(profile,wanted_z2)
+( 1229) # 1230 "profileinterpolate.F90"
+( 1230)           IF ( (.not. missing_real(val1)) .and. &
+( 1231)                (.not. missing_real(val2))       ) THEN
+( 1232)              sum = sum + step_size*(val1+val2)/2._r8_
+( 1233)              int_length = int_length + step_size
+( 1234)           ELSE
+( 1235)              IF (profile%debug_prints) &
+( 1236)                   print *," val1 = ",val1," val2 = ",val2,&
+( 1237)                           " nothing added due to missing values"
+( 1238)           END IF
+( 1239)           exit integration_loop
+( 1240)        ELSE
+( 1241)           val2 = interpolate(profile,wanted_z2)
+( 1242) # 1243 "profileinterpolate.F90"
+( 1243)           IF ( (.not. missing_real(val1)) .and. &
+( 1244)                (.not. missing_real(val2))       ) THEN
+( 1245)              sum = sum + step_size*(val1+val2)/2._r8_
+( 1246)              int_length = int_length + step_size
+( 1247)           ELSE
+( 1248)              IF (profile%debug_prints) &
+( 1249)                   print *," val1 = ",val1," val2 = ",val2,&
+( 1250)                           " nothing added due to missing values"
+( 1251)           END IF
+( 1252)        END IF
+( 1253) # 1254 "profileinterpolate.F90"
+( 1254)        ! copy data to be remembered for the next step
+( 1255)        wanted_z1 = wanted_z2
+( 1256)        val1      = val2
+( 1257)     END DO integration_loop
+( 1258) # 1259 "profileinterpolate.F90"
+( 1259)     IF (profile%debug_prints) THEN
+( 1260)        print *,"result: "
+( 1261)        print *,"sum = ",sum
+( 1262)        print *,"int_length = ",int_length
+( 1263)     END IF
+( 1264) # 1265 "profileinterpolate.F90"
+( 1265)     IF (int_length .gt. 0._r8_) THEN
+( 1266)        value = sum
+( 1267)        IF (present(divide_by_int_length)) THEN
+( 1268)           IF (divide_by_int_length) value = sum/int_length
+( 1269)        END IF
+( 1270)     ELSE
+( 1271)        ! probably all needed values were missing, 
+( 1272)        ! so set the integral to missing too
+( 1273)        value = missing_indicator_real
+( 1274)     END IF
+( 1275) # 1276 "profileinterpolate.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 49
+
+( 1276)     IF (profile%debug_prints) &
+( 1277)          print *,"end result: value = ",value
+( 1278) # 1279 "profileinterpolate.F90"
+( 1279)   end function IntegrateInterpolatedProfile
+( 1280)   !  #]
+( 1281)   function get_min_alt_profile(profile) result(min_alt)
+( 1282)     !  #[
+( 1283)     type(profile_type), intent(in) :: profile  ! input
+( 1284)     real(r8_)                      :: min_alt  ! output
+( 1285)     
+( 1286)     ! check the canary
+( 1287)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1288)        print *,"ERROR in get_min_alt_profile():"
+( 1289)        print *,"ERROR: this profile was not properly initialised"
+( 1290)        print *,"profile: "//trim(profile%name)
+( 1291)        min_alt = missing_indicator_real
+( 1292)        return
+( 1293)     end if
+( 1294) # 1295 "profileinterpolate.F90"
+( 1295)     min_alt = missing_indicator_real
+( 1296)     IF (associated(profile%z)) min_alt = profile%z(1)
+( 1297) # 1298 "profileinterpolate.F90"
+( 1298)     return
+( 1299) # 1300 "profileinterpolate.F90"
+( 1300)   end function get_min_alt_profile
+( 1301)     !  #]
+( 1302)   function get_max_alt_profile(profile) result(max_alt)
+( 1303)     !  #[
+( 1304)     type(profile_type), intent(in) :: profile  ! input
+( 1305)     real(r8_)                      :: max_alt  ! output
+( 1306)     
+( 1307)     ! check the canary
+( 1308)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1309)        print *,"ERROR in get_max_alt_profile():"
+( 1310)        print *,"ERROR: this profile was not properly initialised"
+( 1311)        print *,"profile: "//trim(profile%name)
+( 1312)        max_alt = missing_indicator_real
+( 1313)        return
+( 1314)     end if
+( 1315) # 1316 "profileinterpolate.F90"
+( 1316)     max_alt = missing_indicator_real
+( 1317)     if (associated(profile%z)) max_alt = profile%z(profile%size)
+( 1318) # 1319 "profileinterpolate.F90"
+( 1319)     return
+( 1320) # 1321 "profileinterpolate.F90"
+( 1321)   end function get_max_alt_profile
+( 1322)     !  #]
+( 1323)   subroutine get_arrays(profile,z,data,error_flag)
+( 1324)     !  #[
+( 1325)     type(profile_type),      intent(in)  :: profile    ! input
+( 1326)     real(r8_), dimension(:), intent(out) :: z          ! output
+( 1327)     real(r8_), dimension(:), intent(out) :: data       ! output
+( 1328)     integer,                 intent(out) :: error_flag ! output
+( 1329) # 1330 "profileinterpolate.F90"
+( 1330)     ! check the canary
+( 1331)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1332)        print *,"ERROR in get_arrays():"
+( 1333)        print *,"ERROR: this profile was not properly initialised"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:30      page 50
+
+( 1334)        print *,"profile: "//trim(profile%name)
+( 1335)        error_flag = error_programming
+( 1336)        return
+( 1337)     end if
+( 1338) # 1339 "profileinterpolate.F90"
+( 1339)     if (size(data) .ne. profile%size) then
+( 1340)        print *,"ERROR in get_arrays():"
+( 1341)        print *,"ERROR: provided z and data arrays must have proper size!"
+( 1342)        print *,"profile: "//trim(profile%name)
+( 1343)        print *,"profile size is: ",profile%size
+( 1344)        print *,"size of provided data array is ",size(data)
+( 1345)        print *,"size of provided data z     is ",size(z)
+( 1346)        error_flag = error_programming
+( 1347)        return
+( 1348)     end if
+( 1349) # 1350 "profileinterpolate.F90"
+( 1350)     z(:)    = profile%z(:)
+( 1351)     data(:) = profile%data(:)
+( 1352) # 1353 "profileinterpolate.F90"
+( 1353)     return
+( 1354) # 1355 "profileinterpolate.F90"
+( 1355)   end subroutine get_arrays
+( 1356)     !  #]
+( 1357)   function get_profile_size(profile) result (size)
+( 1358)     !  #[
+( 1359)     type(profile_type), intent(in) :: profile ! input
+( 1360)     integer                        :: size    ! output
+( 1361) # 1362 "profileinterpolate.F90"
+( 1362)     ! check the canary
+( 1363)     if (profile%struct_was_properly_initialised .ne. profile_canary) then
+( 1364)        print *,"ERROR in get_profile_size():"
+( 1365)        print *,"ERROR: this profile was not properly initialised"
+( 1366)        print *,"profile: "//trim(profile%name)
+( 1367)        size = -1
+( 1368)        return
+( 1369)     end if
+( 1370) # 1371 "profileinterpolate.F90"
+( 1371)     size = profile%size
+( 1372) # 1373 "profileinterpolate.F90"
+( 1373)     return
+( 1374) # 1375 "profileinterpolate.F90"
+( 1375)   end function get_profile_size
+( 1376)     !  #]
+( 1377)   !------------------------------------------------
+( 1378) end module ProfileInterpolate

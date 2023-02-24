@@ -1,0 +1,1568 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fft.F90
+
+(    1)       subroutine fft991_crm(a,work,trigs,ifax,inc,jump,n,lot,isign)
+(    2) 
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) 
+(   13)       use real_size
+(   14)       real(RR) a(*),work(*),trigs(*)
+(   15)       integer ifax(*)
+(   16)       nfax=ifax(1)
+(   17)       nx=n+1
+(   18)       nh=n/2
+(   19)       ink=inc+inc
+(   20)       if (isign.eq.+1) go to 30
+(   21)       igo=50
+(   22)       if (mod(nfax,2).eq.1) goto 40
+(   23)       ibase=1
+(   24)       jbase=1
+(   25)       do 20 l=1,lot
+(   26)       i=ibase
+(   27)       j=jbase
+(   28)       do 10 m=1,n
+(   29)       work(j)=a(i)
+(   30)       i=i+inc
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 3
+
+(   31)       j=j+1
+(   32)    10 continue
+(   33)       ibase=ibase+jump
+(   34)       jbase=jbase+nx
+(   35)    20 continue
+(   36)       igo=60
+(   37)       go to 40
+(   38)    30 continue
+(   39)       call fft99a_crm(a,work,trigs,inc,jump,n,lot)
+(   40)       igo=60
+(   41)    40 continue
+(   42)       ia=1
+(   43)       la=1
+(   44)       do 80 k=1,nfax
+(   45)       if (igo.eq.60) go to 60
+(   46)    50 continue
+(   47)       call vpassm_crm(a(ia),a(ia+inc),work(1),work(2),trigs, &
+(   48)         ink,2,jump,nx,lot,nh,ifax(k+1),la)
+(   49)       igo=60
+(   50)       go to 70
+(   51)    60 continue
+(   52)       call vpassm_crm(work(1),work(2),a(ia),a(ia+inc),trigs, &
+(   53)          2,ink,nx,jump,lot,nh,ifax(k+1),la)
+(   54)       igo=50
+(   55)    70 continue
+(   56)       la=la*ifax(k+1)
+(   57)    80 continue
+(   58)       if (isign.eq.-1) go to 130
+(   59)       if (mod(nfax,2).eq.1) go to 110
+(   60)       ibase=1
+(   61)       jbase=1
+(   62)       do 100 l=1,lot
+(   63)       i=ibase
+(   64)       j=jbase
+(   65)       do 90 m=1,n
+(   66)       a(j)=work(i)
+(   67)       i=i+1
+(   68)       j=j+inc
+(   69)    90 continue
+(   70)       ibase=ibase+nx
+(   71)       jbase=jbase+jump
+(   72)   100 continue
+(   73)   110 continue
+(   74)       ib=n*inc+1
+(   75)       do 120 l=1,lot
+(   76)       a(ib)=0.0
+(   77)       a(ib+inc)=0.0
+(   78)       ib=ib+jump
+(   79)   120 continue
+(   80)       go to 140
+(   81)   130 continue
+(   82)       call fft99b_crm(work,a,trigs,inc,jump,n,lot)
+(   83)   140 continue
+(   84)       return
+(   85)       end
+(   86) 
+(   87) 
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 4
+
+(   89) 
+(   90) 
+(   91)       subroutine fftfax_crm(n,ifax,trigs)
+(   92)       use real_size
+(   93)       integer ifax(13)
+(   94)       real(RR) trigs(1)
+(   95)       data mode /3/
+(   96)       call fax_crm (ifax, n, mode)
+(   97)       i = ifax(1)
+(   98)       call fftrig_crm (trigs, n, mode)
+(   99)       return
+(  100)       end
+(  101) 
+(  102) 
+(  103) 
+(  104) 
+(  105) 
+(  106)       subroutine fax_crm(ifax,n,mode)
+(  107)       dimension ifax(*)
+(  108)       nn=n
+(  109)       if (iabs(mode).eq.1) go to 10
+(  110)       if (iabs(mode).eq.8) go to 10
+(  111)       nn=n/2
+(  112)       if ((nn+nn).eq.n) go to 10
+(  113)       ifax(1)=-99
+(  114)       return
+(  115)    10 k=1
+(  116)    20 if (mod(nn,4).ne.0) go to 30
+(  117)       k=k+1
+(  118)       ifax(k)=4
+(  119)       nn=nn/4
+(  120)       if (nn.eq.1) go to 80
+(  121)       go to 20
+(  122)    30 if (mod(nn,2).ne.0) go to 40
+(  123)       k=k+1
+(  124)       ifax(k)=2
+(  125)       nn=nn/2
+(  126)       if (nn.eq.1) go to 80
+(  127)    40 if (mod(nn,3).ne.0) go to 50
+(  128)       k=k+1
+(  129)       ifax(k)=3
+(  130)       nn=nn/3
+(  131)       if (nn.eq.1) go to 80
+(  132)       go to 40
+(  133)    50 l=5
+(  134)       inc=2
+(  135)    60 if (mod(nn,l).ne.0) go to 70
+(  136)       k=k+1
+(  137)       ifax(k)=l
+(  138)       nn=nn/l
+(  139)       if (nn.eq.1) go to 80
+(  140)       go to 60
+(  141)    70 l=l+inc
+(  142)       inc=6-inc
+(  143)       go to 60
+(  144)    80 ifax(1)=k-1
+(  145)       nfax=ifax(1)
+(  146)       if (nfax.eq.1) go to 110
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 5
+
+(  147)       do 100 ii=2,nfax
+(  148)       istop=nfax+2-ii
+(  149)       do 90 i=2,istop
+(  150)       if (ifax(i+1).ge.ifax(i)) go to 90
+(  151)       item=ifax(i)
+(  152)       ifax(i)=ifax(i+1)
+(  153)       ifax(i+1)=item
+(  154)    90 continue
+(  155)   100 continue
+(  156)   110 continue
+(  157)       return
+(  158)       end
+(  159) 
+(  160) 
+(  161) 
+(  162) 
+(  163) 
+(  164)       subroutine fftrig_crm(trigs,n,mode)
+(  165)       use real_size
+(  166)       real(RR) trigs(*), pi, del, angle
+(  167)       pi=2.0*asin(1.0_RR)
+(  168)       imode=iabs(mode)
+(  169)       nn=n
+(  170)       if (imode.gt.1.and.imode.lt.6) nn=n/2
+(  171)       del=(pi+pi)/float(nn)
+(  172)       l=nn+nn
+(  173)       do 10 i=1,l,2
+(  174)       angle=0.5*float(i-1)*del
+(  175)       trigs(i)=cos(angle)
+(  176)       trigs(i+1)=sin(angle)
+(  177)    10 continue
+(  178)       if (imode.eq.1) return
+(  179)       if (imode.eq.8) return
+(  180)       del=0.5*del
+(  181)       nh=(nn+1)/2
+(  182)       l=nh+nh
+(  183)       la=nn+nn
+(  184)       do 20 i=1,l,2
+(  185)       angle=0.5*float(i-1)*del
+(  186)       trigs(la+i)=cos(angle)
+(  187)       trigs(la+i+1)=sin(angle)
+(  188)    20 continue
+(  189)       if (imode.le.3) return
+(  190)       del=0.5*del
+(  191)       la=la+nn
+(  192)       if (mode.eq.5) go to 40
+(  193)       do 30 i=2,nn
+(  194)       angle=float(i-1)*del
+(  195)       trigs(la+i)=2.0*sin(angle)
+(  196)    30 continue
+(  197)       return
+(  198)    40 continue
+(  199)       del=0.5*del
+(  200)       do 50 i=2,n
+(  201)       angle=float(i-1)*del
+(  202)       trigs(la+i)=sin(angle)
+(  203)    50 continue
+(  204)       return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 6
+
+(  205)       end
+(  206) 
+(  207) 
+(  208) 
+(  209) 
+(  210) 
+(  211) 
+(  212) 
+(  213) 
+(  214) 
+(  215) 
+(  216)       subroutine fft99a_crm(a,work,trigs,inc,jump,n,lot)
+(  217)       use real_size
+(  218)       real(RR) a(*),work(*),trigs(*)
+(  219)       real(RR) c,s
+(  220)       nh=n/2
+(  221)       nx=n+1
+(  222)       ink=inc+inc
+(  223)       ia=1
+(  224)       ib=n*inc+1
+(  225)       ja=1
+(  226)       jb=2
+(  227)       do 10 l=1,lot
+(  228)       work(ja)=a(ia)+a(ib)
+(  229)       work(jb)=a(ia)-a(ib)
+(  230)       ia=ia+jump
+(  231)       ib=ib+jump
+(  232)       ja=ja+nx
+(  233)       jb=jb+nx
+(  234)    10 continue
+(  235)       iabase=2*inc+1
+(  236)       ibbase=(n-2)*inc+1
+(  237)       jabase=3
+(  238)       jbbase=n-1
+(  239)       do 30 k=3,nh,2
+(  240)       ia=iabase
+(  241)       ib=ibbase
+(  242)       ja=jabase
+(  243)       jb=jbbase
+(  244)       c=trigs(n+k)
+(  245)       s=trigs(n+k+1)
+(  246)       do 20 l=1,lot
+(  247)       work(ja)=(a(ia)+a(ib))- &
+(  248)          (s*(a(ia)-a(ib))+c*(a(ia+inc)+a(ib+inc)))
+(  249)       work(jb)=(a(ia)+a(ib))+ &
+(  250)          (s*(a(ia)-a(ib))+c*(a(ia+inc)+a(ib+inc)))
+(  251)       work(ja+1)=(c*(a(ia)-a(ib))-s*(a(ia+inc)+a(ib+inc)))+ &
+(  252)          (a(ia+inc)-a(ib+inc))
+(  253)       work(jb+1)=(c*(a(ia)-a(ib))-s*(a(ia+inc)+a(ib+inc)))- &
+(  254)          (a(ia+inc)-a(ib+inc))
+(  255)       ia=ia+jump
+(  256)       ib=ib+jump
+(  257)       ja=ja+nx
+(  258)       jb=jb+nx
+(  259)    20 continue
+(  260)       iabase=iabase+ink
+(  261)       ibbase=ibbase-ink
+(  262)       jabase=jabase+2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 7
+
+(  263)       jbbase=jbbase-2
+(  264)    30 continue
+(  265)       if (iabase.ne.ibbase) go to 50
+(  266)       ia=iabase
+(  267)       ja=jabase
+(  268)       do 40 l=1,lot
+(  269)       work(ja)=2.0*a(ia)
+(  270)       work(ja+1)=-2.0*a(ia+inc)
+(  271)       ia=ia+jump
+(  272)       ja=ja+nx
+(  273)    40 continue
+(  274)    50 continue
+(  275)       return
+(  276)       end
+(  277) 
+(  278) 
+(  279) 
+(  280) 
+(  281) 
+(  282)       subroutine fft99b_crm(work,a,trigs,inc,jump,n,lot)
+(  283)       use real_size
+(  284)       real(RR) work(*),a(*),trigs(*)
+(  285)       real(RR) scale,c,s
+(  286)       nh=n/2
+(  287)       nx=n+1
+(  288)       ink=inc+inc
+(  289)       scale=1.0/float(n)
+(  290)       ia=1
+(  291)       ib=2
+(  292)       ja=1
+(  293)       jb=n*inc+1
+(  294)       do 10 l=1,lot
+(  295)       a(ja)=scale*(work(ia)+work(ib))
+(  296)       a(jb)=scale*(work(ia)-work(ib))
+(  297)       a(ja+inc)=0.0
+(  298)       a(jb+inc)=0.0
+(  299)       ia=ia+nx
+(  300)       ib=ib+nx
+(  301)       ja=ja+jump
+(  302)       jb=jb+jump
+(  303)    10 continue
+(  304)       scale=0.5*scale
+(  305)       iabase=3
+(  306)       ibbase=n-1
+(  307)       jabase=2*inc+1
+(  308)       jbbase=(n-2)*inc+1
+(  309)       do 30 k=3,nh,2
+(  310)       ia=iabase
+(  311)       ib=ibbase
+(  312)       ja=jabase
+(  313)       jb=jbbase
+(  314)       c=trigs(n+k)
+(  315)       s=trigs(n+k+1)
+(  316)       do 20 l=1,lot
+(  317)       a(ja)=scale*((work(ia)+work(ib)) &
+(  318)         +(c*(work(ia+1)+work(ib+1))+s*(work(ia)-work(ib))))
+(  319)       a(jb)=scale*((work(ia)+work(ib)) &
+(  320)         -(c*(work(ia+1)+work(ib+1))+s*(work(ia)-work(ib))))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 8
+
+(  321)       a(ja+inc)=scale*((c*(work(ia)-work(ib))-s*(work(ia+1)+work(ib+1))) &
+(  322)          +(work(ib+1)-work(ia+1)))
+(  323)       a(jb+inc)=scale*((c*(work(ia)-work(ib))-s*(work(ia+1)+work(ib+1))) &
+(  324)          -(work(ib+1)-work(ia+1)))
+(  325)       ia=ia+nx
+(  326)       ib=ib+nx
+(  327)       ja=ja+jump
+(  328)       jb=jb+jump
+(  329)    20 continue
+(  330)       iabase=iabase+2
+(  331)       ibbase=ibbase-2
+(  332)       jabase=jabase+ink
+(  333)       jbbase=jbbase-ink
+(  334)    30 continue
+(  335)       if (iabase.ne.ibbase) go to 50
+(  336)       ia=iabase
+(  337)       ja=jabase
+(  338)       scale=2.0*scale
+(  339)       do 40 l=1,lot
+(  340)       a(ja)=scale*work(ia)
+(  341)       a(ja+inc)=-scale*work(ia+1)
+(  342)       ia=ia+nx
+(  343)       ja=ja+jump
+(  344)    40 continue
+(  345)    50 continue
+(  346)       return
+(  347)       end
+(  348) 
+(  349) 
+(  350) 
+(  351)       subroutine vpassm_crm &
+(  352)         (a,b,c,d,trigs,inc1,inc2,inc3,inc4,lot,n,ifac,la)
+(  353)       use real_size
+(  354)       real(RR) a(*),b(*),c(*),d(*),trigs(*)
+(  355)       real(RR) c1,c2,c3,c4,s1,s2,s3,s4
+(  356)       real(RR) sin36/0.587785252292473/,cos36/0.809016994374947/, &
+(  357)           sin72/0.951056516295154/,cos72/0.309016994374947/, &
+(  358)           sin60/0.866025403784437/
+(  359)       m=n/ifac
+(  360)       iink=m*inc1
+(  361)       jink=la*inc2
+(  362)       jump=(ifac-1)*jink
+(  363)       ibase=0
+(  364)       jbase=0
+(  365)       igo=ifac-1
+(  366)       if (igo.gt.4) return
+(  367)       go to (10,50,90,130),igo
+(  368)    10 ia=1
+(  369)       ja=1
+(  370)       ib=ia+iink
+(  371)       jb=ja+jink
+(  372)       do 20 l=1,la
+(  373)       i=ibase
+(  374)       j=jbase
+(  375)       do 15 ijk=1,lot
+(  376)       c(ja+j)=a(ia+i)+a(ib+i)
+(  377)       d(ja+j)=b(ia+i)+b(ib+i)
+(  378)       c(jb+j)=a(ia+i)-a(ib+i)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 9
+
+(  379)       d(jb+j)=b(ia+i)-b(ib+i)
+(  380)       i=i+inc3
+(  381)       j=j+inc4
+(  382)    15 continue
+(  383)       ibase=ibase+inc1
+(  384)       jbase=jbase+inc2
+(  385)    20 continue
+(  386)       if (la.eq.m) return
+(  387)       la1=la+1
+(  388)       jbase=jbase+jump
+(  389)       do 40 k=la1,m,la
+(  390)       kb=k+k-2
+(  391)       c1=trigs(kb+1)
+(  392)       s1=trigs(kb+2)
+(  393)       do 30 l=1,la
+(  394)       i=ibase
+(  395)       j=jbase
+(  396)       do 25 ijk=1,lot
+(  397)       c(ja+j)=a(ia+i)+a(ib+i)
+(  398)       d(ja+j)=b(ia+i)+b(ib+i)
+(  399)       c(jb+j)=c1*(a(ia+i)-a(ib+i))-s1*(b(ia+i)-b(ib+i))
+(  400)       d(jb+j)=s1*(a(ia+i)-a(ib+i))+c1*(b(ia+i)-b(ib+i))
+(  401)       i=i+inc3
+(  402)       j=j+inc4
+(  403)    25 continue
+(  404)       ibase=ibase+inc1
+(  405)       jbase=jbase+inc2
+(  406)    30 continue
+(  407)       jbase=jbase+jump
+(  408)    40 continue
+(  409)       return
+(  410)    50 ia=1
+(  411)       ja=1
+(  412)       ib=ia+iink
+(  413)       jb=ja+jink
+(  414)       ic=ib+iink
+(  415)       jc=jb+jink
+(  416)       do 60 l=1,la
+(  417)       i=ibase
+(  418)       j=jbase
+(  419)       do 55 ijk=1,lot
+(  420)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ic+i))
+(  421)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ic+i))
+(  422)       c(jb+j)=(a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))
+(  423)       c(jc+j)=(a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))
+(  424)       d(jb+j)=(b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i)))
+(  425)       d(jc+j)=(b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i)))
+(  426)       i=i+inc3
+(  427)       j=j+inc4
+(  428)    55 continue
+(  429)       ibase=ibase+inc1
+(  430)       jbase=jbase+inc2
+(  431)    60 continue
+(  432)       if (la.eq.m) return
+(  433)       la1=la+1
+(  434)       jbase=jbase+jump
+(  435)       do 80 k=la1,m,la
+(  436)       kb=k+k-2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 10
+
+(  437)       kc=kb+kb
+(  438)       c1=trigs(kb+1)
+(  439)       s1=trigs(kb+2)
+(  440)       c2=trigs(kc+1)
+(  441)       s2=trigs(kc+2)
+(  442)       do 70 l=1,la
+(  443)       i=ibase
+(  444)       j=jbase
+(  445)       do 65 ijk=1,lot
+(  446)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ic+i))
+(  447)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ic+i))
+(  448)       c(jb+j)= &
+(  449)          c1*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))) &
+(  450)         -s1*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i))))
+(  451)       d(jb+j)= &
+(  452)          s1*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))) &
+(  453)         +c1*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i))))
+(  454)       c(jc+j)= &
+(  455)          c2*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))) &
+(  456)         -s2*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i)))) 
+(  457)       d(jc+j)= &
+(  458)          s2*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))) &
+(  459)         +c2*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i))))
+(  460)       i=i+inc3
+(  461)       j=j+inc4
+(  462)    65 continue
+(  463)       ibase=ibase+inc1
+(  464)       jbase=jbase+inc2
+(  465)    70 continue
+(  466)       jbase=jbase+jump
+(  467)    80 continue
+(  468)       return
+(  469)    90 ia=1
+(  470)       ja=1
+(  471)       ib=ia+iink
+(  472)       jb=ja+jink
+(  473)       ic=ib+iink
+(  474)       jc=jb+jink
+(  475)       id=ic+iink
+(  476)       jd=jc+jink
+(  477)       do 100 l=1,la
+(  478)       i=ibase
+(  479)       j=jbase
+(  480)       do 95 ijk=1,lot
+(  481)       c(ja+j)=(a(ia+i)+a(ic+i))+(a(ib+i)+a(id+i))
+(  482)       c(jc+j)=(a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))
+(  483)       d(ja+j)=(b(ia+i)+b(ic+i))+(b(ib+i)+b(id+i))
+(  484)       d(jc+j)=(b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i))
+(  485)       c(jb+j)=(a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))
+(  486)       c(jd+j)=(a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))
+(  487)       d(jb+j)=(b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i))
+(  488)       d(jd+j)=(b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i))
+(  489)       i=i+inc3
+(  490)       j=j+inc4
+(  491)    95 continue
+(  492)       ibase=ibase+inc1
+(  493)       jbase=jbase+inc2
+(  494)   100 continue
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 11
+
+(  495)       if (la.eq.m) return
+(  496)       la1=la+1
+(  497)       jbase=jbase+jump
+(  498)       do 120 k=la1,m,la
+(  499)       kb=k+k-2
+(  500)       kc=kb+kb
+(  501)       kd=kc+kb
+(  502)       c1=trigs(kb+1)
+(  503)       s1=trigs(kb+2)
+(  504)       c2=trigs(kc+1)
+(  505)       s2=trigs(kc+2)
+(  506)       c3=trigs(kd+1)
+(  507)       s3=trigs(kd+2)
+(  508)       do 110 l=1,la
+(  509)       i=ibase
+(  510)       j=jbase
+(  511)       do 105 ijk=1,lot
+(  512)       c(ja+j)=(a(ia+i)+a(ic+i))+(a(ib+i)+a(id+i))
+(  513)       d(ja+j)=(b(ia+i)+b(ic+i))+(b(ib+i)+b(id+i))
+(  514)       c(jc+j)= &
+(  515)          c2*((a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))) &
+(  516)         -s2*((b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i)))
+(  517)       d(jc+j)= &
+(  518)          s2*((a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))) &
+(  519)         +c2*((b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i)))
+(  520)       c(jb+j)= &
+(  521)          c1*((a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))) &
+(  522)         -s1*((b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i)))
+(  523)       d(jb+j)= &
+(  524)          s1*((a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))) &
+(  525)         +c1*((b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i)))
+(  526)       c(jd+j)= &
+(  527)          c3*((a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))) &
+(  528)         -s3*((b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i)))
+(  529)       d(jd+j)= &
+(  530)          s3*((a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))) &
+(  531)         +c3*((b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i)))
+(  532)       i=i+inc3
+(  533)       j=j+inc4
+(  534)   105 continue
+(  535)       ibase=ibase+inc1
+(  536)       jbase=jbase+inc2
+(  537)   110 continue
+(  538)       jbase=jbase+jump
+(  539)   120 continue
+(  540)       return
+(  541)   130 ia=1
+(  542)       ja=1
+(  543)       ib=ia+iink
+(  544)       jb=ja+jink
+(  545)       ic=ib+iink
+(  546)       jc=jb+jink
+(  547)       id=ic+iink
+(  548)       jd=jc+jink
+(  549)       ie=id+iink
+(  550)       je=jd+jink
+(  551)       do 140 l=1,la
+(  552)       i=ibase
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 12
+
+(  553)       j=jbase
+(  554)       do 135 ijk=1,lot
+(  555)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ie+i))+(a(ic+i)+a(id+i))
+(  556)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ie+i))+(b(ic+i)+b(id+i))
+(  557)       c(jb+j)=(a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  558)        -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))
+(  559)       c(je+j)=(a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  560)        +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))
+(  561)       d(jb+j)=(b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  562)        +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i)))
+(  563)       d(je+j)=(b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  564)        -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i)))
+(  565)       c(jc+j)=(a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  566)        -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))
+(  567)       c(jd+j)=(a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  568)        +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))
+(  569)       d(jc+j)=(b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  570)        +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i)))
+(  571)       d(jd+j)=(b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  572)        -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i)))
+(  573)       i=i+inc3
+(  574)       j=j+inc4
+(  575)   135 continue
+(  576)       ibase=ibase+inc1
+(  577)       jbase=jbase+inc2
+(  578)   140 continue
+(  579)       if (la.eq.m) return
+(  580)       la1=la+1
+(  581)       jbase=jbase+jump
+(  582)       do 160 k=la1,m,la
+(  583)       kb=k+k-2
+(  584)       kc=kb+kb
+(  585)       kd=kc+kb
+(  586)       ke=kd+kb
+(  587)       c1=trigs(kb+1)
+(  588)       s1=trigs(kb+2)
+(  589)       c2=trigs(kc+1)
+(  590)       s2=trigs(kc+2)
+(  591)       c3=trigs(kd+1)
+(  592)       s3=trigs(kd+2)
+(  593)       c4=trigs(ke+1)
+(  594)       s4=trigs(ke+2)
+(  595)       do 150 l=1,la
+(  596)       i=ibase
+(  597)       j=jbase
+(  598)       do 145 ijk=1,lot
+(  599)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ie+i))+(a(ic+i)+a(id+i))
+(  600)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ie+i))+(b(ic+i)+b(id+i))
+(  601)       c(jb+j)= &
+(  602)          c1*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  603)            -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  604)         -s1*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  605)           +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  606)       d(jb+j)= &
+(  607)          s1*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  608)            -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  609)         +c1*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  610)            +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 13
+
+(  611)       c(je+j)= &
+(  612)          c4*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  613)            +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  614)         -s4*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  615)            -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  616)       d(je+j)= &
+(  617)          s4*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  618)            +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  619)         +c4*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  620)            -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  621)       c(jc+j)= &
+(  622)          c2*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  623)            -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  624)         -s2*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  625)            +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  626)       d(jc+j)= &
+(  627)          s2*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  628)            -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  629)         +c2*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  630)            +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  631)       c(jd+j)= &
+(  632)          c3*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  633)            +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  634)         -s3*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  635)            -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  636)       d(jd+j)= &
+(  637)          s3*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  638)            +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  639)         +c3*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  640)            -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  641)       i=i+inc3
+(  642)       j=j+inc4
+(  643)   145 continue
+(  644)       ibase=ibase+inc1
+(  645)       jbase=jbase+inc2
+(  646)   150 continue
+(  647)       jbase=jbase+jump
+(  648)   160 continue
+(  649)       return
+(  650)       end
+(  651) 
+(  652) 
+(  653) 
+(  654) 
+(  655) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 14
+
+(    1) # 1 "fft.F90"
+(    1)       subroutine fft991_crm(a,work,trigs,ifax,inc,jump,n,lot,isign)
+(    2) # 3 "fft.F90"
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) # 13 "fft.F90"
+(   13)       use real_size
+(   14)       real(RR) a(*),work(*),trigs(*)
+(   15)       integer ifax(*)
+(   16)       nfax=ifax(1)
+(   17)       nx=n+1
+(   18)       nh=n/2
+(   19)       ink=inc+inc
+(   20)       if (isign.eq.+1) go to 30
+(   21)       igo=50
+(   22)       if (mod(nfax,2).eq.1) goto 40
+(   23)       ibase=1
+(   24)       jbase=1
+(   25)       do 20 l=1,lot
+(   26)       i=ibase
+(   27)       j=jbase
+(   28)       do 10 m=1,n
+(   29)       work(j)=a(i)
+(   30)       i=i+inc
+(   31)       j=j+1
+(   32)    10 continue
+(   33)       ibase=ibase+jump
+(   34)       jbase=jbase+nx
+(   35)    20 continue
+(   36)       igo=60
+(   37)       go to 40
+(   38)    30 continue
+(   39)       call fft99a_crm(a,work,trigs,inc,jump,n,lot)
+(   40)       igo=60
+(   41)    40 continue
+(   42)       ia=1
+(   43)       la=1
+(   44)       do 80 k=1,nfax
+(   45)       if (igo.eq.60) go to 60
+(   46)    50 continue
+(   47)       call vpassm_crm(a(ia),a(ia+inc),work(1),work(2),trigs, &
+(   48)         ink,2,jump,nx,lot,nh,ifax(k+1),la)
+(   49)       igo=60
+(   50)       go to 70
+(   51)    60 continue
+(   52)       call vpassm_crm(work(1),work(2),a(ia),a(ia+inc),trigs, &
+(   53)          2,ink,nx,jump,lot,nh,ifax(k+1),la)
+(   54)       igo=50
+(   55)    70 continue
+(   56)       la=la*ifax(k+1)
+(   57)    80 continue
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 15
+
+(   58)       if (isign.eq.-1) go to 130
+(   59)       if (mod(nfax,2).eq.1) go to 110
+(   60)       ibase=1
+(   61)       jbase=1
+(   62)       do 100 l=1,lot
+(   63)       i=ibase
+(   64)       j=jbase
+(   65)       do 90 m=1,n
+(   66)       a(j)=work(i)
+(   67)       i=i+1
+(   68)       j=j+inc
+(   69)    90 continue
+(   70)       ibase=ibase+nx
+(   71)       jbase=jbase+jump
+(   72)   100 continue
+(   73)   110 continue
+(   74)       ib=n*inc+1
+(   75)       do 120 l=1,lot
+(   76)       a(ib)=0.0
+(   77)       a(ib+inc)=0.0
+(   78)       ib=ib+jump
+(   79)   120 continue
+(   80)       go to 140
+(   81)   130 continue
+(   82)       call fft99b_crm(work,a,trigs,inc,jump,n,lot)
+(   83)   140 continue
+(   84)       return
+(   85)       end
+(   86) # 91 "fft.F90"
+(   91)       subroutine fftfax_crm(n,ifax,trigs)
+(   92)       use real_size
+(   93)       integer ifax(13)
+(   94)       real(RR) trigs(1)
+(   95)       data mode /3/
+(   96)       call fax_crm (ifax, n, mode)
+(   97)       i = ifax(1)
+(   98)       call fftrig_crm (trigs, n, mode)
+(   99)       return
+(  100)       end
+(  101) # 106 "fft.F90"
+(  106)       subroutine fax_crm(ifax,n,mode)
+(  107)       dimension ifax(*)
+(  108)       nn=n
+(  109)       if (iabs(mode).eq.1) go to 10
+(  110)       if (iabs(mode).eq.8) go to 10
+(  111)       nn=n/2
+(  112)       if ((nn+nn).eq.n) go to 10
+(  113)       ifax(1)=-99
+(  114)       return
+(  115)    10 k=1
+(  116)    20 if (mod(nn,4).ne.0) go to 30
+(  117)       k=k+1
+(  118)       ifax(k)=4
+(  119)       nn=nn/4
+(  120)       if (nn.eq.1) go to 80
+(  121)       go to 20
+(  122)    30 if (mod(nn,2).ne.0) go to 40
+(  123)       k=k+1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 16
+
+(  124)       ifax(k)=2
+(  125)       nn=nn/2
+(  126)       if (nn.eq.1) go to 80
+(  127)    40 if (mod(nn,3).ne.0) go to 50
+(  128)       k=k+1
+(  129)       ifax(k)=3
+(  130)       nn=nn/3
+(  131)       if (nn.eq.1) go to 80
+(  132)       go to 40
+(  133)    50 l=5
+(  134)       inc=2
+(  135)    60 if (mod(nn,l).ne.0) go to 70
+(  136)       k=k+1
+(  137)       ifax(k)=l
+(  138)       nn=nn/l
+(  139)       if (nn.eq.1) go to 80
+(  140)       go to 60
+(  141)    70 l=l+inc
+(  142)       inc=6-inc
+(  143)       go to 60
+(  144)    80 ifax(1)=k-1
+(  145)       nfax=ifax(1)
+(  146)       if (nfax.eq.1) go to 110
+(  147)       do 100 ii=2,nfax
+(  148)       istop=nfax+2-ii
+(  149)       do 90 i=2,istop
+(  150)       if (ifax(i+1).ge.ifax(i)) go to 90
+(  151)       item=ifax(i)
+(  152)       ifax(i)=ifax(i+1)
+(  153)       ifax(i+1)=item
+(  154)    90 continue
+(  155)   100 continue
+(  156)   110 continue
+(  157)       return
+(  158)       end
+(  159) # 164 "fft.F90"
+(  164)       subroutine fftrig_crm(trigs,n,mode)
+(  165)       use real_size
+(  166)       real(RR) trigs(*), pi, del, angle
+(  167)       pi=2.0*asin(1.0_RR)
+(  168)       imode=iabs(mode)
+(  169)       nn=n
+(  170)       if (imode.gt.1.and.imode.lt.6) nn=n/2
+(  171)       del=(pi+pi)/float(nn)
+(  172)       l=nn+nn
+(  173)       do 10 i=1,l,2
+(  174)       angle=0.5*float(i-1)*del
+(  175)       trigs(i)=cos(angle)
+(  176)       trigs(i+1)=sin(angle)
+(  177)    10 continue
+(  178)       if (imode.eq.1) return
+(  179)       if (imode.eq.8) return
+(  180)       del=0.5*del
+(  181)       nh=(nn+1)/2
+(  182)       l=nh+nh
+(  183)       la=nn+nn
+(  184)       do 20 i=1,l,2
+(  185)       angle=0.5*float(i-1)*del
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 17
+
+(  186)       trigs(la+i)=cos(angle)
+(  187)       trigs(la+i+1)=sin(angle)
+(  188)    20 continue
+(  189)       if (imode.le.3) return
+(  190)       del=0.5*del
+(  191)       la=la+nn
+(  192)       if (mode.eq.5) go to 40
+(  193)       do 30 i=2,nn
+(  194)       angle=float(i-1)*del
+(  195)       trigs(la+i)=2.0*sin(angle)
+(  196)    30 continue
+(  197)       return
+(  198)    40 continue
+(  199)       del=0.5*del
+(  200)       do 50 i=2,n
+(  201)       angle=float(i-1)*del
+(  202)       trigs(la+i)=sin(angle)
+(  203)    50 continue
+(  204)       return
+(  205)       end
+(  206) # 216 "fft.F90"
+(  216)       subroutine fft99a_crm(a,work,trigs,inc,jump,n,lot)
+(  217)       use real_size
+(  218)       real(RR) a(*),work(*),trigs(*)
+(  219)       real(RR) c,s
+(  220)       nh=n/2
+(  221)       nx=n+1
+(  222)       ink=inc+inc
+(  223)       ia=1
+(  224)       ib=n*inc+1
+(  225)       ja=1
+(  226)       jb=2
+(  227)       do 10 l=1,lot
+(  228)       work(ja)=a(ia)+a(ib)
+(  229)       work(jb)=a(ia)-a(ib)
+(  230)       ia=ia+jump
+(  231)       ib=ib+jump
+(  232)       ja=ja+nx
+(  233)       jb=jb+nx
+(  234)    10 continue
+(  235)       iabase=2*inc+1
+(  236)       ibbase=(n-2)*inc+1
+(  237)       jabase=3
+(  238)       jbbase=n-1
+(  239)       do 30 k=3,nh,2
+(  240)       ia=iabase
+(  241)       ib=ibbase
+(  242)       ja=jabase
+(  243)       jb=jbbase
+(  244)       c=trigs(n+k)
+(  245)       s=trigs(n+k+1)
+(  246)       do 20 l=1,lot
+(  247)       work(ja)=(a(ia)+a(ib))- &
+(  248)          (s*(a(ia)-a(ib))+c*(a(ia+inc)+a(ib+inc)))
+(  249)       work(jb)=(a(ia)+a(ib))+ &
+(  250)          (s*(a(ia)-a(ib))+c*(a(ia+inc)+a(ib+inc)))
+(  251)       work(ja+1)=(c*(a(ia)-a(ib))-s*(a(ia+inc)+a(ib+inc)))+ &
+(  252)          (a(ia+inc)-a(ib+inc))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 18
+
+(  253)       work(jb+1)=(c*(a(ia)-a(ib))-s*(a(ia+inc)+a(ib+inc)))- &
+(  254)          (a(ia+inc)-a(ib+inc))
+(  255)       ia=ia+jump
+(  256)       ib=ib+jump
+(  257)       ja=ja+nx
+(  258)       jb=jb+nx
+(  259)    20 continue
+(  260)       iabase=iabase+ink
+(  261)       ibbase=ibbase-ink
+(  262)       jabase=jabase+2
+(  263)       jbbase=jbbase-2
+(  264)    30 continue
+(  265)       if (iabase.ne.ibbase) go to 50
+(  266)       ia=iabase
+(  267)       ja=jabase
+(  268)       do 40 l=1,lot
+(  269)       work(ja)=2.0*a(ia)
+(  270)       work(ja+1)=-2.0*a(ia+inc)
+(  271)       ia=ia+jump
+(  272)       ja=ja+nx
+(  273)    40 continue
+(  274)    50 continue
+(  275)       return
+(  276)       end
+(  277) # 282 "fft.F90"
+(  282)       subroutine fft99b_crm(work,a,trigs,inc,jump,n,lot)
+(  283)       use real_size
+(  284)       real(RR) work(*),a(*),trigs(*)
+(  285)       real(RR) scale,c,s
+(  286)       nh=n/2
+(  287)       nx=n+1
+(  288)       ink=inc+inc
+(  289)       scale=1.0/float(n)
+(  290)       ia=1
+(  291)       ib=2
+(  292)       ja=1
+(  293)       jb=n*inc+1
+(  294)       do 10 l=1,lot
+(  295)       a(ja)=scale*(work(ia)+work(ib))
+(  296)       a(jb)=scale*(work(ia)-work(ib))
+(  297)       a(ja+inc)=0.0
+(  298)       a(jb+inc)=0.0
+(  299)       ia=ia+nx
+(  300)       ib=ib+nx
+(  301)       ja=ja+jump
+(  302)       jb=jb+jump
+(  303)    10 continue
+(  304)       scale=0.5*scale
+(  305)       iabase=3
+(  306)       ibbase=n-1
+(  307)       jabase=2*inc+1
+(  308)       jbbase=(n-2)*inc+1
+(  309)       do 30 k=3,nh,2
+(  310)       ia=iabase
+(  311)       ib=ibbase
+(  312)       ja=jabase
+(  313)       jb=jbbase
+(  314)       c=trigs(n+k)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 19
+
+(  315)       s=trigs(n+k+1)
+(  316)       do 20 l=1,lot
+(  317)       a(ja)=scale*((work(ia)+work(ib)) &
+(  318)         +(c*(work(ia+1)+work(ib+1))+s*(work(ia)-work(ib))))
+(  319)       a(jb)=scale*((work(ia)+work(ib)) &
+(  320)         -(c*(work(ia+1)+work(ib+1))+s*(work(ia)-work(ib))))
+(  321)       a(ja+inc)=scale*((c*(work(ia)-work(ib))-s*(work(ia+1)+work(ib+1))) &
+(  322)          +(work(ib+1)-work(ia+1)))
+(  323)       a(jb+inc)=scale*((c*(work(ia)-work(ib))-s*(work(ia+1)+work(ib+1))) &
+(  324)          -(work(ib+1)-work(ia+1)))
+(  325)       ia=ia+nx
+(  326)       ib=ib+nx
+(  327)       ja=ja+jump
+(  328)       jb=jb+jump
+(  329)    20 continue
+(  330)       iabase=iabase+2
+(  331)       ibbase=ibbase-2
+(  332)       jabase=jabase+ink
+(  333)       jbbase=jbbase-ink
+(  334)    30 continue
+(  335)       if (iabase.ne.ibbase) go to 50
+(  336)       ia=iabase
+(  337)       ja=jabase
+(  338)       scale=2.0*scale
+(  339)       do 40 l=1,lot
+(  340)       a(ja)=scale*work(ia)
+(  341)       a(ja+inc)=-scale*work(ia+1)
+(  342)       ia=ia+nx
+(  343)       ja=ja+jump
+(  344)    40 continue
+(  345)    50 continue
+(  346)       return
+(  347)       end
+(  348) # 351 "fft.F90"
+(  351)       subroutine vpassm_crm &
+(  352)         (a,b,c,d,trigs,inc1,inc2,inc3,inc4,lot,n,ifac,la)
+(  353)       use real_size
+(  354)       real(RR) a(*),b(*),c(*),d(*),trigs(*)
+(  355)       real(RR) c1,c2,c3,c4,s1,s2,s3,s4
+(  356)       real(RR) sin36/0.587785252292473/,cos36/0.809016994374947/, &
+(  357)           sin72/0.951056516295154/,cos72/0.309016994374947/, &
+(  358)           sin60/0.866025403784437/
+(  359)       m=n/ifac
+(  360)       iink=m*inc1
+(  361)       jink=la*inc2
+(  362)       jump=(ifac-1)*jink
+(  363)       ibase=0
+(  364)       jbase=0
+(  365)       igo=ifac-1
+(  366)       if (igo.gt.4) return
+(  367)       go to (10,50,90,130),igo
+(  368)    10 ia=1
+(  369)       ja=1
+(  370)       ib=ia+iink
+(  371)       jb=ja+jink
+(  372)       do 20 l=1,la
+(  373)       i=ibase
+(  374)       j=jbase
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 20
+
+(  375)       do 15 ijk=1,lot
+(  376)       c(ja+j)=a(ia+i)+a(ib+i)
+(  377)       d(ja+j)=b(ia+i)+b(ib+i)
+(  378)       c(jb+j)=a(ia+i)-a(ib+i)
+(  379)       d(jb+j)=b(ia+i)-b(ib+i)
+(  380)       i=i+inc3
+(  381)       j=j+inc4
+(  382)    15 continue
+(  383)       ibase=ibase+inc1
+(  384)       jbase=jbase+inc2
+(  385)    20 continue
+(  386)       if (la.eq.m) return
+(  387)       la1=la+1
+(  388)       jbase=jbase+jump
+(  389)       do 40 k=la1,m,la
+(  390)       kb=k+k-2
+(  391)       c1=trigs(kb+1)
+(  392)       s1=trigs(kb+2)
+(  393)       do 30 l=1,la
+(  394)       i=ibase
+(  395)       j=jbase
+(  396)       do 25 ijk=1,lot
+(  397)       c(ja+j)=a(ia+i)+a(ib+i)
+(  398)       d(ja+j)=b(ia+i)+b(ib+i)
+(  399)       c(jb+j)=c1*(a(ia+i)-a(ib+i))-s1*(b(ia+i)-b(ib+i))
+(  400)       d(jb+j)=s1*(a(ia+i)-a(ib+i))+c1*(b(ia+i)-b(ib+i))
+(  401)       i=i+inc3
+(  402)       j=j+inc4
+(  403)    25 continue
+(  404)       ibase=ibase+inc1
+(  405)       jbase=jbase+inc2
+(  406)    30 continue
+(  407)       jbase=jbase+jump
+(  408)    40 continue
+(  409)       return
+(  410)    50 ia=1
+(  411)       ja=1
+(  412)       ib=ia+iink
+(  413)       jb=ja+jink
+(  414)       ic=ib+iink
+(  415)       jc=jb+jink
+(  416)       do 60 l=1,la
+(  417)       i=ibase
+(  418)       j=jbase
+(  419)       do 55 ijk=1,lot
+(  420)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ic+i))
+(  421)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ic+i))
+(  422)       c(jb+j)=(a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))
+(  423)       c(jc+j)=(a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))
+(  424)       d(jb+j)=(b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i)))
+(  425)       d(jc+j)=(b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i)))
+(  426)       i=i+inc3
+(  427)       j=j+inc4
+(  428)    55 continue
+(  429)       ibase=ibase+inc1
+(  430)       jbase=jbase+inc2
+(  431)    60 continue
+(  432)       if (la.eq.m) return
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 21
+
+(  433)       la1=la+1
+(  434)       jbase=jbase+jump
+(  435)       do 80 k=la1,m,la
+(  436)       kb=k+k-2
+(  437)       kc=kb+kb
+(  438)       c1=trigs(kb+1)
+(  439)       s1=trigs(kb+2)
+(  440)       c2=trigs(kc+1)
+(  441)       s2=trigs(kc+2)
+(  442)       do 70 l=1,la
+(  443)       i=ibase
+(  444)       j=jbase
+(  445)       do 65 ijk=1,lot
+(  446)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ic+i))
+(  447)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ic+i))
+(  448)       c(jb+j)= &
+(  449)          c1*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))) &
+(  450)         -s1*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i))))
+(  451)       d(jb+j)= &
+(  452)          s1*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))-(sin60*(b(ib+i)-b(ic+i)))) &
+(  453)         +c1*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))+(sin60*(a(ib+i)-a(ic+i))))
+(  454)       c(jc+j)= &
+(  455)          c2*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))) &
+(  456)         -s2*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i)))) 
+(  457)       d(jc+j)= &
+(  458)          s2*((a(ia+i)-0.5*(a(ib+i)+a(ic+i)))+(sin60*(b(ib+i)-b(ic+i)))) &
+(  459)         +c2*((b(ia+i)-0.5*(b(ib+i)+b(ic+i)))-(sin60*(a(ib+i)-a(ic+i))))
+(  460)       i=i+inc3
+(  461)       j=j+inc4
+(  462)    65 continue
+(  463)       ibase=ibase+inc1
+(  464)       jbase=jbase+inc2
+(  465)    70 continue
+(  466)       jbase=jbase+jump
+(  467)    80 continue
+(  468)       return
+(  469)    90 ia=1
+(  470)       ja=1
+(  471)       ib=ia+iink
+(  472)       jb=ja+jink
+(  473)       ic=ib+iink
+(  474)       jc=jb+jink
+(  475)       id=ic+iink
+(  476)       jd=jc+jink
+(  477)       do 100 l=1,la
+(  478)       i=ibase
+(  479)       j=jbase
+(  480)       do 95 ijk=1,lot
+(  481)       c(ja+j)=(a(ia+i)+a(ic+i))+(a(ib+i)+a(id+i))
+(  482)       c(jc+j)=(a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))
+(  483)       d(ja+j)=(b(ia+i)+b(ic+i))+(b(ib+i)+b(id+i))
+(  484)       d(jc+j)=(b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i))
+(  485)       c(jb+j)=(a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))
+(  486)       c(jd+j)=(a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))
+(  487)       d(jb+j)=(b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i))
+(  488)       d(jd+j)=(b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i))
+(  489)       i=i+inc3
+(  490)       j=j+inc4
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 22
+
+(  491)    95 continue
+(  492)       ibase=ibase+inc1
+(  493)       jbase=jbase+inc2
+(  494)   100 continue
+(  495)       if (la.eq.m) return
+(  496)       la1=la+1
+(  497)       jbase=jbase+jump
+(  498)       do 120 k=la1,m,la
+(  499)       kb=k+k-2
+(  500)       kc=kb+kb
+(  501)       kd=kc+kb
+(  502)       c1=trigs(kb+1)
+(  503)       s1=trigs(kb+2)
+(  504)       c2=trigs(kc+1)
+(  505)       s2=trigs(kc+2)
+(  506)       c3=trigs(kd+1)
+(  507)       s3=trigs(kd+2)
+(  508)       do 110 l=1,la
+(  509)       i=ibase
+(  510)       j=jbase
+(  511)       do 105 ijk=1,lot
+(  512)       c(ja+j)=(a(ia+i)+a(ic+i))+(a(ib+i)+a(id+i))
+(  513)       d(ja+j)=(b(ia+i)+b(ic+i))+(b(ib+i)+b(id+i))
+(  514)       c(jc+j)= &
+(  515)          c2*((a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))) &
+(  516)         -s2*((b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i)))
+(  517)       d(jc+j)= &
+(  518)          s2*((a(ia+i)+a(ic+i))-(a(ib+i)+a(id+i))) &
+(  519)         +c2*((b(ia+i)+b(ic+i))-(b(ib+i)+b(id+i)))
+(  520)       c(jb+j)= &
+(  521)          c1*((a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))) &
+(  522)         -s1*((b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i)))
+(  523)       d(jb+j)= &
+(  524)          s1*((a(ia+i)-a(ic+i))-(b(ib+i)-b(id+i))) &
+(  525)         +c1*((b(ia+i)-b(ic+i))+(a(ib+i)-a(id+i)))
+(  526)       c(jd+j)= &
+(  527)          c3*((a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))) &
+(  528)         -s3*((b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i)))
+(  529)       d(jd+j)= &
+(  530)          s3*((a(ia+i)-a(ic+i))+(b(ib+i)-b(id+i))) &
+(  531)         +c3*((b(ia+i)-b(ic+i))-(a(ib+i)-a(id+i)))
+(  532)       i=i+inc3
+(  533)       j=j+inc4
+(  534)   105 continue
+(  535)       ibase=ibase+inc1
+(  536)       jbase=jbase+inc2
+(  537)   110 continue
+(  538)       jbase=jbase+jump
+(  539)   120 continue
+(  540)       return
+(  541)   130 ia=1
+(  542)       ja=1
+(  543)       ib=ia+iink
+(  544)       jb=ja+jink
+(  545)       ic=ib+iink
+(  546)       jc=jb+jink
+(  547)       id=ic+iink
+(  548)       jd=jc+jink
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 23
+
+(  549)       ie=id+iink
+(  550)       je=jd+jink
+(  551)       do 140 l=1,la
+(  552)       i=ibase
+(  553)       j=jbase
+(  554)       do 135 ijk=1,lot
+(  555)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ie+i))+(a(ic+i)+a(id+i))
+(  556)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ie+i))+(b(ic+i)+b(id+i))
+(  557)       c(jb+j)=(a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  558)        -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))
+(  559)       c(je+j)=(a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  560)        +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))
+(  561)       d(jb+j)=(b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  562)        +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i)))
+(  563)       d(je+j)=(b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  564)        -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i)))
+(  565)       c(jc+j)=(a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  566)        -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))
+(  567)       c(jd+j)=(a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  568)        +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))
+(  569)       d(jc+j)=(b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  570)        +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i)))
+(  571)       d(jd+j)=(b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  572)        -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i)))
+(  573)       i=i+inc3
+(  574)       j=j+inc4
+(  575)   135 continue
+(  576)       ibase=ibase+inc1
+(  577)       jbase=jbase+inc2
+(  578)   140 continue
+(  579)       if (la.eq.m) return
+(  580)       la1=la+1
+(  581)       jbase=jbase+jump
+(  582)       do 160 k=la1,m,la
+(  583)       kb=k+k-2
+(  584)       kc=kb+kb
+(  585)       kd=kc+kb
+(  586)       ke=kd+kb
+(  587)       c1=trigs(kb+1)
+(  588)       s1=trigs(kb+2)
+(  589)       c2=trigs(kc+1)
+(  590)       s2=trigs(kc+2)
+(  591)       c3=trigs(kd+1)
+(  592)       s3=trigs(kd+2)
+(  593)       c4=trigs(ke+1)
+(  594)       s4=trigs(ke+2)
+(  595)       do 150 l=1,la
+(  596)       i=ibase
+(  597)       j=jbase
+(  598)       do 145 ijk=1,lot
+(  599)       c(ja+j)=a(ia+i)+(a(ib+i)+a(ie+i))+(a(ic+i)+a(id+i))
+(  600)       d(ja+j)=b(ia+i)+(b(ib+i)+b(ie+i))+(b(ic+i)+b(id+i))
+(  601)       c(jb+j)= &
+(  602)          c1*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  603)            -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  604)         -s1*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  605)           +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  606)       d(jb+j)= &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:46      page 24
+
+(  607)          s1*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  608)            -(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  609)         +c1*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  610)            +(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  611)       c(je+j)= &
+(  612)          c4*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  613)            +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  614)         -s4*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  615)            -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  616)       d(je+j)= &
+(  617)          s4*((a(ia+i)+cos72*(a(ib+i)+a(ie+i))-cos36*(a(ic+i)+a(id+i))) &
+(  618)            +(sin72*(b(ib+i)-b(ie+i))+sin36*(b(ic+i)-b(id+i)))) &
+(  619)         +c4*((b(ia+i)+cos72*(b(ib+i)+b(ie+i))-cos36*(b(ic+i)+b(id+i))) &
+(  620)            -(sin72*(a(ib+i)-a(ie+i))+sin36*(a(ic+i)-a(id+i))))
+(  621)       c(jc+j)= &
+(  622)          c2*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  623)            -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  624)         -s2*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  625)            +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  626)       d(jc+j)= &
+(  627)          s2*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  628)            -(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  629)         +c2*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  630)            +(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  631)       c(jd+j)= &
+(  632)          c3*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  633)            +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  634)         -s3*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  635)            -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  636)       d(jd+j)= &
+(  637)          s3*((a(ia+i)-cos36*(a(ib+i)+a(ie+i))+cos72*(a(ic+i)+a(id+i))) &
+(  638)            +(sin36*(b(ib+i)-b(ie+i))-sin72*(b(ic+i)-b(id+i)))) &
+(  639)         +c3*((b(ia+i)-cos36*(b(ib+i)+b(ie+i))+cos72*(b(ic+i)+b(id+i))) &
+(  640)            -(sin36*(a(ib+i)-a(ie+i))-sin72*(a(ic+i)-a(id+i))))
+(  641)       i=i+inc3
+(  642)       j=j+inc4
+(  643)   145 continue
+(  644)       ibase=ibase+inc1
+(  645)       jbase=jbase+inc2
+(  646)   150 continue
+(  647)       jbase=jbase+jump
+(  648)   160 continue
+(  649)       return
+(  650)       end

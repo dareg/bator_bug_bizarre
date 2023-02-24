@@ -1,0 +1,385 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: height_conv.F90
+
+(    1) MODULE height_conv
+(    2)   !  #[ Description:
+(    3)   !---------------------------------------------------------
+(    4)   !  A set of functions for the conversion between geometric 
+(    5)   !  height and geopotential height.
+(    6)   !  written by: M. Rennie
+(    7)   !
+(    8)   !  Modifications:
+(    9)   !  05-Dec-2011 M. Rennie  First version
+(   10)   !---------------------------------------------------------
+(   11)   !  #]
+(   12)   !  #[ USE Definitions
+(   13)   ! a module that defines some generic numerics tricks
+(   14)   USE Numerics, only: r8_
+(   15)   USE aeolusconstants, only : pi
+(   16) 
+(   17)   !  #]
+(   18)   !  #[ parameters and types used for height conversion
+(   19)   implicit none     ! no implicit variable typing
+(   20) 
+(   21)   ! Some parameters needed for calculations
+(   22) 
+(   23)   ! constants relating to WGS-84 ellipsoid and gravity above ellipsoid 
+(   24)   REAL(r8_),    PARAMETER  :: ecc     = 0.081819_r8_      ! eccentricity
+(   25)   REAL(r8_),    PARAMETER  :: k_somig = 1.931853E-3_r8_   ! Somigliana's constant
+(   26)   REAL(r8_),    PARAMETER  :: g_equat = 9.7803253359_r8_  ! equatorial gravity (ms-2)
+(   27)   REAL(r8_),    PARAMETER  :: a_earth = 6378.137E3_r8_    ! semi-major axis of earth (m)
+(   28)   REAL(r8_),    PARAMETER  :: flatt   = 0.003352811_r8_   ! flattening
+(   29)   REAL(r8_),    PARAMETER  :: m_ratio = 0.003449787_r8_   ! gravity ratio  
+(   30)   ! IFS parameter
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 3
+
+(   31)   REAL(r8_),    PARAMETER  :: g_stan  = 9.80665_r8_       ! standard gravity (ms-2) 
+(   32) 
+(   33)   !  #]
+(   34) contains
+(   35) 
+(   36)   function r_eff(lat) result(r_res)
+(   37)     !Calculate effective radius value
+(   38) 
+(   39)     !input variable
+(   40)     REAL(r8_),    INTENT(IN) :: lat       !latitude in radians
+(   41)     !output variable
+(   42)     REAL(r8_)                :: r_res     !effective radius in m
+(   43) 
+(   44)     r_res = a_earth/(1.0_r8_  + flatt + m_ratio -2.0_r8_ *flatt*(sin(lat))**2)
+(   45)     
+(   46)   end function r_eff
+(   47) 
+(   48)   function g_somig(lat) result(g_res)
+(   49)     !Calculate gravitational acceleration using Somigliana's equation for an ellipsoid
+(   50) 
+(   51)     !input variable
+(   52)     REAL(r8_),    INTENT(IN) :: lat       !latitude in radians
+(   53)     !output variable
+(   54)     REAL(r8_)                :: g_res     !gravitational acc
+(   55) 
+(   56)     g_res = g_equat*(1.0_r8_  + k_somig*(sin(lat))**2)/(SQRT(1.0_r8_  - (ecc**2)*(sin(lat))**2))
+(   57)     
+(   58)   end function g_somig
+(   59) 
+(   60)   function geom_to_geop(geom_hgt,lat) result(geop_hgt)
+(   61)     !Convert geometric height (m) to geopotential height (m)
+(   62) 
+(   63)     !input variables
+(   64)     REAL(r8_),    INTENT(IN) :: lat       !latitude in degrees
+(   65)     REAL(r8_),    INTENT(IN) :: geom_hgt  !geometric height in m
+(   66)     !local variables
+(   67)     REAL(r8_)                :: latrad    !latitude in radians
+(   68)     REAL(r8_)                :: g_res     !gravitational acceleration over ellipsoid, ms-2
+(   69)     REAL(r8_)                :: r_res     !earth effective radius, m    
+(   70)     !output variable
+(   71)     REAL(r8_)                :: geop_hgt  !geopotential height, m
+(   72) 
+(   73)     latrad=lat*(pi/180.0_r8_)  !convert latitude from degrees to radians
+(   74) 
+(   75)     g_res=g_somig(latrad)      !get gravitational acceleration for specified latitude
+(   76)     r_res=r_eff(latrad)        !get Earth effective radius for specified latitude 
+(   77) 
+(   78)     !Calculate geopotential height given the geometric height
+(   79)     geop_hgt = (g_res/g_stan)*(r_res*geom_hgt)/(r_res+geom_hgt)
+(   80)     
+(   81)   end function geom_to_geop
+(   82) 
+(   83)   function geop_to_geom(geop_hgt,lat) result(geom_hgt)
+(   84)     !Convert geopotential height (m) to geometric height (m)
+(   85) 
+(   86)     !input variables
+(   87)     REAL(r8_),    INTENT(IN) :: lat       !latitude in degrees
+(   88)     REAL(r8_),    INTENT(IN) :: geop_hgt  !geopotential height in m
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 4
+
+(   89)     !local variables
+(   90)     REAL(r8_)                :: latrad    !latitude in radians
+(   91)     REAL(r8_)                :: g_res     !gravitational acceleration over ellipsoid, ms-2
+(   92)     REAL(r8_)                :: r_res     !earth effective radius, m    
+(   93)     !output variable
+(   94)     REAL(r8_)                :: geom_hgt  !geometric height, m
+(   95) 
+(   96)     latrad=lat*(pi/180.0_r8_)  !convert latitude from degrees to radians
+(   97) 
+(   98)     g_res=g_somig(latrad)      !get gravitational acceleration for specified latitude
+(   99)     r_res=r_eff(latrad)        !get Earth effective radius for specified latitude 
+(  100) 
+(  101)     !Calculate geometric height given the geopotential height
+(  102)     geom_hgt = (r_res*geop_hgt)/((g_res/g_stan)*r_res - geop_hgt)   
+(  103) 
+(  104)   end function geop_to_geom
+(  105) 
+(  106) END MODULE height_conv
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 5
+
+(    1) # 1 "height_conv.F90"
+(    1) MODULE height_conv
+(    2)   !  #[ Description:
+(    3)   !---------------------------------------------------------
+(    4)   !  A set of functions for the conversion between geometric 
+(    5)   !  height and geopotential height.
+(    6)   !  written by: M. Rennie
+(    7)   !
+(    8)   !  Modifications:
+(    9)   !  05-Dec-2011 M. Rennie  First version
+(   10)   !---------------------------------------------------------
+(   11)   !  #]
+(   12)   !  #[ USE Definitions
+(   13)   ! a module that defines some generic numerics tricks
+(   14)   USE Numerics, only: r8_
+(   15)   USE aeolusconstants, only : pi
+(   16) # 17 "height_conv.F90"
+(   17)   !  #]
+(   18)   !  #[ parameters and types used for height conversion
+(   19)   implicit none     ! no implicit variable typing
+(   20) # 21 "height_conv.F90"
+(   21)   ! Some parameters needed for calculations
+(   22) # 23 "height_conv.F90"
+(   23)   ! constants relating to WGS-84 ellipsoid and gravity above ellipsoid 
+(   24)   REAL(r8_),    PARAMETER  :: ecc     = 0.081819_r8_      ! eccentricity
+(   25)   REAL(r8_),    PARAMETER  :: k_somig = 1.931853E-3_r8_   ! Somigliana's constant
+(   26)   REAL(r8_),    PARAMETER  :: g_equat = 9.7803253359_r8_  ! equatorial gravity (ms-2)
+(   27)   REAL(r8_),    PARAMETER  :: a_earth = 6378.137E3_r8_    ! semi-major axis of earth (m)
+(   28)   REAL(r8_),    PARAMETER  :: flatt   = 0.003352811_r8_   ! flattening
+(   29)   REAL(r8_),    PARAMETER  :: m_ratio = 0.003449787_r8_   ! gravity ratio  
+(   30)   ! IFS parameter
+(   31)   REAL(r8_),    PARAMETER  :: g_stan  = 9.80665_r8_       ! standard gravity (ms-2) 
+(   32) # 33 "height_conv.F90"
+(   33)   !  #]
+(   34) contains
+(   35) # 36 "height_conv.F90"
+(   36)   function r_eff(lat) result(r_res)
+(   37)     !Calculate effective radius value
+(   38) # 39 "height_conv.F90"
+(   39)     !input variable
+(   40)     REAL(r8_),    INTENT(IN) :: lat       !latitude in radians
+(   41)     !output variable
+(   42)     REAL(r8_)                :: r_res     !effective radius in m
+(   43) # 44 "height_conv.F90"
+(   44)     r_res = a_earth/(1.0_r8_  + flatt + m_ratio -2.0_r8_ *flatt*(sin(lat))**2)
+(   45)     
+(   46)   end function r_eff
+(   47) # 48 "height_conv.F90"
+(   48)   function g_somig(lat) result(g_res)
+(   49)     !Calculate gravitational acceleration using Somigliana's equation for an ellipsoid
+(   50) # 51 "height_conv.F90"
+(   51)     !input variable
+(   52)     REAL(r8_),    INTENT(IN) :: lat       !latitude in radians
+(   53)     !output variable
+(   54)     REAL(r8_)                :: g_res     !gravitational acc
+(   55) # 56 "height_conv.F90"
+(   56)     g_res = g_equat*(1.0_r8_  + k_somig*(sin(lat))**2)/(SQRT(1.0_r8_  - (ecc**2)*(sin(lat))**2))
+(   57)     
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:35:57      page 6
+
+(   58)   end function g_somig
+(   59) # 60 "height_conv.F90"
+(   60)   function geom_to_geop(geom_hgt,lat) result(geop_hgt)
+(   61)     !Convert geometric height (m) to geopotential height (m)
+(   62) # 63 "height_conv.F90"
+(   63)     !input variables
+(   64)     REAL(r8_),    INTENT(IN) :: lat       !latitude in degrees
+(   65)     REAL(r8_),    INTENT(IN) :: geom_hgt  !geometric height in m
+(   66)     !local variables
+(   67)     REAL(r8_)                :: latrad    !latitude in radians
+(   68)     REAL(r8_)                :: g_res     !gravitational acceleration over ellipsoid, ms-2
+(   69)     REAL(r8_)                :: r_res     !earth effective radius, m    
+(   70)     !output variable
+(   71)     REAL(r8_)                :: geop_hgt  !geopotential height, m
+(   72) # 73 "height_conv.F90"
+(   73)     latrad=lat*(pi/180.0_r8_)  !convert latitude from degrees to radians
+(   74) # 75 "height_conv.F90"
+(   75)     g_res=g_somig(latrad)      !get gravitational acceleration for specified latitude
+(   76)     r_res=r_eff(latrad)        !get Earth effective radius for specified latitude 
+(   77) # 78 "height_conv.F90"
+(   78)     !Calculate geopotential height given the geometric height
+(   79)     geop_hgt = (g_res/g_stan)*(r_res*geom_hgt)/(r_res+geom_hgt)
+(   80)     
+(   81)   end function geom_to_geop
+(   82) # 83 "height_conv.F90"
+(   83)   function geop_to_geom(geop_hgt,lat) result(geom_hgt)
+(   84)     !Convert geopotential height (m) to geometric height (m)
+(   85) # 86 "height_conv.F90"
+(   86)     !input variables
+(   87)     REAL(r8_),    INTENT(IN) :: lat       !latitude in degrees
+(   88)     REAL(r8_),    INTENT(IN) :: geop_hgt  !geopotential height in m
+(   89)     !local variables
+(   90)     REAL(r8_)                :: latrad    !latitude in radians
+(   91)     REAL(r8_)                :: g_res     !gravitational acceleration over ellipsoid, ms-2
+(   92)     REAL(r8_)                :: r_res     !earth effective radius, m    
+(   93)     !output variable
+(   94)     REAL(r8_)                :: geom_hgt  !geometric height, m
+(   95) # 96 "height_conv.F90"
+(   96)     latrad=lat*(pi/180.0_r8_)  !convert latitude from degrees to radians
+(   97) # 98 "height_conv.F90"
+(   98)     g_res=g_somig(latrad)      !get gravitational acceleration for specified latitude
+(   99)     r_res=r_eff(latrad)        !get Earth effective radius for specified latitude 
+(  100) # 101 "height_conv.F90"
+(  101)     !Calculate geometric height given the geopotential height
+(  102)     geom_hgt = (r_res*geop_hgt)/((g_res/g_stan)*r_res - geop_hgt)   
+(  103) # 104 "height_conv.F90"
+(  104)   end function geop_to_geom
+(  105) # 106 "height_conv.F90"
+(  106) END MODULE height_conv

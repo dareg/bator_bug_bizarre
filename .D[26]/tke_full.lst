@@ -1,0 +1,506 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: tke_full.F90
+
+(    1) 
+(    2) subroutine tke_full
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) !   this subroutine solves the TKE equation
+(   15) 
+(   16) use vars
+(   17) !use micro_params
+(   18) use params
+(   19) use real_size
+(   20) implicit none
+(   21) 
+(   22) real(RR) def2(nx,ny,nzm)
+(   23) real(RR) grd,betdz,Ck,Ce,Ces,Ce1,Ce2,smix,Pr,Cee,Cs
+(   24) real(RR) buoy_sgs,ratio,a_prod_sh,a_prod_bu,a_diss
+(   25) real(RR) lstarn, lstarp, bbb, omn, omp
+(   26) real(RR) qsatt,dqsat
+(   27) integer i,j,k,kc,kb
+(   28) 
+(   29) ! call t_startf('tke_full') ! commented by Phani
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 3
+
+(   31) !Cs = 0.1944
+(   32) Cs = 0.15
+(   33) Ck=0.1
+(   34) Ce=Ck**3/Cs**4
+(   35) Ces=Ce/0.7*3.0
+(   36) 
+(   37) if(RUN3D) then
+(   38)   call shear_prod3D(def2)
+(   39) else
+(   40)   call shear_prod2D(def2)
+(   41) endif
+(   42) 
+(   43) do k=1,nzm      
+(   44)   kb=k-1
+(   45)   kc=k+1
+(   46) 
+(   47)   grd=dz*adz(k)
+(   48) 
+(   49)   betdz=bet(k)/dz/(adzw(kc)+adzw(k))
+(   50)   Ce1=Ce/0.7*0.19
+(   51)   Ce2=Ce/0.7*0.51
+(   52)   if(k.eq.1) then
+(   53)     kb=1
+(   54)     kc=2
+(   55)     betdz=bet(k)/dz/adzw(kc)
+(   56)     Ce1=Ces/0.7*0.19
+(   57)     Ce2=Ces/0.7*0.51
+(   58)   end if
+(   59)   if(k.eq.nzm) then
+(   60)     kb=nzm-1
+(   61)     kc=nzm
+(   62)     betdz=bet(k)/dz/adzw(k)
+(   63)     Ce1=Ces/0.7*0.19
+(   64)     Ce2=Ces/0.7*0.51
+(   65)   end if
+(   66)   tkelediss(k) = 0.
+(   67)   tkesbdiss(k) = 0.
+(   68)   tkesbshear(k)= 0.
+(   69)   tkesbbuoy(k) = 0.
+(   70)   do j=1,ny
+(   71)   do i=1,nx
+(   72) !  SGS buoyancy flux
+(   73) 
+(   74) !bloss: removed temperature diagnostics for omn.
+(   75) !         - use mass weighted qsat, dqsat and latent heat for cloud 
+(   76) !         - separate buoyancy contributions for precipitating water and ice.
+(   77)    
+(   78)    if(qcl(i,j,k)+qci(i,j,k) .gt. 0.) then
+(   79)       
+(   80)       omn = qcl(i,j,k)/(qcl(i,j,k)+qci(i,j,k)+1.e-20)
+(   81)       lstarn = fac_cond+(1.-omn)*fac_fus
+(   82)       
+(   83)       dqsat = omn*dtqsatw_crm(tabs(i,j,k),pres(k))+ &
+(   84)                              (1.-omn)*dtqsati_crm(tabs(i,j,k),pres(k))
+(   85)       qsatt = omn*qsatw_crm(tabs(i,j,k),pres(k))+(1.-omn)*qsati_crm(tabs(i,j,k),pres(k))
+(   86)       bbb = 1. + epsv*qsatt-qcl(i,j,k)-qci(i,j,k) -qpl(i,j,k)-qpi(i,j,k)+1.61*tabs(i,j,k)*dqsat
+(   87)       bbb = bbb / (1.+lstarn*dqsat)
+(   88)       buoy_sgs=betdz*(bbb*(t(i,j,kc)-t(i,j,kb)) &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 4
+
+(   89)         +(bbb*lstarn - (1.+lstarn*dqsat)*tabs(i,j,k))* &
+(   90)             (qv(i,j,kc)+qcl(i,j,kc)+qci(i,j,kc)-qv(i,j,kb)-qcl(i,j,kb)-qci(i,j,kb)) & 
+(   91)         + (bbb*fac_cond - (1.+fac_cond*dqsat)*tabs(i,j,k))*(qpl(i,j,kc)-qpl(i,j,kb))  &
+(   92)         + (bbb*fac_sub  - (1.+fac_sub *dqsat)*tabs(i,j,k))*(qpi(i,j,kc)-qpi(i,j,kb)) )
+(   93) !bloss  +(bbb*lstarp - (1.+lstarp*dqsat)*tabs(i,j,k))* &
+(   94) !bloss            (qpl(i,j,kc)+qpi(i,j,kc)-qpl(i,j,kb)-qpi(i,j,kb)) )
+(   95)    else
+(   96)       
+(   97)       bbb = 1.+epsv*qv(i,j,k)-qpl(i,j,k)-qpi(i,j,k)
+(   98)       buoy_sgs=betdz*( bbb*(t(i,j,kc)-t(i,j,kb)) &
+(   99)         +epsv*tabs(i,j,k)* &
+(  100)          (qv(i,j,kc)+qcl(i,j,kc)+qci(i,j,kc)-qv(i,j,kb)-qcl(i,j,kb)-qci(i,j,kb)) &
+(  101)         +(bbb*fac_cond-tabs(i,j,k))*(qpl(i,j,kc)-qpl(i,j,kb)) &
+(  102)         +(bbb*fac_sub -tabs(i,j,k))*(qpi(i,j,kc)-qpi(i,j,kb)) )
+(  103) !bloss  +(bbb*lstarp-tabs(i,j,k))* &
+(  104) !bloss         (qpl(i,j,kc)+qpi(i,j,kc)-qpl(i,j,kb)-qpi(i,j,kb)) )
+(  105)    end if
+(  106) 
+(  107)    if(buoy_sgs.le.0.) then
+(  108)      smix=grd
+(  109)    else
+(  110)      smix=min(grd,max(0.1*grd, sqrt(0.76*tk(i,j,k)/Ck/sqrt(buoy_sgs+1.e-10))))
+(  111)    end if
+(  112) 
+(  113) 
+(  114)    ratio=smix/grd
+(  115)    Pr=1. 
+(  116) !   Pr=1. +2.*ratio
+(  117)    Cee=Ce1+Ce2*ratio
+(  118) 
+(  119)    if(dosmagor) then
+(  120) 
+(  121)      tk(i,j,k)=sqrt(Ck**3/Cee*max(0.,def2(i,j,k)-Pr*buoy_sgs))*smix**2
+(  122)      if(.not.doscalar) tke(i,j,k) = (tk(i,j,k)/(Ck*smix))**2
+(  123)      a_prod_sh=(tk(i,j,k)+0.001)*def2(i,j,k)
+(  124)      a_prod_bu=-(tk(i,j,k)+0.001)*Pr*buoy_sgs
+(  125)      a_diss=a_prod_sh+a_prod_bu
+(  126) 
+(  127)    else
+(  128) 
+(  129)      tke(i,j,k)=max(0.,tke(i,j,k))
+(  130)      a_prod_sh=(tk(i,j,k)+0.001)*def2(i,j,k)
+(  131)      a_prod_bu=-(tk(i,j,k)+0.001)*Pr*buoy_sgs
+(  132)      a_diss=Cee/smix*tke(i,j,k)**1.5   
+(  133)      tke(i,j,k)=max(0.,tke(i,j,k)+dtn*(max(0.,a_prod_sh+a_prod_bu)-a_diss))
+(  134)      tk(i,j,k)=Ck*smix*sqrt(tke(i,j,k))
+(  135) 
+(  136)    end if
+(  137) 
+(  138)    tkh(i,j,k)=Pr*tk(i,j,k)
+(  139) 
+(  140)    tkelediss(k) = tkelediss(k) - a_prod_sh
+(  141)    tkesbdiss(k) = tkesbdiss(k) + a_diss
+(  142)    tkesbshear(k)= tkesbshear(k)+ a_prod_sh
+(  143)    tkesbbuoy(k) = tkesbbuoy(k) + a_prod_bu
+(  144) 
+(  145)   end do ! i
+(  146)   end do ! j
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 5
+
+(  147) 
+(  148)   tkelediss(k) = tkelediss(k)/float(nx*ny)
+(  149) 
+(  150) 
+(  151) end do ! k
+(  152) 
+(  153) ! call t_stopf('tke_full') ! commented by Phani
+(  154) 
+(  155) end
+(  156) 
+(  157) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 6
+
+(    1) # 1 "tke_full.F90"
+(    1) # 2 "tke_full.F90"
+(    2) subroutine tke_full
+(    3) # 4 "tke_full.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "tke_full.F90"
+(   14) !   this subroutine solves the TKE equation
+(   15) # 16 "tke_full.F90"
+(   16) use vars
+(   17) !use micro_params
+(   18) use params
+(   19) use real_size
+(   20) implicit none
+(   21) # 22 "tke_full.F90"
+(   22) real(RR) def2(nx,ny,nzm)
+(   23) real(RR) grd,betdz,Ck,Ce,Ces,Ce1,Ce2,smix,Pr,Cee,Cs
+(   24) real(RR) buoy_sgs,ratio,a_prod_sh,a_prod_bu,a_diss
+(   25) real(RR) lstarn, lstarp, bbb, omn, omp
+(   26) real(RR) qsatt,dqsat
+(   27) integer i,j,k,kc,kb
+(   28) # 29 "tke_full.F90"
+(   29) ! call t_startf('tke_full') ! commented by Phani
+(   30) # 31 "tke_full.F90"
+(   31) !Cs = 0.1944
+(   32) Cs = 0.15
+(   33) Ck=0.1
+(   34) Ce=Ck**3/Cs**4
+(   35) Ces=Ce/0.7*3.0
+(   36) # 37 "tke_full.F90"
+(   37) if(RUN3D) then
+(   38)   call shear_prod3D(def2)
+(   39) else
+(   40)   call shear_prod2D(def2)
+(   41) endif
+(   42) # 43 "tke_full.F90"
+(   43) do k=1,nzm      
+(   44)   kb=k-1
+(   45)   kc=k+1
+(   46) # 47 "tke_full.F90"
+(   47)   grd=dz*adz(k)
+(   48) # 49 "tke_full.F90"
+(   49)   betdz=bet(k)/dz/(adzw(kc)+adzw(k))
+(   50)   Ce1=Ce/0.7*0.19
+(   51)   Ce2=Ce/0.7*0.51
+(   52)   if(k.eq.1) then
+(   53)     kb=1
+(   54)     kc=2
+(   55)     betdz=bet(k)/dz/adzw(kc)
+(   56)     Ce1=Ces/0.7*0.19
+(   57)     Ce2=Ces/0.7*0.51
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 7
+
+(   58)   end if
+(   59)   if(k.eq.nzm) then
+(   60)     kb=nzm-1
+(   61)     kc=nzm
+(   62)     betdz=bet(k)/dz/adzw(k)
+(   63)     Ce1=Ces/0.7*0.19
+(   64)     Ce2=Ces/0.7*0.51
+(   65)   end if
+(   66)   tkelediss(k) = 0.
+(   67)   tkesbdiss(k) = 0.
+(   68)   tkesbshear(k)= 0.
+(   69)   tkesbbuoy(k) = 0.
+(   70)   do j=1,ny
+(   71)   do i=1,nx
+(   72) !  SGS buoyancy flux
+(   73) # 74 "tke_full.F90"
+(   74) !bloss: removed temperature diagnostics for omn.
+(   75) !         - use mass weighted qsat, dqsat and latent heat for cloud 
+(   76) !         - separate buoyancy contributions for precipitating water and ice.
+(   77)    
+(   78)    if(qcl(i,j,k)+qci(i,j,k) .gt. 0.) then
+(   79)       
+(   80)       omn = qcl(i,j,k)/(qcl(i,j,k)+qci(i,j,k)+1.e-20)
+(   81)       lstarn = fac_cond+(1.-omn)*fac_fus
+(   82)       
+(   83)       dqsat = omn*dtqsatw_crm(tabs(i,j,k),pres(k))+ &
+(   84)                              (1.-omn)*dtqsati_crm(tabs(i,j,k),pres(k))
+(   85)       qsatt = omn*qsatw_crm(tabs(i,j,k),pres(k))+(1.-omn)*qsati_crm(tabs(i,j,k),pres(k))
+(   86)       bbb = 1. + epsv*qsatt-qcl(i,j,k)-qci(i,j,k) -qpl(i,j,k)-qpi(i,j,k)+1.61*tabs(i,j,k)*dqsat
+(   87)       bbb = bbb / (1.+lstarn*dqsat)
+(   88)       buoy_sgs=betdz*(bbb*(t(i,j,kc)-t(i,j,kb)) &
+(   89)         +(bbb*lstarn - (1.+lstarn*dqsat)*tabs(i,j,k))* &
+(   90)             (qv(i,j,kc)+qcl(i,j,kc)+qci(i,j,kc)-qv(i,j,kb)-qcl(i,j,kb)-qci(i,j,kb)) & 
+(   91)         + (bbb*fac_cond - (1.+fac_cond*dqsat)*tabs(i,j,k))*(qpl(i,j,kc)-qpl(i,j,kb))  &
+(   92)         + (bbb*fac_sub  - (1.+fac_sub *dqsat)*tabs(i,j,k))*(qpi(i,j,kc)-qpi(i,j,kb)) )
+(   93) !bloss  +(bbb*lstarp - (1.+lstarp*dqsat)*tabs(i,j,k))* &
+(   94) !bloss            (qpl(i,j,kc)+qpi(i,j,kc)-qpl(i,j,kb)-qpi(i,j,kb)) )
+(   95)    else
+(   96)       
+(   97)       bbb = 1.+epsv*qv(i,j,k)-qpl(i,j,k)-qpi(i,j,k)
+(   98)       buoy_sgs=betdz*( bbb*(t(i,j,kc)-t(i,j,kb)) &
+(   99)         +epsv*tabs(i,j,k)* &
+(  100)          (qv(i,j,kc)+qcl(i,j,kc)+qci(i,j,kc)-qv(i,j,kb)-qcl(i,j,kb)-qci(i,j,kb)) &
+(  101)         +(bbb*fac_cond-tabs(i,j,k))*(qpl(i,j,kc)-qpl(i,j,kb)) &
+(  102)         +(bbb*fac_sub -tabs(i,j,k))*(qpi(i,j,kc)-qpi(i,j,kb)) )
+(  103) !bloss  +(bbb*lstarp-tabs(i,j,k))* &
+(  104) !bloss         (qpl(i,j,kc)+qpi(i,j,kc)-qpl(i,j,kb)-qpi(i,j,kb)) )
+(  105)    end if
+(  106) # 107 "tke_full.F90"
+(  107)    if(buoy_sgs.le.0.) then
+(  108)      smix=grd
+(  109)    else
+(  110)      smix=min(grd,max(0.1*grd, sqrt(0.76*tk(i,j,k)/Ck/sqrt(buoy_sgs+1.e-10))))
+(  111)    end if
+(  112) # 114 "tke_full.F90"
+(  114)    ratio=smix/grd
+(  115)    Pr=1. 
+(  116) !   Pr=1. +2.*ratio
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:50      page 8
+
+(  117)    Cee=Ce1+Ce2*ratio
+(  118) # 119 "tke_full.F90"
+(  119)    if(dosmagor) then
+(  120) # 121 "tke_full.F90"
+(  121)      tk(i,j,k)=sqrt(Ck**3/Cee*max(0.,def2(i,j,k)-Pr*buoy_sgs))*smix**2
+(  122)      if(.not.doscalar) tke(i,j,k) = (tk(i,j,k)/(Ck*smix))**2
+(  123)      a_prod_sh=(tk(i,j,k)+0.001)*def2(i,j,k)
+(  124)      a_prod_bu=-(tk(i,j,k)+0.001)*Pr*buoy_sgs
+(  125)      a_diss=a_prod_sh+a_prod_bu
+(  126) # 127 "tke_full.F90"
+(  127)    else
+(  128) # 129 "tke_full.F90"
+(  129)      tke(i,j,k)=max(0.,tke(i,j,k))
+(  130)      a_prod_sh=(tk(i,j,k)+0.001)*def2(i,j,k)
+(  131)      a_prod_bu=-(tk(i,j,k)+0.001)*Pr*buoy_sgs
+(  132)      a_diss=Cee/smix*tke(i,j,k)**1.5   
+(  133)      tke(i,j,k)=max(0.,tke(i,j,k)+dtn*(max(0.,a_prod_sh+a_prod_bu)-a_diss))
+(  134)      tk(i,j,k)=Ck*smix*sqrt(tke(i,j,k))
+(  135) # 136 "tke_full.F90"
+(  136)    end if
+(  137) # 138 "tke_full.F90"
+(  138)    tkh(i,j,k)=Pr*tk(i,j,k)
+(  139) # 140 "tke_full.F90"
+(  140)    tkelediss(k) = tkelediss(k) - a_prod_sh
+(  141)    tkesbdiss(k) = tkesbdiss(k) + a_diss
+(  142)    tkesbshear(k)= tkesbshear(k)+ a_prod_sh
+(  143)    tkesbbuoy(k) = tkesbbuoy(k) + a_prod_bu
+(  144) # 145 "tke_full.F90"
+(  145)   end do ! i
+(  146)   end do ! j
+(  147) # 148 "tke_full.F90"
+(  148)   tkelediss(k) = tkelediss(k)/float(nx*ny)
+(  149) # 151 "tke_full.F90"
+(  151) end do ! k
+(  152) # 153 "tke_full.F90"
+(  153) ! call t_stopf('tke_full') ! commented by Phani
+(  154) # 155 "tke_full.F90"
+(  155) end

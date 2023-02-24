@@ -1,0 +1,259 @@
+module bufr_ee_hdr
+  !  #[ Documentation
+  !
+  ! a module to define, encode and decode the common
+  ! EE header items (L1B, L2B and L2C), FH, and MPH
+  ! (it seems no SPH fields are encoded at all)
+  !
+  ! Written by: J. de Kloe, KNMI
+  !
+  ! Modifications:
+  ! 06-Aug-2009 J. de Kloe  Initial version
+  ! 10-Aug-2009 J. de Kloe  in working order now
+  !
+  !  #]
+  !  #[ modules used
+  use bufrwrapper, only: BufrMessageType, AddBufrDescriptor, &
+                         fill_one_element, fill_one_string_element
+  use ErrorHandler, only: no_error
+  use DateTimeMod,  only: date_type, time_type
+  use Numerics, only : r8_, missing_real
+  use latlon_handling, only: ensure_lon_range_180_180
+
+  ! generic entries
+  use adm_bufr_descr_codes, only: &
+       DD_satellite_identifier,        & ! = 001007
+       DD_id_of_originating_center,    & ! = 001033
+       DD_id_of_originating_subcenter, & ! = 001034
+       DD_satellite_instruments,       & ! = 002019
+       DD_year,                        & ! = 004001
+       DD_month,                       & ! = 004002
+       DD_day,                         & ! = 004003
+       DD_hour,                        & ! = 004004
+       DD_minute,                      & ! = 004005
+       DD_seconds_within_a_minute,     & ! = 004007
+       DD_latitude_high_accuracy,      & ! = 005001
+       DD_longitude_high_accuracy,     & ! = 006001
+       DD_time_significance              ! = 008021
+
+  ! ADM specific entries
+  USE adm_bufr_descr_codes, only: &
+       ADM_data_section,               & ! = 017002
+       ADM_instrum_target_pos_signific,& ! = 017005
+       ADM_height_bin_altitude,        & ! = 017010
+       ADM_product_name                  ! = 017100
+
+  ! D-table entries
+  USE adm_bufr_descr_codes, only: &
+       DD_D_date_YYYYMMDD,             & ! = 301011
+       DD_D_time_HHMM,                 & ! = 301012
+       ADM_D_geolocation_latlon          ! = 331004
+
+  use bufr_ee_code_tables, only: BCODE_INSTRUMENT, &
+                                 BCODE_TIME_SENSE_START, &
+                                 BCODE_POS_LOS_GEOID, &
+                                 BCODE_DATA_HEA
+
+  !  #]
+  !  #[ Variables and parameters
+  implicit none
+
+  ! used for conversion of longitudes from range 0..360 to -180..+180
+  real(r8_), parameter :: DEGREE_REF_LON = 180._r8_
+  !  #]
+contains
+  !-------------
+  subroutine define_descr_list_EE_HDR(BufrMsg, num_defined_descr, error_flag)
+    !  #[ define the descriptor list for the common EE header items
+
+    ! this corresponds to the subroutine set_LxB_bufr_header_dd()
+    ! defined in L1B_BufrUtil.F90
+
+    !interface
+
+    ! descriptor list will be modified after execution of this subroutine
+    Type(BufrMessageType), intent(inout) :: BufrMsg
+    integer,               intent(out)   :: num_defined_descr
+    integer,               intent(out)   :: error_flag
+
+    ! local variables and parameters
+    integer :: i
+    integer, parameter :: list_size = 13
+    integer, dimension(list_size), parameter :: descriptors = &
+         (/ & 
+         ! origin satellite, centre
+         DD_satellite_identifier,         & ! (code)
+         DD_satellite_instruments,        & ! (code)
+         DD_id_of_originating_center,     & ! (code)
+         DD_id_of_originating_subcenter,  & ! (code)
+         ! start obs time
+         DD_time_significance,            & ! (code)
+         DD_D_date_YYYYMMDD,              & ! will be unpacked as:
+                                            ! 004001 ! year   = DD_year
+                                            ! 004002 ! month  = DD_month
+                                            ! 004003 ! day    = DD_day
+         DD_D_time_HHMM,                  & ! will be unpacked as:
+                                            ! 004004 ! hour   = DD_hour
+                                            ! 004005 ! minute = DD_minute
+         DD_seconds_within_a_minute,      & ! [s]
+         ! obs position DEM
+         ADM_instrum_target_pos_signific, & ! (code)
+         ADM_D_geolocation_latlon,        & ! will be unpacked as:
+                   ! 207001, 005001, 006001, 207000 
+         ADM_height_bin_altitude,         & ! [m]
+         ! L1B header info
+         ADM_data_section,                & ! section type which follows (code)
+         ! file version
+         ADM_product_name                 & ! product name (string)
+         ! 017101                           ! ??? yet undefined 
+         ! (reserved for future additions?)
+          /)
+    
+    ! init
+    error_flag        = no_error
+    num_defined_descr = 0
+
+    do i=1,list_size
+       call AddBufrDescriptor(BufrMsg,descriptors(i),error_flag)
+       if (error_flag .ne. no_error) return
+    end do
+
+    num_defined_descr = 17 ! after descriptor expansion !
+
+  end subroutine define_descr_list_EE_HDR
+
+  !  #]
+  subroutine bufr_fill_EE_HDR(BufrMsg,BCODE_SATID,BCODE_CENTRE,&
+                              BCODE_SUBCENTRE,&
+                              date,time,lat,lon,alt,product_name,error_flag)
+    !  #[
+    ! this corresponds to the subroutine fill_L1B_bufr_header()
+    ! defined in L1B_BufrUtil.F90
+
+    ! interface
+
+    ! values array will be modified after execution of this subroutine
+    Type(BufrMessageType), intent(inout) :: BufrMsg
+    integer,               intent(in)    :: BCODE_SATID
+    integer,               intent(in)    :: BCODE_CENTRE
+    integer,               intent(in)    :: BCODE_SUBCENTRE
+    Type(date_type),       intent(in)    :: date
+    Type(time_type),       intent(in)    :: time
+    real(r8_),             intent(in)    :: lat
+    real(r8_),             intent(in)    :: lon
+    real(r8_),             intent(in)    :: alt
+    character(len=*),      intent(in)    :: product_name
+    integer,               intent(out)   :: error_flag
+
+    ! local variables
+    real(r8_)              :: tmp_lon
+
+    ! this item is also stored in section 2 (ECMWF specific section)
+    call fill_one_element(BufrMsg, real(BCODE_SATID,r8_), &
+                          DD_satellite_identifier, "BCODE_SATID", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    call fill_one_element(BufrMsg, real(BCODE_INSTRUMENT,r8_), &
+                          DD_satellite_instruments, "BCODE_INSTRUMENT", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in section 1, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(BCODE_CENTRE,r8_), &
+                          DD_id_of_originating_center, "BCODE_CENTRE", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in section 1, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(BCODE_SUBCENTRE,r8_), &
+                          DD_id_of_originating_subcenter, "BCODE_SUBCENTRE", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+    
+    ! this is a code (value 28) indicating "start of scan"
+    call fill_one_element(BufrMsg, real(BCODE_TIME_SENSE_START,r8_), &
+                          DD_time_significance, "BCODE_TIME_SENSE_START", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in sections 1 and 2, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(date%year,r8_), DD_year, "date%year", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in sections 1 and 2, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(date%month,r8_), &
+                          DD_month, "date%month", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in sections 1 and 2, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(date%day,r8_), DD_day, "date%day", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in sections 1 and 2, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(time%hour,r8_), DD_hour, "time%hour", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in sections 1 and 2, 
+    ! why is it added to the template as well?
+    call fill_one_element(BufrMsg, real(time%minute,r8_), &
+                          DD_minute, "time%minute", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! this item is also stored in section 2 (ECMWF specific section)
+    call fill_one_element(BufrMsg, time%second, &
+                          DD_seconds_within_a_minute, "time%second", &
+                          error_flag)
+    if (error_flag .ne. no_error) return
+
+    ! this is a code (value 5) indicating "obs. geoid. intersect"
+    call fill_one_element(BufrMsg, real(BCODE_POS_LOS_GEOID,r8_), &
+                          ADM_instrum_target_pos_signific, &
+                          "BCODE_POS_LOS_GEOID", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    call fill_one_element(BufrMsg, lat, DD_latitude_high_accuracy, &
+                          "lat", error_flag)
+    if (error_flag .ne. no_error) return
+
+    ! ensure lon values are in the range -180..+180,
+    ! even if the input values might reach to +360.
+    tmp_lon = lon
+    if (.not. missing_real(tmp_lon)) &
+         tmp_lon = ensure_lon_range_180_180(tmp_lon)
+
+    call fill_one_element(BufrMsg, tmp_lon, DD_longitude_high_accuracy, &
+                          "lon", error_flag)
+    if (error_flag .ne. no_error) return
+
+    call fill_one_element(BufrMsg, alt, ADM_height_bin_altitude, &
+                          "alt", error_flag)
+    if (error_flag .ne. no_error) return
+
+    ! this is a code (value 0) indicating that a HDR section follows
+    call fill_one_element(BufrMsg, real(BCODE_DATA_HEA,r8_), &
+                          ADM_data_section, "BCODE_DATA_HEA", &
+                          error_flag, int_encode=.true.)
+    if (error_flag .ne. no_error) return
+
+    ! product name
+    call fill_one_string_element(BufrMsg, product_name, ADM_product_name, &
+                                 "L2B_Headers%MPH%product", error_flag)
+    if (error_flag .ne. no_error) return
+
+  end subroutine bufr_fill_EE_HDR
+    !  #]
+  !-------------
+end module bufr_ee_hdr

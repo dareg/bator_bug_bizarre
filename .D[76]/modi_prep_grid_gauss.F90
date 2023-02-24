@@ -1,0 +1,12 @@
+!depfile:prep_grid_gauss.F90
+MODULE MODI_PREP_GRID_GAUSS 
+INTERFACE
+      SUBROUTINE PREP_GRID_GAUSS (&
+                                  HFILETYPE,HINTERP_TYPE,KNI)
+ CHARACTER(LEN=6),  INTENT(IN)    :: HFILETYPE    ! file type
+ CHARACTER(LEN=6),  INTENT(OUT)   :: HINTERP_TYPE ! Grid type
+INTEGER,           INTENT(OUT)   :: KNI          ! number of points
+END SUBROUTINE PREP_GRID_GAUSS
+
+END INTERFACE
+END MODULE MODI_PREP_GRID_GAUSS 

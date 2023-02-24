@@ -1,0 +1,369 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_ini_data_param_teb.F90
+
+(    1) !depfile:ini_data_param_teb.F90
+(    2) MODULE MODI_INI_DATA_PARAM_TEB 
+(    3) INTERFACE
+(    4)       SUBROUTINE INI_DATA_PARAM_TEB (BDD, &
+(    5)                                      KTYPE,                                          &
+(    6)                                 PZ0_TOWN, PALB_ROOF, PALB_ROAD, PALB_WALL,          &
+(    7)                                 PEMIS_ROOF, PEMIS_ROAD, PEMIS_WALL, PHC_ROOF,       &
+(    8)                                 PHC_ROAD, PHC_WALL, PTC_ROOF, PTC_ROAD, PTC_WALL,   &
+(    9)                                 PD_ROOF, PD_ROAD, PD_WALL, PBLD_HEIGHT,             &
+(   10)                                 PWALL_O_HOR, PBLD, PCAN_HW_RATIO, PH_TRAFFIC,        &
+(   11)                                 PLE_TRAFFIC, PH_INDUSTRY, PLE_INDUSTRY,              &
+(   12)                                 PGARDEN, OGARDEN, PHC_FLOOR,                        &
+(   13)                                 PTC_FLOOR, PD_FLOOR, PTCOOL_TARGET, PTHEAT_TARGET,  &
+(   14)                                 PF_WASTE_CAN, PEFF_HEAT, PQIN, PQIN_FRAD, PSHGC,    &
+(   15)                                 PU_WIN, PGR, PSHGC_SH, PFLOOR_HEIGHT, PINF,         &
+(   16)                                 PF_WATER_COND, PQIN_FLAT, PHR_TARGET, PV_VENT,      &
+(   17)                                 PCAP_SYS_HEAT, PCAP_SYS_RAT, PT_ADP, PM_SYS_RAT,    &
+(   18)                                 PCOP_RAT, PT_SIZE_MAX, PT_SIZE_MIN, PSHADE,         &
+(   19)                                 PNATVENT, PROUGH_ROOF, PROUGH_WALL, PGREENROOF,     &
+(   20)                                 PRESIDENTIAL,                                       &
+(   21)                                 PEMIS_PANEL, PALB_PANEL, PEFF_PANEL, PFRAC_PANEL    )
+(   22) USE MODD_BLD_DESCRIPTION_n, ONLY : BLD_DESC_t
+(   23) TYPE(BLD_DESC_t), INTENT(INOUT) :: BDD
+(   24) INTEGER, DIMENSION(:), INTENT(IN) :: KTYPE
+(   25) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_TOWN
+(   26) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_ROOF
+(   27) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_ROAD
+(   28) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_WALL
+(   29) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_ROOF
+(   30) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_ROAD
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_WALL
+(   32) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_ROOF
+(   33) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_ROAD
+(   34) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_WALL
+(   35) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_ROOF
+(   36) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_ROAD
+(   37) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_WALL
+(   38) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_ROOF
+(   39) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_ROAD
+(   40) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_WALL
+(   41) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBLD_HEIGHT
+(   42) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PWALL_O_HOR
+(   43) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBLD
+(   44) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PCAN_HW_RATIO
+(   45) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_TRAFFIC
+(   46) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLE_TRAFFIC
+(   47) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_INDUSTRY
+(   48) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLE_INDUSTRY
+(   49) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PGARDEN
+(   50) LOGICAL,            INTENT(IN),  OPTIONAL :: OGARDEN
+(   51) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_FLOOR
+(   52) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_FLOOR
+(   53) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_FLOOR
+(   54) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PTCOOL_TARGET
+(   55) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PTHEAT_TARGET
+(   56) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PF_WASTE_CAN
+(   57) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEFF_HEAT
+(   58) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN
+(   59) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN_FRAD
+(   60) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHGC
+(   61) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PU_WIN
+(   62) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PGR
+(   63) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHGC_SH
+(   64) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PFLOOR_HEIGHT
+(   65) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PINF
+(   66) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PF_WATER_COND
+(   67) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN_FLAT
+(   68) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PHR_TARGET
+(   69) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PV_VENT
+(   70) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCAP_SYS_HEAT
+(   71) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCAP_SYS_RAT
+(   72) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_ADP
+(   73) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PM_SYS_RAT
+(   74) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCOP_RAT
+(   75) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_SIZE_MAX
+(   76) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_SIZE_MIN
+(   77) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHADE
+(   78) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PNATVENT
+(   79) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PROUGH_ROOF
+(   80) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PROUGH_WALL
+(   81) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PRESIDENTIAL
+(   82) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PGREENROOF
+(   83) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEMIS_PANEL
+(   84) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PALB_PANEL
+(   85) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEFF_PANEL
+(   86) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PFRAC_PANEL
+(   87) END SUBROUTINE INI_DATA_PARAM_TEB
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 4
+
+(   89) END INTERFACE
+(   90) END MODULE MODI_INI_DATA_PARAM_TEB 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 5
+
+(    1) # 1 "modi_ini_data_param_teb.F90"
+(    1) !depfile:ini_data_param_teb.F90
+(    2) MODULE MODI_INI_DATA_PARAM_TEB 
+(    3) INTERFACE
+(    4)       SUBROUTINE INI_DATA_PARAM_TEB (BDD, &
+(    5)                                      KTYPE,                                          &
+(    6)                                 PZ0_TOWN, PALB_ROOF, PALB_ROAD, PALB_WALL,          &
+(    7)                                 PEMIS_ROOF, PEMIS_ROAD, PEMIS_WALL, PHC_ROOF,       &
+(    8)                                 PHC_ROAD, PHC_WALL, PTC_ROOF, PTC_ROAD, PTC_WALL,   &
+(    9)                                 PD_ROOF, PD_ROAD, PD_WALL, PBLD_HEIGHT,             &
+(   10)                                 PWALL_O_HOR, PBLD, PCAN_HW_RATIO, PH_TRAFFIC,        &
+(   11)                                 PLE_TRAFFIC, PH_INDUSTRY, PLE_INDUSTRY,              &
+(   12)                                 PGARDEN, OGARDEN, PHC_FLOOR,                        &
+(   13)                                 PTC_FLOOR, PD_FLOOR, PTCOOL_TARGET, PTHEAT_TARGET,  &
+(   14)                                 PF_WASTE_CAN, PEFF_HEAT, PQIN, PQIN_FRAD, PSHGC,    &
+(   15)                                 PU_WIN, PGR, PSHGC_SH, PFLOOR_HEIGHT, PINF,         &
+(   16)                                 PF_WATER_COND, PQIN_FLAT, PHR_TARGET, PV_VENT,      &
+(   17)                                 PCAP_SYS_HEAT, PCAP_SYS_RAT, PT_ADP, PM_SYS_RAT,    &
+(   18)                                 PCOP_RAT, PT_SIZE_MAX, PT_SIZE_MIN, PSHADE,         &
+(   19)                                 PNATVENT, PROUGH_ROOF, PROUGH_WALL, PGREENROOF,     &
+(   20)                                 PRESIDENTIAL,                                       &
+(   21)                                 PEMIS_PANEL, PALB_PANEL, PEFF_PANEL, PFRAC_PANEL    )
+(   22) USE MODD_BLD_DESCRIPTION_n, ONLY : BLD_DESC_t
+(   23) TYPE(BLD_DESC_t), INTENT(INOUT) :: BDD
+(   24) INTEGER, DIMENSION(:), INTENT(IN) :: KTYPE
+(   25) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_TOWN
+(   26) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_ROOF
+(   27) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_ROAD
+(   28) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PALB_WALL
+(   29) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_ROOF
+(   30) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_ROAD
+(   31) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PEMIS_WALL
+(   32) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_ROOF
+(   33) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_ROAD
+(   34) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_WALL
+(   35) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_ROOF
+(   36) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_ROAD
+(   37) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_WALL
+(   38) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_ROOF
+(   39) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_ROAD
+(   40) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_WALL
+(   41) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBLD_HEIGHT
+(   42) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PWALL_O_HOR
+(   43) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBLD
+(   44) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PCAN_HW_RATIO
+(   45) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_TRAFFIC
+(   46) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLE_TRAFFIC
+(   47) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_INDUSTRY
+(   48) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLE_INDUSTRY
+(   49) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PGARDEN
+(   50) LOGICAL,            INTENT(IN),  OPTIONAL :: OGARDEN
+(   51) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PHC_FLOOR
+(   52) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PTC_FLOOR
+(   53) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PD_FLOOR
+(   54) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PTCOOL_TARGET
+(   55) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PTHEAT_TARGET
+(   56) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PF_WASTE_CAN
+(   57) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEFF_HEAT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:28      page 6
+
+(   58) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN
+(   59) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN_FRAD
+(   60) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHGC
+(   61) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PU_WIN
+(   62) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PGR
+(   63) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHGC_SH
+(   64) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PFLOOR_HEIGHT
+(   65) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PINF
+(   66) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PF_WATER_COND
+(   67) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PQIN_FLAT
+(   68) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PHR_TARGET
+(   69) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PV_VENT
+(   70) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCAP_SYS_HEAT
+(   71) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCAP_SYS_RAT
+(   72) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_ADP
+(   73) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PM_SYS_RAT
+(   74) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PCOP_RAT
+(   75) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_SIZE_MAX
+(   76) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PT_SIZE_MIN
+(   77) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PSHADE
+(   78) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PNATVENT
+(   79) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PROUGH_ROOF
+(   80) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PROUGH_WALL
+(   81) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PRESIDENTIAL
+(   82) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PGREENROOF
+(   83) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEMIS_PANEL
+(   84) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PALB_PANEL
+(   85) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PEFF_PANEL
+(   86) REAL, DIMENSION(:),   INTENT(OUT), OPTIONAL   :: PFRAC_PANEL
+(   87) END SUBROUTINE INI_DATA_PARAM_TEB
+(   88) # 89 "modi_ini_data_param_teb.F90"
+(   89) END INTERFACE
+(   90) END MODULE MODI_INI_DATA_PARAM_TEB 

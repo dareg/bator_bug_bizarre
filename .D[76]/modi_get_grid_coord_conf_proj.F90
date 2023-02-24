@@ -1,0 +1,13 @@
+!depfile:get_grid_coord_conf_proj.F90
+MODULE MODI_GET_GRID_COORD_CONF_PROJ
+INTERFACE
+      SUBROUTINE GET_GRID_COORD_CONF_PROJ(KGRID_PAR,KL,PGRID_PAR,PX,PY)
+INTEGER,                    INTENT(IN)  :: KGRID_PAR  ! size of PGRID_PAR
+INTEGER,                    INTENT(IN)  :: KL         ! number of points
+REAL, DIMENSION(KGRID_PAR), INTENT(IN)  :: PGRID_PAR  ! parameters defining this grid
+REAL, DIMENSION(KL),        INTENT(OUT) :: PX         ! X (m)
+REAL, DIMENSION(KL),        INTENT(OUT) :: PY         ! Y (m)
+END SUBROUTINE GET_GRID_COORD_CONF_PROJ
+
+END INTERFACE
+END MODULE MODI_GET_GRID_COORD_CONF_PROJ

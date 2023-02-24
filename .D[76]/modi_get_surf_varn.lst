@@ -1,0 +1,284 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:11      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:11      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_get_surf_varn.F90
+
+(    1) !depfile:get_surf_varn.F90
+(    2) MODULE MODI_GET_SURF_VAR_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_SURF_VAR_n (FM, IM, SM, TM, WM, DGO, D, UG, U, USS, S,     &
+(    5)                                  HPROGRAM, KI, KS,PSEA, PWATER, PNATURE, PTOWN, &
+(    6)                                  PT2M, PQ2M, PQS, PZ0, PZ0H, PZ0EFF, PZ0_SEA,   &
+(    7)                                  PZ0_WATER, PZ0_NATURE, PZ0_TOWN, PZ0H_SEA,     &
+(    8)                                  PZ0H_WATER, PZ0H_NATURE, PZ0H_TOWN, PQS_SEA,   &
+(    9)                                  PQS_WATER, PQS_NATURE, PQS_TOWN, PPSNG, PPSNV, &
+(   10)                                  PZS, PSERIES, PTWSNOW,PSIC,                    &
+(   11)                                  PSSO_STDEV, PLON, PLAT,                        &
+(   12)                                  PBARE, PLAI_TREE, PH_TREE                    )  
+(   13) USE MODD_SURFEX_n, ONLY : FLAKE_MODEL_t, ISBA_MODEL_t, SEAFLUX_MODEL_t, &
+(   14)                           TEB_MODEL_t, WATFLUX_MODEL_t
+(   15) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   16) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   17) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   18) USE MODD_SSO_n, ONLY : SSO_t
+(   19) USE MODD_SEAFLUX_n, ONLY : SEAFLUX_t 
+(   20) TYPE(FLAKE_MODEL_t), INTENT(INOUT) :: FM
+(   21) TYPE(ISBA_MODEL_t), INTENT(INOUT) :: IM
+(   22) TYPE(SEAFLUX_MODEL_t), INTENT(INOUT) :: SM
+(   23) TYPE(TEB_MODEL_t), INTENT(INOUT) :: TM
+(   24) TYPE(WATFLUX_MODEL_t), INTENT(INOUT) :: WM
+(   25) TYPE(SEAFLUX_t), INTENT(INOUT) :: S
+(   26) TYPE(DIAG_OPTIONS_t), INTENT(INOUT) :: DGO
+(   27) TYPE(DIAG_t), INTENT(INOUT) :: D
+(   28) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+(   29) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   30) TYPE(SSO_t), INTENT(INOUT) :: USS
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:11      page 3
+
+(   31)  CHARACTER(LEN=6),   INTENT(IN)            :: HPROGRAM    
+(   32) INTEGER,            INTENT(IN)            :: KI         ! number of points
+(   33) INTEGER,            INTENT(IN)            :: KS         ! number of points
+(   34) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSEA       ! sea fraction
+(   35) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PWATER     ! water fraction
+(   36) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PNATURE    ! nature fraction
+(   37) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PTOWN      ! town fraction
+(   38) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PT2M       ! Air temperature at 2 meters         (K)
+(   39) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQ2M       ! Air humidity at 2 meters            (kg/kg)
+(   40) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS
+(   41) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0        ! surface roughness length            (m)
+(   42) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H       ! surface roughness length for heat   (m)
+(   43) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0EFF     ! effective roughness length for heat (m)
+(   44) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_SEA    ! surface roughness length over sea   (m)
+(   45) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_WATER  ! surface roughness length over water (m)
+(   46) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_NATURE ! surface roughness length over nature(m)
+(   47) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_TOWN   ! surface roughness length over town  (m)
+(   48) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_SEA    ! surface roughness length for heat over sea   (m)
+(   49) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_WATER  ! surface roughness length for heat over water (m)
+(   50) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_NATURE ! surface roughness length for heat over nature(m)
+(   51) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_TOWN   ! surface roughness length for heat over town  (m)
+(   52) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_SEA    ! surface humidity over sea           (kg/kg)
+(   53) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_WATER  ! surface humidity over water         (kg/kg)
+(   54) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_NATURE ! surface humidity over nature        (kg/kg)
+(   55) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_TOWN   ! surface humidity over town          (kg/kg)
+(   56) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PPSNG      ! snow fraction over ground           (-)        
+(   57) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PPSNV      ! snow fraction over vegetation       (-)
+(   58) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZS        ! surface orography                   (m)    
+(   59) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PSERIES  ! any surface field for which 
+(   60) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PTWSNOW    ! Snow total reservoir
+(   61) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSIC       ! Sea ice concentration
+(   62) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSSO_STDEV ! S.S.O. standard deviation           (m)
+(   63) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLON       ! longitude
+(   64) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLAT       ! latitude
+(   65) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBARE      ! bare soil fraction on grid mesh     (-)
+(   66) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLAI_TREE       ! Leaf Area Index    on grid mesh     (-)
+(   67) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_TREE        ! Height of trees    on grid mesh     (-)
+(   68) END SUBROUTINE GET_SURF_VAR_n
+(   69) 
+(   70) END INTERFACE
+(   71) END MODULE MODI_GET_SURF_VAR_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:11      page 4
+
+(    1) # 1 "modi_get_surf_varn.F90"
+(    1) !depfile:get_surf_varn.F90
+(    2) MODULE MODI_GET_SURF_VAR_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE GET_SURF_VAR_n (FM, IM, SM, TM, WM, DGO, D, UG, U, USS, S,     &
+(    5)                                  HPROGRAM, KI, KS,PSEA, PWATER, PNATURE, PTOWN, &
+(    6)                                  PT2M, PQ2M, PQS, PZ0, PZ0H, PZ0EFF, PZ0_SEA,   &
+(    7)                                  PZ0_WATER, PZ0_NATURE, PZ0_TOWN, PZ0H_SEA,     &
+(    8)                                  PZ0H_WATER, PZ0H_NATURE, PZ0H_TOWN, PQS_SEA,   &
+(    9)                                  PQS_WATER, PQS_NATURE, PQS_TOWN, PPSNG, PPSNV, &
+(   10)                                  PZS, PSERIES, PTWSNOW,PSIC,                    &
+(   11)                                  PSSO_STDEV, PLON, PLAT,                        &
+(   12)                                  PBARE, PLAI_TREE, PH_TREE                    )  
+(   13) USE MODD_SURFEX_n, ONLY : FLAKE_MODEL_t, ISBA_MODEL_t, SEAFLUX_MODEL_t, &
+(   14)                           TEB_MODEL_t, WATFLUX_MODEL_t
+(   15) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   16) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   17) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   18) USE MODD_SSO_n, ONLY : SSO_t
+(   19) USE MODD_SEAFLUX_n, ONLY : SEAFLUX_t 
+(   20) TYPE(FLAKE_MODEL_t), INTENT(INOUT) :: FM
+(   21) TYPE(ISBA_MODEL_t), INTENT(INOUT) :: IM
+(   22) TYPE(SEAFLUX_MODEL_t), INTENT(INOUT) :: SM
+(   23) TYPE(TEB_MODEL_t), INTENT(INOUT) :: TM
+(   24) TYPE(WATFLUX_MODEL_t), INTENT(INOUT) :: WM
+(   25) TYPE(SEAFLUX_t), INTENT(INOUT) :: S
+(   26) TYPE(DIAG_OPTIONS_t), INTENT(INOUT) :: DGO
+(   27) TYPE(DIAG_t), INTENT(INOUT) :: D
+(   28) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+(   29) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   30) TYPE(SSO_t), INTENT(INOUT) :: USS
+(   31)  CHARACTER(LEN=6),   INTENT(IN)            :: HPROGRAM    
+(   32) INTEGER,            INTENT(IN)            :: KI         ! number of points
+(   33) INTEGER,            INTENT(IN)            :: KS         ! number of points
+(   34) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSEA       ! sea fraction
+(   35) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PWATER     ! water fraction
+(   36) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PNATURE    ! nature fraction
+(   37) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PTOWN      ! town fraction
+(   38) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PT2M       ! Air temperature at 2 meters         (K)
+(   39) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQ2M       ! Air humidity at 2 meters            (kg/kg)
+(   40) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS
+(   41) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0        ! surface roughness length            (m)
+(   42) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H       ! surface roughness length for heat   (m)
+(   43) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0EFF     ! effective roughness length for heat (m)
+(   44) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_SEA    ! surface roughness length over sea   (m)
+(   45) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_WATER  ! surface roughness length over water (m)
+(   46) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_NATURE ! surface roughness length over nature(m)
+(   47) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0_TOWN   ! surface roughness length over town  (m)
+(   48) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_SEA    ! surface roughness length for heat over sea   (m)
+(   49) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_WATER  ! surface roughness length for heat over water (m)
+(   50) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_NATURE ! surface roughness length for heat over nature(m)
+(   51) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZ0H_TOWN   ! surface roughness length for heat over town  (m)
+(   52) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_SEA    ! surface humidity over sea           (kg/kg)
+(   53) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_WATER  ! surface humidity over water         (kg/kg)
+(   54) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_NATURE ! surface humidity over nature        (kg/kg)
+(   55) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PQS_TOWN   ! surface humidity over town          (kg/kg)
+(   56) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PPSNG      ! snow fraction over ground           (-)        
+(   57) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PPSNV      ! snow fraction over vegetation       (-)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:11      page 5
+
+(   58) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PZS        ! surface orography                   (m)    
+(   59) REAL, DIMENSION(:,:), INTENT(OUT), OPTIONAL :: PSERIES  ! any surface field for which 
+(   60) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PTWSNOW    ! Snow total reservoir
+(   61) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSIC       ! Sea ice concentration
+(   62) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PSSO_STDEV ! S.S.O. standard deviation           (m)
+(   63) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLON       ! longitude
+(   64) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLAT       ! latitude
+(   65) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PBARE      ! bare soil fraction on grid mesh     (-)
+(   66) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PLAI_TREE       ! Leaf Area Index    on grid mesh     (-)
+(   67) REAL, DIMENSION(:), INTENT(OUT), OPTIONAL :: PH_TREE        ! Height of trees    on grid mesh     (-)
+(   68) END SUBROUTINE GET_SURF_VAR_n
+(   69) # 70 "modi_get_surf_varn.F90"
+(   70) END INTERFACE
+(   71) END MODULE MODI_GET_SURF_VAR_n 

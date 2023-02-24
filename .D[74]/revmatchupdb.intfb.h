@@ -1,0 +1,8 @@
+INTERFACE
+SUBROUTINE revmatchupdb(num_time_slots)
+USE PARKIND1 ,ONLY : JPIM ,JPRD
+USE YOMDB
+USE YOMCOCTP
+INTEGER(KIND=JPIM), intent(in) :: num_time_slots
+END SUBROUTINE revmatchupdb
+END INTERFACE

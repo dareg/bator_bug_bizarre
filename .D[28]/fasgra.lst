@@ -1,0 +1,745 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fasgra.F90
+
+(    1) SUBROUTINE FASGRA_MT64                                             &
+(    2) &                     (FA,  KREP, CDNOMC, KLONGD)
+(    3) 
+(    4) USE FA_MOD, ONLY : FA_COM, FACADR, LGRIB2_LAM_BF
+(    5) USE PARKIND1, ONLY : JPRB, JPIM
+(    6) USE LFI_PRECISION
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) 
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de calcul de la taille maximale de l'entete GRIB pour
+(   12) !     un champ horizontal.
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   15) !                CDNOMC (Entree) ==> Nom du cadre
+(   16) !                KLONGD (Sortie) ==> Taille max. de l'entete
+(   17) !
+(   18) !   Modified  R. El Khatib 20-Feb-2019 bugfix for LAM non-packed output fields in the single precision model
+(   19) !
+(   20) 
+(   21) TYPE(FA_COM)   :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KLONGD
+(   23) !
+(   24) CHARACTER CDNOMC*(*)
+(   25) !
+(   26) INTEGER (KIND=JPLIKB) :: J
+(   27) TYPE (FACADR), POINTER :: YLCADR
+(   28) INTEGER (KIND=JPLIKB) :: IRANGC, IRANGC2, INUMER2, IRANG2
+(   29) INTEGER (KIND=JPLIKB) :: ITYPTR, ISTROI
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 3
+
+(   31) CHARACTER (LEN=*), PARAMETER :: CLNOM2 = '.dummy'
+(   32) !
+(   33) INTEGER (KIND=JPLIKB), PARAMETER :: IFLEVG = 1, ITRONC = 2, ILATIT = 4, IXLOPA = 5, INPAHE=(1+ILATIT)/2
+(   34) INTEGER (KIND=JPLIKB), ALLOCATABLE :: IOZPAR (:), INLOPA (:)
+(   35) REAL (KIND=JPDBLR),    ALLOCATABLE :: ZSINLA (:)
+(   36) 
+(   37) CHARACTER (LEN=16) :: CLNOMA, CLPREF, CLSUFF
+(   38) INTEGER (KIND=JPLIKB) :: ILGRSP, ILGRGP, ILCHSP, ILCHGP
+(   39) INTEGER (KIND=JPLIKB) :: ILNOMA, INBARI, INBARP, INIVAU
+(   40) INTEGER (KIND=JPLIKB) :: INGRIB, INBPDG, INBCSP, ISTRON, IPUILA, IDMOPL, ILNOMC
+(   41) 
+(   42) REAL (KIND=JPDBLR) :: ZCHAMP (1000)
+(   43) INTEGER (KIND=JPLIKB) :: IVALCO (1000)
+(   44) REAL (KIND=JPDBLR) :: ZFOHYB (2,IFLEVG+1)
+(   45) REAL (KIND=JPDBLR) :: ZUNDF
+(   46) LOGICAL :: LLMLAM, LLLTLN, LLUNDF, LLMODC, LLREDF
+(   47) INTEGER (KIND=JPLIKB) :: IVERSI
+(   48) 
+(   49) REAL (KIND=JPRB) :: ZHOOK_HANDLE
+(   50) 
+(   51) IF (LHOOK) CALL DR_HOOK('FASGRA_MT',0,ZHOOK_HANDLE)
+(   52) 
+(   53) #define FAGRIB2
+(   54) #ifndef FAGRIB2
+(   55) 
+(   56) KLONGD = 2
+(   57) GOTO 1001
+(   58) 
+(   59) #else
+(   60) 
+(   61) 
+(   62) 
+(   63) CALL FANUCA_MT64 (FA, CDNOMC,IRANGC, .FALSE.)
+(   64) 
+(   65) YLCADR => FA%CADRE(IRANGC)
+(   66) 
+(   67) IF (YLCADR%IADDPK > 0) THEN
+(   68)   KLONGD = YLCADR%IADDPK
+(   69)   GOTO 1001
+(   70) ENDIF
+(   71) 
+(   72) ISTROI = FA%NSTROI
+(   73) FA%NSTROI = 1
+(   74) 
+(   75) 
+(   76) LLMLAM = YLCADR%LIMLAM
+(   77) LLLTLN = YLCADR%SINLAT(2) < 0 .AND. LLMLAM
+(   78) 
+(   79) 
+(   80) ! Taille d'un champ
+(   81) 
+(   82) IF (LLMLAM) THEN
+(   83)   ILCHSP = YLCADR%NSFLAM
+(   84) ELSE
+(   85)   ILCHSP = (1+YLCADR%MTRONC)*(2+YLCADR%MTRONC)
+(   86) ENDIF
+(   87) 
+(   88) ILCHGP = YLCADR%NVAPDG
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 4
+
+(   89) 
+(   90) ! Geometrie minimale
+(   91) 
+(   92) ALLOCATE (IOZPAR (FA%JPXIND), INLOPA (FA%JPXPAH), ZSINLA (FA%JPXGEO))
+(   93) 
+(   94) ZFOHYB (1,:) = 1._JPDBLR
+(   95) ZFOHYB (2,:) = 0._JPDBLR
+(   96) 
+(   97) IOZPAR = 1
+(   98) 
+(   99) IF (LLMLAM) THEN
+(  100)   ITYPTR = - ITRONC
+(  101)   ZSINLA (1:18) = YLCADR%SINLAT (1:18)
+(  102)   INLOPA (1:8)  = (/ 1_JPLIKB, 1_JPLIKB, &
+(  103)                  &   1_JPLIKB, ILATIT-2, &
+(  104)                  &   1_JPLIKB, IXLOPA-2, &
+(  105)                  &   0_JPLIKB, 0_JPLIKB /)
+(  106) ELSE
+(  107)   ZSINLA (1:INPAHE) = (/ (1._JPDBLR/REAL (J, JPDBLR), J = 1, INPAHE) /)
+(  108)   ITYPTR = YLCADR%NTYPTR
+(  109)   INLOPA = IXLOPA
+(  110) ENDIF
+(  111) 
+(  112) 
+(  113) ! Definition d'un cadre sur la geometrie minimale
+(  114) 
+(  115) LLMODC = .FALSE.
+(  116) LLREDF = .FALSE.
+(  117) ILNOMC = INT (LEN (CLNOM2), JPLIKB)
+(  118) 
+(  119) CALL FACADI_MT64                                                                        &
+(  120) &           (FA, KREP, CLNOM2, ITYPTR, YLCADR%SSLAPO, YLCADR%SCLOPO, YLCADR%SSLOPO,     &
+(  121) &            YLCADR%SCODIL, ITRONC,  ILATIT, IXLOPA, INLOPA, IOZPAR, ZSINLA, IFLEVG,    &
+(  122) &            YLCADR%SPREFE, ZFOHYB (1,:), ZFOHYB (2,:), LLMODC, LLREDF, 0_JPLIKB,       &
+(  123) &            IRANGC2, ILNOMC, 1_JPLIKB)
+(  124) 
+(  125) 
+(  126) ! Ouverture d'un fichier
+(  127) 
+(  128) INUMER2 = 0
+(  129) INBARP=0
+(  130) INBARI=0
+(  131) 
+(  132) CALL FANOUV_MT64 (FA, KREP, INUMER2, .FALSE., CLNOM2, 'UNKNOWN', .TRUE., &
+(  133)                 & .TRUE., 0_JPLIKB, INBARP, INBARI, CLNOM2)
+(  134) 
+(  135) CALL FANUMU_MT64 (FA, INUMER2, IRANG2)
+(  136) 
+(  137) ! Read grib_api templates
+(  138) 
+(  139) CALL FAIGRA_MT64 (FA)
+(  140) 
+(  141) 
+(  142) ! Compactage et extrapolation de la taille d'un champ compacte
+(  143) 
+(  144) CALL GRIB_GET_API_VERSION (IVERSI)
+(  145) 
+(  146) IF (IVERSI == 11400) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 5
+
+(  147)   INGRIB = 121
+(  148) ELSE
+(  149)   INGRIB = 123
+(  150) ENDIF
+(  151) 
+(  152) CALL FAGOTE_MT64 (FA, KREP, INUMER2, INGRIB, 64_JPLIKB, 64_JPLIKB, 1_JPLIKB, 0_JPLIKB, 0_JPLIKB)
+(  153) 
+(  154) ZUNDF  = 0._JPDBLR
+(  155) LLUNDF = .FALSE.
+(  156) ZCHAMP = 0._JPDBLR
+(  157) IVALCO = 0_JPLIKB
+(  158) IF (LLLTLN) THEN
+(  159)   CLPREF = 'H'
+(  160)   INIVAU = 2
+(  161)   CLSUFF = 'TEMPERATURE'
+(  162)   ILGRGP = SIZE (IVALCO)
+(  163)   CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  164)                   & .FALSE., IVALCO, ILGRGP, LLUNDF, ZUNDF)
+(  165)   KLONGD = MAX (ILGRGP, 2)
+(  166) ELSE
+(  167)   CLPREF = 'S'
+(  168)   INIVAU = 1
+(  169)   CLSUFF = 'TEMPERATURE'
+(  170)   ILGRGP = SIZE (IVALCO)
+(  171)   CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  172)                   & .FALSE., IVALCO, ILGRGP, LLUNDF, ZUNDF)
+(  173)   IF ((.NOT. LLMLAM) .OR. LGRIB2_LAM_BF) THEN
+(  174)     ILGRSP = SIZE (IVALCO)
+(  175)     CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  176)                     & .TRUE.,  IVALCO, ILGRSP, LLUNDF, ZUNDF)
+(  177)   ELSE
+(  178)     ILGRSP = 0
+(  179)   ENDIF
+(  180)   KLONGD=MAX (                                                        &
+(  181)         &         2, ILGRGP + 2*(YLCADR%NNIVER+1) + YLCADR%NLATIT,    &
+(  182)         &         2, ILGRSP + 2*(YLCADR%NNIVER+1)                     &
+(  183)         &    )
+(  184) ENDIF
+(  185) 
+(  186) KLONGD = KLONGD + 100
+(  187) 
+(  188) CALL FAIRNO_MT64 (FA, KREP, INUMER2, 'KEEP')
+(  189) 
+(  190) YLCADR%IADDPK = KLONGD
+(  191) 
+(  192) FA%NSTROI = ISTROI
+(  193) 
+(  194) #endif
+(  195) 
+(  196) 1001 CONTINUE
+(  197) 
+(  198) IF (LHOOK) CALL DR_HOOK('FASGRA_MT',1,ZHOOK_HANDLE)
+(  199) 
+(  200) END SUBROUTINE FASGRA_MT64
+(  201) 
+(  202) SUBROUTINE FASGRA64                                        &
+(  203) &           (KREP, CDNOMC, KLONGD)
+(  204) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 6
+
+(  205) &                  FA_COM_DEFAULT_INIT,  &
+(  206) &                  NEW_FA_DEFAULT
+(  207) USE LFI_PRECISION
+(  208) IMPLICIT NONE
+(  209) ! Arguments
+(  210) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  211) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  212) INTEGER (KIND=JPLIKB)  KLONGD                                 !   OUT
+(  213) 
+(  214) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  215) 
+(  216) CALL FASGRA_MT64                                               &
+(  217) &           (FA, KREP, CDNOMC, KLONGD)
+(  218) 
+(  219) END SUBROUTINE
+(  220) 
+(  221) SUBROUTINE FASGRA                                          &
+(  222) &           (KREP, CDNOMC, KLONGD)
+(  223) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  224) &                  FA_COM_DEFAULT_INIT,  &
+(  225) &                  NEW_FA_DEFAULT
+(  226) USE LFI_PRECISION
+(  227) IMPLICIT NONE
+(  228) ! Arguments
+(  229) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  230) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  231) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  232) 
+(  233) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  234) 
+(  235) CALL FASGRA_MT                                                 &
+(  236) &           (FA, KREP, CDNOMC, KLONGD)
+(  237) 
+(  238) END SUBROUTINE
+(  239) 
+(  240) SUBROUTINE FASGRA_MT                                           &
+(  241) &           (FA, KREP, CDNOMC, KLONGD)
+(  242) USE FA_MOD, ONLY : FA_COM
+(  243) USE LFI_PRECISION
+(  244) IMPLICIT NONE
+(  245) ! Arguments
+(  246) TYPE (FA_COM)          FA                                     ! INOUT
+(  247) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  248) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  249) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  250) ! Local integers
+(  251) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  252) INTEGER (KIND=JPLIKB)  ILONGD                                 !   OUT
+(  253) ! Convert arguments
+(  254) 
+(  255) 
+(  256) CALL FASGRA_MT64                                               &
+(  257) &           (FA, IREP, CDNOMC, ILONGD)
+(  258) 
+(  259) KREP       = INT (      IREP, JPLIKM)
+(  260) KLONGD     = INT (    ILONGD, JPLIKM)
+(  261) 
+(  262) END SUBROUTINE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 7
+
+(  263) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 8
+
+(    1) # 1 "fasgra.F90"
+(    1) SUBROUTINE FASGRA_MT64                                             &
+(    2) &                     (FA,  KREP, CDNOMC, KLONGD)
+(    3) # 4 "fasgra.F90"
+(    4) USE FA_MOD, ONLY : FA_COM, FACADR, LGRIB2_LAM_BF
+(    5) USE PARKIND1, ONLY : JPRB, JPIM
+(    6) USE LFI_PRECISION
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) # 9 "fasgra.F90"
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de calcul de la taille maximale de l'entete GRIB pour
+(   12) !     un champ horizontal.
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   15) !                CDNOMC (Entree) ==> Nom du cadre
+(   16) !                KLONGD (Sortie) ==> Taille max. de l'entete
+(   17) !
+(   18) !   Modified  R. El Khatib 20-Feb-2019 bugfix for LAM non-packed output fields in the single precision model
+(   19) !
+(   20) # 21 "fasgra.F90"
+(   21) TYPE(FA_COM)   :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KLONGD
+(   23) !
+(   24) CHARACTER CDNOMC*(*)
+(   25) !
+(   26) INTEGER (KIND=JPLIKB) :: J
+(   27) TYPE (FACADR), POINTER :: YLCADR
+(   28) INTEGER (KIND=JPLIKB) :: IRANGC, IRANGC2, INUMER2, IRANG2
+(   29) INTEGER (KIND=JPLIKB) :: ITYPTR, ISTROI
+(   30) !
+(   31) CHARACTER (LEN=*), PARAMETER :: CLNOM2 = '.dummy'
+(   32) !
+(   33) INTEGER (KIND=JPLIKB), PARAMETER :: IFLEVG = 1, ITRONC = 2, ILATIT = 4, IXLOPA = 5, INPAHE=(1+ILATIT)/2
+(   34) INTEGER (KIND=JPLIKB), ALLOCATABLE :: IOZPAR (:), INLOPA (:)
+(   35) REAL (KIND=JPDBLR),    ALLOCATABLE :: ZSINLA (:)
+(   36) # 37 "fasgra.F90"
+(   37) CHARACTER (LEN=16) :: CLNOMA, CLPREF, CLSUFF
+(   38) INTEGER (KIND=JPLIKB) :: ILGRSP, ILGRGP, ILCHSP, ILCHGP
+(   39) INTEGER (KIND=JPLIKB) :: ILNOMA, INBARI, INBARP, INIVAU
+(   40) INTEGER (KIND=JPLIKB) :: INGRIB, INBPDG, INBCSP, ISTRON, IPUILA, IDMOPL, ILNOMC
+(   41) # 42 "fasgra.F90"
+(   42) REAL (KIND=JPDBLR) :: ZCHAMP (1000)
+(   43) INTEGER (KIND=JPLIKB) :: IVALCO (1000)
+(   44) REAL (KIND=JPDBLR) :: ZFOHYB (2,IFLEVG+1)
+(   45) REAL (KIND=JPDBLR) :: ZUNDF
+(   46) LOGICAL :: LLMLAM, LLLTLN, LLUNDF, LLMODC, LLREDF
+(   47) INTEGER (KIND=JPLIKB) :: IVERSI
+(   48) # 49 "fasgra.F90"
+(   49) REAL (KIND=JPRB) :: ZHOOK_HANDLE
+(   50) # 51 "fasgra.F90"
+(   51) IF (LHOOK) CALL DR_HOOK('FASGRA_MT',0,ZHOOK_HANDLE)
+(   52) # 63 "fasgra.F90"
+(   63) CALL FANUCA_MT64 (FA, CDNOMC,IRANGC, .FALSE.)
+(   64) # 65 "fasgra.F90"
+(   65) YLCADR => FA%CADRE(IRANGC)
+(   66) # 67 "fasgra.F90"
+(   67) IF (YLCADR%IADDPK > 0) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 9
+
+(   68)   KLONGD = YLCADR%IADDPK
+(   69)   GOTO 1001
+(   70) ENDIF
+(   71) # 72 "fasgra.F90"
+(   72) ISTROI = FA%NSTROI
+(   73) FA%NSTROI = 1
+(   74) # 76 "fasgra.F90"
+(   76) LLMLAM = YLCADR%LIMLAM
+(   77) LLLTLN = YLCADR%SINLAT(2) < 0 .AND. LLMLAM
+(   78) # 80 "fasgra.F90"
+(   80) ! Taille d'un champ
+(   81) # 82 "fasgra.F90"
+(   82) IF (LLMLAM) THEN
+(   83)   ILCHSP = YLCADR%NSFLAM
+(   84) ELSE
+(   85)   ILCHSP = (1+YLCADR%MTRONC)*(2+YLCADR%MTRONC)
+(   86) ENDIF
+(   87) # 88 "fasgra.F90"
+(   88) ILCHGP = YLCADR%NVAPDG
+(   89) # 90 "fasgra.F90"
+(   90) ! Geometrie minimale
+(   91) # 92 "fasgra.F90"
+(   92) ALLOCATE (IOZPAR (FA%JPXIND), INLOPA (FA%JPXPAH), ZSINLA (FA%JPXGEO))
+(   93) # 94 "fasgra.F90"
+(   94) ZFOHYB (1,:) = 1._JPDBLR
+(   95) ZFOHYB (2,:) = 0._JPDBLR
+(   96) # 97 "fasgra.F90"
+(   97) IOZPAR = 1
+(   98) # 99 "fasgra.F90"
+(   99) IF (LLMLAM) THEN
+(  100)   ITYPTR = - ITRONC
+(  101)   ZSINLA (1:18) = YLCADR%SINLAT (1:18)
+(  102)   INLOPA (1:8)  = (/ 1_JPLIKB, 1_JPLIKB, &
+(  103)                  &   1_JPLIKB, ILATIT-2, &
+(  104)                  &   1_JPLIKB, IXLOPA-2, &
+(  105)                  &   0_JPLIKB, 0_JPLIKB /)
+(  106) ELSE
+(  107)   ZSINLA (1:INPAHE) = (/ (1._JPDBLR/REAL (J, JPDBLR), J = 1, INPAHE) /)
+(  108)   ITYPTR = YLCADR%NTYPTR
+(  109)   INLOPA = IXLOPA
+(  110) ENDIF
+(  111) # 113 "fasgra.F90"
+(  113) ! Definition d'un cadre sur la geometrie minimale
+(  114) # 115 "fasgra.F90"
+(  115) LLMODC = .FALSE.
+(  116) LLREDF = .FALSE.
+(  117) ILNOMC = INT (LEN (CLNOM2), JPLIKB)
+(  118) # 119 "fasgra.F90"
+(  119) CALL FACADI_MT64                                                                        &
+(  120) &           (FA, KREP, CLNOM2, ITYPTR, YLCADR%SSLAPO, YLCADR%SCLOPO, YLCADR%SSLOPO,     &
+(  121) &            YLCADR%SCODIL, ITRONC,  ILATIT, IXLOPA, INLOPA, IOZPAR, ZSINLA, IFLEVG,    &
+(  122) &            YLCADR%SPREFE, ZFOHYB (1,:), ZFOHYB (2,:), LLMODC, LLREDF, 0_JPLIKB,       &
+(  123) &            IRANGC2, ILNOMC, 1_JPLIKB)
+(  124) # 126 "fasgra.F90"
+(  126) ! Ouverture d'un fichier
+(  127) # 128 "fasgra.F90"
+(  128) INUMER2 = 0
+(  129) INBARP=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 10
+
+(  130) INBARI=0
+(  131) # 132 "fasgra.F90"
+(  132) CALL FANOUV_MT64 (FA, KREP, INUMER2, .FALSE., CLNOM2, 'UNKNOWN', .TRUE., &
+(  133)                 & .TRUE., 0_JPLIKB, INBARP, INBARI, CLNOM2)
+(  134) # 135 "fasgra.F90"
+(  135) CALL FANUMU_MT64 (FA, INUMER2, IRANG2)
+(  136) # 137 "fasgra.F90"
+(  137) ! Read grib_api templates
+(  138) # 139 "fasgra.F90"
+(  139) CALL FAIGRA_MT64 (FA)
+(  140) # 142 "fasgra.F90"
+(  142) ! Compactage et extrapolation de la taille d'un champ compacte
+(  143) # 144 "fasgra.F90"
+(  144) CALL GRIB_GET_API_VERSION (IVERSI)
+(  145) # 146 "fasgra.F90"
+(  146) IF (IVERSI == 11400) THEN
+(  147)   INGRIB = 121
+(  148) ELSE
+(  149)   INGRIB = 123
+(  150) ENDIF
+(  151) # 152 "fasgra.F90"
+(  152) CALL FAGOTE_MT64 (FA, KREP, INUMER2, INGRIB, 64_JPLIKB, 64_JPLIKB, 1_JPLIKB, 0_JPLIKB, 0_JPLIKB)
+(  153) # 154 "fasgra.F90"
+(  154) ZUNDF  = 0._JPDBLR
+(  155) LLUNDF = .FALSE.
+(  156) ZCHAMP = 0._JPDBLR
+(  157) IVALCO = 0_JPLIKB
+(  158) IF (LLLTLN) THEN
+(  159)   CLPREF = 'H'
+(  160)   INIVAU = 2
+(  161)   CLSUFF = 'TEMPERATURE'
+(  162)   ILGRGP = SIZE (IVALCO)
+(  163)   CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  164)                   & .FALSE., IVALCO, ILGRGP, LLUNDF, ZUNDF)
+(  165)   KLONGD = MAX (ILGRGP, 2)
+(  166) ELSE
+(  167)   CLPREF = 'S'
+(  168)   INIVAU = 1
+(  169)   CLSUFF = 'TEMPERATURE'
+(  170)   ILGRGP = SIZE (IVALCO)
+(  171)   CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  172)                   & .FALSE., IVALCO, ILGRGP, LLUNDF, ZUNDF)
+(  173)   IF ((.NOT. LLMLAM) .OR. LGRIB2_LAM_BF) THEN
+(  174)     ILGRSP = SIZE (IVALCO)
+(  175)     CALL FACGRA_MT64 (FA, KREP, IRANG2, CLPREF, INIVAU, CLSUFF, ZCHAMP, &
+(  176)                     & .TRUE.,  IVALCO, ILGRSP, LLUNDF, ZUNDF)
+(  177)   ELSE
+(  178)     ILGRSP = 0
+(  179)   ENDIF
+(  180)   KLONGD=MAX (                                                        &
+(  181)         &         2, ILGRGP + 2*(YLCADR%NNIVER+1) + YLCADR%NLATIT,    &
+(  182)         &         2, ILGRSP + 2*(YLCADR%NNIVER+1)                     &
+(  183)         &    )
+(  184) ENDIF
+(  185) # 186 "fasgra.F90"
+(  186) KLONGD = KLONGD + 100
+(  187) # 188 "fasgra.F90"
+(  188) CALL FAIRNO_MT64 (FA, KREP, INUMER2, 'KEEP')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 11
+
+(  189) # 190 "fasgra.F90"
+(  190) YLCADR%IADDPK = KLONGD
+(  191) # 192 "fasgra.F90"
+(  192) FA%NSTROI = ISTROI
+(  193) # 196 "fasgra.F90"
+(  196) 1001 CONTINUE
+(  197) # 198 "fasgra.F90"
+(  198) IF (LHOOK) CALL DR_HOOK('FASGRA_MT',1,ZHOOK_HANDLE)
+(  199) # 200 "fasgra.F90"
+(  200) END SUBROUTINE FASGRA_MT64
+(  201) # 202 "fasgra.F90"
+(  202) SUBROUTINE FASGRA64                                        &
+(  203) &           (KREP, CDNOMC, KLONGD)
+(  204) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  205) &                  FA_COM_DEFAULT_INIT,  &
+(  206) &                  NEW_FA_DEFAULT
+(  207) USE LFI_PRECISION
+(  208) IMPLICIT NONE
+(  209) ! Arguments
+(  210) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  211) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  212) INTEGER (KIND=JPLIKB)  KLONGD                                 !   OUT
+(  213) # 214 "fasgra.F90"
+(  214) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  215) # 216 "fasgra.F90"
+(  216) CALL FASGRA_MT64                                               &
+(  217) &           (FA, KREP, CDNOMC, KLONGD)
+(  218) # 219 "fasgra.F90"
+(  219) END SUBROUTINE
+(  220) # 221 "fasgra.F90"
+(  221) SUBROUTINE FASGRA                                          &
+(  222) &           (KREP, CDNOMC, KLONGD)
+(  223) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  224) &                  FA_COM_DEFAULT_INIT,  &
+(  225) &                  NEW_FA_DEFAULT
+(  226) USE LFI_PRECISION
+(  227) IMPLICIT NONE
+(  228) ! Arguments
+(  229) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  230) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  231) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  232) # 233 "fasgra.F90"
+(  233) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  234) # 235 "fasgra.F90"
+(  235) CALL FASGRA_MT                                                 &
+(  236) &           (FA, KREP, CDNOMC, KLONGD)
+(  237) # 238 "fasgra.F90"
+(  238) END SUBROUTINE
+(  239) # 240 "fasgra.F90"
+(  240) SUBROUTINE FASGRA_MT                                           &
+(  241) &           (FA, KREP, CDNOMC, KLONGD)
+(  242) USE FA_MOD, ONLY : FA_COM
+(  243) USE LFI_PRECISION
+(  244) IMPLICIT NONE
+(  245) ! Arguments
+(  246) TYPE (FA_COM)          FA                                     ! INOUT
+(  247) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  248) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:28      page 12
+
+(  249) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  250) ! Local integers
+(  251) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  252) INTEGER (KIND=JPLIKB)  ILONGD                                 !   OUT
+(  253) ! Convert arguments
+(  254) # 256 "fasgra.F90"
+(  256) CALL FASGRA_MT64                                               &
+(  257) &           (FA, IREP, CDNOMC, ILONGD)
+(  258) # 259 "fasgra.F90"
+(  259) KREP       = INT (      IREP, JPLIKM)
+(  260) KLONGD     = INT (    ILONGD, JPLIKM)
+(  261) # 262 "fasgra.F90"
+(  262) END SUBROUTINE

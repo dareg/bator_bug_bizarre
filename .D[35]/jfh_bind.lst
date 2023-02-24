@@ -1,0 +1,342 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: jfh_bind.F90
+
+(    1)  SUBROUTINE JFH_BIND()
+(    2) #ifndef RS6K
+(    3)  WRITE(0,*) "JFH_BIND compiled without -DRS6K so not binding"
+(    4)  RETURN
+(    5)  END SUBROUTINE JFH_BIND
+(    6) #else
+(    7) !     PURPOSE.
+(    8) !     --------
+(    9) !       Binds task and threads to CPUs for LL submitted jobs 
+(   10) !       (not for interactive jobs)
+(   11) 
+(   12) !     INTERFACE.
+(   13) !     ----------
+(   14) !       CALL JFH_BIND() 
+(   15) 
+(   16) !     METHOD.
+(   17) !     -------
+(   18) !       The first call to JFH_BIND routine binds CPUs according to 
+(   19) !       the env vars 
+(   20) !         JFH_BIND=map
+(   21) !         JFH_BMAP="N 0 1 2 ..."  where N is number of entries
+(   22) !       and prints out the binding
+(   23) !         e.g. for 4 threads: CPUs = 0 32 1 33
+(   24) 
+(   25) !       Subsequent calls, and calls without env vars set, will not bind, 
+(   26) !       but will print out the binding
+(   27) 
+(   28) !       JFH_BIND may be called before or after mpi_init
+(   29) 
+(   30) !       Note that IFS may also call EC_BIND, which binds differently to 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 3
+
+(   31) !       jfh_bind, but it will not be called (in CY37R3) if:
+(   32) !         mpi_init is called before mpl_init
+(   33) !         the job is not run on whole nodes
+(   34) 
+(   35) !       Serial (non MPI) version can be created by compiling with -DSERIAL
+(   36) 
+(   37) !     EXTERNALS.   
+(   38) !     ----------   
+(   39) !       SYSTEM             Get host name
+(   40) !       MPI_INITIALIZED    Check if mpi iniitalised
+(   41) !       MPI_COMM_RANK      Get rank of mpi tasK
+(   42) !       GETENV             Get environment variable
+(   43) !       OMP_GET_THREAD_NUM Get thread num
+(   44) !       --- following in jfhc.c-----
+(   45) !       AFF                Get cpu num & CPUs per node
+(   46) !       SMTCTL             Get CPU ids for SMT id
+(   47) !       IS_SMT_ON          Check for SMT 
+(   48) !       JBIND              Bind thread to processor
+(   49) 
+(   50) !     AUTHOR.
+(   51) !     -------
+(   52) !        J.Hague,  IBM,  Aug 2011  
+(   53) !     ------------------------------------------------------------------
+(   54) 
+(   55)  IMPLICIT NONE
+(   56)  INTEGER OMP_GET_MAX_THREADS
+(   57)  INTEGER OMP_GET_THREAD_NUM
+(   58)  INTEGER, ALLOCATABLE :: ITA(:), MAP(:)
+(   59)  INTEGER, ALLOCATABLE :: JCPU(:), ID0(:), ID1(:)
+(   60)  INTEGER IP,IT,NT,MP,IPROC,NMAP
+(   61)  INTEGER ICPU,IER
+(   62)  INTEGER I,II,MDUM
+(   63)  INTEGER ISMT, IS_SMT_ON  
+(   64)  INTEGER IFIRST, IPRT, IRA
+(   65)  LOGICAL LFLG
+(   66)  CHARACTER*120 C,C1,C2
+(   67)  CHARACTER*3 CB, CC
+(   68)  CHARACTER*1000 CBM
+(   69)  SAVE        CB,CBM
+(   70)  DATA IFIRST/0/
+(   71) #ifndef SERIAL
+(   72) #include "mpif.h"
+(   73) #endif
+(   74) 
+(   75)  CALL SYSTEM("hostname")
+(   76) 
+(   77) #ifndef SERIAL
+(   78)  CALL MPI_INITIALIZED(LFLG,IER)
+(   79)  IF(LFLG) THEN
+(   80)    CALL MPI_COMM_RANK(MPI_COMM_WORLD,IP,IER)
+(   81)  ELSE
+(   82) #ifdef RS6K
+(   83)   CALL GET_ENVIRONMENT_VARIABLE("MP_CHILD",VALUE=C)
+(   84) #endif
+(   85)   READ(C,*) IP
+(   86)  ENDIF
+(   87) !write(0,*) "LFLG,ip=",LFLG,ip
+(   88) #else
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 4
+
+(   89)  IP=0
+(   90) #endif
+(   91) 
+(   92)  CALL AFF(MDUM,MP)
+(   93)  ALLOCATE(MAP(MP+1))
+(   94)  ALLOCATE(JCPU(MP))
+(   95)  ALLOCATE(ID0(MP/2))
+(   96)  ALLOCATE(ID1(MP/2))
+(   97)  NT=OMP_GET_MAX_THREADS()
+(   98)  ALLOCATE(ITA(NT))
+(   99) 
+(  100)  CALL GET_ENVIRONMENT_VARIABLE("JFH_BIND",CB)
+(  101)  IF(IFIRST.EQ.0) THEN
+(  102)    IFIRST=1
+(  103)    IF(CB.EQ."yes".OR.CB.EQ."YES".OR.CB.EQ."map".OR.CB.EQ."MAP") THEN
+(  104)      DO I=1,MP
+(  105)        JCPU(I)=I-1
+(  106)      ENDDO
+(  107) 
+(  108) !---------Must reset jcpu if SMT ON-----------------------------
+(  109)      ISMT=IS_SMT_ON()
+(  110) !    write(0,*) "ismt=",ismt
+(  111)      IF(ISMT .NE. -99) THEN
+(  112)        CALL SMTCTL(MP/2, ID0, ID1)
+(  113)        DO I=1,MP/2
+(  114)         JCPU(2*I-1)=ID0(I)
+(  115)         JCPU(2*I  )=ID1(I)
+(  116)        ENDDO
+(  117)      ENDIF
+(  118) !---------------------------------------------------------------
+(  119) !    write(0,*) "jcpu=",jcpu
+(  120) 
+(  121)      MAP(1)=-1
+(  122)      NMAP=MP
+(  123)      IF(CB.EQ."map".OR.CB.EQ."MAP") THEN
+(  124)         CALL GET_ENVIRONMENT_VARIABLE("JFH_BMAP",CBM)
+(  125)       READ(CBM,*) NMAP,(MAP(I),I=1,MIN(MP,NMAP))
+(  126) !       write(6,*) "NMAP,Map=",NMAP,(MAP(I),I=1,NMAP)
+(  127)      ENDIF
+(  128) 
+(  129)      IRA=0
+(  130)      CALL GET_ENVIRONMENT_VARIABLE("JFH_RA_DET",CC)
+(  131)      IF(CC.EQ."yes".OR.CC.EQ."YES") ira=1
+(  132) !    write(0,*) "CC,ira=",CC,ira
+(  133)      IPRT=0
+(  134)      CALL GET_ENVIRONMENT_VARIABLE("JFH_RA_PRT",CC)
+(  135)      IF(CC.EQ."yes".OR.CC.EQ."YES") iprt=1
+(  136) 
+(  137) !$OMP PARALLEL 
+(  138)      IF(IRA==1) THEN
+(  139) !      write(0,*) "Calling ra_det"
+(  140)        CALL RA_DET(2,IPRT)
+(  141)      ENDIF
+(  142) !$OMP END PARALLEL 
+(  143) 
+(  144) !$OMP PARALLEL PRIVATE(IT,IPROC)
+(  145)      IT=OMP_GET_THREAD_NUM()
+(  146)      IF(IRA==1) CALL RA_CHECK(2,IPRT)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 5
+
+(  147)      IPROC=NT*IP+IT
+(  148)      IPROC=MOD(IPROC,NMAP)
+(  149) !    write(0,*) "i,it,IPROC=",i,it,IPROC
+(  150) !    write(0,*) "it,IPROC,MAP,jcpu,MAP",it,IPROC,MAP(IPROC+1),jcpu(MAP(IPROC+1)+1)
+(  151)      IF(MAP(1).EQ.-1) CALL JBIND(JCPU(IPROC+1))
+(  152)      IF(MAP(1).NE.-1) CALL JBIND(JCPU(MAP(IPROC+1)+1))
+(  153) !$OMP END PARALLEL 
+(  154) 
+(  155)    ENDIF
+(  156)  ENDIF
+(  157) 
+(  158) !$OMP PARALLEL PRIVATE(it,icpu,mdum)
+(  159)    IT=OMP_GET_THREAD_NUM()
+(  160)    CALL AFF(ICPU,MDUM)
+(  161)    ITA(IT+1)=ICPU
+(  162) !$OMP END PARALLEL
+(  163)  WRITE(0,*) "CPUs = ",(ITA(I),I=1,NT)
+(  164)  DEALLOCATE(ITA,MAP,JCPU,ID0,ID1)
+(  165)  END SUBROUTINE JFH_BIND
+(  166) #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:27      page 6
+
+(    1) # 1 "jfh_bind.F90"
+(    1)  SUBROUTINE JFH_BIND()
+(    2) # 3 "jfh_bind.F90"
+(    3)  WRITE(0,*) "JFH_BIND compiled without -DRS6K so not binding"
+(    4)  RETURN
+(    5)  END SUBROUTINE JFH_BIND

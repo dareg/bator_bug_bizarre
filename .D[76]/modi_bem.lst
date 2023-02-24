@@ -1,0 +1,249 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:55      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:55      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_bem.F90
+
+(    1) !depfile:bem.F90
+(    2) MODULE MODI_BEM
+(    3) INTERFACE
+(    4)         SUBROUTINE BEM(BOP, T, B, DMT, PTSTEP, PSUNTIME, KDAY, PPS, PRHOA, PT_CAN,  &
+(    5)                        PQ_CAN, PU_CAN, PHU_BLD, PT_RAD_IND, PFLX_BLD_FL, PFLX_BLD_MA,&
+(    6)                        PRADHT_IN, PRAD_RF_MA, PRAD_RF_FL, PRAD_WL_MA, PRAD_WL_FL,&
+(    7)                        PRAD_WIN_MA, PRAD_WIN_FL, PCONV_RF_BLD, PCONV_WL_BLD,     &
+(    8)                        PCONV_WIN_BLD, PLOAD_IN_FL, PLOAD_IN_MA                )
+(    9) USE MODD_BEM_OPTION_n, ONLY : BEM_OPTIONS_t
+(   10) USE MODD_TEB_n, ONLY : TEB_t
+(   11) USE MODD_BEM_n, ONLY : BEM_t
+(   12) USE MODD_DIAG_MISC_TEB_n, ONLY : DIAG_MISC_TEB_t
+(   13) TYPE(BEM_OPTIONS_t), INTENT(INOUT) :: BOP
+(   14) TYPE(TEB_t), INTENT(INOUT) :: T
+(   15) TYPE(BEM_t), INTENT(INOUT) :: B
+(   16) TYPE(DIAG_MISC_TEB_t), INTENT(INOUT) :: DMT
+(   17) REAL,                INTENT(IN)   :: PTSTEP        ! Time step
+(   18) REAL, DIMENSION(:),  INTENT(IN)   :: PSUNTIME       ! current solar time since midnight (solar time, s)
+(   19) INTEGER,             INTENT(IN)   :: KDAY          ! Simulation day
+(   20) REAL, DIMENSION(:),   INTENT(IN)  :: PPS          ! Canyon air pressure [Pa]
+(   21) REAL, DIMENSION(:),   INTENT(IN)  :: PRHOA        ! Air density at the lowest level [kg m-3]
+(   22) REAL, DIMENSION(:),   INTENT(IN)  :: PT_CAN    ! Canyon air temperature [K]
+(   23) REAL, DIMENSION(:),   INTENT(IN)  :: PQ_CAN    ! Canyon air specific humidity [kg kg-1]
+(   24) REAL, DIMENSION(:),   INTENT(IN)  :: PU_CAN    ! Canyon wind speed (m s-1)
+(   25) REAL, DIMENSION(:),   INTENT(OUT)  :: PHU_BLD       ! Indoor relative humidity 0 < (-) < 1
+(   26) REAL, DIMENSION(:),   INTENT(IN)  :: PT_RAD_IND    ! Indoor mean radiant temperature [K]
+(   27) REAL, DIMENSION(:),   INTENT(OUT)  :: PFLX_BLD_FL! Heat flux from indoor air to floor 
+(   28) REAL, DIMENSION(:),   INTENT(OUT)  :: PFLX_BLD_MA ! Heat flux from indoor air to mass 
+(   29) REAL, DIMENSION(:),   INTENT(IN) :: PRADHT_IN     ! Indoor radiant heat transfer coefficient
+(   30) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_RF_MA  ! Rad. fluxes between roof and mass
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:55      page 3
+
+(   31) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_RF_FL ! Rad. fluxes between roof and floor
+(   32) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WL_MA  ! Rad. fluxes between wall and mass
+(   33) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WL_FL ! Rad. fluxes between wall and floor
+(   34) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WIN_MA   ! Rad. fluxes between wind. and mass
+(   35) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WIN_FL  ! Rad. fluxes between wind. and floor
+(   36) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_RF_BLD  ! Conv. fluxes between roof and indoor air
+(   37) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_WL_BLD  ! Conv. fluxes between wall and indoor air
+(   38) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_WIN_BLD   ! Conv. fluxes between wind. and indoor air
+(   39) REAL, DIMENSION(:)  , INTENT(IN)  :: PLOAD_IN_FL  ! solar + int heat gain on floor W/m2 [floor]
+(   40) REAL, DIMENSION(:)  , INTENT(IN)  :: PLOAD_IN_MA   ! solar + int heat gain on floor W/m2 [mass]
+(   41) END SUBROUTINE BEM
+(   42) 
+(   43) END INTERFACE
+(   44) END MODULE MODI_BEM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:55      page 4
+
+(    1) # 1 "modi_bem.F90"
+(    1) !depfile:bem.F90
+(    2) MODULE MODI_BEM
+(    3) INTERFACE
+(    4)         SUBROUTINE BEM(BOP, T, B, DMT, PTSTEP, PSUNTIME, KDAY, PPS, PRHOA, PT_CAN,  &
+(    5)                        PQ_CAN, PU_CAN, PHU_BLD, PT_RAD_IND, PFLX_BLD_FL, PFLX_BLD_MA,&
+(    6)                        PRADHT_IN, PRAD_RF_MA, PRAD_RF_FL, PRAD_WL_MA, PRAD_WL_FL,&
+(    7)                        PRAD_WIN_MA, PRAD_WIN_FL, PCONV_RF_BLD, PCONV_WL_BLD,     &
+(    8)                        PCONV_WIN_BLD, PLOAD_IN_FL, PLOAD_IN_MA                )
+(    9) USE MODD_BEM_OPTION_n, ONLY : BEM_OPTIONS_t
+(   10) USE MODD_TEB_n, ONLY : TEB_t
+(   11) USE MODD_BEM_n, ONLY : BEM_t
+(   12) USE MODD_DIAG_MISC_TEB_n, ONLY : DIAG_MISC_TEB_t
+(   13) TYPE(BEM_OPTIONS_t), INTENT(INOUT) :: BOP
+(   14) TYPE(TEB_t), INTENT(INOUT) :: T
+(   15) TYPE(BEM_t), INTENT(INOUT) :: B
+(   16) TYPE(DIAG_MISC_TEB_t), INTENT(INOUT) :: DMT
+(   17) REAL,                INTENT(IN)   :: PTSTEP        ! Time step
+(   18) REAL, DIMENSION(:),  INTENT(IN)   :: PSUNTIME       ! current solar time since midnight (solar time, s)
+(   19) INTEGER,             INTENT(IN)   :: KDAY          ! Simulation day
+(   20) REAL, DIMENSION(:),   INTENT(IN)  :: PPS          ! Canyon air pressure [Pa]
+(   21) REAL, DIMENSION(:),   INTENT(IN)  :: PRHOA        ! Air density at the lowest level [kg m-3]
+(   22) REAL, DIMENSION(:),   INTENT(IN)  :: PT_CAN    ! Canyon air temperature [K]
+(   23) REAL, DIMENSION(:),   INTENT(IN)  :: PQ_CAN    ! Canyon air specific humidity [kg kg-1]
+(   24) REAL, DIMENSION(:),   INTENT(IN)  :: PU_CAN    ! Canyon wind speed (m s-1)
+(   25) REAL, DIMENSION(:),   INTENT(OUT)  :: PHU_BLD       ! Indoor relative humidity 0 < (-) < 1
+(   26) REAL, DIMENSION(:),   INTENT(IN)  :: PT_RAD_IND    ! Indoor mean radiant temperature [K]
+(   27) REAL, DIMENSION(:),   INTENT(OUT)  :: PFLX_BLD_FL! Heat flux from indoor air to floor 
+(   28) REAL, DIMENSION(:),   INTENT(OUT)  :: PFLX_BLD_MA ! Heat flux from indoor air to mass 
+(   29) REAL, DIMENSION(:),   INTENT(IN) :: PRADHT_IN     ! Indoor radiant heat transfer coefficient
+(   30) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_RF_MA  ! Rad. fluxes between roof and mass
+(   31) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_RF_FL ! Rad. fluxes between roof and floor
+(   32) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WL_MA  ! Rad. fluxes between wall and mass
+(   33) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WL_FL ! Rad. fluxes between wall and floor
+(   34) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WIN_MA   ! Rad. fluxes between wind. and mass
+(   35) REAL, DIMENSION(:)  , INTENT(IN)  :: PRAD_WIN_FL  ! Rad. fluxes between wind. and floor
+(   36) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_RF_BLD  ! Conv. fluxes between roof and indoor air
+(   37) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_WL_BLD  ! Conv. fluxes between wall and indoor air
+(   38) REAL, DIMENSION(:)  , INTENT(IN)  :: PCONV_WIN_BLD   ! Conv. fluxes between wind. and indoor air
+(   39) REAL, DIMENSION(:)  , INTENT(IN)  :: PLOAD_IN_FL  ! solar + int heat gain on floor W/m2 [floor]
+(   40) REAL, DIMENSION(:)  , INTENT(IN)  :: PLOAD_IN_MA   ! solar + int heat gain on floor W/m2 [mass]
+(   41) END SUBROUTINE BEM
+(   42) # 43 "modi_bem.F90"
+(   43) END INTERFACE
+(   44) END MODULE MODI_BEM

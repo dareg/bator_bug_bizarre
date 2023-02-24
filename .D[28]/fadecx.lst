@@ -1,0 +1,1255 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fadecx.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FADECX_MT64                                          &
+(    4) &                     (FA, KREP, KRANG, CDNOMA, KVALCO, KLONGA, &
+(    5) &                      PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF,  &
+(    6) &                      LDUNDF, PUNDF, YDGR1TAB)
+(    7) USE FA_MOD, ONLY : FA_COM, JPNIIL, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   14) !      Controle de coherence et decodage (GRIBEX) d'un CHAMP
+(   15) !      HORIZONTAL venant d'etre lu sur un fichier ARPEGE/ALADIN.
+(   16) !       ( DECodage d'un champ gribeX )
+(   17) !**
+(   18) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   19) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   20) !                CDNOMA (Entree) ==> Nom d'article (prefabrique);
+(   21) !    ( Tableau ) KVALCO (Entree) ==> Donnees issues de la lecture;
+(   22) !                KLONGA (Entree) ==> Nombre de mots lus;
+(   23) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu;
+(   24) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   25) !                                    par des coefficients spectraux;
+(   26) !                CDPREF (Entree) ==> Prefixe au sens FA
+(   27) !                KNIVAU (Entree) ==> Niveau au sens FA
+(   28) !                CDSUFF (Entree) ==> Suffixe au sens FA
+(   29) !                LDUNDF (Entree) ==> Si ce champ a des valeurs indefinies
+(   30) !                                    alors inserer PUNDF sur les points
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 3
+
+(   31) !                                    manquants
+(   32) !                PUNDF  (Entree) ==> Dans le cas ou LDUNDF est vrai,
+(   33) !                                    valeur non definie a inserer dans le champ
+(   34) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   35) !                                    indefinies
+(   36) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai (en sortie),
+(   37) !                                    valeur non definie a inserer dans le champ
+(   38) !*
+(   39) !  MODIFICATION :
+(   40) !         JM AUDOIN  15/05/2007  Partie 3.1  Blindage controle changement unite
+(   41) !
+(   42) !
+(   43) !
+(   44) TYPE(FA_COM)   :: FA
+(   45) TYPE(FAGR1TAB) :: YDGR1TAB
+(   46) INTEGER (KIND=JPLIKB) KREP, KRANG, KLONGA, KNIVAU
+(   47) !
+(   48) INTEGER (KIND=JPLIKB), TARGET :: KVALCO(KLONGA)
+(   49) REAL (KIND=JPDBLR) PCHAMP(*)
+(   50) INTEGER (KIND=JPLIKB), POINTER :: IVALCO (:)
+(   51) !
+(   52) REAL (KIND=JPDBLR) PUNDF
+(   53) !
+(   54) LOGICAL LDCOSP, LDUNDF, LLUNDF, LLSWAP
+(   55) !
+(   56) CHARACTER CDNOMA*(*), CDPREF*(*), CDSUFF*(*)
+(   57) !
+(   58) #include "fagribex.h"
+(   59) !
+(   60) REAL (KIND=JPDBLR) ZSEC2(10+2*(FA%JPXNIV+1)), ZSEC3(2)
+(   61) REAL (KIND=JPDBLR), ALLOCATABLE ::  ZSEC4(:), ZCHAMP(:)
+(   62) REAL (KIND=JPDBLR) ZUNDF
+(   63) REAL (KIND=JPDBLR) ZPULAP
+(   64) !
+(   65) INTEGER (KIND=JPLIKB) ISEC0(2), ISEC1(FA%JPSEC1)
+(   66) INTEGER (KIND=JPLIKB) ISEC2(FA%JPSEC2), ISEC3(2)
+(   67) INTEGER (KIND=JPLIKB) ISEC4(FA%JPSEC4)
+(   68) INTEGER (KIND=JPLIKB) ILCHAM, ISTRIA, IDECAL
+(   69) INTEGER (KIND=JPLIKB) IPOFIN, ILONSEC2
+(   70) INTEGER (KIND=JPLIKB) ITRONC, IIND, ILOW, IHIGH
+(   71) INTEGER (KIND=JPLIKB) IL, IADD, IRANGC, IILCHAM
+(   72) INTEGER (KIND=JPLIKB) INIMES
+(   73) INTEGER (KIND=JPLIKB) IVALC3, IVALC4, IVALC5, IWORD
+(   74) INTEGER (KIND=JPLIKB) INUMER, ILENG, IRET, IDX
+(   75) INTEGER (KIND=JPLIKB) JN, JM, JLAT, JLON, J
+(   76) INTEGER (KIND=JPLIKB) IFAORI, IFAMOD 
+(   77) INTEGER (KIND=JPLIKB) INIPAR (8)
+(   78) !
+(   79) LOGICAL LLMLAM, LLCOSP
+(   80) !
+(   81) CHARACTER(LEN=1) CLOPER
+(   82) CHARACTER(LEN=8) CLGRIB
+(   83) !
+(   84) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   85) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   86) LOGICAL                  LLFATA
+(   87) TYPE (FAGR1TAB)          YLGR1TAB
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 4
+
+(   89) !**
+(   90) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   91) !-----------------------------------------------------------------------
+(   92) !
+(   93) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   94) IF (LHOOK) CALL DR_HOOK('FADECX_MT',0,ZHOOK_HANDLE)
+(   95) KREP=0
+(   96) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   97)   KREP=-66
+(   98)   GOTO 1001
+(   99) ENDIF
+(  100) !
+(  101) INUMER=FA%FICHIER(KRANG)%NULOGI
+(  102) !
+(  103) CLOPER='D'
+(  104) ISTRIA=0
+(  105) !**
+(  106) !     2.  -  CONTROLE DES DONNEES DE L'ARTICLE
+(  107) !-----------------------------------------------------------------------
+(  108) !
+(  109) IF (KVALCO(1).NE.3.OR.                         &
+(  110) &    KVALCO(2).LT.0.OR.KVALCO(2).GT.1.OR.      &
+(  111) &    (KVALCO(2).EQ.1.AND.KVALCO(4).LT.0)) THEN
+(  112)   KREP=-91
+(  113)   GOTO 1001
+(  114) ELSE
+(  115)   LLCOSP=KVALCO(2).EQ.1
+(  116) ENDIF
+(  117) !
+(  118) IF ((LLCOSP.AND..NOT.LDCOSP).OR.(.NOT.LLCOSP.AND.LDCOSP)) THEN
+(  119)   KREP=-92
+(  120)   GOTO 1001
+(  121) ENDIF
+(  122) !
+(  123) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(  124) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  125) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  126) !
+(  127) IF (LDCOSP) THEN
+(  128)   IF (LLMLAM) THEN
+(  129)     ILCHAM=FA%CADRE(IRANGC)%NSFLAM
+(  130)     ILONSEC2=21+ITRONC
+(  131)   ELSE    
+(  132)     ILCHAM=(1+ITRONC)*(2+ITRONC)
+(  133)     ILONSEC2=22
+(  134)   ENDIF   
+(  135) ELSE
+(  136)   ILCHAM=FA%CADRE(IRANGC)%NVAPDG
+(  137)   IF (LLMLAM) THEN
+(  138)     ILONSEC2=22
+(  139)   ELSE
+(  140)     ILONSEC2=22+FA%CADRE(IRANGC)%NLATIT
+(  141)   ENDIF
+(  142) ENDIF
+(  143) !
+(  144) ALLOCATE (ZCHAMP(ILCHAM), ZSEC4(ILCHAM))
+(  145) !
+(  146) !**
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 5
+
+(  147) !     3.  -  DECODAGE GRIBEX DES DONNEES DE L'ARTICLE
+(  148) !-----------------------------------------------------------------------
+(  149) !
+(  150) IDECAL=3
+(  151) IVALC3=KVALCO(3)
+(  152) IF (LDCOSP) THEN
+(  153)   IDECAL=IDECAL+2
+(  154) ! IVALC4=ss-tronc non compactee
+(  155) ! IVALC5=puissance de laplacien
+(  156)   IVALC4=KVALCO(4)
+(  157)   IVALC5=KVALCO(5)
+(  158) ENDIF
+(  159) 
+(  160) IILCHAM=ILCHAM
+(  161) !
+(  162) ! Pour Aladin, le calcul du nb de coeff spectraux qui ont
+(  163) ! ete compactes est plus complexe (certains ont ete retires
+(  164) ! pour ne pas etre compactes: ss-tronc triangulaire).
+(  165) !
+(  166) IF (LDCOSP.AND.LLMLAM) THEN
+(  167)   ISTRIA=4*(1+FA%CADRE(IRANGC)%NOZPAR(1)+FA%CADRE(IRANGC)%NOZPAR(2)+ &
+(  168) &            IVALC4*(IVALC4-1)/2)
+(  169)   IILCHAM=ILCHAM-ISTRIA
+(  170) ENDIF
+(  171) 
+(  172) ! C'est un champ GRIB, mais les octets ont peut-etre ete 
+(  173) ! inverses s'il a ete produit sur une architecture differente
+(  174) ! On cherche donc a deviner s'il faut les inverser a nouveau,
+(  175) ! et on inverse le cas echeant
+(  176) 
+(  177) CLGRIB=TRANSFER (KVALCO(IDECAL+1), CLGRIB)
+(  178) LLSWAP = (CLGRIB (1:4) /= 'GRIB') .AND. (CLGRIB (5:8) == 'BIRG')
+(  179) IF (LLSWAP) THEN
+(  180)   ALLOCATE (IVALCO (KLONGA))
+(  181)   CALL JSWAP (IVALCO(IDECAL+1), KVALCO(IDECAL+1), 8_JPLIKM, INT (KLONGA-IDECAL, JPLIKM))
+(  182) ELSE
+(  183)   IVALCO => KVALCO
+(  184) ENDIF
+(  185) 
+(  186) ! ILENG=longueur disponible en entiers declares INTEGER dans KVALCO.
+(  187) ILENG=2*(KLONGA-IDECAL)
+(  188) !
+(  189) !     3.1 -  APPEL A GRIBEX
+(  190) !
+(  191) IWORD=0
+(  192) IRET=-1
+(  193) 
+(  194) CALL FAGRIBEX(ISEC0,ISEC1,ISEC2,ZSEC2,ISEC3,ZSEC3,ISEC4,          &
+(  195) &             PCHAMP,IILCHAM,IVALCO(IDECAL+1:KLONGA),ILENG,IWORD, &
+(  196) &             CLOPER,IRET)
+(  197) 
+(  198) IF (LLSWAP) THEN
+(  199)   DEALLOCATE (IVALCO)
+(  200)   NULLIFY (IVALCO)
+(  201) ENDIF
+(  202) 
+(  203) IF (FA%LFAMOP) THEN
+(  204)   WRITE (UNIT=FA%NULOUT,FMT=*)                          &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 6
+
+(  205) &         ' FADECX: KLONGA, IDECAL, ILENG, IILCHAM = ', &
+(  206) &         KLONGA, IDECAL, ILENG, IILCHAM
+(  207)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ISEC0 = ',ISEC0
+(  208)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ISEC1 = ',ISEC1
+(  209)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  210) &                     '       * ILONSEC2 ! ISEC2(1:ILONSEC2) = ', &
+(  211) &                     ILONSEC2, ' ! ', ISEC2(1:ILONSEC2)
+(  212)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ZSEC2(1:2) = ',ZSEC2(1:2)
+(  213)   IF (ISEC2(12).GT.0) WRITE (UNIT=FA%NULOUT,FMT=*)            &
+(  214) &          '       * ISEC2(12) ! ZSEC2(11:10+ISEC2(12)) = ',  &
+(  215) &                    ISEC2(12), ' ! ', ZSEC2(11:10+ISEC2(12))
+(  216)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * FA%JPSEC4 ! ISEC4 = ', &
+(  217) &                               FA%JPSEC4,' ! ',ISEC4
+(  218) ENDIF
+(  219) !
+(  220) !
+(  221) IF (KREP.NE.0) THEN
+(  222)   GOTO 1001
+(  223) ENDIF
+(  224) !
+(  225) !*
+(  226) !     3.3 -  CONTROLES DE COHERENCE
+(  227) !-----------------------------------------------------------------------
+(  228) !
+(  229) 
+(  230) IF (IRET.GT.0) THEN
+(  231) ! Erreur rapportee par GRIBEX
+(  232)   KREP=-1000-IRET
+(  233)   WRITE (UNIT=FA%NULOUT,FMT=*) ' FADECX: IRET, KREP = ',IRET, KREP 
+(  234)   GOTO 1001
+(  235) ELSEIF (IRET.LT.0 .AND. ((IRET /= -4) .OR. .NOT. LDUNDF)) THEN ! -4 = "A bitmap was encountered"
+(  236) ! Warning rapporte par GRIBEX
+(  237)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  238)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  239) &         '!------------------------------------------'
+(  240)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  241) &         '!           FADECX:   WARNING !!!         !'
+(  242)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  243) &         '!------------------------------------------'
+(  244)   WRITE (UNIT=FA%NULOUT,FMT=*) ' Code retour de GRIBEX = ', &
+(  245) &        IRET,' pour le champ: ',CDNOMA
+(  246)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  247) ENDIF
+(  248) IF (ISEC4(1).LT.IILCHAM) THEN
+(  249)   KREP=-93
+(  250)   IF (FA%LFAMOP) THEN
+(  251)     WRITE (UNIT=FA%NULOUT,FMT=*)                                 &
+(  252) &         'FADECX: ERREUR !!! Nbre de valeurs decodees = ',      &
+(  253) &            ISEC4(1),' et nbre de valeurs attendues = ',IILCHAM
+(  254)   ENDIF
+(  255)   GOTO 1001
+(  256) ELSEIF (ISEC4(1).GT.IILCHAM) THEN
+(  257)   KREP=-94
+(  258)   IF (FA%LFAMOP) THEN
+(  259)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  260) &         'FADECX: ERREUR !!! Nbre de valeurs decodees = ',   &
+(  261) &         ISEC4(1),' et nbre de valeurs attendues = ',IILCHAM
+(  262)   ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 7
+
+(  263)   IF (LLMOER(KREP,KRANG)) GOTO 1001
+(  264) ENDIF
+(  265) !
+(  266) IF (IVALC3.NE.ISEC4(2).AND.FA%LFAMOP) THEN
+(  267)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  268) &     ' FADECX: WARNING, le nb de bits de codage qui avait',      &
+(  269) &     ' ete demande ( ',IVALC3,' ) est different de celui qui a', &
+(  270) &          ' ete finalement retenu ( ',ISEC4(2),' ) par GRIBEX.'
+(  271)   WRITE (UNIT=FA%NULOUT,FMT=*)                       &
+(  272) &         ' => Gain de place sans perte de precision'
+(  273) ENDIF
+(  274) !
+(  275) !  Dans le cas d'un champ spectral ARPEGE
+(  276) !
+(  277) IF (LDCOSP.AND..NOT.LLMLAM.AND.(ISEC4(18).NE.IVALC4 &
+(  278) &    .OR.ISEC4(17).NE.IVALC5)) THEN                  
+(  279)   IF (FA%LFAMOP) THEN
+(  280)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  281) &            'Ss-tronc non compactee dans GRIB = ',ISEC4(18), &
+(  282) &            ' et on attend: ',IVALC4
+(  283)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  284) &            'Puissance de laplacien dans GRIB = ',ISEC4(17), &
+(  285) &            ' et on attend: ',IVALC5
+(  286)   ENDIF
+(  287)   KREP=-95
+(  288)   GOTO 1001
+(  289) ENDIF
+(  290) !
+(  291) ! Controle de l'adequation entre le nb de mots lus par LFI et le detail:
+(  292) ! ( enrobage FA + message GRIBEX + eventuelles valeurs non-compactees ).
+(  293) !
+(  294) IWORD=1+(ISEC0(1)-1)/JPLIKB
+(  295) IF (FA%LFAMOP) THEN
+(  296)   WRITE (UNIT=FA%NULOUT,FMT=*) ' FADECX: IWORD = ',IWORD
+(  297) ENDIF
+(  298) IPOFIN=IDECAL+IWORD
+(  299) IF (LDCOSP) THEN
+(  300)   IF (LLMLAM) THEN
+(  301)     IPOFIN=IPOFIN+ISTRIA
+(  302)   ELSE
+(  303)     IPOFIN=IPOFIN+(1+IVALC4)*(2+IVALC4)
+(  304)   ENDIF
+(  305) ENDIF
+(  306) !
+(  307) IF (KLONGA.LT.IPOFIN) THEN
+(  308)   KREP=-93
+(  309)   GOTO 1001
+(  310) ELSEIF (KLONGA.GT.IPOFIN) THEN
+(  311)   KREP=-94
+(  312)   IF (LLMOER(KREP,KRANG)) GOTO 1001
+(  313) ENDIF
+(  314) !*
+(  315) !     3.2 -  DEMODULATION DES COEFF. SPEC. ALADIN QUI ONT ETE COMPACTES
+(  316) !-----------------------------------------------------------------------
+(  317) !
+(  318) IF (LDCOSP.AND.LLMLAM) THEN
+(  319) !  Transfert des donnees decodees et modulees entieres en nombres reels
+(  320) !  pour les demoduler. Comme PCHAMP est a profil implicite, on ne peut
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 8
+
+(  321) !  s'en servir pour la fonction TRANSFER => il faut passer par ICHAMP!
+(  322)   ZSEC4(1:IILCHAM) = PCHAMP(1:IILCHAM)
+(  323)   ZCHAMP=0._JPDBLR
+(  324)   ZPULAP=REAL(IVALC5,JPDBLR) * (-0.001_JPDBLR)
+(  325)   IIND=0
+(  326)   DO JM=1,FA%CADRE(IRANGC)%NOMPAR(2)
+(  327)     ILOW=2+2*JM+1
+(  328)     IADD=4*MAX(IVALC4+1-JM,1_JPLIKB )
+(  329) !
+(  330)     DO IDX=FA%CADRE(IRANGC)%NOMPAR(ILOW)+IADD,FA%CADRE(IRANGC)%NOMPAR(ILOW+1)
+(  331)       IIND=IIND+1        
+(  332)       JN=(IDX-FA%CADRE(IRANGC)%NOMPAR(ILOW))/4
+(  333)       ZCHAMP(IDX)=ZSEC4(IIND) *                 &
+(  334) &           ((REAL(JN**2+JM**2,JPDBLR))**ZPULAP)
+(  335)     ENDDO
+(  336)   ENDDO
+(  337) !  Transfert des donnees decodees et demodulees reelles en nombres entiers
+(  338) !  disposes aux bons endroits du tableau definitif.
+(  339)   PCHAMP(1:ILCHAM) = ZCHAMP (1:ILCHAM)
+(  340) ENDIF
+(  341) !*
+(  342) !     3.3 -  TRANSFERT DES COEFFICIENTS SPECTRAUX NON COMPACTES.
+(  343) !-----------------------------------------------------------------------
+(  344) !        (et non fournis par GRIBEX) stockes en fin d'article.
+(  345) !
+(  346) IF (LDCOSP) THEN
+(  347)   IF (LLMLAM) THEN
+(  348)     IIND=0
+(  349)     DO JM=0,FA%CADRE(IRANGC)%NOMPAR(2)
+(  350)       IL=2+2*JM+1
+(  351)       ILOW=FA%CADRE(IRANGC)%NOMPAR(IL)
+(  352) !
+(  353)       IF (JM.EQ.0) THEN
+(  354)         IHIGH=FA%CADRE(IRANGC)%NOMPAR(IL+1)
+(  355)       ELSE
+(  356)         IHIGH=ILOW+4*(IVALC4+1-JM)-1
+(  357)         IF (IHIGH.LE.ILOW) IHIGH=ILOW+3
+(  358)       ENDIF
+(  359) !
+(  360)       DO IDX=ILOW,IHIGH
+(  361)         IIND=IIND+1
+(  362)         PCHAMP(IDX)=TRANSFER (KVALCO(IDECAL+IWORD+IIND), PCHAMP(IDX))
+(  363)       ENDDO
+(  364)     ENDDO
+(  365)   ELSE
+(  366) !
+(  367) ! Cas ARPEGE
+(  368) !
+(  369)     PCHAMP(1:2*(IVALC4+1))=                              &
+(  370) &        TRANSFER (KVALCO(IDECAL+IWORD+1:IDECAL+IWORD+2*(IVALC4+1)), PCHAMP(1:2*(IVALC4+1)))
+(  371)     IIND=2*(IVALC4+1)-1
+(  372)     IDX=2*(ITRONC+1)-1
+(  373)     DO JM=1,IVALC4
+(  374)     DO JN=JM,ITRONC
+(  375)       IDX=IDX+2
+(  376)       IF (JN.LE.IVALC4) THEN
+(  377)         IIND=IIND+2
+(  378)         PCHAMP(IDX) = TRANSFER (KVALCO(IDECAL+IWORD+IIND), PCHAMP(IDX))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 9
+
+(  379)         PCHAMP(IDX+1) = TRANSFER (KVALCO(IDECAL+IWORD+IIND+1), PCHAMP(IDX+1))
+(  380)       ENDIF
+(  381)     ENDDO
+(  382)     ENDDO
+(  383) !
+(  384)   ENDIF
+(  385) ENDIF
+(  386) !*
+(  387) !     3.4 - Renversement des valeurs en pts de grille des champs
+(  388) !            lat-lon afin de les ranger Sud-Nord plutot que Nord-Sud
+(  389) !            (on conserve le rangt W-E consecutif) a l'image du rangt
+(  390) !            initial effectue par FullPos.
+(  391) !-----------------------------------------------------------------------
+(  392) !
+(  393) IF ((ISEC2(1)==0.OR.ISEC2(1)==10.OR.ISEC2(1)==20.OR. &
+(  394) &    ISEC2(1)==30) .AND. .NOT.LDCOSP) THEN
+(  395)   IF (FA%LFAMOP) THEN
+(  396)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  397) &            ' FADECX: Grille LAT-LON issue BDAP -> ',        &
+(  398) &            ' renversement des valeurs pour etre rangees SN'
+(  399)   ENDIF
+(  400)   DO JLAT=1,FA%CADRE(IRANGC)%NLATIT
+(  401)   DO JLON=1,FA%CADRE(IRANGC)%NXLOPA
+(  402)     JN=JLON+FA%CADRE(IRANGC)%NXLOPA*(JLAT-1)
+(  403)     IDX=JLON+FA%CADRE(IRANGC)%NXLOPA*(FA%CADRE(IRANGC)%NLATIT-JLAT)
+(  404)     ZCHAMP(IDX) = PCHAMP(JN)
+(  405)   ENDDO
+(  406)   ENDDO
+(  407)   PCHAMP(1:ILCHAM) = ZCHAMP(1:ILCHAM)
+(  408) ENDIF
+(  409) 
+(  410) !
+(  411) !            CHANGEMENT D'UNITE DE CERTAINS CHAMPS.
+(  412) !            Il s'agit de champs dont les valeurs sont comprises
+(  413) !            entre 0 et 1 dans le modele mais dont l'unite
+(  414) !            conventionnelle dans le GRIB est le %.
+(  415) !
+(  416) CALL FAIPAG_MT64                                                    &
+(  417) &               (FA,  KREP, INUMER, CDPREF, KNIVAU, CDSUFF, INIPAR, &
+(  418) &                YLGR1TAB)
+(  419) !
+(  420) ! Traitement des valeurs indefinies
+(  421) !
+(  422) LLUNDF = ISEC1(5) == 192
+(  423) IF (LLUNDF) THEN
+(  424)   ZUNDF = ZSEC3(2)
+(  425) ELSE
+(  426)   ZUNDF = 0._JPDBLR
+(  427) ENDIF
+(  428) !
+(  429) ! Facteur d'echelle eventuel
+(  430) !
+(  431) IF (YLGR1TAB%LMULTI) THEN
+(  432)   PCHAMP (1:ILCHAM) = PCHAMP (1:ILCHAM) / YLGR1TAB%FMULTI
+(  433)   ZUNDF             = ZUNDF             / YLGR1TAB%FMULTI
+(  434) ENDIF
+(  435) IF (LDUNDF .AND. LLUNDF) THEN
+(  436)   DO J = 1, ILCHAM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 10
+
+(  437)     IF (PCHAMP (J) == ZUNDF) THEN
+(  438)       PCHAMP (J) = PUNDF
+(  439)     ENDIF
+(  440)   ENDDO
+(  441)   ZUNDF = PUNDF
+(  442) ENDIF
+(  443) LDUNDF = LLUNDF
+(  444) PUNDF  = ZUNDF
+(  445) 
+(  446) !**
+(  447) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  448) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  449) !-----------------------------------------------------------------------
+(  450) !
+(  451) 1001 CONTINUE
+(  452) LLFATA=LLMOER (KREP,KRANG)
+(  453) !
+(  454) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  455)   INIMES=2
+(  456)   CLNSPR='FADECX'
+(  457) !
+(  458)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KRANG='',I4,  &
+(  459) &         '', CDNOMA='''''',A,'''''', KLONGA= '',I8,      &
+(  460) &         '', LDCOSP='',L1)')                             &
+(  461) &     KREP, KRANG, CDNOMA, KLONGA, LDCOSP
+(  462)   CALL FAIPAR_MT64                                        &
+(  463) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  464) &                  CLNSPR,CDNOMA,.FALSE.)
+(  465) ENDIF
+(  466) !
+(  467) IF (LHOOK) CALL DR_HOOK('FADECX_MT',1,ZHOOK_HANDLE)
+(  468) 
+(  469) CONTAINS
+(  470) 
+(  471) #include "facom2.llmoer.h"
+(  472) 
+(  473) END SUBROUTINE FADECX_MT64
+(  474) 
+(  475) !INTF KREP            OUT                                                              
+(  476) !INTF KRANG         IN                                                                 
+(  477) !INTF CDNOMA        IN                                                                 
+(  478) !INTF KVALCO        IN    DIMS=*                         KIND=JPLIKB                   
+(  479) !INTF KLONGA        IN                                                                 
+(  480) !INTF PCHAMP          OUT DIMS=*                                                       
+(  481) !INTF LDCOSP        IN                                                                 
+(  482) !INTF LDUNDF          OUT                                                              
+(  483) !INTF PUNDF           OUT                                                              
+(  484) !INTF YDGR1TAB        OUT                                                              
+(  485) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 11
+
+(    1) # 1 "fadecx.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FADECX_MT64                                          &
+(    4) &                     (FA, KREP, KRANG, CDNOMA, KVALCO, KLONGA, &
+(    5) &                      PCHAMP, LDCOSP, CDPREF, KNIVAU, CDSUFF,  &
+(    6) &                      LDUNDF, PUNDF, YDGR1TAB)
+(    7) USE FA_MOD, ONLY : FA_COM, JPNIIL, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   14) !      Controle de coherence et decodage (GRIBEX) d'un CHAMP
+(   15) !      HORIZONTAL venant d'etre lu sur un fichier ARPEGE/ALADIN.
+(   16) !       ( DECodage d'un champ gribeX )
+(   17) !**
+(   18) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   19) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   20) !                CDNOMA (Entree) ==> Nom d'article (prefabrique);
+(   21) !    ( Tableau ) KVALCO (Entree) ==> Donnees issues de la lecture;
+(   22) !                KLONGA (Entree) ==> Nombre de mots lus;
+(   23) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu;
+(   24) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   25) !                                    par des coefficients spectraux;
+(   26) !                CDPREF (Entree) ==> Prefixe au sens FA
+(   27) !                KNIVAU (Entree) ==> Niveau au sens FA
+(   28) !                CDSUFF (Entree) ==> Suffixe au sens FA
+(   29) !                LDUNDF (Entree) ==> Si ce champ a des valeurs indefinies
+(   30) !                                    alors inserer PUNDF sur les points
+(   31) !                                    manquants
+(   32) !                PUNDF  (Entree) ==> Dans le cas ou LDUNDF est vrai,
+(   33) !                                    valeur non definie a inserer dans le champ
+(   34) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   35) !                                    indefinies
+(   36) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai (en sortie),
+(   37) !                                    valeur non definie a inserer dans le champ
+(   38) !*
+(   39) !  MODIFICATION :
+(   40) !         JM AUDOIN  15/05/2007  Partie 3.1  Blindage controle changement unite
+(   41) !
+(   42) !
+(   43) !
+(   44) TYPE(FA_COM)   :: FA
+(   45) TYPE(FAGR1TAB) :: YDGR1TAB
+(   46) INTEGER (KIND=JPLIKB) KREP, KRANG, KLONGA, KNIVAU
+(   47) !
+(   48) INTEGER (KIND=JPLIKB), TARGET :: KVALCO(KLONGA)
+(   49) REAL (KIND=JPDBLR) PCHAMP(*)
+(   50) INTEGER (KIND=JPLIKB), POINTER :: IVALCO (:)
+(   51) !
+(   52) REAL (KIND=JPDBLR) PUNDF
+(   53) !
+(   54) LOGICAL LDCOSP, LDUNDF, LLUNDF, LLSWAP
+(   55) !
+(   56) CHARACTER CDNOMA*(*), CDPREF*(*), CDSUFF*(*)
+(   57) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 12
+
+(   58) # 58 "fadecx.F90"
+(   58) # 1 ".D[27]/fagribex.h"
+(    1) INTERFACE
+(    2) SUBROUTINE FAGRIBEX (KSEC0,KSEC1,KSEC2,PSEC2,KSEC3,PSEC3,KSEC4, &
+(    3) &                    PSEC4,KLENP,KGRIB,KLENG,KWORD,HOPER,KRET)
+(    4) USE LFI_PRECISION
+(    5) IMPLICIT NONE
+(    6) INTEGER (KIND=JPLIKB) :: KSEC0 (:)
+(    7) INTEGER (KIND=JPLIKB) :: KSEC1 (:)
+(    8) INTEGER (KIND=JPLIKB) :: KSEC2 (:)
+(    9) INTEGER (KIND=JPLIKB) :: KSEC3 (:)
+(   10) INTEGER (KIND=JPLIKB) :: KSEC4 (:)
+(   11) INTEGER (KIND=JPLIKB) :: KGRIB (*)
+(   12) INTEGER (KIND=JPLIKB) :: KLENP
+(   13) INTEGER (KIND=JPLIKB) :: KLENG
+(   14) INTEGER (KIND=JPLIKB) :: KWORD 
+(   15) INTEGER (KIND=JPLIKB) :: KRET
+(   16) REAL (KIND=JPDBLR)    :: PSEC2 (:) 
+(   17) REAL (KIND=JPDBLR)    :: PSEC3 (:) 
+(   18) REAL (KIND=JPDBLR)    :: PSEC4 (*)
+(   19) CHARACTER(LEN=*)      :: HOPER
+(   20) END SUBROUTINE
+(   21) END INTERFACE
+(   22) # 59 "fadecx.F90"
+(   59) # 59 "fadecx.F90"
+(   59) !
+(   60) REAL (KIND=JPDBLR) ZSEC2(10+2*(FA%JPXNIV+1)), ZSEC3(2)
+(   61) REAL (KIND=JPDBLR), ALLOCATABLE ::  ZSEC4(:), ZCHAMP(:)
+(   62) REAL (KIND=JPDBLR) ZUNDF
+(   63) REAL (KIND=JPDBLR) ZPULAP
+(   64) !
+(   65) INTEGER (KIND=JPLIKB) ISEC0(2), ISEC1(FA%JPSEC1)
+(   66) INTEGER (KIND=JPLIKB) ISEC2(FA%JPSEC2), ISEC3(2)
+(   67) INTEGER (KIND=JPLIKB) ISEC4(FA%JPSEC4)
+(   68) INTEGER (KIND=JPLIKB) ILCHAM, ISTRIA, IDECAL
+(   69) INTEGER (KIND=JPLIKB) IPOFIN, ILONSEC2
+(   70) INTEGER (KIND=JPLIKB) ITRONC, IIND, ILOW, IHIGH
+(   71) INTEGER (KIND=JPLIKB) IL, IADD, IRANGC, IILCHAM
+(   72) INTEGER (KIND=JPLIKB) INIMES
+(   73) INTEGER (KIND=JPLIKB) IVALC3, IVALC4, IVALC5, IWORD
+(   74) INTEGER (KIND=JPLIKB) INUMER, ILENG, IRET, IDX
+(   75) INTEGER (KIND=JPLIKB) JN, JM, JLAT, JLON, J
+(   76) INTEGER (KIND=JPLIKB) IFAORI, IFAMOD 
+(   77) INTEGER (KIND=JPLIKB) INIPAR (8)
+(   78) !
+(   79) LOGICAL LLMLAM, LLCOSP
+(   80) !
+(   81) CHARACTER(LEN=1) CLOPER
+(   82) CHARACTER(LEN=8) CLGRIB
+(   83) !
+(   84) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   85) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   86) LOGICAL                  LLFATA
+(   87) TYPE (FAGR1TAB)          YLGR1TAB
+(   88) # 89 "fadecx.F90"
+(   89) !**
+(   90) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   91) !-----------------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 13
+
+(   92) !
+(   93) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   94) IF (LHOOK) CALL DR_HOOK('FADECX_MT',0,ZHOOK_HANDLE)
+(   95) KREP=0
+(   96) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   97)   KREP=-66
+(   98)   GOTO 1001
+(   99) ENDIF
+(  100) !
+(  101) INUMER=FA%FICHIER(KRANG)%NULOGI
+(  102) !
+(  103) CLOPER='D'
+(  104) ISTRIA=0
+(  105) !**
+(  106) !     2.  -  CONTROLE DES DONNEES DE L'ARTICLE
+(  107) !-----------------------------------------------------------------------
+(  108) !
+(  109) IF (KVALCO(1).NE.3.OR.                         &
+(  110) &    KVALCO(2).LT.0.OR.KVALCO(2).GT.1.OR.      &
+(  111) &    (KVALCO(2).EQ.1.AND.KVALCO(4).LT.0)) THEN
+(  112)   KREP=-91
+(  113)   GOTO 1001
+(  114) ELSE
+(  115)   LLCOSP=KVALCO(2).EQ.1
+(  116) ENDIF
+(  117) !
+(  118) IF ((LLCOSP.AND..NOT.LDCOSP).OR.(.NOT.LLCOSP.AND.LDCOSP)) THEN
+(  119)   KREP=-92
+(  120)   GOTO 1001
+(  121) ENDIF
+(  122) !
+(  123) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(  124) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  125) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  126) !
+(  127) IF (LDCOSP) THEN
+(  128)   IF (LLMLAM) THEN
+(  129)     ILCHAM=FA%CADRE(IRANGC)%NSFLAM
+(  130)     ILONSEC2=21+ITRONC
+(  131)   ELSE    
+(  132)     ILCHAM=(1+ITRONC)*(2+ITRONC)
+(  133)     ILONSEC2=22
+(  134)   ENDIF   
+(  135) ELSE
+(  136)   ILCHAM=FA%CADRE(IRANGC)%NVAPDG
+(  137)   IF (LLMLAM) THEN
+(  138)     ILONSEC2=22
+(  139)   ELSE
+(  140)     ILONSEC2=22+FA%CADRE(IRANGC)%NLATIT
+(  141)   ENDIF
+(  142) ENDIF
+(  143) !
+(  144) ALLOCATE (ZCHAMP(ILCHAM), ZSEC4(ILCHAM))
+(  145) !
+(  146) !**
+(  147) !     3.  -  DECODAGE GRIBEX DES DONNEES DE L'ARTICLE
+(  148) !-----------------------------------------------------------------------
+(  149) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 14
+
+(  150) IDECAL=3
+(  151) IVALC3=KVALCO(3)
+(  152) IF (LDCOSP) THEN
+(  153)   IDECAL=IDECAL+2
+(  154) ! IVALC4=ss-tronc non compactee
+(  155) ! IVALC5=puissance de laplacien
+(  156)   IVALC4=KVALCO(4)
+(  157)   IVALC5=KVALCO(5)
+(  158) ENDIF
+(  159) # 160 "fadecx.F90"
+(  160) IILCHAM=ILCHAM
+(  161) !
+(  162) ! Pour Aladin, le calcul du nb de coeff spectraux qui ont
+(  163) ! ete compactes est plus complexe (certains ont ete retires
+(  164) ! pour ne pas etre compactes: ss-tronc triangulaire).
+(  165) !
+(  166) IF (LDCOSP.AND.LLMLAM) THEN
+(  167)   ISTRIA=4*(1+FA%CADRE(IRANGC)%NOZPAR(1)+FA%CADRE(IRANGC)%NOZPAR(2)+ &
+(  168) &            IVALC4*(IVALC4-1)/2)
+(  169)   IILCHAM=ILCHAM-ISTRIA
+(  170) ENDIF
+(  171) # 172 "fadecx.F90"
+(  172) ! C'est un champ GRIB, mais les octets ont peut-etre ete 
+(  173) ! inverses s'il a ete produit sur une architecture differente
+(  174) ! On cherche donc a deviner s'il faut les inverser a nouveau,
+(  175) ! et on inverse le cas echeant
+(  176) # 177 "fadecx.F90"
+(  177) CLGRIB=TRANSFER (KVALCO(IDECAL+1), CLGRIB)
+(  178) LLSWAP = (CLGRIB (1:4) /= 'GRIB') .AND. (CLGRIB (5:8) == 'BIRG')
+(  179) IF (LLSWAP) THEN
+(  180)   ALLOCATE (IVALCO (KLONGA))
+(  181)   CALL JSWAP (IVALCO(IDECAL+1), KVALCO(IDECAL+1), 8_JPLIKM, INT (KLONGA-IDECAL, JPLIKM))
+(  182) ELSE
+(  183)   IVALCO => KVALCO
+(  184) ENDIF
+(  185) # 186 "fadecx.F90"
+(  186) ! ILENG=longueur disponible en entiers declares INTEGER dans KVALCO.
+(  187) ILENG=2*(KLONGA-IDECAL)
+(  188) !
+(  189) !     3.1 -  APPEL A GRIBEX
+(  190) !
+(  191) IWORD=0
+(  192) IRET=-1
+(  193) # 194 "fadecx.F90"
+(  194) CALL FAGRIBEX(ISEC0,ISEC1,ISEC2,ZSEC2,ISEC3,ZSEC3,ISEC4,          &
+(  195) &             PCHAMP,IILCHAM,IVALCO(IDECAL+1:KLONGA),ILENG,IWORD, &
+(  196) &             CLOPER,IRET)
+(  197) # 198 "fadecx.F90"
+(  198) IF (LLSWAP) THEN
+(  199)   DEALLOCATE (IVALCO)
+(  200)   NULLIFY (IVALCO)
+(  201) ENDIF
+(  202) # 203 "fadecx.F90"
+(  203) IF (FA%LFAMOP) THEN
+(  204)   WRITE (UNIT=FA%NULOUT,FMT=*)                          &
+(  205) &         ' FADECX: KLONGA, IDECAL, ILENG, IILCHAM = ', &
+(  206) &         KLONGA, IDECAL, ILENG, IILCHAM
+(  207)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ISEC0 = ',ISEC0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 15
+
+(  208)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ISEC1 = ',ISEC1
+(  209)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  210) &                     '       * ILONSEC2 ! ISEC2(1:ILONSEC2) = ', &
+(  211) &                     ILONSEC2, ' ! ', ISEC2(1:ILONSEC2)
+(  212)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * ZSEC2(1:2) = ',ZSEC2(1:2)
+(  213)   IF (ISEC2(12).GT.0) WRITE (UNIT=FA%NULOUT,FMT=*)            &
+(  214) &          '       * ISEC2(12) ! ZSEC2(11:10+ISEC2(12)) = ',  &
+(  215) &                    ISEC2(12), ' ! ', ZSEC2(11:10+ISEC2(12))
+(  216)   WRITE (UNIT=FA%NULOUT,FMT=*) '       * FA%JPSEC4 ! ISEC4 = ', &
+(  217) &                               FA%JPSEC4,' ! ',ISEC4
+(  218) ENDIF
+(  219) !
+(  220) !
+(  221) IF (KREP.NE.0) THEN
+(  222)   GOTO 1001
+(  223) ENDIF
+(  224) !
+(  225) !*
+(  226) !     3.3 -  CONTROLES DE COHERENCE
+(  227) !-----------------------------------------------------------------------
+(  228) !
+(  229) # 230 "fadecx.F90"
+(  230) IF (IRET.GT.0) THEN
+(  231) ! Erreur rapportee par GRIBEX
+(  232)   KREP=-1000-IRET
+(  233)   WRITE (UNIT=FA%NULOUT,FMT=*) ' FADECX: IRET, KREP = ',IRET, KREP 
+(  234)   GOTO 1001
+(  235) ELSEIF (IRET.LT.0 .AND. ((IRET /= -4) .OR. .NOT. LDUNDF)) THEN ! -4 = "A bitmap was encountered"
+(  236) ! Warning rapporte par GRIBEX
+(  237)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  238)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  239) &         '!------------------------------------------'
+(  240)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  241) &         '!           FADECX:   WARNING !!!         !'
+(  242)   WRITE (UNIT=FA%NULOUT,FMT=*)                         &
+(  243) &         '!------------------------------------------'
+(  244)   WRITE (UNIT=FA%NULOUT,FMT=*) ' Code retour de GRIBEX = ', &
+(  245) &        IRET,' pour le champ: ',CDNOMA
+(  246)   WRITE (UNIT=FA%NULOUT,FMT=*)
+(  247) ENDIF
+(  248) IF (ISEC4(1).LT.IILCHAM) THEN
+(  249)   KREP=-93
+(  250)   IF (FA%LFAMOP) THEN
+(  251)     WRITE (UNIT=FA%NULOUT,FMT=*)                                 &
+(  252) &         'FADECX: ERREUR !!! Nbre de valeurs decodees = ',      &
+(  253) &            ISEC4(1),' et nbre de valeurs attendues = ',IILCHAM
+(  254)   ENDIF
+(  255)   GOTO 1001
+(  256) ELSEIF (ISEC4(1).GT.IILCHAM) THEN
+(  257)   KREP=-94
+(  258)   IF (FA%LFAMOP) THEN
+(  259)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  260) &         'FADECX: ERREUR !!! Nbre de valeurs decodees = ',   &
+(  261) &         ISEC4(1),' et nbre de valeurs attendues = ',IILCHAM
+(  262)   ENDIF
+(  263)   IF (LLMOER(KREP,KRANG)) GOTO 1001
+(  264) ENDIF
+(  265) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 16
+
+(  266) IF (IVALC3.NE.ISEC4(2).AND.FA%LFAMOP) THEN
+(  267)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  268) &     ' FADECX: WARNING, le nb de bits de codage qui avait',      &
+(  269) &     ' ete demande ( ',IVALC3,' ) est different de celui qui a', &
+(  270) &          ' ete finalement retenu ( ',ISEC4(2),' ) par GRIBEX.'
+(  271)   WRITE (UNIT=FA%NULOUT,FMT=*)                       &
+(  272) &         ' => Gain de place sans perte de precision'
+(  273) ENDIF
+(  274) !
+(  275) !  Dans le cas d'un champ spectral ARPEGE
+(  276) !
+(  277) IF (LDCOSP.AND..NOT.LLMLAM.AND.(ISEC4(18).NE.IVALC4 &
+(  278) &    .OR.ISEC4(17).NE.IVALC5)) THEN                  
+(  279)   IF (FA%LFAMOP) THEN
+(  280)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  281) &            'Ss-tronc non compactee dans GRIB = ',ISEC4(18), &
+(  282) &            ' et on attend: ',IVALC4
+(  283)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  284) &            'Puissance de laplacien dans GRIB = ',ISEC4(17), &
+(  285) &            ' et on attend: ',IVALC5
+(  286)   ENDIF
+(  287)   KREP=-95
+(  288)   GOTO 1001
+(  289) ENDIF
+(  290) !
+(  291) ! Controle de l'adequation entre le nb de mots lus par LFI et le detail:
+(  292) ! ( enrobage FA + message GRIBEX + eventuelles valeurs non-compactees ).
+(  293) !
+(  294) IWORD=1+(ISEC0(1)-1)/JPLIKB
+(  295) IF (FA%LFAMOP) THEN
+(  296)   WRITE (UNIT=FA%NULOUT,FMT=*) ' FADECX: IWORD = ',IWORD
+(  297) ENDIF
+(  298) IPOFIN=IDECAL+IWORD
+(  299) IF (LDCOSP) THEN
+(  300)   IF (LLMLAM) THEN
+(  301)     IPOFIN=IPOFIN+ISTRIA
+(  302)   ELSE
+(  303)     IPOFIN=IPOFIN+(1+IVALC4)*(2+IVALC4)
+(  304)   ENDIF
+(  305) ENDIF
+(  306) !
+(  307) IF (KLONGA.LT.IPOFIN) THEN
+(  308)   KREP=-93
+(  309)   GOTO 1001
+(  310) ELSEIF (KLONGA.GT.IPOFIN) THEN
+(  311)   KREP=-94
+(  312)   IF (LLMOER(KREP,KRANG)) GOTO 1001
+(  313) ENDIF
+(  314) !*
+(  315) !     3.2 -  DEMODULATION DES COEFF. SPEC. ALADIN QUI ONT ETE COMPACTES
+(  316) !-----------------------------------------------------------------------
+(  317) !
+(  318) IF (LDCOSP.AND.LLMLAM) THEN
+(  319) !  Transfert des donnees decodees et modulees entieres en nombres reels
+(  320) !  pour les demoduler. Comme PCHAMP est a profil implicite, on ne peut
+(  321) !  s'en servir pour la fonction TRANSFER => il faut passer par ICHAMP!
+(  322)   ZSEC4(1:IILCHAM) = PCHAMP(1:IILCHAM)
+(  323)   ZCHAMP=0._JPDBLR
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 17
+
+(  324)   ZPULAP=REAL(IVALC5,JPDBLR) * (-0.001_JPDBLR)
+(  325)   IIND=0
+(  326)   DO JM=1,FA%CADRE(IRANGC)%NOMPAR(2)
+(  327)     ILOW=2+2*JM+1
+(  328)     IADD=4*MAX(IVALC4+1-JM,1_JPLIKB )
+(  329) !
+(  330)     DO IDX=FA%CADRE(IRANGC)%NOMPAR(ILOW)+IADD,FA%CADRE(IRANGC)%NOMPAR(ILOW+1)
+(  331)       IIND=IIND+1        
+(  332)       JN=(IDX-FA%CADRE(IRANGC)%NOMPAR(ILOW))/4
+(  333)       ZCHAMP(IDX)=ZSEC4(IIND) *                 &
+(  334) &           ((REAL(JN**2+JM**2,JPDBLR))**ZPULAP)
+(  335)     ENDDO
+(  336)   ENDDO
+(  337) !  Transfert des donnees decodees et demodulees reelles en nombres entiers
+(  338) !  disposes aux bons endroits du tableau definitif.
+(  339)   PCHAMP(1:ILCHAM) = ZCHAMP (1:ILCHAM)
+(  340) ENDIF
+(  341) !*
+(  342) !     3.3 -  TRANSFERT DES COEFFICIENTS SPECTRAUX NON COMPACTES.
+(  343) !-----------------------------------------------------------------------
+(  344) !        (et non fournis par GRIBEX) stockes en fin d'article.
+(  345) !
+(  346) IF (LDCOSP) THEN
+(  347)   IF (LLMLAM) THEN
+(  348)     IIND=0
+(  349)     DO JM=0,FA%CADRE(IRANGC)%NOMPAR(2)
+(  350)       IL=2+2*JM+1
+(  351)       ILOW=FA%CADRE(IRANGC)%NOMPAR(IL)
+(  352) !
+(  353)       IF (JM.EQ.0) THEN
+(  354)         IHIGH=FA%CADRE(IRANGC)%NOMPAR(IL+1)
+(  355)       ELSE
+(  356)         IHIGH=ILOW+4*(IVALC4+1-JM)-1
+(  357)         IF (IHIGH.LE.ILOW) IHIGH=ILOW+3
+(  358)       ENDIF
+(  359) !
+(  360)       DO IDX=ILOW,IHIGH
+(  361)         IIND=IIND+1
+(  362)         PCHAMP(IDX)=TRANSFER (KVALCO(IDECAL+IWORD+IIND), PCHAMP(IDX))
+(  363)       ENDDO
+(  364)     ENDDO
+(  365)   ELSE
+(  366) !
+(  367) ! Cas ARPEGE
+(  368) !
+(  369)     PCHAMP(1:2*(IVALC4+1))=                              &
+(  370) &        TRANSFER (KVALCO(IDECAL+IWORD+1:IDECAL+IWORD+2*(IVALC4+1)), PCHAMP(1:2*(IVALC4+1)))
+(  371)     IIND=2*(IVALC4+1)-1
+(  372)     IDX=2*(ITRONC+1)-1
+(  373)     DO JM=1,IVALC4
+(  374)     DO JN=JM,ITRONC
+(  375)       IDX=IDX+2
+(  376)       IF (JN.LE.IVALC4) THEN
+(  377)         IIND=IIND+2
+(  378)         PCHAMP(IDX) = TRANSFER (KVALCO(IDECAL+IWORD+IIND), PCHAMP(IDX))
+(  379)         PCHAMP(IDX+1) = TRANSFER (KVALCO(IDECAL+IWORD+IIND+1), PCHAMP(IDX+1))
+(  380)       ENDIF
+(  381)     ENDDO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 18
+
+(  382)     ENDDO
+(  383) !
+(  384)   ENDIF
+(  385) ENDIF
+(  386) !*
+(  387) !     3.4 - Renversement des valeurs en pts de grille des champs
+(  388) !            lat-lon afin de les ranger Sud-Nord plutot que Nord-Sud
+(  389) !            (on conserve le rangt W-E consecutif) a l'image du rangt
+(  390) !            initial effectue par FullPos.
+(  391) !-----------------------------------------------------------------------
+(  392) !
+(  393) IF ((ISEC2(1)==0.OR.ISEC2(1)==10.OR.ISEC2(1)==20.OR. &
+(  394) &    ISEC2(1)==30) .AND. .NOT.LDCOSP) THEN
+(  395)   IF (FA%LFAMOP) THEN
+(  396)     WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  397) &            ' FADECX: Grille LAT-LON issue BDAP -> ',        &
+(  398) &            ' renversement des valeurs pour etre rangees SN'
+(  399)   ENDIF
+(  400)   DO JLAT=1,FA%CADRE(IRANGC)%NLATIT
+(  401)   DO JLON=1,FA%CADRE(IRANGC)%NXLOPA
+(  402)     JN=JLON+FA%CADRE(IRANGC)%NXLOPA*(JLAT-1)
+(  403)     IDX=JLON+FA%CADRE(IRANGC)%NXLOPA*(FA%CADRE(IRANGC)%NLATIT-JLAT)
+(  404)     ZCHAMP(IDX) = PCHAMP(JN)
+(  405)   ENDDO
+(  406)   ENDDO
+(  407)   PCHAMP(1:ILCHAM) = ZCHAMP(1:ILCHAM)
+(  408) ENDIF
+(  409) # 410 "fadecx.F90"
+(  410) !
+(  411) !            CHANGEMENT D'UNITE DE CERTAINS CHAMPS.
+(  412) !            Il s'agit de champs dont les valeurs sont comprises
+(  413) !            entre 0 et 1 dans le modele mais dont l'unite
+(  414) !            conventionnelle dans le GRIB est le %.
+(  415) !
+(  416) CALL FAIPAG_MT64                                                    &
+(  417) &               (FA,  KREP, INUMER, CDPREF, KNIVAU, CDSUFF, INIPAR, &
+(  418) &                YLGR1TAB)
+(  419) !
+(  420) ! Traitement des valeurs indefinies
+(  421) !
+(  422) LLUNDF = ISEC1(5) == 192
+(  423) IF (LLUNDF) THEN
+(  424)   ZUNDF = ZSEC3(2)
+(  425) ELSE
+(  426)   ZUNDF = 0._JPDBLR
+(  427) ENDIF
+(  428) !
+(  429) ! Facteur d'echelle eventuel
+(  430) !
+(  431) IF (YLGR1TAB%LMULTI) THEN
+(  432)   PCHAMP (1:ILCHAM) = PCHAMP (1:ILCHAM) / YLGR1TAB%FMULTI
+(  433)   ZUNDF             = ZUNDF             / YLGR1TAB%FMULTI
+(  434) ENDIF
+(  435) IF (LDUNDF .AND. LLUNDF) THEN
+(  436)   DO J = 1, ILCHAM
+(  437)     IF (PCHAMP (J) == ZUNDF) THEN
+(  438)       PCHAMP (J) = PUNDF
+(  439)     ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:07      page 19
+
+(  440)   ENDDO
+(  441)   ZUNDF = PUNDF
+(  442) ENDIF
+(  443) LDUNDF = LLUNDF
+(  444) PUNDF  = ZUNDF
+(  445) # 446 "fadecx.F90"
+(  446) !**
+(  447) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  448) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  449) !-----------------------------------------------------------------------
+(  450) !
+(  451) 1001 CONTINUE
+(  452) LLFATA=LLMOER (KREP,KRANG)
+(  453) !
+(  454) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  455)   INIMES=2
+(  456)   CLNSPR='FADECX'
+(  457) !
+(  458)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KRANG='',I4,  &
+(  459) &         '', CDNOMA='''''',A,'''''', KLONGA= '',I8,      &
+(  460) &         '', LDCOSP='',L1)')                             &
+(  461) &     KREP, KRANG, CDNOMA, KLONGA, LDCOSP
+(  462)   CALL FAIPAR_MT64                                        &
+(  463) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  464) &                  CLNSPR,CDNOMA,.FALSE.)
+(  465) ENDIF
+(  466) !
+(  467) IF (LHOOK) CALL DR_HOOK('FADECX_MT',1,ZHOOK_HANDLE)
+(  468) # 469 "fadecx.F90"
+(  469) CONTAINS
+(  470) # 471 "fadecx.F90"
+(  471) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 472 "fadecx.F90"
+(  472) # 473 "fadecx.F90"
+(  473) END SUBROUTINE FADECX_MT64
+(  474) # 475 "fadecx.F90"
+(  475) !INTF KREP            OUT                                                              
+(  476) !INTF KRANG         IN                                                                 
+(  477) !INTF CDNOMA        IN                                                                 
+(  478) !INTF KVALCO        IN    DIMS=*                         KIND=JPLIKB                   
+(  479) !INTF KLONGA        IN                                                                 
+(  480) !INTF PCHAMP          OUT DIMS=*                                                       
+(  481) !INTF LDCOSP        IN                                                                 
+(  482) !INTF LDUNDF          OUT                                                              
+(  483) !INTF PUNDF           OUT                                                              
+(  484) !INTF YDGR1TAB        OUT                                                              
+
+
+

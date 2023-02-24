@@ -1,0 +1,787 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Fscheduler.F90
+
+(    1) !
+(    2) ! Fscheduler.F90 : Runs Unix-commands read from file(s) in parallel
+(    3) !
+(    4) !! Usage: env ODB_PARAL=<ncpus> fscheduler.x maxcmds [cmdfile_1 [cmdfile_2 ...]]
+(    5) !
+(    6) ! Special commands:
+(    7) ! ----------------
+(    8) ! wait                                -- will synchronize i.e. a barrier
+(    9) ! on_error: command [; command; ...]  -- command(s) to be run when error had detected
+(   10) !
+(   11) ! Also, set export FSCHEDULER_PBAR=1 to get a "progress bar" to stdout
+(   12) 
+(   13) 
+(   14) PROGRAM fscheduler
+(   15) USE PARKIND1  ,ONLY : JPIM
+(   16) 
+(   17) #ifdef NAG
+(   18) USE F90_UNIX_ENV, ONLY: GETARG, IARGC
+(   19) USE F90_UNIX_IO, ONLY: FLUSH
+(   20) #endif
+(   21) 
+(   22) implicit none
+(   23) !-- Maximum number of characters in a Fortran90 string (i.e. character(len=maxstrlen))
+(   24) !   (see also odb/module/odbshared.F90 definition)
+(   25) CHARACTER(LEN=1),PARAMETER :: BACKSL='\\'
+(   26) INTEGER(KIND=JPIM), parameter :: maxstrlen = 32767 ! 65536
+(   27) INTEGER(KIND=JPIM) :: iu, nfiles, j, j1, j2, ncmd, ilen, ipos, k, kount, rc
+(   28) INTEGER(KIND=JPIM) :: numproc_default, numproc
+(   29) INTEGER(KIND=JPIM) :: pbar_default, pbar, pbar_cur, pbar_max
+(   30) #ifndef NAG
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 3
+
+(   31) INTEGER(KIND=JPIM) :: iargc
+(   32) #endif
+(   33) character(len=512) :: file
+(   34) logical LLclose_file, LLwait, LLcont, LLpbar
+(   35) logical LLhas_on_error, LLrun_on_error
+(   36) INTEGER(KIND=JPIM) :: nmaxcmd, numargs, exit_code
+(   37) INTEGER(KIND=JPIM) :: usec, usec_inc, usec_default
+(   38) character(len=20) :: cmaxcmd
+(   39) character(len=maxstrlen) :: acmd, on_error_cmd
+(   40) character(len=maxstrlen), allocatable :: cmd(:)
+(   41) INTEGER(KIND=JPIM), allocatable :: ilencmd(:)
+(   42) INTEGER(KIND=JPIM), allocatable :: iecho(:)
+(   43) INTEGER(KIND=JPIM), allocatable :: pid(:)
+(   44) 
+(   45) numproc_default = 1
+(   46) CALL util_igetenv('ODB_PARAL', numproc_default, numproc)
+(   47) 
+(   48) pbar_default = 0
+(   49) CALL util_igetenv('FSCHEDULER_PBAR', pbar_default, pbar)
+(   50) LLpbar = (pbar == 1)
+(   51) 
+(   52) numargs = iargc()
+(   53) 
+(   54) if (numargs >= 1) then
+(   55)   call getarg(1,cmaxcmd)
+(   56)   read(cmaxcmd,'(i20)') nmaxcmd
+(   57)   allocate(cmd(nmaxcmd))
+(   58)   allocate(ilencmd(nmaxcmd))
+(   59)   allocate(iecho(nmaxcmd))
+(   60) else
+(   61)   write(0,*) 'Usage: fscheduler.x maxcmds [cmdfile_1 [cmdfile_2 ...]]'
+(   62)   call ec_exit(1)
+(   63) endif
+(   64) 
+(   65) nfiles = numargs - 1
+(   66) if (nfiles >= 1) then
+(   67)   iu = 1
+(   68)   LLclose_file = .TRUE.
+(   69) else
+(   70)   iu = 5
+(   71)   LLclose_file = .FALSE.
+(   72) endif
+(   73) 
+(   74) ncmd = 0
+(   75) j2 = max(1,nfiles)
+(   76) j1 = min(1,j2)
+(   77) do j=j1,j2
+(   78)   if (LLclose_file) then
+(   79)     call getarg(j+1,file)
+(   80)     open(iu,file=trim(file),status='old',err=99) ! ignore open errors
+(   81)   endif
+(   82)   LLcont = .FALSE.
+(   83)   do while (ncmd < nmaxcmd)
+(   84)     ilen = 1
+(   85)     if (LLcont) ilen = len_trim(acmd)
+(   86)     read(iu,'(a)',end=98,err=98) acmd(ilen:) ! ignore read & eof-errors
+(   87)     acmd = adjustl(trim(acmd)) ! shift to left by skipping any leading blanks
+(   88)     ilen = len_trim(acmd)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 4
+
+(   89)     if (acmd(ilen:ilen) == BACKSL) then
+(   90)       ! This was a continuation line; wait for the rest the line
+(   91)       LLcont = .TRUE.
+(   92)     else if (ilen > 0 .and. acmd(1:1) /= '#' .and. acmd(1:1) /= '!') then
+(   93)       ! Do not accept empty lines or lines beginning with '#' or '!'
+(   94)       LLcont = .FALSE.
+(   95)       ncmd = ncmd + 1
+(   96)       cmd(ncmd) = acmd
+(   97)       ilencmd(ncmd) = ilen ! cmd-length
+(   98)       iecho(ncmd) = ilen ! how many chars to be echo'ed
+(   99)       ! search for double-pipe-char '||' and truncate [echoing] just before it
+(  100)       ipos = scan(cmd(ncmd)(1:ilen),'|',back=.TRUE.)
+(  101)       if (ipos > 1) then
+(  102)         if (cmd(ncmd)(ipos-1:ipos-1) == '|') iecho(ncmd) = ipos - 2
+(  103)       endif
+(  104)     else
+(  105)       LLcont = .FALSE.
+(  106)     endif
+(  107)   enddo
+(  108)  98   continue
+(  109)   if (LLclose_file) then
+(  110)     close(iu)
+(  111)   endif
+(  112)  99   continue
+(  113) enddo
+(  114) 
+(  115) allocate(pid(ncmd))
+(  116) pid(:) = -1
+(  117) kount = 0 ! count of unfinished tasks
+(  118) LLhas_on_error = .FALSE.
+(  119) LLrun_on_error = .FALSE.
+(  120) exit_code = 0
+(  121) if (LLpbar) then
+(  122)   pbar_max = ncmd
+(  123)   pbar_cur = 0
+(  124) endif
+(  125) 
+(  126) CMDLOOP: do j=1,ncmd
+(  127)    LLwait = .FALSE.
+(  128)    pid(j) = 0
+(  129) #ifdef NECSX
+(  130)    write(0,'(a)') cmd(j)(1:min(iecho(j),132))
+(  131) #else
+(  132)    write(0,'(a)') cmd(j)(1:iecho(j))
+(  133) #endif
+(  134)    if (ilencmd(j) >= 9 .and. cmd(j)(1:9) == 'on_error:') then
+(  135)       on_error_cmd = adjustl(trim(cmd(j)(10:)))
+(  136)       LLhas_on_error = .TRUE.
+(  137)       if (LLpbar) CALL increment_pbar(.TRUE.)
+(  138)    else if (cmd(j)(1:ilencmd(j)) == 'wait') then
+(  139)       LLwait = .TRUE.
+(  140)       if (LLpbar) CALL increment_pbar(.TRUE.)
+(  141)    else
+(  142)       call codb_subshell(cmd(j)(1:ilencmd(j)), pid(j)) ! fork() + system()
+(  143)       if (pid(j) > 0) then
+(  144)          kount = kount + 1
+(  145)       else if (pid(j) == 0) then
+(  146)          !-- subshell already finished with rc == 0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 5
+
+(  147)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  148)          continue ! do nothing
+(  149)       else ! pid(j) < 0
+(  150)          !-- subshell already finished with rc > 0 == abs(pid(j)) 
+(  151)          !   ==> run on_error-code (if available), when all other procs finished
+(  152)          LLrun_on_error = .TRUE.
+(  153)          exit_code = abs(pid(j))
+(  154)          pid(j) = 0
+(  155)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  156)       endif
+(  157)    endif
+(  158) 
+(  159)    ! The following arrangement allows new subprocess to be launched as soon as another one has finished !
+(  160)    ! In other words: we do NOT wait for ALL the previous 'numproc'-tasks to finish first; just one
+(  161) 
+(  162)    usec_default = 500000
+(  163)    usec_inc = 400000
+(  164)    do while ((LLwait .and. kount > 0) .or. kount == numproc .or. (j == ncmd .and. kount > 0))
+(  165)       call codb_wait(-1, 1, rc) ! wait for any (child-)process; do not block/hang; rc may contain finished pid
+(  166)       if (rc > 0) then ! rc indeed contains a finished pid
+(  167)          LOOP: do k=1,j
+(  168)             if (rc == pid(k)) then
+(  169)                pid(k) = -1
+(  170)                kount = kount - 1
+(  171)                if (LLpbar) CALL increment_pbar(.TRUE.)
+(  172)                exit LOOP
+(  173)             endif
+(  174)          enddo LOOP
+(  175)       else if (rc == 0) then ! Nobody exited this time
+(  176)          usec = usec_default + kount * usec_inc
+(  177)          call ec_usleep(usec) ! Take a "usec" microsecs nap!
+(  178)          if (LLpbar) CALL increment_pbar(.FALSE.)
+(  179)       else ! rc < 0
+(  180)          LLrun_on_error = .TRUE.
+(  181)          exit_code = abs(rc)
+(  182)          kount = kount - 1
+(  183)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  184)       endif
+(  185)    enddo
+(  186) 
+(  187)    if (LLrun_on_error) then
+(  188)       if (LLpbar) CALL increment_pbar(.FALSE.)
+(  189)       exit CMDLOOP
+(  190)    endif
+(  191) enddo CMDLOOP
+(  192) 
+(  193) deallocate(pid)
+(  194) 
+(  195) deallocate(cmd)
+(  196) deallocate(ilencmd)
+(  197) deallocate(iecho)
+(  198) 
+(  199) if (LLrun_on_error .and. LLhas_on_error) call codb_subshell(trim(on_error_cmd), rc)
+(  200) if (LLrun_on_error .and. LLpbar) then
+(  201)    call increment_pbar(.FALSE.,'FSCHEDULER has detected a fatal error !!!')
+(  202) endif
+(  203) 
+(  204) call ec_exit(exit_code)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 6
+
+(  205) 
+(  206) CONTAINS
+(  207) 
+(  208) SUBROUTINE increment_pbar(LDincr, cderrmsg)
+(  209) USE PARKIND1  ,ONLY : JPIM, JPRD
+(  210) implicit none
+(  211) CHARACTER(LEN=1),PARAMETER :: BACKSL='\\'
+(  212) logical, intent(in) :: LDincr
+(  213) character(len=*), intent(in), optional :: cderrmsg
+(  214) character(len=50), save :: cbar
+(  215) INTEGER(KIND=JPIM), save :: npropel = 1
+(  216) INTEGER(KIND=JPIM), parameter :: io = 6
+(  217) character(len=1), parameter :: cr = char(13)
+(  218) character(len=1) :: clast
+(  219) character(len=1), parameter :: cpropel(5) = (/'-', BACKSL, '|', '/', '+'/)
+(  220) REAL(KIND=JPRD) :: Telapsed, Tremains
+(  221) character(len=10) :: nice(2)
+(  222) INTEGER(KIND=JPIM) :: ipc, x, j, idiv
+(  223) INTEGER(KIND=JPIM) :: percent_done
+(  224) logical, save :: LLdone = .false.
+(  225) REAL(KIND=JPRD) :: util_walltime
+(  226) percent_done(x) = nint((x * 100.0_JPRD)/pbar_max)
+(  227) if (present(cderrmsg)) then
+(  228)    write(io,'(/a/)') cderrmsg
+(  229) else
+(  230)    if (LLdone) return
+(  231)    if (pbar_cur == 0) then
+(  232)       cbar = ' '
+(  233)       Telapsed = util_walltime()
+(  234)    endif
+(  235)    if (LDincr) pbar_cur = pbar_cur + 1
+(  236)    Telapsed = util_walltime()
+(  237)    ipc = percent_done(pbar_cur)
+(  238)    ipc = min(max(ipc, 0),100)
+(  239)    idiv = 100/len(cbar)
+(  240)    do j=1,ipc/idiv
+(  241)       cbar(j:j) = '#'
+(  242)    enddo
+(  243)    do j=ipc/idiv+1,len(cbar)
+(  244)       cbar(j:j) = '.'
+(  245)    enddo
+(  246)    clast = cr
+(  247)    if (ipc == 100) then
+(  248)       clast = ' '
+(  249)       npropel = 5
+(  250)       Tremains = 0
+(  251)    else
+(  252)       if (pbar_cur > 0) then
+(  253)          Tremains = (Telapsed * (pbar_max - pbar_cur))/pbar_cur
+(  254)       else
+(  255)          Tremains = 2147483647.0_JPRD
+(  256)       endif
+(  257)    endif
+(  258)    nice(1) = nicetime(Telapsed)
+(  259)    nice(2) = nicetime(Tremains)
+(  260)    write(io,&
+(  261)         & '(3x,a1,a,2x,i3,a1,"  (time: ",a,", left: ",a,", procs:",i2,")      ",a1)',&
+(  262)         & advance='no') &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 7
+
+(  263)         & cpropel(npropel),cbar, ipc, '%', &
+(  264)         & trim(nice(1)), trim(nice(2)), &
+(  265)         & kount, clast
+(  266)    if (ipc == 100) then
+(  267)       write(io,*) ' '
+(  268)       LLdone = .TRUE.
+(  269)    endif
+(  270)    call flush(io)
+(  271)    npropel = npropel + 1
+(  272)    if (npropel > 4) npropel = 1
+(  273) endif
+(  274) END SUBROUTINE increment_pbar
+(  275) 
+(  276) FUNCTION nicetime(t) RESULT(c)
+(  277) USE PARKIND1  ,ONLY : JPIM, JPRD
+(  278) implicit none
+(  279) character(len=10) c
+(  280) REAL(KIND=JPRD), intent(in) :: t
+(  281) INTEGER(KIND=JPIM) :: tim, hh, mm, ss
+(  282) tim = int(t)
+(  283) ss = mod(tim,60)
+(  284) mm = mod(tim/60,60)
+(  285) hh = tim/3600
+(  286) if (hh > 0) then
+(  287)   write(c,'(i4,":",i2.2,":",i2.2)') hh, mm, ss
+(  288) else
+(  289)   write(c,'(i7,":",i2.2)') mm, ss
+(  290) endif
+(  291) c = adjustl(c)
+(  292) END FUNCTION nicetime
+(  293) 
+(  294) END PROGRAM fscheduler
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 8
+
+(    1) # 1 "Fscheduler.F90"
+(    1) !
+(    2) ! Fscheduler.F90 : Runs Unix-commands read from file(s) in parallel
+(    3) !
+(    4) !! Usage: env ODB_PARAL=<ncpus> fscheduler.x maxcmds [cmdfile_1 [cmdfile_2 ...]]
+(    5) !
+(    6) ! Special commands:
+(    7) ! ----------------
+(    8) ! wait                                -- will synchronize i.e. a barrier
+(    9) ! on_error: command [; command; ...]  -- command(s) to be run when error had detected
+(   10) !
+(   11) ! Also, set export FSCHEDULER_PBAR=1 to get a "progress bar" to stdout
+(   12) # 14 "Fscheduler.F90"
+(   14) PROGRAM fscheduler
+(   15) USE PARKIND1  ,ONLY : JPIM
+(   16) # 22 "Fscheduler.F90"
+(   22) implicit none
+(   23) !-- Maximum number of characters in a Fortran90 string (i.e. character(len=maxstrlen))
+(   24) !   (see also odb/module/odbshared.F90 definition)
+(   25) CHARACTER(LEN=1),PARAMETER :: BACKSL='\\'
+(   26) INTEGER(KIND=JPIM), parameter :: maxstrlen = 32767 ! 65536
+(   27) INTEGER(KIND=JPIM) :: iu, nfiles, j, j1, j2, ncmd, ilen, ipos, k, kount, rc
+(   28) INTEGER(KIND=JPIM) :: numproc_default, numproc
+(   29) INTEGER(KIND=JPIM) :: pbar_default, pbar, pbar_cur, pbar_max
+(   30) # 31 "Fscheduler.F90"
+(   31) INTEGER(KIND=JPIM) :: iargc
+(   32) # 33 "Fscheduler.F90"
+(   33) character(len=512) :: file
+(   34) logical LLclose_file, LLwait, LLcont, LLpbar
+(   35) logical LLhas_on_error, LLrun_on_error
+(   36) INTEGER(KIND=JPIM) :: nmaxcmd, numargs, exit_code
+(   37) INTEGER(KIND=JPIM) :: usec, usec_inc, usec_default
+(   38) character(len=20) :: cmaxcmd
+(   39) character(len=maxstrlen) :: acmd, on_error_cmd
+(   40) character(len=maxstrlen), allocatable :: cmd(:)
+(   41) INTEGER(KIND=JPIM), allocatable :: ilencmd(:)
+(   42) INTEGER(KIND=JPIM), allocatable :: iecho(:)
+(   43) INTEGER(KIND=JPIM), allocatable :: pid(:)
+(   44) # 45 "Fscheduler.F90"
+(   45) numproc_default = 1
+(   46) CALL util_igetenv('ODB_PARAL', numproc_default, numproc)
+(   47) # 48 "Fscheduler.F90"
+(   48) pbar_default = 0
+(   49) CALL util_igetenv('FSCHEDULER_PBAR', pbar_default, pbar)
+(   50) LLpbar = (pbar == 1)
+(   51) # 52 "Fscheduler.F90"
+(   52) numargs = iargc()
+(   53) # 54 "Fscheduler.F90"
+(   54) if (numargs >= 1) then
+(   55)   call getarg(1,cmaxcmd)
+(   56)   read(cmaxcmd,'(i20)') nmaxcmd
+(   57)   allocate(cmd(nmaxcmd))
+(   58)   allocate(ilencmd(nmaxcmd))
+(   59)   allocate(iecho(nmaxcmd))
+(   60) else
+(   61)   write(0,*) 'Usage: fscheduler.x maxcmds [cmdfile_1 [cmdfile_2 ...]]'
+(   62)   call ec_exit(1)
+(   63) endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 9
+
+(   64) # 65 "Fscheduler.F90"
+(   65) nfiles = numargs - 1
+(   66) if (nfiles >= 1) then
+(   67)   iu = 1
+(   68)   LLclose_file = .TRUE.
+(   69) else
+(   70)   iu = 5
+(   71)   LLclose_file = .FALSE.
+(   72) endif
+(   73) # 74 "Fscheduler.F90"
+(   74) ncmd = 0
+(   75) j2 = max(1,nfiles)
+(   76) j1 = min(1,j2)
+(   77) do j=j1,j2
+(   78)   if (LLclose_file) then
+(   79)     call getarg(j+1,file)
+(   80)     open(iu,file=trim(file),status='old',err=99) ! ignore open errors
+(   81)   endif
+(   82)   LLcont = .FALSE.
+(   83)   do while (ncmd < nmaxcmd)
+(   84)     ilen = 1
+(   85)     if (LLcont) ilen = len_trim(acmd)
+(   86)     read(iu,'(a)',end=98,err=98) acmd(ilen:) ! ignore read & eof-errors
+(   87)     acmd = adjustl(trim(acmd)) ! shift to left by skipping any leading blanks
+(   88)     ilen = len_trim(acmd)
+(   89)     if (acmd(ilen:ilen) == BACKSL) then
+(   90)       ! This was a continuation line; wait for the rest the line
+(   91)       LLcont = .TRUE.
+(   92)     else if (ilen > 0 .and. acmd(1:1) /= '#' .and. acmd(1:1) /= '!') then
+(   93)       ! Do not accept empty lines or lines beginning with '#' or '!'
+(   94)       LLcont = .FALSE.
+(   95)       ncmd = ncmd + 1
+(   96)       cmd(ncmd) = acmd
+(   97)       ilencmd(ncmd) = ilen ! cmd-length
+(   98)       iecho(ncmd) = ilen ! how many chars to be echo'ed
+(   99)       ! search for double-pipe-char '||' and truncate [echoing] just before it
+(  100)       ipos = scan(cmd(ncmd)(1:ilen),'|',back=.TRUE.)
+(  101)       if (ipos > 1) then
+(  102)         if (cmd(ncmd)(ipos-1:ipos-1) == '|') iecho(ncmd) = ipos - 2
+(  103)       endif
+(  104)     else
+(  105)       LLcont = .FALSE.
+(  106)     endif
+(  107)   enddo
+(  108)  98   continue
+(  109)   if (LLclose_file) then
+(  110)     close(iu)
+(  111)   endif
+(  112)  99   continue
+(  113) enddo
+(  114) # 115 "Fscheduler.F90"
+(  115) allocate(pid(ncmd))
+(  116) pid(:) = -1
+(  117) kount = 0 ! count of unfinished tasks
+(  118) LLhas_on_error = .FALSE.
+(  119) LLrun_on_error = .FALSE.
+(  120) exit_code = 0
+(  121) if (LLpbar) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 10
+
+(  122)   pbar_max = ncmd
+(  123)   pbar_cur = 0
+(  124) endif
+(  125) # 126 "Fscheduler.F90"
+(  126) CMDLOOP: do j=1,ncmd
+(  127)    LLwait = .FALSE.
+(  128)    pid(j) = 0
+(  129) # 132 "Fscheduler.F90"
+(  132)    write(0,'(a)') cmd(j)(1:iecho(j))
+(  133) # 134 "Fscheduler.F90"
+(  134)    if (ilencmd(j) >= 9 .and. cmd(j)(1:9) == 'on_error:') then
+(  135)       on_error_cmd = adjustl(trim(cmd(j)(10:)))
+(  136)       LLhas_on_error = .TRUE.
+(  137)       if (LLpbar) CALL increment_pbar(.TRUE.)
+(  138)    else if (cmd(j)(1:ilencmd(j)) == 'wait') then
+(  139)       LLwait = .TRUE.
+(  140)       if (LLpbar) CALL increment_pbar(.TRUE.)
+(  141)    else
+(  142)       call codb_subshell(cmd(j)(1:ilencmd(j)), pid(j)) ! fork() + system()
+(  143)       if (pid(j) > 0) then
+(  144)          kount = kount + 1
+(  145)       else if (pid(j) == 0) then
+(  146)          !-- subshell already finished with rc == 0
+(  147)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  148)          continue ! do nothing
+(  149)       else ! pid(j) < 0
+(  150)          !-- subshell already finished with rc > 0 == abs(pid(j)) 
+(  151)          !   ==> run on_error-code (if available), when all other procs finished
+(  152)          LLrun_on_error = .TRUE.
+(  153)          exit_code = abs(pid(j))
+(  154)          pid(j) = 0
+(  155)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  156)       endif
+(  157)    endif
+(  158) # 159 "Fscheduler.F90"
+(  159)    ! The following arrangement allows new subprocess to be launched as soon as another one has finished !
+(  160)    ! In other words: we do NOT wait for ALL the previous 'numproc'-tasks to finish first; just one
+(  161) # 162 "Fscheduler.F90"
+(  162)    usec_default = 500000
+(  163)    usec_inc = 400000
+(  164)    do while ((LLwait .and. kount > 0) .or. kount == numproc .or. (j == ncmd .and. kount > 0))
+(  165)       call codb_wait(-1, 1, rc) ! wait for any (child-)process; do not block/hang; rc may contain finished pid
+(  166)       if (rc > 0) then ! rc indeed contains a finished pid
+(  167)          LOOP: do k=1,j
+(  168)             if (rc == pid(k)) then
+(  169)                pid(k) = -1
+(  170)                kount = kount - 1
+(  171)                if (LLpbar) CALL increment_pbar(.TRUE.)
+(  172)                exit LOOP
+(  173)             endif
+(  174)          enddo LOOP
+(  175)       else if (rc == 0) then ! Nobody exited this time
+(  176)          usec = usec_default + kount * usec_inc
+(  177)          call ec_usleep(usec) ! Take a "usec" microsecs nap!
+(  178)          if (LLpbar) CALL increment_pbar(.FALSE.)
+(  179)       else ! rc < 0
+(  180)          LLrun_on_error = .TRUE.
+(  181)          exit_code = abs(rc)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 11
+
+(  182)          kount = kount - 1
+(  183)          if (LLpbar) CALL increment_pbar(.TRUE.)
+(  184)       endif
+(  185)    enddo
+(  186) # 187 "Fscheduler.F90"
+(  187)    if (LLrun_on_error) then
+(  188)       if (LLpbar) CALL increment_pbar(.FALSE.)
+(  189)       exit CMDLOOP
+(  190)    endif
+(  191) enddo CMDLOOP
+(  192) # 193 "Fscheduler.F90"
+(  193) deallocate(pid)
+(  194) # 195 "Fscheduler.F90"
+(  195) deallocate(cmd)
+(  196) deallocate(ilencmd)
+(  197) deallocate(iecho)
+(  198) # 199 "Fscheduler.F90"
+(  199) if (LLrun_on_error .and. LLhas_on_error) call codb_subshell(trim(on_error_cmd), rc)
+(  200) if (LLrun_on_error .and. LLpbar) then
+(  201)    call increment_pbar(.FALSE.,'FSCHEDULER has detected a fatal error !!!')
+(  202) endif
+(  203) # 204 "Fscheduler.F90"
+(  204) call ec_exit(exit_code)
+(  205) # 206 "Fscheduler.F90"
+(  206) CONTAINS
+(  207) # 208 "Fscheduler.F90"
+(  208) SUBROUTINE increment_pbar(LDincr, cderrmsg)
+(  209) USE PARKIND1  ,ONLY : JPIM, JPRD
+(  210) implicit none
+(  211) CHARACTER(LEN=1),PARAMETER :: BACKSL='\\'
+(  212) logical, intent(in) :: LDincr
+(  213) character(len=*), intent(in), optional :: cderrmsg
+(  214) character(len=50), save :: cbar
+(  215) INTEGER(KIND=JPIM), save :: npropel = 1
+(  216) INTEGER(KIND=JPIM), parameter :: io = 6
+(  217) character(len=1), parameter :: cr = char(13)
+(  218) character(len=1) :: clast
+(  219) character(len=1), parameter :: cpropel(5) = (/'-', BACKSL, '|', '/', '+'/)
+(  220) REAL(KIND=JPRD) :: Telapsed, Tremains
+(  221) character(len=10) :: nice(2)
+(  222) INTEGER(KIND=JPIM) :: ipc, x, j, idiv
+(  223) INTEGER(KIND=JPIM) :: percent_done
+(  224) logical, save :: LLdone = .false.
+(  225) REAL(KIND=JPRD) :: util_walltime
+(  226) percent_done(x) = nint((x * 100.0_JPRD)/pbar_max)
+(  227) if (present(cderrmsg)) then
+(  228)    write(io,'(/a/)') cderrmsg
+(  229) else
+(  230)    if (LLdone) return
+(  231)    if (pbar_cur == 0) then
+(  232)       cbar = ' '
+(  233)       Telapsed = util_walltime()
+(  234)    endif
+(  235)    if (LDincr) pbar_cur = pbar_cur + 1
+(  236)    Telapsed = util_walltime()
+(  237)    ipc = percent_done(pbar_cur)
+(  238)    ipc = min(max(ipc, 0),100)
+(  239)    idiv = 100/len(cbar)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:15      page 12
+
+(  240)    do j=1,ipc/idiv
+(  241)       cbar(j:j) = '#'
+(  242)    enddo
+(  243)    do j=ipc/idiv+1,len(cbar)
+(  244)       cbar(j:j) = '.'
+(  245)    enddo
+(  246)    clast = cr
+(  247)    if (ipc == 100) then
+(  248)       clast = ' '
+(  249)       npropel = 5
+(  250)       Tremains = 0
+(  251)    else
+(  252)       if (pbar_cur > 0) then
+(  253)          Tremains = (Telapsed * (pbar_max - pbar_cur))/pbar_cur
+(  254)       else
+(  255)          Tremains = 2147483647.0_JPRD
+(  256)       endif
+(  257)    endif
+(  258)    nice(1) = nicetime(Telapsed)
+(  259)    nice(2) = nicetime(Tremains)
+(  260)    write(io,&
+(  261)         & '(3x,a1,a,2x,i3,a1,"  (time: ",a,", left: ",a,", procs:",i2,")      ",a1)',&
+(  262)         & advance='no') &
+(  263)         & cpropel(npropel),cbar, ipc, '%', &
+(  264)         & trim(nice(1)), trim(nice(2)), &
+(  265)         & kount, clast
+(  266)    if (ipc == 100) then
+(  267)       write(io,*) ' '
+(  268)       LLdone = .TRUE.
+(  269)    endif
+(  270)    call flush(io)
+(  271)    npropel = npropel + 1
+(  272)    if (npropel > 4) npropel = 1
+(  273) endif
+(  274) END SUBROUTINE increment_pbar
+(  275) # 276 "Fscheduler.F90"
+(  276) FUNCTION nicetime(t) RESULT(c)
+(  277) USE PARKIND1  ,ONLY : JPIM, JPRD
+(  278) implicit none
+(  279) character(len=10) c
+(  280) REAL(KIND=JPRD), intent(in) :: t
+(  281) INTEGER(KIND=JPIM) :: tim, hh, mm, ss
+(  282) tim = int(t)
+(  283) ss = mod(tim,60)
+(  284) mm = mod(tim/60,60)
+(  285) hh = tim/3600
+(  286) if (hh > 0) then
+(  287)   write(c,'(i4,":",i2.2,":",i2.2)') hh, mm, ss
+(  288) else
+(  289)   write(c,'(i7,":",i2.2)') mm, ss
+(  290) endif
+(  291) c = adjustl(c)
+(  292) END FUNCTION nicetime
+(  293) # 294 "Fscheduler.F90"
+(  294) END PROGRAM fscheduler

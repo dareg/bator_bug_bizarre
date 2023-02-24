@@ -1,0 +1,2515 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: datetimemod.F90
+
+(    1) module DateTimeMod        
+(    2)   ! ---------------------------------- 
+(    3)   !  #[ Description: 
+(    4)   !   This module facilitates date and time  processing
+(    5)   !
+(    6)   ! Written by Hans Bonekamp and Jos de Kloe, KNMI
+(    7)   !
+(    8)   ! Modifications
+(    9)   ! 08-Sep-2003   H. Bonekamp Original code
+(   10)   ! 18-Nov-2004   J. de Kloe  adapted to use date-time structs
+(   11)   ! 24-Nov-2004   J. de Kloe  added some annotations
+(   12)   ! 02-Feb-2005   J. de Kloe  added some ...2string functions
+(   13)   ! 28-Feb-2005   J. de Kloe  added convert_to_derived_datetime function
+(   14)   ! 26-Apr-2005   J. de Kloe  added convert_to_derived_datetime function
+(   15)   ! 20-May-2005   J. de Kloe  added date2string_sep, time2string_sep
+(   16)   !                           and get_current_date_time
+(   17)   ! 24-Nov-2005   J. de Kloe  adapted for use in the L2BP by making the 
+(   18)   !                           seconds in time_type of type r8_
+(   19)   ! 01-Mar-2007   J. de Kloe  fixed a small bug in time2string_sep_ms
+(   20)   !                           and time2_string_ms
+(   21)   ! 21-Mar-2007   J. de Kloe  fixed a small bug in local-time=>UTC correction
+(   22)   !                           in routine get_current_date_time()
+(   23)   ! 16-Jan-2008   J. de Kloe  phase out integer kind i_ 
+(   24)   ! 11-Aug-2008   D. Tan      Add Convert_HHMMSS_to_Time
+(   25)   ! 09-Jun-2015   J. de kloe  allow the special end-of-mission year
+(   26)   ! 15-May-2018   J. de Kloe  some leap second adaptations
+(   27)   !
+(   28)   !  #]
+(   29)   !  #[ Modules used: 
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 3
+
+(   31)   USE numerics, only: r8_, missing_indicator_real,    missing_real, &
+(   32)                            missing_indicator_integer, missing_int
+(   33)   USE ErrorHandler, only: error_invalid_date, &
+(   34)                           error_invalid_time, &
+(   35)                           no_error
+(   36)   !  #]  
+(   37)   !  #[ parameter/variable/type declarations
+(   38)   implicit none 
+(   39) 
+(   40)   ! used by code from Jos
+(   41)   TYPE date_type
+(   42)      integer   :: year
+(   43)      integer   :: month
+(   44)      integer   :: day
+(   45)   END TYPE date_type
+(   46) 
+(   47)   TYPE time_type
+(   48)      integer   :: hour
+(   49)      integer   :: minute
+(   50)      real(r8_) :: second
+(   51)   END TYPE time_type
+(   52) 
+(   53)   ! a date or time is defined as missing if all the 
+(   54)   ! components in its struct are set to missing
+(   55) 
+(   56)   type(date_type), parameter :: &
+(   57)        missing_date_value = date_type(missing_indicator_integer, &
+(   58)                                       missing_indicator_integer, &
+(   59)                                       missing_indicator_integer)
+(   60)   type(date_type), parameter :: &
+(   61)        end_of_mission_date = date_type(9999,12,31)
+(   62) 
+(   63)   !  #]  
+(   64)   !  #[ interface/operator definitions
+(   65) ! this conflicts with the optional eps_in argument for equal_time
+(   66) ! but then do we really need these operators?
+(   67) !  interface operator(.eq.)
+(   68) !     module procedure equal_date, equal_time
+(   69) !  end interface
+(   70) !  interface operator(.ne.)
+(   71) !     module procedure not_equal_date, not_equal_time
+(   72) !  end interface
+(   73)   !  #]
+(   74)   ! ----------------------------------
+(   75) contains 
+(   76)   ! ----------------------------------
+(   77)   ! these routines are written by Jos de Kloe, for ESDP and ADM
+(   78)   !  #[ Date functions
+(   79)   subroutine init_date(date)
+(   80)     !  #[
+(   81)     TYPE(date_type) :: date
+(   82)     call set_date_to_missing(date)
+(   83)   end subroutine init_date
+(   84)     !  #]
+(   85)   subroutine set_date_to_missing(date)
+(   86)     !  #[
+(   87)     TYPE(date_type) :: date
+(   88)     date%year  = missing_indicator_integer
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 4
+
+(   89)     date%month = missing_indicator_integer
+(   90)     date%day   = missing_indicator_integer
+(   91)   end subroutine set_date_to_missing
+(   92)     !  #]
+(   93)   subroutine set_date_to_end_of_mission(date)
+(   94)     !  #[
+(   95)     TYPE(date_type) :: date
+(   96)     date = end_of_mission_date
+(   97)   end subroutine set_date_to_end_of_mission
+(   98)     !  #]
+(   99)   function missing_date(date) result(is_missing)
+(  100)     !  #[
+(  101)     TYPE(date_type) :: date       ! input
+(  102)     logical         :: is_missing ! result
+(  103) 
+(  104)     is_missing = .false.
+(  105)     IF ( missing_int(date%year)  .and. &
+(  106)          missing_int(date%month) .and. &
+(  107)          missing_int(date%day)         ) THEN
+(  108)        is_missing = .true.
+(  109)     END IF
+(  110) 
+(  111)   end function missing_date
+(  112)     !  #]
+(  113)   function end_of_mission(date) result(is_end_of_mission)
+(  114)     !  #[
+(  115)     TYPE(date_type) :: date       ! input
+(  116)     logical         :: is_end_of_mission ! result
+(  117) 
+(  118)     is_end_of_mission = .false.
+(  119)     if ( (date%year  .eq. 9999) .and. &
+(  120)          (date%month .eq.   12) .and. &
+(  121)          (date%day   .eq.   31)        ) then
+(  122)        is_end_of_mission = .true.
+(  123)     end if
+(  124) 
+(  125)   end function end_of_mission
+(  126)     !  #]
+(  127)   function equal_date(date1,date2) result(dates_are_equal)
+(  128)     !  #[
+(  129)     TYPE(date_type), intent(in) :: date1, date2
+(  130)     logical :: dates_are_equal
+(  131) 
+(  132)     dates_are_equal = .true.
+(  133)     IF (date1%year  .ne. date2%year ) dates_are_equal = .false.
+(  134)     IF (date1%month .ne. date2%month) dates_are_equal = .false.
+(  135)     IF (date1%day   .ne. date2%day  ) dates_are_equal = .false.
+(  136) 
+(  137)   end function equal_date
+(  138)     !  #]
+(  139)   function not_equal_date(date1,date2) result(dates_are_not_equal)
+(  140)     !  #[
+(  141)     TYPE(date_type), intent(in) :: date1, date2
+(  142)     logical :: dates_are_not_equal
+(  143) 
+(  144)     IF (equal_date(date1,date2)) THEN
+(  145)        dates_are_not_equal = .false.
+(  146)     ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 5
+
+(  147)        dates_are_not_equal = .true.
+(  148)     END IF
+(  149) 
+(  150)   end function not_equal_date
+(  151)     !  #]
+(  152)   ! the next two conversion routines are constructed by Jos de Kloe
+(  153)   ! and give identical output between 19000101 and 20991231
+(  154)   ! when compared to the ymd2julian and julian2ymd routines.
+(  155)   ! However, otuside this dayrange the routines have not been tested
+(  156)   ! and the results may differ ....
+(  157)   function convert_date_to_int(date) result(date_int)
+(  158)     !  #[ date2int
+(  159)     ! to enable sorting
+(  160)     TYPE(date_type) :: date
+(  161)     integer :: date_int
+(  162) 
+(  163)     if (missing_date(date)) then
+(  164)        date_int = missing_indicator_integer
+(  165)        return
+(  166)     end if
+(  167) 
+(  168)     date_int = 100*100*date%year  + &
+(  169)                    100*date%month + &
+(  170)                        date%day
+(  171)   end function convert_date_to_int
+(  172)     !  #]
+(  173)   function convert_int_to_date(date_int) result(date)
+(  174)     !  #[ int2date
+(  175)     TYPE(date_type) :: date
+(  176)     integer :: date_int, rest
+(  177) 
+(  178)     if (missing_int(date_int)) then
+(  179)        date = missing_date_value
+(  180)        return
+(  181)     end if
+(  182) 
+(  183)     date%year  = date_int/(100*100)
+(  184)     rest       = date_int - 100*100*date%year
+(  185)     date%month = rest/100
+(  186)     rest       = rest     - 100*date%month
+(  187)     date%day   = rest
+(  188) 
+(  189)   end function convert_int_to_date
+(  190)     !  #]
+(  191)   function set_date(year,month,day) result(date)
+(  192)     !  #[ yyyy,mm,dd to date_struct
+(  193) 
+(  194)     ! identical to the default initialisation function date_type()
+(  195)     ! interface
+(  196)     TYPE(date_type) :: date
+(  197)     integer         :: year,month,day
+(  198) 
+(  199)     date%year  = year
+(  200)     date%month = month
+(  201)     date%day   = day
+(  202) 
+(  203)   end function set_date
+(  204)     !  #]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 6
+
+(  205)   subroutine get_ymd(date,year,month,day)
+(  206)     !  #[ date_struct to yyyy,mm,dd 
+(  207)     ! interface
+(  208)     TYPE(date_type), intent(in) :: date
+(  209)     integer, intent(out)        :: year,month,day
+(  210) 
+(  211)     year  = date%year
+(  212)     month = date%month
+(  213)     day   = date%day
+(  214) 
+(  215)   end subroutine get_ymd
+(  216)     !  #]
+(  217)   subroutine print_date(date)
+(  218)     !  #[
+(  219)     TYPE(date_type) :: date
+(  220)     
+(  221)     if (missing_date(date)) then
+(  222)        print '(a)',"date: [missing]"
+(  223)        return
+(  224)     end IF
+(  225) 
+(  226)     if (end_of_mission(date)) then
+(  227)        print '(a)',"date: [end-of-mission]"
+(  228)        return
+(  229)     end if
+(  230) 
+(  231)     print '(a,i2.2,"-",i2.2,"-",i4.4)',"date: ",&
+(  232)          date%day,date%month,date%year
+(  233)     
+(  234)   end subroutine print_date
+(  235)     !  #]
+(  236)   function date2string(date) result(datestring)
+(  237)     !  #[
+(  238)     TYPE(date_type)  :: date       ! input
+(  239)     character(len=8) :: datestring ! result
+(  240)     
+(  241)     if ( missing_int(date%day)   .and. &
+(  242)          missing_int(date%month) .and. &
+(  243)          missing_int(date%year)        ) then
+(  244)        datestring = "[missng]"
+(  245)        return
+(  246)     end if
+(  247)     
+(  248)     if (end_of_mission(date)) then
+(  249)        datestring = "[EOMISS]"
+(  250)        return
+(  251)     end if
+(  252)     
+(  253)     write(datestring,"(i4.4,i2.2,i2.2)") date%year, date%month, date%day
+(  254)     
+(  255)   end function date2string
+(  256)     !  #]
+(  257)   function date2string_sep(date,separator) result(datestring)
+(  258)     !  #[
+(  259)     TYPE(date_type), intent(in)  :: date       ! input
+(  260)     character(len=1), intent(in) :: separator  ! input
+(  261)     character(len=10)            :: datestring ! result
+(  262) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 7
+
+(  263)     datestring(:) = ' '
+(  264) 
+(  265)     if (missing_date(date)) then
+(  266)        datestring = "[missing]"
+(  267)        return
+(  268)     end if
+(  269) 
+(  270)     if (end_of_mission(date)) then
+(  271)        datestring = "[eomssion]"
+(  272)        return
+(  273)     end if
+(  274)     
+(  275)     write(datestring,"(i4.4,a1,i2.2,a1,i2.2)") &
+(  276)          date%year, separator, date%month, separator, date%day
+(  277)     
+(  278)    end function date2string_sep
+(  279)     !  #]
+(  280)   subroutine string2date(datestring, date, time)
+(  281)     !  #[
+(  282)     character(len=*) :: datestring ! input
+(  283)     type(date_type)  :: date       ! output
+(  284)     type(time_type)  :: time       ! output
+(  285) 
+(  286)     integer :: iyear, imonth, iday
+(  287)     integer :: ihour, iminute, isecond
+(  288)     integer :: ios
+(  289)     logical :: error_occurred
+(  290) 
+(  291)     iyear   = 0
+(  292)     imonth  = 0
+(  293)     iday    = 0
+(  294)     ihour   = 0
+(  295)     iminute = 0
+(  296)     isecond = 0
+(  297)     error_occurred = .false.
+(  298) 
+(  299)     read (datestring,    '(I4)', iostat=ios) iyear
+(  300)     if (ios .ne. 0) error_occurred = .true.
+(  301) 
+(  302)     read (datestring, '(4X,I2)', iostat=ios) imonth
+(  303)     if (ios .ne. 0) error_occurred = .true.
+(  304) 
+(  305)     read (datestring, '(6X,I2)', iostat=ios) iday
+(  306)     if (ios .ne. 0) error_occurred = .true.
+(  307) 
+(  308)     if (datestring(9:9) .ne. ' ') then
+(  309)       read (datestring, '(8X,I2)', iostat=ios) ihour
+(  310)       if (ios .ne. 0) error_occurred = .true.
+(  311)     endif
+(  312) 
+(  313)     if (datestring(11:11) .ne. ' ') then
+(  314)       read (datestring, '(10X,I2)', iostat=ios) iminute
+(  315)       if (ios .ne. 0) error_occurred = .true.
+(  316)     endif
+(  317) 
+(  318)     if (datestring(13:13) .ne. ' ') then
+(  319)       read (datestring, '(12X,I2)', iostat=ios) isecond
+(  320)       if (ios .ne. 0) error_occurred = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 8
+
+(  321)     endif
+(  322) 
+(  323)     if (error_occurred) then
+(  324)       write(*,*) "Error in conversion of string ", trim(datestring), " to date/time"
+(  325)     else
+(  326)       date%year   = iyear
+(  327)       date%month  = imonth
+(  328)       date%day    = iday
+(  329)       time%hour   = ihour
+(  330)       time%minute = iminute
+(  331)       time%second = isecond
+(  332)     endif
+(  333) 
+(  334)   end subroutine string2date
+(  335)     !  #]
+(  336)   function valid_date(date) result(is_valid)
+(  337)     !  #[
+(  338)     ! a small wrapper function to allow date testing by calling
+(  339)     ! a function, rather then calling a subroutine 
+(  340) 
+(  341)     TYPE(date_type) :: date     ! input
+(  342)     logical         :: is_valid ! result
+(  343) 
+(  344)     ! local variable
+(  345)     integer :: error_flag
+(  346) 
+(  347)     is_valid = .true.
+(  348) 
+(  349)     ! end-of-mission is a valid date!
+(  350)     if (end_of_mission(date)) return
+(  351) 
+(  352)     call test_date(date, error_flag)
+(  353)     IF (error_flag .ne. no_error) is_valid = .false.
+(  354) 
+(  355)   end function valid_date
+(  356)     !  #]
+(  357)   subroutine test_date(date, error_flag)
+(  358)     !  #[
+(  359)     TYPE(date_type), intent(in) :: date
+(  360)     integer, intent(out)        :: error_flag
+(  361) 
+(  362)     ! init
+(  363)     error_flag = no_error
+(  364) 
+(  365)     ! do some sensibility tests on this date
+(  366)     if ( (date%month .lt. 1) .or. (date%month .gt. 12) ) then
+(  367)        print *,"ERROR reported by test_date:"
+(  368)        print *,"invalid month value: ",date%month
+(  369)        call print_date(date)
+(  370)        error_flag = error_invalid_date
+(  371)        return
+(  372)     endif
+(  373) 
+(  374)     if (date%day .lt. 1) then
+(  375)        print *,"ERROR reported by test_date:"
+(  376)        print *,"invalid day value: ",date%day
+(  377)        call print_date(date)
+(  378)        error_flag = error_invalid_date
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 9
+
+(  379)        return
+(  380)     end if
+(  381) 
+(  382)     if ( (date%month .eq. 1) .or. &
+(  383)          (date%month .eq. 3) .or. &
+(  384)          (date%month .eq. 5) .or. &
+(  385)          (date%month .eq. 7) .or. &
+(  386)          (date%month .eq. 8) .or. &
+(  387)          (date%month .eq. 10) .or. &
+(  388)          (date%month .eq. 12)      ) then
+(  389)        ! month should be .le. 31 for these months
+(  390)        if (date%day .gt. 31) then
+(  391)           print *,"ERROR reported by test_date:"
+(  392)           print *,"invalid day value: ",date%day
+(  393)           print *,"for month: ",date%month
+(  394)           call print_date(date)
+(  395)           error_flag = error_invalid_date
+(  396)           return
+(  397)        end if
+(  398)     end if
+(  399) 
+(  400)     if ( (date%month .eq. 4) .or. &
+(  401)          (date%month .eq. 6) .or. &
+(  402)          (date%month .eq. 9) .or. &
+(  403)          (date%month .eq. 11)      ) then
+(  404)        ! month should be .le. 30 for these months
+(  405)        if (date%day .gt. 30) then
+(  406)           print *,"ERROR reported by test_date:"
+(  407)           print *,"invalid day value: ",date%day
+(  408)           print *,"for month: ",date%month
+(  409)           call print_date(date)
+(  410)           error_flag = error_invalid_date
+(  411)           return
+(  412)        end if
+(  413)     end if
+(  414) 
+(  415)     if (date%month .eq. 2) then
+(  416)        ! month should be .le. 29 for february
+(  417)        if (date%day .gt. 29) then
+(  418)           print *,"ERROR reported by test_date:"
+(  419)           print *,"invalid day value: ",date%day
+(  420)           print *,"for month: ",date%month
+(  421)           call print_date(date)
+(  422)           error_flag = error_invalid_date
+(  423)           return
+(  424)        end if
+(  425)     end if
+(  426) 
+(  427)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  428)     if (date%year .eq. 9999) then
+(  429)        if ((date%month .eq. 12) .and. (date%day .eq. 31)) return
+(  430)     end if
+(  431) 
+(  432)     if ( (date%year .lt. 1900) .or. (date%year .gt. 2100) ) then
+(  433)        print *,"WARNING reported by test_date:"
+(  434)        print *,"the year: ",date%year," seems unlikely"
+(  435)        print *,"and the software has not been tested for these years"
+(  436)        call print_date(date)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 10
+
+(  437)        error_flag = error_invalid_date
+(  438)        return
+(  439)     end if
+(  440) 
+(  441)   end subroutine test_date
+(  442)     !  #]
+(  443)   function conv_date_to_daycount(date) result(daycount)
+(  444)     !  #[
+(  445)     ! for given date (ccyymmdd) return day number since 19000101
+(  446)     ! an adapted version of the IDAT2C.f routine in the lib_util library
+(  447)     ! Since 2000 was a leap year, all years/4 are leapyears
+(  448)     ! This will break down for the year 2100.....
+(  449)     ! (which is not of my concern right now)
+(  450) 
+(  451)     integer, intent(in) :: date ! CCYY*100*100 + MM*100 + DD
+(  452)     integer :: daycount
+(  453) 
+(  454)     ! local variables
+(  455)     integer :: yy,mm,dd,rest
+(  456)     integer :: num_leapyears
+(  457)     integer, parameter, dimension(12) :: monthstart = &
+(  458)          (/ 0,31,59,90,120,151,181,212,243,273,304,334 /)
+(  459) 
+(  460)     yy = date/10000
+(  461)     rest = date - yy*10000
+(  462)     yy = yy - 1900
+(  463)     mm = rest/100
+(  464)     dd = rest - mm*100
+(  465) 
+(  466)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  467)     if (date .ne. 99991231) then
+(  468)        if ( (date .lt. 19000101) .or. &
+(  469)             (date .gt. 20991231)      ) then
+(  470)           print *,"ERROR: conv_date_to_daycount cannot handle dates outside"
+(  471)           print *,"ERROR: the range 19000101...20991231"
+(  472)           daycount = missing_indicator_integer
+(  473)           return
+(  474)        end if
+(  475)     end if
+(  476) 
+(  477)     !  subtract 1 to let dayrange start with zero
+(  478)     daycount = monthstart(mm) + dd - 1
+(  479)     
+(  480)     ! take leap years into account
+(  481) 
+(  482)     ! Add 1 if current year is a leapyear, and month .gt. 2
+(  483)     if ( (mod(yy,4) .eq. 0) .and. &
+(  484)          (yy .ne. 0)        .and. &
+(  485)          (mm .gt. 2)              ) then
+(  486)        daycount = daycount + 1
+(  487)        !print *,"yy = ",yy," mm = ",mm," dd = ",dd
+(  488)        !print *,"daycount = ",daycount
+(  489)        !print *,"monthstart(mm) = ",monthstart(mm)
+(  490)     endif
+(  491) 
+(  492)     ! Remember: 1900 was not a leapyear, but 2000 was one
+(  493)     ! Take leapyears that occurred BEFORE the curent year into account
+(  494)     ! NOTE: this will fail beyond the year 2100, so the actual daycount
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 11
+
+(  495)     ! value for then end-of-mission code 99991231 is wrong.
+(  496)     ! Don't know yet how important this is. 
+(  497)     num_leapyears = (yy-1)/4 
+(  498) 
+(  499)     daycount = daycount + yy*365 + num_leapyears
+(  500) 
+(  501)   end function conv_date_to_daycount
+(  502)   !---------------------------------------------------
+(  503)     !  #]
+(  504)   function conv_daycount_to_date(daycount) result(date)
+(  505)     !  #[
+(  506) 
+(  507)     ! for given day number since 19000101 return the date (ccyymmdd)
+(  508)     ! an adapted version of the IDAT2C.f routine in the lib_util library
+(  509)     ! Since 2000 was a leap year, all years/4 are leapyears
+(  510)     ! This will break down for the year 2100.....
+(  511)     ! (which is not of my concern right now)
+(  512) 
+(  513)     integer, intent(in) :: daycount
+(  514)     integer :: date ! CCYY*100*100 + MM*100 + DD
+(  515) 
+(  516)     ! local variables
+(  517)     integer :: yy,mm,dd,rest
+(  518) !    integer :: num_leapyears
+(  519)     integer, parameter, dimension(12) :: monthstart = &
+(  520)          (/ 0,31,59,90,120,151,181,212,243,273,304,334 /)
+(  521) 
+(  522)     if (daycount .lt. 0) then
+(  523)        print *,"ERROR: conv_daycount_to_date cannot handle negative daycounts!"
+(  524)        print *,"ERROR: This would mean a date soutside the range"
+(  525)        print *,"19000101...20991231, which is not implemented at this time"
+(  526)        print *,"daycount = ",daycount
+(  527)        date = missing_indicator_integer
+(  528)        return
+(  529)     end if
+(  530) 
+(  531)     yy=0
+(  532)     rest = daycount
+(  533)     yearloop: DO
+(  534)        IF ( (mod(yy,4) .eq. 0) .and. (yy .ne. 0) ) THEN
+(  535)           ! this is a leapyear
+(  536)           IF (rest .ge. 366) THEN
+(  537)              rest = rest - 366
+(  538)              yy = yy + 1
+(  539)           ELSE
+(  540)              exit yearloop
+(  541)           END IF
+(  542)        ELSE
+(  543)           IF (rest .ge. 365) THEN
+(  544)              rest = rest - 365
+(  545)              yy = yy + 1
+(  546)           ELSE
+(  547)              exit yearloop
+(  548)           END IF
+(  549)        END IF
+(  550)     END DO yearloop
+(  551) 
+(  552)     ! Remember: 1900 was not a leapyear, but 2000 was
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 12
+
+(  553)     ! Take leapyears that occurred BEFORE the curent year into account
+(  554) 
+(  555) 
+(  556) !    yy = int(1.0*daycount/365.25)
+(  557) !    num_leapyears = (yy-1)/4
+(  558) !    rest = daycount - yy*365 - num_leapyears
+(  559) 
+(  560)     mm = 1
+(  561)     monthloop: DO 
+(  562)        if (rest .lt. monthstart(mm+1)) exit monthloop
+(  563)        mm = mm+1
+(  564)        if (mm .eq. 12) exit monthloop
+(  565)     END DO monthloop
+(  566) 
+(  567)     dd = rest - monthstart(mm) + 1
+(  568) 
+(  569)     ! Add 1 if current year is a leapyear, and month .gt. 2
+(  570)     if ( (mod(yy,4) .eq. 0) .and. &
+(  571)          (yy .ne. 0)        .and. &
+(  572)          (mm .gt. 2)              ) then
+(  573)        if (rest .eq. monthstart(3) ) then
+(  574)           ! setting month back to 2
+(  575)           mm = 2
+(  576)        else
+(  577)           ! one extra day for this year ...
+(  578)           rest = rest - 1
+(  579)        end if
+(  580)        dd = rest - monthstart(mm) + 1
+(  581)        ! for leap years this can result in a day of 0, for the next month
+(  582)        ! so correct for this
+(  583)        IF (dd .eq. 0) THEN
+(  584)           mm = mm - 1
+(  585)           dd = rest - monthstart(mm) + 1
+(  586)        END IF
+(  587)     end if
+(  588) 
+(  589)     !print *,"test: yy = ",yy," mm=",mm," dd=",dd, "rest=",rest
+(  590) 
+(  591)     date = 100*100*(yy+1900) + 100*mm + dd
+(  592) 
+(  593)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  594)     if (date .ne. 99991231) then
+(  595)        IF (date .gt. 20991231) THEN
+(  596)           print *,"ERROR: The date ",date," is outside the range"
+(  597)           print *,"19000101...20991231, this is not implemented at this time"
+(  598)           date = missing_indicator_integer
+(  599)           return
+(  600)        END IF
+(  601)     end if
+(  602)     
+(  603)   end function conv_daycount_to_date
+(  604)   !---------------------------------------------------
+(  605) 
+(  606)     !  #]
+(  607)   !  #]
+(  608)   !  #[ Time functions
+(  609)   subroutine init_time(time)
+(  610)     !  #[
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 13
+
+(  611)     TYPE(time_type), intent(out) :: time    
+(  612)     call set_time_to_missing(time)
+(  613)   end subroutine init_time
+(  614)     !  #]
+(  615)   subroutine set_time_to_missing(time)
+(  616)     !  #[
+(  617)     TYPE(time_type), intent(out) :: time    
+(  618)     time%hour   = missing_indicator_integer
+(  619)     time%minute = missing_indicator_integer
+(  620)     time%second = missing_indicator_real
+(  621)   end subroutine set_time_to_missing
+(  622)     !  #]
+(  623)   function equal_time(time1,time2,eps_in) result(times_are_equal)
+(  624)     !  #[
+(  625)     TYPE(time_type), intent(in) :: time1, time2
+(  626)     logical :: times_are_equal
+(  627)     real(r8_), optional :: eps_in
+(  628) 
+(  629)     ! local variable
+(  630)     real(r8_) :: eps
+(  631) 
+(  632)     IF (present(eps_in)) THEN
+(  633)        eps = eps_in
+(  634)     ELSE
+(  635)        ! use millisecond accuracy as default
+(  636)        eps = 1.e-3_r8_
+(  637)     END IF
+(  638) 
+(  639)     times_are_equal = .true.
+(  640)     IF (time1%hour   .ne. time2%hour   ) times_are_equal = .false.
+(  641)     IF (time1%minute .ne. time2%minute ) times_are_equal = .false.
+(  642)     IF ( abs(time1%second - time2%second) .gt. eps ) times_are_equal = .false.
+(  643) 
+(  644)   end function equal_time
+(  645)     !  #]
+(  646)   function not_equal_time(time1,time2) result(times_are_not_equal)
+(  647)     !  #[
+(  648)     TYPE(time_type), intent(in) :: time1, time2
+(  649)     logical :: times_are_not_equal
+(  650) 
+(  651)     IF (equal_time(time1,time2)) THEN
+(  652)        times_are_not_equal = .false.
+(  653)     ELSE
+(  654)        times_are_not_equal = .true.
+(  655)     END IF
+(  656) 
+(  657)   end function not_equal_time
+(  658)     !  #]
+(  659)   function missing_time(time) result(is_missing)
+(  660)     !  #[
+(  661)     TYPE(time_type) :: time       ! input
+(  662)     logical         :: is_missing ! result
+(  663) 
+(  664)     is_missing = .false.
+(  665)     IF ( missing_int(time%hour)   .and. &
+(  666)          missing_int(time%minute) .and. &
+(  667)          missing_real(time%second)      ) THEN
+(  668)        is_missing = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 14
+
+(  669)     END IF
+(  670) 
+(  671)   end function missing_time
+(  672)     !  #]
+(  673)   function convert_time_to_real(time) result(time_real)
+(  674)     !  #[
+(  675)     ! to enable sorting
+(  676)     TYPE(time_type) :: time   
+(  677)     real(r8_)       :: time_real
+(  678)     time_real = real(60*60*time%hour + &
+(  679)                      60*time%minute,    r8_) + &
+(  680)                         time%second
+(  681)   end function convert_time_to_real
+(  682)     !  #]
+(  683)   function convert_real_to_time(time_real) result(time)
+(  684)     !  #[
+(  685)     ! interface
+(  686)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  687)     real(r8_)       :: time_real  ! time in seconds since midnight
+(  688) 
+(  689)     ! local variable
+(  690)     real(r8_) :: rest
+(  691)     real(r8_), parameter :: seconds_per_day = 86400._r8_
+(  692)     
+(  693)     time%hour   = floor(time_real/(60*60))
+(  694)     rest        = time_real - 60*60*time%hour
+(  695)     time%minute = floor(rest/60)
+(  696)     rest        = rest - 60*time%minute
+(  697)     time%second = rest
+(  698) 
+(  699)     ! special leap second case:
+(  700)     if ( (time_real .ge. seconds_per_day) .and. &
+(  701)          (time_real .lt. seconds_per_day+1) ) then
+(  702)        time%hour   = 23
+(  703)        time%minute = 59
+(  704)        time%second = 60 + time_real - seconds_per_day
+(  705)     end if
+(  706)     
+(  707)   end function convert_real_to_time
+(  708)     !  #]
+(  709)   function convert_HHMMSS_to_time(time_real) result(time)
+(  710)     !  #[
+(  711)     ! interface
+(  712)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  713)     real(r8_)       :: time_real  ! time in HHMMSS.uuuuuu format
+(  714) 
+(  715)     ! local variable
+(  716)     real(r8_) :: rest
+(  717) 
+(  718)     time%hour   = floor(time_real/(100*100))
+(  719)     rest        = time_real - 100*100*time%hour
+(  720)     time%minute = floor(rest/100)
+(  721)     rest        = rest - 100*time%minute
+(  722)     time%second = rest
+(  723) 
+(  724)   end function convert_HHMMSS_to_time
+(  725)     !  #]
+(  726)   function set_time(h,m,s) result(time)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 15
+
+(  727)     !  #[ h,m,s to time
+(  728)     ! identical to the default initialisation function time_type()
+(  729)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  730)     integer         :: h,m
+(  731)     real(r8_)       :: s
+(  732)     
+(  733)     time%hour   = h
+(  734)     time%minute = m
+(  735)     time%second = s
+(  736) 
+(  737)   end function set_time
+(  738)     !  #]
+(  739)   subroutine get_hms(time,h,m,s)
+(  740)     !  #[ time to h,m,s
+(  741)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  742)     integer         :: h,m
+(  743)     real(r8_)       :: s
+(  744)     
+(  745)     h = time%hour  
+(  746)     m = time%minute
+(  747)     s = time%second
+(  748) 
+(  749)   end subroutine get_hms
+(  750)     !  #]
+(  751)   subroutine print_time(time)
+(  752)     !  #[
+(  753)     TYPE(time_type)   :: time    
+(  754)     character(len=11) :: timestr
+(  755) 
+(  756)     timestr(:) = ' '
+(  757)     IF ( missing_int(time%hour)   .and. &
+(  758)          missing_int(time%minute) .and. &
+(  759)          missing_real(time%second)      ) THEN
+(  760)        write(timestr,"(a)") "[missing]"
+(  761)     ELSE
+(  762)        write(timestr,"(i2.2,':',i2.2,':',f5.2)") &
+(  763)             time%hour,time%minute,time%second
+(  764)        ! prevent a space in the second field for seconds below 10.
+(  765)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  766)     END IF
+(  767)     print '("time: ",a)',timestr
+(  768) 
+(  769)   end subroutine print_time
+(  770)     !  #]
+(  771)   function time2string(time) result(timestr)
+(  772)     !  #[
+(  773)     TYPE(time_type)  :: time    ! input
+(  774)     character(len=6) :: timestr ! result
+(  775)     
+(  776)     IF ( missing_int(time%hour)   .and. &
+(  777)          missing_int(time%minute) .and. &
+(  778)          missing_real(time%second)      ) THEN
+(  779)        write(timestr,"(a)") "[miss]"
+(  780)     ELSE
+(  781)        write(timestr,"(i2.2,i2.2,i2.2)") &
+(  782)             time%hour,time%minute,floor(time%second)
+(  783)     END IF
+(  784) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 16
+
+(  785)   end function time2string
+(  786)     !  #]
+(  787)   function time2string_sep(time,separator) result(timestr)
+(  788)     !  #[
+(  789)     TYPE(time_type)  :: time       ! input
+(  790)     character(len=1) :: separator  ! input
+(  791)     character(len=8) :: timestr    ! result
+(  792)     
+(  793)     IF ( missing_int(time%hour)   .and. &
+(  794)          missing_int(time%minute) .and. &
+(  795)          missing_real(time%second)      ) THEN
+(  796)        write(timestr,"(a)") "[missng]"
+(  797)     ELSE
+(  798)        write(timestr,"(i2.2,a1,i2.2,a1,i2.2)") &
+(  799)             time%hour, separator, time%minute, separator, floor(time%second)
+(  800)     END IF
+(  801) 
+(  802)   end function time2string_sep
+(  803)     !  #]
+(  804)   function time2string_ms(time) result(timestr)
+(  805)     !  #[
+(  806)     TYPE(time_type)   :: time    ! input
+(  807)     character(len=13) :: timestr ! result
+(  808)     
+(  809)     IF ( missing_int(time%hour)   .and. &
+(  810)          missing_int(time%minute) .and. &
+(  811)          missing_real(time%second)      ) THEN
+(  812)        write(timestr,"(a)") "[missing]"
+(  813)     ELSE
+(  814)        write(timestr,"(i2.2,i2.2,f9.6)") &
+(  815)             time%hour,time%minute,time%second
+(  816)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  817)     END IF
+(  818) 
+(  819)   end function time2string_ms
+(  820)     !  #]
+(  821)   function time2string_sep_ms(time,separator) result(timestr)
+(  822)     !  #[
+(  823)     TYPE(time_type)   :: time       ! input
+(  824)     character(len=1)  :: separator  ! input
+(  825)     character(len=15) :: timestr    ! result
+(  826)     
+(  827)     IF ( missing_int(time%hour)   .and. &
+(  828)          missing_int(time%minute) .and. &
+(  829)          missing_real(time%second)      ) THEN
+(  830)        write(timestr,"(a)") "[missing]"
+(  831)     ELSE
+(  832)        write(timestr,"(i2.2,a1,i2.2,a1,f9.6)") &
+(  833)             time%hour, separator, time%minute, separator, time%second
+(  834)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  835)     END IF
+(  836) 
+(  837)   end function time2string_sep_ms
+(  838)     !  #]
+(  839)   function valid_time(time) result(is_valid)
+(  840)     !  #[
+(  841)     ! a small wrapper function to allow date testing by calling
+(  842)     ! a function, rather then calling a subroutine 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 17
+
+(  843) 
+(  844)     TYPE(time_type) :: time    
+(  845)     logical         :: is_valid ! result
+(  846) 
+(  847)     ! local variable
+(  848)     integer :: error_flag
+(  849) 
+(  850)     call test_time(time,error_flag)
+(  851)     is_valid = .true.
+(  852)     IF (error_flag .ne. no_error) is_valid = .false.
+(  853) 
+(  854)   end function valid_time
+(  855)     !  #]
+(  856)   subroutine test_time(time, error_flag, use_gps)
+(  857)     !  #[
+(  858)     ! check whether the time struct holds valid numbers
+(  859)     TYPE(time_type), intent(in) :: time    
+(  860)     integer, intent(out)        :: error_flag
+(  861)     logical, optional, intent(in) :: use_gps
+(  862) 
+(  863)     ! local variable
+(  864)     real(r8_) :: max_seconds
+(  865)     logical :: do_use_gps
+(  866)     
+(  867)     ! init
+(  868)     error_flag = no_error
+(  869) 
+(  870)     if ( (time%hour .lt. 0) .or. (time%hour .gt. 23) ) then
+(  871)        print *,"ERROR reported by: test_time()"
+(  872)        print *,"invalid value for time%hour: ",time%hour
+(  873)        error_flag = error_invalid_time
+(  874)        return
+(  875)     end if
+(  876) 
+(  877)     if ( (time%minute .lt. 0) .or. (time%minute .gt. 59) ) then
+(  878)        print *,"ERROR reported by: test_time()"
+(  879)        print *,"invalid value for time%minute: ",time%minute
+(  880)        error_flag = error_invalid_time
+(  881)        return
+(  882)     end if
+(  883) 
+(  884)     do_use_gps = .false.
+(  885)     if (present(use_gps)) do_use_gps = use_gps
+(  886)     
+(  887)     ! UTC times can have the second value of 60.999999
+(  888)     ! in case a leap second occurred
+(  889)     max_seconds = 61._r8_
+(  890)     ! But GPS times cannot have them!
+(  891)     if (do_use_gps) max_seconds = 60._r8_
+(  892) 
+(  893)     if ( (time%second .lt. 0.) .or. (time%second .ge. max_seconds) ) then
+(  894)        print *,"ERROR reported by: test_time()"
+(  895)        print *,"invalid value for time%second: ",time%second
+(  896)        if (do_use_gps) then
+(  897)           print *,"max. allowed second value for GPS times is: ", max_seconds
+(  898)        else
+(  899)           print *,"max. allowed second value for UPS times is: ", max_seconds
+(  900)        end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 18
+
+(  901)        error_flag = error_invalid_time
+(  902)        return
+(  903)     end if
+(  904)          
+(  905)   end subroutine test_time
+(  906)     !  #]
+(  907)   !  #]
+(  908)   !  #[ combined date-time functions
+(  909)   subroutine increment_datetime(date,time,time_increment)
+(  910)     !  #[
+(  911)     ! add a given time_increment (in seconds) to the time struct, 
+(  912)     ! and update the date struct if necessary
+(  913)     
+(  914)     ! interface
+(  915)     type(time_type), intent(inout) :: time
+(  916)     type(date_type), intent(inout) :: date
+(  917)     real(r8_),       intent(in)    :: time_increment
+(  918) 
+(  919)     ! local variables
+(  920)     real(r8_) :: time_real, new_time_real
+(  921)     integer   :: date_int, new_date_int
+(  922)     integer   :: day_offset, daycount
+(  923)     real(r8_), parameter :: seconds_per_day = 24._r8_*60*60
+(  924) 
+(  925)     ! convert time to time_real (in seconds since midnight)
+(  926)     time_real = convert_time_to_real(time) 
+(  927) 
+(  928)     ! calculate new time
+(  929)     time_real = time_real + time_increment
+(  930) 
+(  931)     ! convert date to date_int
+(  932)     date_int = convert_date_to_int(date)
+(  933) 
+(  934)     ! first assume the new date equals the old date
+(  935)     new_date_int = date_int
+(  936) 
+(  937)     ! first assume the new time_real is ok
+(  938)     new_time_real = time_real
+(  939) 
+(  940)     ! then test time_real 
+(  941)     if (time_real .lt. 0.) then
+(  942)        ! we stepped to a previous day, so the date needs to be updated
+(  943)        day_offset    = 1+floor(abs(time_real)/seconds_per_day)
+(  944)        daycount      = conv_date_to_daycount(date_int)
+(  945)        daycount      = daycount - day_offset
+(  946)        new_date_int  = conv_daycount_to_date(daycount)
+(  947)        new_time_real = time_real + day_offset*seconds_per_day
+(  948)     endif
+(  949) 
+(  950)     if (time_real .ge. seconds_per_day) then
+(  951)        ! we stepped to a next day, so the date needs to be updated
+(  952)        day_offset    = floor(time_real/seconds_per_day)
+(  953)        daycount      = conv_date_to_daycount(date_int)
+(  954)        daycount      = daycount + day_offset
+(  955)        new_date_int  = conv_daycount_to_date(daycount)
+(  956)        new_time_real = time_real - day_offset*seconds_per_day
+(  957)     endif
+(  958) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 19
+
+(  959)     ! copy the date_int and time_real values to the 
+(  960)     ! output values date and time
+(  961) 
+(  962)     date = convert_int_to_date( new_date_int)
+(  963)     time = convert_real_to_time(new_time_real)
+(  964) 
+(  965)   end subroutine increment_datetime
+(  966)     !  #]
+(  967)   subroutine convert_to_derived_datetime(date_int,hour)
+(  968)     !  #[
+(  969)     ! parameters
+(  970)     integer, intent(inout) :: hour
+(  971)     integer, intent(inout) :: date_int ! YYYYMMDD
+(  972) 
+(  973)     ! local variables
+(  974)     integer :: derived_hour, derived_date, day_offset, daycount
+(  975) 
+(  976)     ! remember: hour 24 does not exist
+(  977)     ! for this hour 0 of the next day is used,
+(  978)     ! therefore (and to be able to use forecasts of 27,30,33, and 36 hours)
+(  979)     ! I use the derived_date and derived_hour, which is obtained by limiting
+(  980)     ! the hour to the range 0-23 and changing the date to match it.
+(  981) 
+(  982)     ! set the derived values to the input values
+(  983)     derived_date = date_int
+(  984)     derived_hour = hour
+(  985) 
+(  986)     IF (hour .lt. 0) THEN
+(  987)        day_offset   = 1+abs(hour)/24
+(  988)        daycount     = conv_date_to_daycount(date_int)
+(  989)        daycount     = daycount - day_offset
+(  990)        derived_date = conv_daycount_to_date(daycount)
+(  991)        derived_hour = derived_hour + 24*day_offset
+(  992)     END IF
+(  993) 
+(  994)     IF (hour .ge. 24) THEN
+(  995)        day_offset   = hour/24
+(  996)        daycount     = conv_date_to_daycount(date_int)
+(  997)        daycount     = daycount + day_offset
+(  998)        derived_date = conv_daycount_to_date(daycount)
+(  999)        derived_hour = derived_hour - 24*day_offset
+( 1000)     END IF
+( 1001) 
+( 1002)     ! copy the derived values to the output values
+( 1003)     date_int = derived_date
+( 1004)     hour     = derived_hour
+( 1005) 
+( 1006)   end subroutine convert_to_derived_datetime
+( 1007)     !  #]
+( 1008)   subroutine get_current_date_time(date,time,use_UTC)
+( 1009)     !  #[
+( 1010)     ! interface
+( 1011)     type(time_type),   intent(out) :: time
+( 1012)     type(date_type),   intent(out) :: date
+( 1013)     logical, optional, intent(in)  :: use_UTC
+( 1014) 
+( 1015)     ! local variables
+( 1016)     integer, dimension(8) :: v
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 20
+
+( 1017)     real(r8_) :: time_increment ! in seconds
+( 1018)     logical   :: do_use_UTC
+( 1019) 
+( 1020)     ! init
+( 1021)     do_use_UTC = .true.
+( 1022)     IF (present(use_UTC)) do_use_UTC = use_UTC
+( 1023) 
+( 1024)     call init_date(date)
+( 1025)     call init_time(time)
+( 1026) 
+( 1027)     ! request the current date and time from the system
+( 1028)     ! beware: the UTC/GMT correction seems not to be working
+( 1029)     ! on my own workstation....
+( 1030)     call date_and_time(values=v)
+( 1031) 
+( 1032)     date = set_date(v(1),v(2),v(3))
+( 1033)     time = set_time(v(5),v(6),1._r8_*v(7)+1.e-3_r8_*v(8))
+( 1034) 
+( 1035)     IF (do_use_UTC) THEN
+( 1036)        ! correct the date/time to go to UTC
+( 1037)        time_increment = -1*v(4)*60 ! convert min=>sec
+( 1038)        call increment_datetime(date,time,time_increment)
+( 1039)     END IF
+( 1040) 
+( 1041)   end subroutine get_current_date_time
+( 1042)     !  #]
+( 1043)   !  #]
+( 1044)   ! ----------------------------------
+( 1045) end module DateTimeMod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 21
+
+(    1) # 1 "datetimemod.F90"
+(    1) module DateTimeMod        
+(    2)   ! ---------------------------------- 
+(    3)   !  #[ Description: 
+(    4)   !   This module facilitates date and time  processing
+(    5)   !
+(    6)   ! Written by Hans Bonekamp and Jos de Kloe, KNMI
+(    7)   !
+(    8)   ! Modifications
+(    9)   ! 08-Sep-2003   H. Bonekamp Original code
+(   10)   ! 18-Nov-2004   J. de Kloe  adapted to use date-time structs
+(   11)   ! 24-Nov-2004   J. de Kloe  added some annotations
+(   12)   ! 02-Feb-2005   J. de Kloe  added some ...2string functions
+(   13)   ! 28-Feb-2005   J. de Kloe  added convert_to_derived_datetime function
+(   14)   ! 26-Apr-2005   J. de Kloe  added convert_to_derived_datetime function
+(   15)   ! 20-May-2005   J. de Kloe  added date2string_sep, time2string_sep
+(   16)   !                           and get_current_date_time
+(   17)   ! 24-Nov-2005   J. de Kloe  adapted for use in the L2BP by making the 
+(   18)   !                           seconds in time_type of type r8_
+(   19)   ! 01-Mar-2007   J. de Kloe  fixed a small bug in time2string_sep_ms
+(   20)   !                           and time2_string_ms
+(   21)   ! 21-Mar-2007   J. de Kloe  fixed a small bug in local-time=>UTC correction
+(   22)   !                           in routine get_current_date_time()
+(   23)   ! 16-Jan-2008   J. de Kloe  phase out integer kind i_ 
+(   24)   ! 11-Aug-2008   D. Tan      Add Convert_HHMMSS_to_Time
+(   25)   ! 09-Jun-2015   J. de kloe  allow the special end-of-mission year
+(   26)   ! 15-May-2018   J. de Kloe  some leap second adaptations
+(   27)   !
+(   28)   !  #]
+(   29)   !  #[ Modules used: 
+(   30) # 31 "datetimemod.F90"
+(   31)   USE numerics, only: r8_, missing_indicator_real,    missing_real, &
+(   32)                            missing_indicator_integer, missing_int
+(   33)   USE ErrorHandler, only: error_invalid_date, &
+(   34)                           error_invalid_time, &
+(   35)                           no_error
+(   36)   !  #]  
+(   37)   !  #[ parameter/variable/type declarations
+(   38)   implicit none 
+(   39) # 40 "datetimemod.F90"
+(   40)   ! used by code from Jos
+(   41)   TYPE date_type
+(   42)      integer   :: year
+(   43)      integer   :: month
+(   44)      integer   :: day
+(   45)   END TYPE date_type
+(   46) # 47 "datetimemod.F90"
+(   47)   TYPE time_type
+(   48)      integer   :: hour
+(   49)      integer   :: minute
+(   50)      real(r8_) :: second
+(   51)   END TYPE time_type
+(   52) # 53 "datetimemod.F90"
+(   53)   ! a date or time is defined as missing if all the 
+(   54)   ! components in its struct are set to missing
+(   55) # 56 "datetimemod.F90"
+(   56)   type(date_type), parameter :: &
+(   57)        missing_date_value = date_type(missing_indicator_integer, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 22
+
+(   58)                                       missing_indicator_integer, &
+(   59)                                       missing_indicator_integer)
+(   60)   type(date_type), parameter :: &
+(   61)        end_of_mission_date = date_type(9999,12,31)
+(   62) # 63 "datetimemod.F90"
+(   63)   !  #]  
+(   64)   !  #[ interface/operator definitions
+(   65) ! this conflicts with the optional eps_in argument for equal_time
+(   66) ! but then do we really need these operators?
+(   67) !  interface operator(.eq.)
+(   68) !     module procedure equal_date, equal_time
+(   69) !  end interface
+(   70) !  interface operator(.ne.)
+(   71) !     module procedure not_equal_date, not_equal_time
+(   72) !  end interface
+(   73)   !  #]
+(   74)   ! ----------------------------------
+(   75) contains 
+(   76)   ! ----------------------------------
+(   77)   ! these routines are written by Jos de Kloe, for ESDP and ADM
+(   78)   !  #[ Date functions
+(   79)   subroutine init_date(date)
+(   80)     !  #[
+(   81)     TYPE(date_type) :: date
+(   82)     call set_date_to_missing(date)
+(   83)   end subroutine init_date
+(   84)     !  #]
+(   85)   subroutine set_date_to_missing(date)
+(   86)     !  #[
+(   87)     TYPE(date_type) :: date
+(   88)     date%year  = missing_indicator_integer
+(   89)     date%month = missing_indicator_integer
+(   90)     date%day   = missing_indicator_integer
+(   91)   end subroutine set_date_to_missing
+(   92)     !  #]
+(   93)   subroutine set_date_to_end_of_mission(date)
+(   94)     !  #[
+(   95)     TYPE(date_type) :: date
+(   96)     date = end_of_mission_date
+(   97)   end subroutine set_date_to_end_of_mission
+(   98)     !  #]
+(   99)   function missing_date(date) result(is_missing)
+(  100)     !  #[
+(  101)     TYPE(date_type) :: date       ! input
+(  102)     logical         :: is_missing ! result
+(  103) # 104 "datetimemod.F90"
+(  104)     is_missing = .false.
+(  105)     IF ( missing_int(date%year)  .and. &
+(  106)          missing_int(date%month) .and. &
+(  107)          missing_int(date%day)         ) THEN
+(  108)        is_missing = .true.
+(  109)     END IF
+(  110) # 111 "datetimemod.F90"
+(  111)   end function missing_date
+(  112)     !  #]
+(  113)   function end_of_mission(date) result(is_end_of_mission)
+(  114)     !  #[
+(  115)     TYPE(date_type) :: date       ! input
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 23
+
+(  116)     logical         :: is_end_of_mission ! result
+(  117) # 118 "datetimemod.F90"
+(  118)     is_end_of_mission = .false.
+(  119)     if ( (date%year  .eq. 9999) .and. &
+(  120)          (date%month .eq.   12) .and. &
+(  121)          (date%day   .eq.   31)        ) then
+(  122)        is_end_of_mission = .true.
+(  123)     end if
+(  124) # 125 "datetimemod.F90"
+(  125)   end function end_of_mission
+(  126)     !  #]
+(  127)   function equal_date(date1,date2) result(dates_are_equal)
+(  128)     !  #[
+(  129)     TYPE(date_type), intent(in) :: date1, date2
+(  130)     logical :: dates_are_equal
+(  131) # 132 "datetimemod.F90"
+(  132)     dates_are_equal = .true.
+(  133)     IF (date1%year  .ne. date2%year ) dates_are_equal = .false.
+(  134)     IF (date1%month .ne. date2%month) dates_are_equal = .false.
+(  135)     IF (date1%day   .ne. date2%day  ) dates_are_equal = .false.
+(  136) # 137 "datetimemod.F90"
+(  137)   end function equal_date
+(  138)     !  #]
+(  139)   function not_equal_date(date1,date2) result(dates_are_not_equal)
+(  140)     !  #[
+(  141)     TYPE(date_type), intent(in) :: date1, date2
+(  142)     logical :: dates_are_not_equal
+(  143) # 144 "datetimemod.F90"
+(  144)     IF (equal_date(date1,date2)) THEN
+(  145)        dates_are_not_equal = .false.
+(  146)     ELSE
+(  147)        dates_are_not_equal = .true.
+(  148)     END IF
+(  149) # 150 "datetimemod.F90"
+(  150)   end function not_equal_date
+(  151)     !  #]
+(  152)   ! the next two conversion routines are constructed by Jos de Kloe
+(  153)   ! and give identical output between 19000101 and 20991231
+(  154)   ! when compared to the ymd2julian and julian2ymd routines.
+(  155)   ! However, otuside this dayrange the routines have not been tested
+(  156)   ! and the results may differ ....
+(  157)   function convert_date_to_int(date) result(date_int)
+(  158)     !  #[ date2int
+(  159)     ! to enable sorting
+(  160)     TYPE(date_type) :: date
+(  161)     integer :: date_int
+(  162) # 163 "datetimemod.F90"
+(  163)     if (missing_date(date)) then
+(  164)        date_int = missing_indicator_integer
+(  165)        return
+(  166)     end if
+(  167) # 168 "datetimemod.F90"
+(  168)     date_int = 100*100*date%year  + &
+(  169)                    100*date%month + &
+(  170)                        date%day
+(  171)   end function convert_date_to_int
+(  172)     !  #]
+(  173)   function convert_int_to_date(date_int) result(date)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 24
+
+(  174)     !  #[ int2date
+(  175)     TYPE(date_type) :: date
+(  176)     integer :: date_int, rest
+(  177) # 178 "datetimemod.F90"
+(  178)     if (missing_int(date_int)) then
+(  179)        date = missing_date_value
+(  180)        return
+(  181)     end if
+(  182) # 183 "datetimemod.F90"
+(  183)     date%year  = date_int/(100*100)
+(  184)     rest       = date_int - 100*100*date%year
+(  185)     date%month = rest/100
+(  186)     rest       = rest     - 100*date%month
+(  187)     date%day   = rest
+(  188) # 189 "datetimemod.F90"
+(  189)   end function convert_int_to_date
+(  190)     !  #]
+(  191)   function set_date(year,month,day) result(date)
+(  192)     !  #[ yyyy,mm,dd to date_struct
+(  193) # 194 "datetimemod.F90"
+(  194)     ! identical to the default initialisation function date_type()
+(  195)     ! interface
+(  196)     TYPE(date_type) :: date
+(  197)     integer         :: year,month,day
+(  198) # 199 "datetimemod.F90"
+(  199)     date%year  = year
+(  200)     date%month = month
+(  201)     date%day   = day
+(  202) # 203 "datetimemod.F90"
+(  203)   end function set_date
+(  204)     !  #]
+(  205)   subroutine get_ymd(date,year,month,day)
+(  206)     !  #[ date_struct to yyyy,mm,dd 
+(  207)     ! interface
+(  208)     TYPE(date_type), intent(in) :: date
+(  209)     integer, intent(out)        :: year,month,day
+(  210) # 211 "datetimemod.F90"
+(  211)     year  = date%year
+(  212)     month = date%month
+(  213)     day   = date%day
+(  214) # 215 "datetimemod.F90"
+(  215)   end subroutine get_ymd
+(  216)     !  #]
+(  217)   subroutine print_date(date)
+(  218)     !  #[
+(  219)     TYPE(date_type) :: date
+(  220)     
+(  221)     if (missing_date(date)) then
+(  222)        print '(a)',"date: [missing]"
+(  223)        return
+(  224)     end IF
+(  225) # 226 "datetimemod.F90"
+(  226)     if (end_of_mission(date)) then
+(  227)        print '(a)',"date: [end-of-mission]"
+(  228)        return
+(  229)     end if
+(  230) # 231 "datetimemod.F90"
+(  231)     print '(a,i2.2,"-",i2.2,"-",i4.4)',"date: ",&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 25
+
+(  232)          date%day,date%month,date%year
+(  233)     
+(  234)   end subroutine print_date
+(  235)     !  #]
+(  236)   function date2string(date) result(datestring)
+(  237)     !  #[
+(  238)     TYPE(date_type)  :: date       ! input
+(  239)     character(len=8) :: datestring ! result
+(  240)     
+(  241)     if ( missing_int(date%day)   .and. &
+(  242)          missing_int(date%month) .and. &
+(  243)          missing_int(date%year)        ) then
+(  244)        datestring = "[missng]"
+(  245)        return
+(  246)     end if
+(  247)     
+(  248)     if (end_of_mission(date)) then
+(  249)        datestring = "[EOMISS]"
+(  250)        return
+(  251)     end if
+(  252)     
+(  253)     write(datestring,"(i4.4,i2.2,i2.2)") date%year, date%month, date%day
+(  254)     
+(  255)   end function date2string
+(  256)     !  #]
+(  257)   function date2string_sep(date,separator) result(datestring)
+(  258)     !  #[
+(  259)     TYPE(date_type), intent(in)  :: date       ! input
+(  260)     character(len=1), intent(in) :: separator  ! input
+(  261)     character(len=10)            :: datestring ! result
+(  262) # 263 "datetimemod.F90"
+(  263)     datestring(:) = ' '
+(  264) # 265 "datetimemod.F90"
+(  265)     if (missing_date(date)) then
+(  266)        datestring = "[missing]"
+(  267)        return
+(  268)     end if
+(  269) # 270 "datetimemod.F90"
+(  270)     if (end_of_mission(date)) then
+(  271)        datestring = "[eomssion]"
+(  272)        return
+(  273)     end if
+(  274)     
+(  275)     write(datestring,"(i4.4,a1,i2.2,a1,i2.2)") &
+(  276)          date%year, separator, date%month, separator, date%day
+(  277)     
+(  278)    end function date2string_sep
+(  279)     !  #]
+(  280)   subroutine string2date(datestring, date, time)
+(  281)     !  #[
+(  282)     character(len=*) :: datestring ! input
+(  283)     type(date_type)  :: date       ! output
+(  284)     type(time_type)  :: time       ! output
+(  285) # 286 "datetimemod.F90"
+(  286)     integer :: iyear, imonth, iday
+(  287)     integer :: ihour, iminute, isecond
+(  288)     integer :: ios
+(  289)     logical :: error_occurred
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 26
+
+(  290) # 291 "datetimemod.F90"
+(  291)     iyear   = 0
+(  292)     imonth  = 0
+(  293)     iday    = 0
+(  294)     ihour   = 0
+(  295)     iminute = 0
+(  296)     isecond = 0
+(  297)     error_occurred = .false.
+(  298) # 299 "datetimemod.F90"
+(  299)     read (datestring,    '(I4)', iostat=ios) iyear
+(  300)     if (ios .ne. 0) error_occurred = .true.
+(  301) # 302 "datetimemod.F90"
+(  302)     read (datestring, '(4X,I2)', iostat=ios) imonth
+(  303)     if (ios .ne. 0) error_occurred = .true.
+(  304) # 305 "datetimemod.F90"
+(  305)     read (datestring, '(6X,I2)', iostat=ios) iday
+(  306)     if (ios .ne. 0) error_occurred = .true.
+(  307) # 308 "datetimemod.F90"
+(  308)     if (datestring(9:9) .ne. ' ') then
+(  309)       read (datestring, '(8X,I2)', iostat=ios) ihour
+(  310)       if (ios .ne. 0) error_occurred = .true.
+(  311)     endif
+(  312) # 313 "datetimemod.F90"
+(  313)     if (datestring(11:11) .ne. ' ') then
+(  314)       read (datestring, '(10X,I2)', iostat=ios) iminute
+(  315)       if (ios .ne. 0) error_occurred = .true.
+(  316)     endif
+(  317) # 318 "datetimemod.F90"
+(  318)     if (datestring(13:13) .ne. ' ') then
+(  319)       read (datestring, '(12X,I2)', iostat=ios) isecond
+(  320)       if (ios .ne. 0) error_occurred = .true.
+(  321)     endif
+(  322) # 323 "datetimemod.F90"
+(  323)     if (error_occurred) then
+(  324)       write(*,*) "Error in conversion of string ", trim(datestring), " to date/time"
+(  325)     else
+(  326)       date%year   = iyear
+(  327)       date%month  = imonth
+(  328)       date%day    = iday
+(  329)       time%hour   = ihour
+(  330)       time%minute = iminute
+(  331)       time%second = isecond
+(  332)     endif
+(  333) # 334 "datetimemod.F90"
+(  334)   end subroutine string2date
+(  335)     !  #]
+(  336)   function valid_date(date) result(is_valid)
+(  337)     !  #[
+(  338)     ! a small wrapper function to allow date testing by calling
+(  339)     ! a function, rather then calling a subroutine 
+(  340) # 341 "datetimemod.F90"
+(  341)     TYPE(date_type) :: date     ! input
+(  342)     logical         :: is_valid ! result
+(  343) # 344 "datetimemod.F90"
+(  344)     ! local variable
+(  345)     integer :: error_flag
+(  346) # 347 "datetimemod.F90"
+(  347)     is_valid = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 27
+
+(  348) # 349 "datetimemod.F90"
+(  349)     ! end-of-mission is a valid date!
+(  350)     if (end_of_mission(date)) return
+(  351) # 352 "datetimemod.F90"
+(  352)     call test_date(date, error_flag)
+(  353)     IF (error_flag .ne. no_error) is_valid = .false.
+(  354) # 355 "datetimemod.F90"
+(  355)   end function valid_date
+(  356)     !  #]
+(  357)   subroutine test_date(date, error_flag)
+(  358)     !  #[
+(  359)     TYPE(date_type), intent(in) :: date
+(  360)     integer, intent(out)        :: error_flag
+(  361) # 362 "datetimemod.F90"
+(  362)     ! init
+(  363)     error_flag = no_error
+(  364) # 365 "datetimemod.F90"
+(  365)     ! do some sensibility tests on this date
+(  366)     if ( (date%month .lt. 1) .or. (date%month .gt. 12) ) then
+(  367)        print *,"ERROR reported by test_date:"
+(  368)        print *,"invalid month value: ",date%month
+(  369)        call print_date(date)
+(  370)        error_flag = error_invalid_date
+(  371)        return
+(  372)     endif
+(  373) # 374 "datetimemod.F90"
+(  374)     if (date%day .lt. 1) then
+(  375)        print *,"ERROR reported by test_date:"
+(  376)        print *,"invalid day value: ",date%day
+(  377)        call print_date(date)
+(  378)        error_flag = error_invalid_date
+(  379)        return
+(  380)     end if
+(  381) # 382 "datetimemod.F90"
+(  382)     if ( (date%month .eq. 1) .or. &
+(  383)          (date%month .eq. 3) .or. &
+(  384)          (date%month .eq. 5) .or. &
+(  385)          (date%month .eq. 7) .or. &
+(  386)          (date%month .eq. 8) .or. &
+(  387)          (date%month .eq. 10) .or. &
+(  388)          (date%month .eq. 12)      ) then
+(  389)        ! month should be .le. 31 for these months
+(  390)        if (date%day .gt. 31) then
+(  391)           print *,"ERROR reported by test_date:"
+(  392)           print *,"invalid day value: ",date%day
+(  393)           print *,"for month: ",date%month
+(  394)           call print_date(date)
+(  395)           error_flag = error_invalid_date
+(  396)           return
+(  397)        end if
+(  398)     end if
+(  399) # 400 "datetimemod.F90"
+(  400)     if ( (date%month .eq. 4) .or. &
+(  401)          (date%month .eq. 6) .or. &
+(  402)          (date%month .eq. 9) .or. &
+(  403)          (date%month .eq. 11)      ) then
+(  404)        ! month should be .le. 30 for these months
+(  405)        if (date%day .gt. 30) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 28
+
+(  406)           print *,"ERROR reported by test_date:"
+(  407)           print *,"invalid day value: ",date%day
+(  408)           print *,"for month: ",date%month
+(  409)           call print_date(date)
+(  410)           error_flag = error_invalid_date
+(  411)           return
+(  412)        end if
+(  413)     end if
+(  414) # 415 "datetimemod.F90"
+(  415)     if (date%month .eq. 2) then
+(  416)        ! month should be .le. 29 for february
+(  417)        if (date%day .gt. 29) then
+(  418)           print *,"ERROR reported by test_date:"
+(  419)           print *,"invalid day value: ",date%day
+(  420)           print *,"for month: ",date%month
+(  421)           call print_date(date)
+(  422)           error_flag = error_invalid_date
+(  423)           return
+(  424)        end if
+(  425)     end if
+(  426) # 427 "datetimemod.F90"
+(  427)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  428)     if (date%year .eq. 9999) then
+(  429)        if ((date%month .eq. 12) .and. (date%day .eq. 31)) return
+(  430)     end if
+(  431) # 432 "datetimemod.F90"
+(  432)     if ( (date%year .lt. 1900) .or. (date%year .gt. 2100) ) then
+(  433)        print *,"WARNING reported by test_date:"
+(  434)        print *,"the year: ",date%year," seems unlikely"
+(  435)        print *,"and the software has not been tested for these years"
+(  436)        call print_date(date)
+(  437)        error_flag = error_invalid_date
+(  438)        return
+(  439)     end if
+(  440) # 441 "datetimemod.F90"
+(  441)   end subroutine test_date
+(  442)     !  #]
+(  443)   function conv_date_to_daycount(date) result(daycount)
+(  444)     !  #[
+(  445)     ! for given date (ccyymmdd) return day number since 19000101
+(  446)     ! an adapted version of the IDAT2C.f routine in the lib_util library
+(  447)     ! Since 2000 was a leap year, all years/4 are leapyears
+(  448)     ! This will break down for the year 2100.....
+(  449)     ! (which is not of my concern right now)
+(  450) # 451 "datetimemod.F90"
+(  451)     integer, intent(in) :: date ! CCYY*100*100 + MM*100 + DD
+(  452)     integer :: daycount
+(  453) # 454 "datetimemod.F90"
+(  454)     ! local variables
+(  455)     integer :: yy,mm,dd,rest
+(  456)     integer :: num_leapyears
+(  457)     integer, parameter, dimension(12) :: monthstart = &
+(  458)          (/ 0,31,59,90,120,151,181,212,243,273,304,334 /)
+(  459) # 460 "datetimemod.F90"
+(  460)     yy = date/10000
+(  461)     rest = date - yy*10000
+(  462)     yy = yy - 1900
+(  463)     mm = rest/100
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 29
+
+(  464)     dd = rest - mm*100
+(  465) # 466 "datetimemod.F90"
+(  466)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  467)     if (date .ne. 99991231) then
+(  468)        if ( (date .lt. 19000101) .or. &
+(  469)             (date .gt. 20991231)      ) then
+(  470)           print *,"ERROR: conv_date_to_daycount cannot handle dates outside"
+(  471)           print *,"ERROR: the range 19000101...20991231"
+(  472)           daycount = missing_indicator_integer
+(  473)           return
+(  474)        end if
+(  475)     end if
+(  476) # 477 "datetimemod.F90"
+(  477)     !  subtract 1 to let dayrange start with zero
+(  478)     daycount = monthstart(mm) + dd - 1
+(  479)     
+(  480)     ! take leap years into account
+(  481) # 482 "datetimemod.F90"
+(  482)     ! Add 1 if current year is a leapyear, and month .gt. 2
+(  483)     if ( (mod(yy,4) .eq. 0) .and. &
+(  484)          (yy .ne. 0)        .and. &
+(  485)          (mm .gt. 2)              ) then
+(  486)        daycount = daycount + 1
+(  487)        !print *,"yy = ",yy," mm = ",mm," dd = ",dd
+(  488)        !print *,"daycount = ",daycount
+(  489)        !print *,"monthstart(mm) = ",monthstart(mm)
+(  490)     endif
+(  491) # 492 "datetimemod.F90"
+(  492)     ! Remember: 1900 was not a leapyear, but 2000 was one
+(  493)     ! Take leapyears that occurred BEFORE the curent year into account
+(  494)     ! NOTE: this will fail beyond the year 2100, so the actual daycount
+(  495)     ! value for then end-of-mission code 99991231 is wrong.
+(  496)     ! Don't know yet how important this is. 
+(  497)     num_leapyears = (yy-1)/4 
+(  498) # 499 "datetimemod.F90"
+(  499)     daycount = daycount + yy*365 + num_leapyears
+(  500) # 501 "datetimemod.F90"
+(  501)   end function conv_date_to_daycount
+(  502)   !---------------------------------------------------
+(  503)     !  #]
+(  504)   function conv_daycount_to_date(daycount) result(date)
+(  505)     !  #[
+(  506) # 507 "datetimemod.F90"
+(  507)     ! for given day number since 19000101 return the date (ccyymmdd)
+(  508)     ! an adapted version of the IDAT2C.f routine in the lib_util library
+(  509)     ! Since 2000 was a leap year, all years/4 are leapyears
+(  510)     ! This will break down for the year 2100.....
+(  511)     ! (which is not of my concern right now)
+(  512) # 513 "datetimemod.F90"
+(  513)     integer, intent(in) :: daycount
+(  514)     integer :: date ! CCYY*100*100 + MM*100 + DD
+(  515) # 516 "datetimemod.F90"
+(  516)     ! local variables
+(  517)     integer :: yy,mm,dd,rest
+(  518) !    integer :: num_leapyears
+(  519)     integer, parameter, dimension(12) :: monthstart = &
+(  520)          (/ 0,31,59,90,120,151,181,212,243,273,304,334 /)
+(  521) # 522 "datetimemod.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 30
+
+(  522)     if (daycount .lt. 0) then
+(  523)        print *,"ERROR: conv_daycount_to_date cannot handle negative daycounts!"
+(  524)        print *,"ERROR: This would mean a date soutside the range"
+(  525)        print *,"19000101...20991231, which is not implemented at this time"
+(  526)        print *,"daycount = ",daycount
+(  527)        date = missing_indicator_integer
+(  528)        return
+(  529)     end if
+(  530) # 531 "datetimemod.F90"
+(  531)     yy=0
+(  532)     rest = daycount
+(  533)     yearloop: DO
+(  534)        IF ( (mod(yy,4) .eq. 0) .and. (yy .ne. 0) ) THEN
+(  535)           ! this is a leapyear
+(  536)           IF (rest .ge. 366) THEN
+(  537)              rest = rest - 366
+(  538)              yy = yy + 1
+(  539)           ELSE
+(  540)              exit yearloop
+(  541)           END IF
+(  542)        ELSE
+(  543)           IF (rest .ge. 365) THEN
+(  544)              rest = rest - 365
+(  545)              yy = yy + 1
+(  546)           ELSE
+(  547)              exit yearloop
+(  548)           END IF
+(  549)        END IF
+(  550)     END DO yearloop
+(  551) # 552 "datetimemod.F90"
+(  552)     ! Remember: 1900 was not a leapyear, but 2000 was
+(  553)     ! Take leapyears that occurred BEFORE the curent year into account
+(  554) # 556 "datetimemod.F90"
+(  556) !    yy = int(1.0*daycount/365.25)
+(  557) !    num_leapyears = (yy-1)/4
+(  558) !    rest = daycount - yy*365 - num_leapyears
+(  559) # 560 "datetimemod.F90"
+(  560)     mm = 1
+(  561)     monthloop: DO 
+(  562)        if (rest .lt. monthstart(mm+1)) exit monthloop
+(  563)        mm = mm+1
+(  564)        if (mm .eq. 12) exit monthloop
+(  565)     END DO monthloop
+(  566) # 567 "datetimemod.F90"
+(  567)     dd = rest - monthstart(mm) + 1
+(  568) # 569 "datetimemod.F90"
+(  569)     ! Add 1 if current year is a leapyear, and month .gt. 2
+(  570)     if ( (mod(yy,4) .eq. 0) .and. &
+(  571)          (yy .ne. 0)        .and. &
+(  572)          (mm .gt. 2)              ) then
+(  573)        if (rest .eq. monthstart(3) ) then
+(  574)           ! setting month back to 2
+(  575)           mm = 2
+(  576)        else
+(  577)           ! one extra day for this year ...
+(  578)           rest = rest - 1
+(  579)        end if
+(  580)        dd = rest - monthstart(mm) + 1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 31
+
+(  581)        ! for leap years this can result in a day of 0, for the next month
+(  582)        ! so correct for this
+(  583)        IF (dd .eq. 0) THEN
+(  584)           mm = mm - 1
+(  585)           dd = rest - monthstart(mm) + 1
+(  586)        END IF
+(  587)     end if
+(  588) # 589 "datetimemod.F90"
+(  589)     !print *,"test: yy = ",yy," mm=",mm," dd=",dd, "rest=",rest
+(  590) # 591 "datetimemod.F90"
+(  591)     date = 100*100*(yy+1900) + 100*mm + dd
+(  592) # 593 "datetimemod.F90"
+(  593)     ! allow the special end-of-mission year, but only if month=12 and day=31
+(  594)     if (date .ne. 99991231) then
+(  595)        IF (date .gt. 20991231) THEN
+(  596)           print *,"ERROR: The date ",date," is outside the range"
+(  597)           print *,"19000101...20991231, this is not implemented at this time"
+(  598)           date = missing_indicator_integer
+(  599)           return
+(  600)        END IF
+(  601)     end if
+(  602)     
+(  603)   end function conv_daycount_to_date
+(  604)   !---------------------------------------------------
+(  605) # 606 "datetimemod.F90"
+(  606)     !  #]
+(  607)   !  #]
+(  608)   !  #[ Time functions
+(  609)   subroutine init_time(time)
+(  610)     !  #[
+(  611)     TYPE(time_type), intent(out) :: time    
+(  612)     call set_time_to_missing(time)
+(  613)   end subroutine init_time
+(  614)     !  #]
+(  615)   subroutine set_time_to_missing(time)
+(  616)     !  #[
+(  617)     TYPE(time_type), intent(out) :: time    
+(  618)     time%hour   = missing_indicator_integer
+(  619)     time%minute = missing_indicator_integer
+(  620)     time%second = missing_indicator_real
+(  621)   end subroutine set_time_to_missing
+(  622)     !  #]
+(  623)   function equal_time(time1,time2,eps_in) result(times_are_equal)
+(  624)     !  #[
+(  625)     TYPE(time_type), intent(in) :: time1, time2
+(  626)     logical :: times_are_equal
+(  627)     real(r8_), optional :: eps_in
+(  628) # 629 "datetimemod.F90"
+(  629)     ! local variable
+(  630)     real(r8_) :: eps
+(  631) # 632 "datetimemod.F90"
+(  632)     IF (present(eps_in)) THEN
+(  633)        eps = eps_in
+(  634)     ELSE
+(  635)        ! use millisecond accuracy as default
+(  636)        eps = 1.e-3_r8_
+(  637)     END IF
+(  638) # 639 "datetimemod.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 32
+
+(  639)     times_are_equal = .true.
+(  640)     IF (time1%hour   .ne. time2%hour   ) times_are_equal = .false.
+(  641)     IF (time1%minute .ne. time2%minute ) times_are_equal = .false.
+(  642)     IF ( abs(time1%second - time2%second) .gt. eps ) times_are_equal = .false.
+(  643) # 644 "datetimemod.F90"
+(  644)   end function equal_time
+(  645)     !  #]
+(  646)   function not_equal_time(time1,time2) result(times_are_not_equal)
+(  647)     !  #[
+(  648)     TYPE(time_type), intent(in) :: time1, time2
+(  649)     logical :: times_are_not_equal
+(  650) # 651 "datetimemod.F90"
+(  651)     IF (equal_time(time1,time2)) THEN
+(  652)        times_are_not_equal = .false.
+(  653)     ELSE
+(  654)        times_are_not_equal = .true.
+(  655)     END IF
+(  656) # 657 "datetimemod.F90"
+(  657)   end function not_equal_time
+(  658)     !  #]
+(  659)   function missing_time(time) result(is_missing)
+(  660)     !  #[
+(  661)     TYPE(time_type) :: time       ! input
+(  662)     logical         :: is_missing ! result
+(  663) # 664 "datetimemod.F90"
+(  664)     is_missing = .false.
+(  665)     IF ( missing_int(time%hour)   .and. &
+(  666)          missing_int(time%minute) .and. &
+(  667)          missing_real(time%second)      ) THEN
+(  668)        is_missing = .true.
+(  669)     END IF
+(  670) # 671 "datetimemod.F90"
+(  671)   end function missing_time
+(  672)     !  #]
+(  673)   function convert_time_to_real(time) result(time_real)
+(  674)     !  #[
+(  675)     ! to enable sorting
+(  676)     TYPE(time_type) :: time   
+(  677)     real(r8_)       :: time_real
+(  678)     time_real = real(60*60*time%hour + &
+(  679)                      60*time%minute,    r8_) + &
+(  680)                         time%second
+(  681)   end function convert_time_to_real
+(  682)     !  #]
+(  683)   function convert_real_to_time(time_real) result(time)
+(  684)     !  #[
+(  685)     ! interface
+(  686)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  687)     real(r8_)       :: time_real  ! time in seconds since midnight
+(  688) # 689 "datetimemod.F90"
+(  689)     ! local variable
+(  690)     real(r8_) :: rest
+(  691)     real(r8_), parameter :: seconds_per_day = 86400._r8_
+(  692)     
+(  693)     time%hour   = floor(time_real/(60*60))
+(  694)     rest        = time_real - 60*60*time%hour
+(  695)     time%minute = floor(rest/60)
+(  696)     rest        = rest - 60*time%minute
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 33
+
+(  697)     time%second = rest
+(  698) # 699 "datetimemod.F90"
+(  699)     ! special leap second case:
+(  700)     if ( (time_real .ge. seconds_per_day) .and. &
+(  701)          (time_real .lt. seconds_per_day+1) ) then
+(  702)        time%hour   = 23
+(  703)        time%minute = 59
+(  704)        time%second = 60 + time_real - seconds_per_day
+(  705)     end if
+(  706)     
+(  707)   end function convert_real_to_time
+(  708)     !  #]
+(  709)   function convert_HHMMSS_to_time(time_real) result(time)
+(  710)     !  #[
+(  711)     ! interface
+(  712)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  713)     real(r8_)       :: time_real  ! time in HHMMSS.uuuuuu format
+(  714) # 715 "datetimemod.F90"
+(  715)     ! local variable
+(  716)     real(r8_) :: rest
+(  717) # 718 "datetimemod.F90"
+(  718)     time%hour   = floor(time_real/(100*100))
+(  719)     rest        = time_real - 100*100*time%hour
+(  720)     time%minute = floor(rest/100)
+(  721)     rest        = rest - 100*time%minute
+(  722)     time%second = rest
+(  723) # 724 "datetimemod.F90"
+(  724)   end function convert_HHMMSS_to_time
+(  725)     !  #]
+(  726)   function set_time(h,m,s) result(time)
+(  727)     !  #[ h,m,s to time
+(  728)     ! identical to the default initialisation function time_type()
+(  729)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  730)     integer         :: h,m
+(  731)     real(r8_)       :: s
+(  732)     
+(  733)     time%hour   = h
+(  734)     time%minute = m
+(  735)     time%second = s
+(  736) # 737 "datetimemod.F90"
+(  737)   end function set_time
+(  738)     !  #]
+(  739)   subroutine get_hms(time,h,m,s)
+(  740)     !  #[ time to h,m,s
+(  741)     TYPE(time_type) :: time       ! struct holding h,m,s in separate fields
+(  742)     integer         :: h,m
+(  743)     real(r8_)       :: s
+(  744)     
+(  745)     h = time%hour  
+(  746)     m = time%minute
+(  747)     s = time%second
+(  748) # 749 "datetimemod.F90"
+(  749)   end subroutine get_hms
+(  750)     !  #]
+(  751)   subroutine print_time(time)
+(  752)     !  #[
+(  753)     TYPE(time_type)   :: time    
+(  754)     character(len=11) :: timestr
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 34
+
+(  755) # 756 "datetimemod.F90"
+(  756)     timestr(:) = ' '
+(  757)     IF ( missing_int(time%hour)   .and. &
+(  758)          missing_int(time%minute) .and. &
+(  759)          missing_real(time%second)      ) THEN
+(  760)        write(timestr,"(a)") "[missing]"
+(  761)     ELSE
+(  762)        write(timestr,"(i2.2,':',i2.2,':',f5.2)") &
+(  763)             time%hour,time%minute,time%second
+(  764)        ! prevent a space in the second field for seconds below 10.
+(  765)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  766)     END IF
+(  767)     print '("time: ",a)',timestr
+(  768) # 769 "datetimemod.F90"
+(  769)   end subroutine print_time
+(  770)     !  #]
+(  771)   function time2string(time) result(timestr)
+(  772)     !  #[
+(  773)     TYPE(time_type)  :: time    ! input
+(  774)     character(len=6) :: timestr ! result
+(  775)     
+(  776)     IF ( missing_int(time%hour)   .and. &
+(  777)          missing_int(time%minute) .and. &
+(  778)          missing_real(time%second)      ) THEN
+(  779)        write(timestr,"(a)") "[miss]"
+(  780)     ELSE
+(  781)        write(timestr,"(i2.2,i2.2,i2.2)") &
+(  782)             time%hour,time%minute,floor(time%second)
+(  783)     END IF
+(  784) # 785 "datetimemod.F90"
+(  785)   end function time2string
+(  786)     !  #]
+(  787)   function time2string_sep(time,separator) result(timestr)
+(  788)     !  #[
+(  789)     TYPE(time_type)  :: time       ! input
+(  790)     character(len=1) :: separator  ! input
+(  791)     character(len=8) :: timestr    ! result
+(  792)     
+(  793)     IF ( missing_int(time%hour)   .and. &
+(  794)          missing_int(time%minute) .and. &
+(  795)          missing_real(time%second)      ) THEN
+(  796)        write(timestr,"(a)") "[missng]"
+(  797)     ELSE
+(  798)        write(timestr,"(i2.2,a1,i2.2,a1,i2.2)") &
+(  799)             time%hour, separator, time%minute, separator, floor(time%second)
+(  800)     END IF
+(  801) # 802 "datetimemod.F90"
+(  802)   end function time2string_sep
+(  803)     !  #]
+(  804)   function time2string_ms(time) result(timestr)
+(  805)     !  #[
+(  806)     TYPE(time_type)   :: time    ! input
+(  807)     character(len=13) :: timestr ! result
+(  808)     
+(  809)     IF ( missing_int(time%hour)   .and. &
+(  810)          missing_int(time%minute) .and. &
+(  811)          missing_real(time%second)      ) THEN
+(  812)        write(timestr,"(a)") "[missing]"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 35
+
+(  813)     ELSE
+(  814)        write(timestr,"(i2.2,i2.2,f9.6)") &
+(  815)             time%hour,time%minute,time%second
+(  816)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  817)     END IF
+(  818) # 819 "datetimemod.F90"
+(  819)   end function time2string_ms
+(  820)     !  #]
+(  821)   function time2string_sep_ms(time,separator) result(timestr)
+(  822)     !  #[
+(  823)     TYPE(time_type)   :: time       ! input
+(  824)     character(len=1)  :: separator  ! input
+(  825)     character(len=15) :: timestr    ! result
+(  826)     
+(  827)     IF ( missing_int(time%hour)   .and. &
+(  828)          missing_int(time%minute) .and. &
+(  829)          missing_real(time%second)      ) THEN
+(  830)        write(timestr,"(a)") "[missing]"
+(  831)     ELSE
+(  832)        write(timestr,"(i2.2,a1,i2.2,a1,f9.6)") &
+(  833)             time%hour, separator, time%minute, separator, time%second
+(  834)        IF (timestr(7:7) .eq. ' ') timestr(7:7) = '0'
+(  835)     END IF
+(  836) # 837 "datetimemod.F90"
+(  837)   end function time2string_sep_ms
+(  838)     !  #]
+(  839)   function valid_time(time) result(is_valid)
+(  840)     !  #[
+(  841)     ! a small wrapper function to allow date testing by calling
+(  842)     ! a function, rather then calling a subroutine 
+(  843) # 844 "datetimemod.F90"
+(  844)     TYPE(time_type) :: time    
+(  845)     logical         :: is_valid ! result
+(  846) # 847 "datetimemod.F90"
+(  847)     ! local variable
+(  848)     integer :: error_flag
+(  849) # 850 "datetimemod.F90"
+(  850)     call test_time(time,error_flag)
+(  851)     is_valid = .true.
+(  852)     IF (error_flag .ne. no_error) is_valid = .false.
+(  853) # 854 "datetimemod.F90"
+(  854)   end function valid_time
+(  855)     !  #]
+(  856)   subroutine test_time(time, error_flag, use_gps)
+(  857)     !  #[
+(  858)     ! check whether the time struct holds valid numbers
+(  859)     TYPE(time_type), intent(in) :: time    
+(  860)     integer, intent(out)        :: error_flag
+(  861)     logical, optional, intent(in) :: use_gps
+(  862) # 863 "datetimemod.F90"
+(  863)     ! local variable
+(  864)     real(r8_) :: max_seconds
+(  865)     logical :: do_use_gps
+(  866)     
+(  867)     ! init
+(  868)     error_flag = no_error
+(  869) # 870 "datetimemod.F90"
+(  870)     if ( (time%hour .lt. 0) .or. (time%hour .gt. 23) ) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 36
+
+(  871)        print *,"ERROR reported by: test_time()"
+(  872)        print *,"invalid value for time%hour: ",time%hour
+(  873)        error_flag = error_invalid_time
+(  874)        return
+(  875)     end if
+(  876) # 877 "datetimemod.F90"
+(  877)     if ( (time%minute .lt. 0) .or. (time%minute .gt. 59) ) then
+(  878)        print *,"ERROR reported by: test_time()"
+(  879)        print *,"invalid value for time%minute: ",time%minute
+(  880)        error_flag = error_invalid_time
+(  881)        return
+(  882)     end if
+(  883) # 884 "datetimemod.F90"
+(  884)     do_use_gps = .false.
+(  885)     if (present(use_gps)) do_use_gps = use_gps
+(  886)     
+(  887)     ! UTC times can have the second value of 60.999999
+(  888)     ! in case a leap second occurred
+(  889)     max_seconds = 61._r8_
+(  890)     ! But GPS times cannot have them!
+(  891)     if (do_use_gps) max_seconds = 60._r8_
+(  892) # 893 "datetimemod.F90"
+(  893)     if ( (time%second .lt. 0.) .or. (time%second .ge. max_seconds) ) then
+(  894)        print *,"ERROR reported by: test_time()"
+(  895)        print *,"invalid value for time%second: ",time%second
+(  896)        if (do_use_gps) then
+(  897)           print *,"max. allowed second value for GPS times is: ", max_seconds
+(  898)        else
+(  899)           print *,"max. allowed second value for UPS times is: ", max_seconds
+(  900)        end if
+(  901)        error_flag = error_invalid_time
+(  902)        return
+(  903)     end if
+(  904)          
+(  905)   end subroutine test_time
+(  906)     !  #]
+(  907)   !  #]
+(  908)   !  #[ combined date-time functions
+(  909)   subroutine increment_datetime(date,time,time_increment)
+(  910)     !  #[
+(  911)     ! add a given time_increment (in seconds) to the time struct, 
+(  912)     ! and update the date struct if necessary
+(  913)     
+(  914)     ! interface
+(  915)     type(time_type), intent(inout) :: time
+(  916)     type(date_type), intent(inout) :: date
+(  917)     real(r8_),       intent(in)    :: time_increment
+(  918) # 919 "datetimemod.F90"
+(  919)     ! local variables
+(  920)     real(r8_) :: time_real, new_time_real
+(  921)     integer   :: date_int, new_date_int
+(  922)     integer   :: day_offset, daycount
+(  923)     real(r8_), parameter :: seconds_per_day = 24._r8_*60*60
+(  924) # 925 "datetimemod.F90"
+(  925)     ! convert time to time_real (in seconds since midnight)
+(  926)     time_real = convert_time_to_real(time) 
+(  927) # 928 "datetimemod.F90"
+(  928)     ! calculate new time
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 37
+
+(  929)     time_real = time_real + time_increment
+(  930) # 931 "datetimemod.F90"
+(  931)     ! convert date to date_int
+(  932)     date_int = convert_date_to_int(date)
+(  933) # 934 "datetimemod.F90"
+(  934)     ! first assume the new date equals the old date
+(  935)     new_date_int = date_int
+(  936) # 937 "datetimemod.F90"
+(  937)     ! first assume the new time_real is ok
+(  938)     new_time_real = time_real
+(  939) # 940 "datetimemod.F90"
+(  940)     ! then test time_real 
+(  941)     if (time_real .lt. 0.) then
+(  942)        ! we stepped to a previous day, so the date needs to be updated
+(  943)        day_offset    = 1+floor(abs(time_real)/seconds_per_day)
+(  944)        daycount      = conv_date_to_daycount(date_int)
+(  945)        daycount      = daycount - day_offset
+(  946)        new_date_int  = conv_daycount_to_date(daycount)
+(  947)        new_time_real = time_real + day_offset*seconds_per_day
+(  948)     endif
+(  949) # 950 "datetimemod.F90"
+(  950)     if (time_real .ge. seconds_per_day) then
+(  951)        ! we stepped to a next day, so the date needs to be updated
+(  952)        day_offset    = floor(time_real/seconds_per_day)
+(  953)        daycount      = conv_date_to_daycount(date_int)
+(  954)        daycount      = daycount + day_offset
+(  955)        new_date_int  = conv_daycount_to_date(daycount)
+(  956)        new_time_real = time_real - day_offset*seconds_per_day
+(  957)     endif
+(  958) # 959 "datetimemod.F90"
+(  959)     ! copy the date_int and time_real values to the 
+(  960)     ! output values date and time
+(  961) # 962 "datetimemod.F90"
+(  962)     date = convert_int_to_date( new_date_int)
+(  963)     time = convert_real_to_time(new_time_real)
+(  964) # 965 "datetimemod.F90"
+(  965)   end subroutine increment_datetime
+(  966)     !  #]
+(  967)   subroutine convert_to_derived_datetime(date_int,hour)
+(  968)     !  #[
+(  969)     ! parameters
+(  970)     integer, intent(inout) :: hour
+(  971)     integer, intent(inout) :: date_int ! YYYYMMDD
+(  972) # 973 "datetimemod.F90"
+(  973)     ! local variables
+(  974)     integer :: derived_hour, derived_date, day_offset, daycount
+(  975) # 976 "datetimemod.F90"
+(  976)     ! remember: hour 24 does not exist
+(  977)     ! for this hour 0 of the next day is used,
+(  978)     ! therefore (and to be able to use forecasts of 27,30,33, and 36 hours)
+(  979)     ! I use the derived_date and derived_hour, which is obtained by limiting
+(  980)     ! the hour to the range 0-23 and changing the date to match it.
+(  981) # 982 "datetimemod.F90"
+(  982)     ! set the derived values to the input values
+(  983)     derived_date = date_int
+(  984)     derived_hour = hour
+(  985) # 986 "datetimemod.F90"
+(  986)     IF (hour .lt. 0) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 38
+
+(  987)        day_offset   = 1+abs(hour)/24
+(  988)        daycount     = conv_date_to_daycount(date_int)
+(  989)        daycount     = daycount - day_offset
+(  990)        derived_date = conv_daycount_to_date(daycount)
+(  991)        derived_hour = derived_hour + 24*day_offset
+(  992)     END IF
+(  993) # 994 "datetimemod.F90"
+(  994)     IF (hour .ge. 24) THEN
+(  995)        day_offset   = hour/24
+(  996)        daycount     = conv_date_to_daycount(date_int)
+(  997)        daycount     = daycount + day_offset
+(  998)        derived_date = conv_daycount_to_date(daycount)
+(  999)        derived_hour = derived_hour - 24*day_offset
+( 1000)     END IF
+( 1001) # 1002 "datetimemod.F90"
+( 1002)     ! copy the derived values to the output values
+( 1003)     date_int = derived_date
+( 1004)     hour     = derived_hour
+( 1005) # 1006 "datetimemod.F90"
+( 1006)   end subroutine convert_to_derived_datetime
+( 1007)     !  #]
+( 1008)   subroutine get_current_date_time(date,time,use_UTC)
+( 1009)     !  #[
+( 1010)     ! interface
+( 1011)     type(time_type),   intent(out) :: time
+( 1012)     type(date_type),   intent(out) :: date
+( 1013)     logical, optional, intent(in)  :: use_UTC
+( 1014) # 1015 "datetimemod.F90"
+( 1015)     ! local variables
+( 1016)     integer, dimension(8) :: v
+( 1017)     real(r8_) :: time_increment ! in seconds
+( 1018)     logical   :: do_use_UTC
+( 1019) # 1020 "datetimemod.F90"
+( 1020)     ! init
+( 1021)     do_use_UTC = .true.
+( 1022)     IF (present(use_UTC)) do_use_UTC = use_UTC
+( 1023) # 1024 "datetimemod.F90"
+( 1024)     call init_date(date)
+( 1025)     call init_time(time)
+( 1026) # 1027 "datetimemod.F90"
+( 1027)     ! request the current date and time from the system
+( 1028)     ! beware: the UTC/GMT correction seems not to be working
+( 1029)     ! on my own workstation....
+( 1030)     call date_and_time(values=v)
+( 1031) # 1032 "datetimemod.F90"
+( 1032)     date = set_date(v(1),v(2),v(3))
+( 1033)     time = set_time(v(5),v(6),1._r8_*v(7)+1.e-3_r8_*v(8))
+( 1034) # 1035 "datetimemod.F90"
+( 1035)     IF (do_use_UTC) THEN
+( 1036)        ! correct the date/time to go to UTC
+( 1037)        time_increment = -1*v(4)*60 ! convert min=>sec
+( 1038)        call increment_datetime(date,time,time_increment)
+( 1039)     END IF
+( 1040) # 1041 "datetimemod.F90"
+( 1041)   end subroutine get_current_date_time
+( 1042)     !  #]
+( 1043)   !  #]
+( 1044)   ! ----------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:46:33      page 39
+
+( 1045) end module DateTimeMod

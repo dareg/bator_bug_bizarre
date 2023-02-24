@@ -1,0 +1,425 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faprst.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAPRST_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme permettant de mettre en place les defauts de compression
+(   12) !     utilises par PROGRID
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   15) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   16) !                KNUMOD (Entree) ==> Numero du modele
+(   17) !                KHCTPI (Entree) ==> Voir PROGRID
+(   18) !                CDOPER (Entree) ==> Voir PROGRID
+(   19) !                LDPRGR (Entree) ==> Activer ou non
+(   20) !
+(   21) !
+(   22) TYPE(FA_COM) :: FA
+(   23) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNUMOD, KHCTPI
+(   24) !
+(   25) CHARACTER CDOPER
+(   26) !
+(   27) LOGICAL LDPRGR
+(   28) !
+(   29) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   30) IF (LHOOK) CALL DR_HOOK('FAPRST_MT',0,ZHOOK_HANDLE)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 3
+
+(   31) 
+(   32) KREP=0
+(   33) 
+(   34) IF (LDPRGR) THEN
+(   35)   CALL FAREGU_MT64 (FA, KNUMER, 'IDMOD',  KNUMOD,   1_JPLIKB)
+(   36)   CALL FAREGU_MT64 (FA, KNUMER, 'FACDEC', 0_JPLIKB, 1_JPLIKB)
+(   37)   SELECT CASE (CDOPER)
+(   38)     CASE ('K')
+(   39)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  0_JPLIKB, 1_JPLIKB)
+(   40)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  0_JPLIKB, 1_JPLIKB)
+(   41)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE',  0_JPLIKB, 1_JPLIKB)
+(   42)     CASE ('X')
+(   43)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  1_JPLIKB, 1_JPLIKB)
+(   44)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  1_JPLIKB, 1_JPLIKB)
+(   45)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE', -1_JPLIKB, 1_JPLIKB)
+(   46)     CASE ('L')
+(   47)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  1_JPLIKB, 1_JPLIKB)
+(   48)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  1_JPLIKB, 1_JPLIKB)
+(   49)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE',  2_JPLIKB, 1_JPLIKB)
+(   50)   END SELECT
+(   51) ENDIF
+(   52) 
+(   53) IF (LHOOK) CALL DR_HOOK('FAPRST_MT',1,ZHOOK_HANDLE)
+(   54) 
+(   55) END SUBROUTINE FAPRST_MT64
+(   56) 
+(   57) ! Oct-2012 P. Marguinaud 64b LFI
+(   58) SUBROUTINE FAPRST64                                        &
+(   59) &           (KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   60) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   61) &                  FA_COM_DEFAULT_INIT,  &
+(   62) &                  NEW_FA_DEFAULT
+(   63) USE LFI_PRECISION
+(   64) IMPLICIT NONE
+(   65) ! Arguments
+(   66) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   67) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   68) INTEGER (KIND=JPLIKB)  KNUMOD                                 ! IN   
+(   69) INTEGER (KIND=JPLIKB)  KHCTPI                                 ! IN   
+(   70) CHARACTER              CDOPER                                 ! IN   
+(   71) LOGICAL                LDPRGR                                 ! IN   
+(   72) 
+(   73) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   74) 
+(   75) CALL FAPRST_MT64                                               &
+(   76) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   77) 
+(   78) END SUBROUTINE FAPRST64
+(   79) 
+(   80) SUBROUTINE FAPRST                                          &
+(   81) &           (KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   82) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   83) &                  FA_COM_DEFAULT_INIT,  &
+(   84) &                  NEW_FA_DEFAULT
+(   85) USE LFI_PRECISION
+(   86) IMPLICIT NONE
+(   87) ! Arguments
+(   88) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 4
+
+(   89) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(   90) INTEGER (KIND=JPLIKM)  KNUMOD                                 ! IN   
+(   91) INTEGER (KIND=JPLIKM)  KHCTPI                                 ! IN   
+(   92) CHARACTER              CDOPER                                 ! IN   
+(   93) LOGICAL                LDPRGR                                 ! IN   
+(   94) 
+(   95) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   96) 
+(   97) CALL FAPRST_MT                                                 &
+(   98) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   99) 
+(  100) END SUBROUTINE FAPRST
+(  101) 
+(  102) SUBROUTINE FAPRST_MT                                           &
+(  103) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(  104) USE FA_MOD, ONLY : FA_COM
+(  105) USE LFI_PRECISION
+(  106) IMPLICIT NONE
+(  107) ! Arguments
+(  108) TYPE (FA_COM)          FA                                     ! INOUT
+(  109) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  110) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  111) INTEGER (KIND=JPLIKM)  KNUMOD                                 ! IN   
+(  112) INTEGER (KIND=JPLIKM)  KHCTPI                                 ! IN   
+(  113) CHARACTER              CDOPER                                 ! IN   
+(  114) LOGICAL                LDPRGR                                 ! IN   
+(  115) ! Local integers
+(  116) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  117) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  118) INTEGER (KIND=JPLIKB)  INUMOD                                 ! IN   
+(  119) INTEGER (KIND=JPLIKB)  IHCTPI                                 ! IN   
+(  120) ! Convert arguments
+(  121) 
+(  122) INUMER     = INT (    KNUMER, JPLIKB)
+(  123) INUMOD     = INT (    KNUMOD, JPLIKB)
+(  124) IHCTPI     = INT (    KHCTPI, JPLIKB)
+(  125) 
+(  126) CALL FAPRST_MT64                                               &
+(  127) &           (FA, IREP, INUMER, INUMOD, IHCTPI, CDOPER, LDPRGR)
+(  128) 
+(  129) KREP       = INT (      IREP, JPLIKM)
+(  130) 
+(  131) END SUBROUTINE FAPRST_MT
+(  132) 
+(  133) !INTF KREP            OUT                                                              
+(  134) !INTF KNUMER        IN                                                                 
+(  135) !INTF KNUMOD        IN                                                                 
+(  136) !INTF KHCTPI        IN                                                                 
+(  137) !INTF CDOPER        IN                                                                 
+(  138) !INTF LDPRGR        IN                                                                 
+(  139) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 5
+
+(    1) # 1 "faprst.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAPRST_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme permettant de mettre en place les defauts de compression
+(   12) !     utilises par PROGRID
+(   13) !**
+(   14) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   15) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   16) !                KNUMOD (Entree) ==> Numero du modele
+(   17) !                KHCTPI (Entree) ==> Voir PROGRID
+(   18) !                CDOPER (Entree) ==> Voir PROGRID
+(   19) !                LDPRGR (Entree) ==> Activer ou non
+(   20) !
+(   21) !
+(   22) TYPE(FA_COM) :: FA
+(   23) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNUMOD, KHCTPI
+(   24) !
+(   25) CHARACTER CDOPER
+(   26) !
+(   27) LOGICAL LDPRGR
+(   28) !
+(   29) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   30) IF (LHOOK) CALL DR_HOOK('FAPRST_MT',0,ZHOOK_HANDLE)
+(   31) # 32 "faprst.F90"
+(   32) KREP=0
+(   33) # 34 "faprst.F90"
+(   34) IF (LDPRGR) THEN
+(   35)   CALL FAREGU_MT64 (FA, KNUMER, 'IDMOD',  KNUMOD,   1_JPLIKB)
+(   36)   CALL FAREGU_MT64 (FA, KNUMER, 'FACDEC', 0_JPLIKB, 1_JPLIKB)
+(   37)   SELECT CASE (CDOPER)
+(   38)     CASE ('K')
+(   39)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  0_JPLIKB, 1_JPLIKB)
+(   40)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  0_JPLIKB, 1_JPLIKB)
+(   41)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE',  0_JPLIKB, 1_JPLIKB)
+(   42)     CASE ('X')
+(   43)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  1_JPLIKB, 1_JPLIKB)
+(   44)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  1_JPLIKB, 1_JPLIKB)
+(   45)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE', -1_JPLIKB, 1_JPLIKB)
+(   46)     CASE ('L')
+(   47)       CALL FAREGU_MT64 (FA, KNUMER, 'GEXTE',  1_JPLIKB, 1_JPLIKB)
+(   48)       CALL FAREGU_MT64 (FA, KNUMER, 'BOUST',  1_JPLIKB, 1_JPLIKB)
+(   49)       CALL FAREGU_MT64 (FA, KNUMER, 'DIFFE',  2_JPLIKB, 1_JPLIKB)
+(   50)   END SELECT
+(   51) ENDIF
+(   52) # 53 "faprst.F90"
+(   53) IF (LHOOK) CALL DR_HOOK('FAPRST_MT',1,ZHOOK_HANDLE)
+(   54) # 55 "faprst.F90"
+(   55) END SUBROUTINE FAPRST_MT64
+(   56) # 57 "faprst.F90"
+(   57) ! Oct-2012 P. Marguinaud 64b LFI
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 6
+
+(   58) SUBROUTINE FAPRST64                                        &
+(   59) &           (KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   60) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   61) &                  FA_COM_DEFAULT_INIT,  &
+(   62) &                  NEW_FA_DEFAULT
+(   63) USE LFI_PRECISION
+(   64) IMPLICIT NONE
+(   65) ! Arguments
+(   66) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   67) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   68) INTEGER (KIND=JPLIKB)  KNUMOD                                 ! IN   
+(   69) INTEGER (KIND=JPLIKB)  KHCTPI                                 ! IN   
+(   70) CHARACTER              CDOPER                                 ! IN   
+(   71) LOGICAL                LDPRGR                                 ! IN   
+(   72) # 73 "faprst.F90"
+(   73) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   74) # 75 "faprst.F90"
+(   75) CALL FAPRST_MT64                                               &
+(   76) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   77) # 78 "faprst.F90"
+(   78) END SUBROUTINE FAPRST64
+(   79) # 80 "faprst.F90"
+(   80) SUBROUTINE FAPRST                                          &
+(   81) &           (KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   82) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   83) &                  FA_COM_DEFAULT_INIT,  &
+(   84) &                  NEW_FA_DEFAULT
+(   85) USE LFI_PRECISION
+(   86) IMPLICIT NONE
+(   87) ! Arguments
+(   88) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   89) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(   90) INTEGER (KIND=JPLIKM)  KNUMOD                                 ! IN   
+(   91) INTEGER (KIND=JPLIKM)  KHCTPI                                 ! IN   
+(   92) CHARACTER              CDOPER                                 ! IN   
+(   93) LOGICAL                LDPRGR                                 ! IN   
+(   94) # 95 "faprst.F90"
+(   95) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   96) # 97 "faprst.F90"
+(   97) CALL FAPRST_MT                                                 &
+(   98) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(   99) # 100 "faprst.F90"
+(  100) END SUBROUTINE FAPRST
+(  101) # 102 "faprst.F90"
+(  102) SUBROUTINE FAPRST_MT                                           &
+(  103) &           (FA, KREP, KNUMER, KNUMOD, KHCTPI, CDOPER, LDPRGR)
+(  104) USE FA_MOD, ONLY : FA_COM
+(  105) USE LFI_PRECISION
+(  106) IMPLICIT NONE
+(  107) ! Arguments
+(  108) TYPE (FA_COM)          FA                                     ! INOUT
+(  109) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  110) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  111) INTEGER (KIND=JPLIKM)  KNUMOD                                 ! IN   
+(  112) INTEGER (KIND=JPLIKM)  KHCTPI                                 ! IN   
+(  113) CHARACTER              CDOPER                                 ! IN   
+(  114) LOGICAL                LDPRGR                                 ! IN   
+(  115) ! Local integers
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:43      page 7
+
+(  116) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  117) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  118) INTEGER (KIND=JPLIKB)  INUMOD                                 ! IN   
+(  119) INTEGER (KIND=JPLIKB)  IHCTPI                                 ! IN   
+(  120) ! Convert arguments
+(  121) # 122 "faprst.F90"
+(  122) INUMER     = INT (    KNUMER, JPLIKB)
+(  123) INUMOD     = INT (    KNUMOD, JPLIKB)
+(  124) IHCTPI     = INT (    KHCTPI, JPLIKB)
+(  125) # 126 "faprst.F90"
+(  126) CALL FAPRST_MT64                                               &
+(  127) &           (FA, IREP, INUMER, INUMOD, IHCTPI, CDOPER, LDPRGR)
+(  128) # 129 "faprst.F90"
+(  129) KREP       = INT (      IREP, JPLIKM)
+(  130) # 131 "faprst.F90"
+(  131) END SUBROUTINE FAPRST_MT
+(  132) # 133 "faprst.F90"
+(  133) !INTF KREP            OUT                                                              
+(  134) !INTF KNUMER        IN                                                                 
+(  135) !INTF KNUMOD        IN                                                                 
+(  136) !INTF KHCTPI        IN                                                                 
+(  137) !INTF CDOPER        IN                                                                 
+(  138) !INTF LDPRGR        IN                                                                 

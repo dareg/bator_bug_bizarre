@@ -1,0 +1,6 @@
+INTERFACE
+SUBROUTINE store_enda
+USE YOMDB
+use odb_module
+END SUBROUTINE store_enda
+END INTERFACE

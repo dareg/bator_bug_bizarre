@@ -1,0 +1,511 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: crmsurface.F90
+
+(    1)      subroutine crmsurface(bflx)
+(    2) 
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) 
+(   13)      use vars
+(   14)      use params
+(   15)      use real_size
+(   16) 
+(   17)      implicit none
+(   18) 
+(   19)      real(RR), intent (in) :: bflx
+(   20)      real(RR) u_h0, tau00, tauxm, tauym
+(   21)      real(RR) diag_ustar
+(   22)      integer i,j
+(   23) 
+(   24) !--------------------------------------------------------
+(   25) 
+(   26) 
+(   27)      if(SFC_FLX_FXD.and..not.SFC_TAU_FXD) then
+(   28) 
+(   29)           uhl = uhl + dtn*utend(1)
+(   30)           vhl = vhl + dtn*vtend(1)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 3
+
+(   31) 
+(   32)       tauxm = 0.
+(   33)       tauym = 0.
+(   34) 
+(   35)       do j=1,ny
+(   36)         do i=1,nx
+(   37)           u_h0 = max(1.,sqrt((0.5*(u(i+1,j,1)+u(i,j,1))+ug)**2+ &
+(   38)                              (0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg)**2))
+(   39)           tau00 = rho(1) * diag_ustar(z(1),bflx,u_h0,z0)**2 
+(   40)           fluxbu(i,j) = -(0.5*(u(i+1,j,1)+u(i,j,1))+ug-uhl)/u_h0*tau00
+(   41)           fluxbv(i,j) = -(0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg-vhl)/u_h0*tau00
+(   42)           tauxm = tauxm + fluxbu(i,j)
+(   43)           tauym = tauym + fluxbv(i,j)
+(   44)         end do
+(   45)       end do
+(   46) 
+(   47)       taux0 = taux0 + tauxm/dble(nx*ny)
+(   48)       tauy0 = tauy0 + tauym/dble(nx*ny)
+(   49) 
+(   50)       end if ! SFC_FLX_FXD
+(   51) 
+(   52)       return
+(   53)       end
+(   54) 
+(   55) 
+(   56) 
+(   57) 
+(   58) 
+(   59) ! ----------------------------------------------------------------------
+(   60) !
+(   61) ! DISCLAIMER : this code appears to be correct but has not been
+(   62) !              very thouroughly tested. If you do notice any
+(   63) !              anomalous behaviour then please contact Andy and/or
+(   64) !              Bjorn
+(   65) !
+(   66) ! Function diag_ustar:  returns value of ustar using the below 
+(   67) ! similarity functions and a specified buoyancy flux (bflx) given in
+(   68) ! kinematic units
+(   69) !
+(   70) ! phi_m (zeta > 0) =  (1 + am * zeta)
+(   71) ! phi_m (zeta < 0) =  (1 - bm * zeta)^(-1/4)
+(   72) !
+(   73) ! where zeta = z/lmo and lmo = (theta_rev/g*vonk) * (ustar^2/tstar)
+(   74) !
+(   75) ! Ref: Businger, 1973, Turbulent Transfer in the Atmospheric Surface 
+(   76) ! Layer, in Workshop on Micormeteorology, pages 67-100.
+(   77) !
+(   78) ! Code writen March, 1999 by Bjorn Stevens
+(   79) !
+(   80) ! Code corrected 8th June 1999 (obukhov length was wrong way up,
+(   81) ! so now used as reciprocal of obukhov length)
+(   82) 
+(   83)       real(RR) function diag_ustar(z,bflx,wnd,z0)
+(   84) 
+(   85)       use real_size
+(   86)       implicit none
+(   87)       real(RR), parameter      :: vonk =  0.4   ! von Karmans constant
+(   88)       real(RR), parameter      :: g    = 9.81   ! gravitational acceleration
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 4
+
+(   89)       real(RR), parameter      :: am   =  4.8   !   "          "         "
+(   90)       real(RR), parameter      :: bm   = 19.3   !   "          "         "
+(   91)       real(RR), parameter      :: eps  = 1.e-10 ! non-zero, small number
+(   92) 
+(   93)       real(RR), intent (in)    :: z             ! height where u locates
+(   94)       real(RR), intent (in)    :: bflx          ! surface buoyancy flux (m^2/s^3)
+(   95)       real(RR), intent (in)    :: wnd           ! wind speed at z
+(   96)       real(RR), intent (in)    :: z0            ! momentum roughness height
+(   97) 
+(   98)       integer :: iterate
+(   99)       real(RR)    :: lnz, klnz, c1, x, psi1, zeta, rlmo, ustar
+(  100) 
+(  101)       lnz   = log(z/z0) 
+(  102)       klnz  = vonk/lnz              
+(  103)       c1    = 3.14159/2. - 3.*log(2.)
+(  104) 
+(  105)       ustar =  wnd*klnz
+(  106)       if (bflx /= 0.0) then 
+(  107)         do iterate=1,8
+(  108)           rlmo   = -bflx * vonk/(ustar**3 + eps)   !reciprocal of
+(  109)                                                    !obukhov length
+(  110)           zeta  = min(1.,z*rlmo)
+(  111)           if (zeta > 0.) then
+(  112)             ustar =  vonk*wnd  /(lnz + am*zeta)
+(  113)           else
+(  114)             x     = sqrt( sqrt( 1.0 - bm*zeta ) )
+(  115)             psi1  = 2.*log(1.0+x) + log(1.0+x*x) - 2.*atan(x) + c1
+(  116)             ustar = wnd*vonk/(lnz - psi1)
+(  117)           end if
+(  118)         end do
+(  119)       end if
+(  120) 
+(  121)       diag_ustar = ustar
+(  122) 
+(  123)       return
+(  124)       end function diag_ustar
+(  125) ! ----------------------------------------------------------------------
+(  126) 
+(  127) 
+(  128) 
+(  129)       real(RR) function z0_est(z,bflx,wnd,ustar)
+(  130) 
+(  131) !
+(  132) ! Compute z0 from buoyancy flux, wind, and friction velocity
+(  133) !
+(  134) ! 2004, Marat Khairoutdinov
+(  135) !
+(  136)       use real_size
+(  137)       implicit none
+(  138)       real(RR), parameter      :: vonk =  0.4   ! von Karmans constant
+(  139)       real(RR), parameter      :: g    = 9.81   ! gravitational acceleration
+(  140)       real(RR), parameter      :: am   =  4.8   !   "          "         "
+(  141)       real(RR), parameter      :: bm   = 19.3   !   "          "         "
+(  142)       real(RR), parameter      :: eps  = 1.e-10 ! non-zero, small number
+(  143) 
+(  144)       real(RR), intent (in)    :: z             ! height where u locates
+(  145)       real(RR), intent (in)    :: bflx          ! surface buoyancy flux (m^2/s^3)
+(  146)       real(RR), intent (in)    :: wnd           ! wind speed at z
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 5
+
+(  147)       real(RR), intent (in)    :: ustar         ! friction velocity
+(  148) 
+(  149)       real(RR)    :: lnz, klnz, c1, x, psi1, zeta, rlmo
+(  150) 
+(  151)       c1    = 3.14159/2. - 3.*log(2.)
+(  152)       rlmo   = -bflx*vonk/(ustar**3+eps)   !reciprocal of
+(  153)       zeta   = min(1.,z*rlmo)
+(  154)       if (zeta >= 0.) then
+(  155)             psi1 = -am*zeta
+(  156)       else
+(  157)             x     = sqrt( sqrt( 1.0 - bm*zeta ) )
+(  158)             psi1  = 2.*log(1.0+x) + log(1.0+x*x) - 2.*atan(x) + c1
+(  159)       end if
+(  160)       lnz = max(0.,vonk*wnd/(ustar + eps) + psi1)
+(  161)       z0_est = z*exp(-lnz)
+(  162) 
+(  163)       return
+(  164)       end function z0_est
+(  165) ! ----------------------------------------------------------------------
+(  166) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 6
+
+(    1) # 1 "crmsurface.F90"
+(    1)      subroutine crmsurface(bflx)
+(    2) # 3 "crmsurface.F90"
+(    3) !************* LICENSE START *****************
+(    4) !
+(    5) ! Copyright 2015 Marat Khairoutdinov 
+(    6) ! School of Marine & Atmospheric Sciences
+(    7) ! Stony Brook University
+(    8) ! This software is distributed under the terms of
+(    9) ! the Apache License version 2.0.
+(   10) !
+(   11) !************** LICENSE END ******************
+(   12) # 13 "crmsurface.F90"
+(   13)      use vars
+(   14)      use params
+(   15)      use real_size
+(   16) # 17 "crmsurface.F90"
+(   17)      implicit none
+(   18) # 19 "crmsurface.F90"
+(   19)      real(RR), intent (in) :: bflx
+(   20)      real(RR) u_h0, tau00, tauxm, tauym
+(   21)      real(RR) diag_ustar
+(   22)      integer i,j
+(   23) # 24 "crmsurface.F90"
+(   24) !--------------------------------------------------------
+(   25) # 27 "crmsurface.F90"
+(   27)      if(SFC_FLX_FXD.and..not.SFC_TAU_FXD) then
+(   28) # 29 "crmsurface.F90"
+(   29)           uhl = uhl + dtn*utend(1)
+(   30)           vhl = vhl + dtn*vtend(1)
+(   31) # 32 "crmsurface.F90"
+(   32)       tauxm = 0.
+(   33)       tauym = 0.
+(   34) # 35 "crmsurface.F90"
+(   35)       do j=1,ny
+(   36)         do i=1,nx
+(   37)           u_h0 = max(1.,sqrt((0.5*(u(i+1,j,1)+u(i,j,1))+ug)**2+ &
+(   38)                              (0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg)**2))
+(   39)           tau00 = rho(1) * diag_ustar(z(1),bflx,u_h0,z0)**2 
+(   40)           fluxbu(i,j) = -(0.5*(u(i+1,j,1)+u(i,j,1))+ug-uhl)/u_h0*tau00
+(   41)           fluxbv(i,j) = -(0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg-vhl)/u_h0*tau00
+(   42)           tauxm = tauxm + fluxbu(i,j)
+(   43)           tauym = tauym + fluxbv(i,j)
+(   44)         end do
+(   45)       end do
+(   46) # 47 "crmsurface.F90"
+(   47)       taux0 = taux0 + tauxm/dble(nx*ny)
+(   48)       tauy0 = tauy0 + tauym/dble(nx*ny)
+(   49) # 50 "crmsurface.F90"
+(   50)       end if ! SFC_FLX_FXD
+(   51) # 52 "crmsurface.F90"
+(   52)       return
+(   53)       end
+(   54) # 59 "crmsurface.F90"
+(   59) ! ----------------------------------------------------------------------
+(   60) !
+(   61) ! DISCLAIMER : this code appears to be correct but has not been
+(   62) !              very thouroughly tested. If you do notice any
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 7
+
+(   63) !              anomalous behaviour then please contact Andy and/or
+(   64) !              Bjorn
+(   65) !
+(   66) ! Function diag_ustar:  returns value of ustar using the below 
+(   67) ! similarity functions and a specified buoyancy flux (bflx) given in
+(   68) ! kinematic units
+(   69) !
+(   70) ! phi_m (zeta > 0) =  (1 + am * zeta)
+(   71) ! phi_m (zeta < 0) =  (1 - bm * zeta)^(-1/4)
+(   72) !
+(   73) ! where zeta = z/lmo and lmo = (theta_rev/g*vonk) * (ustar^2/tstar)
+(   74) !
+(   75) ! Ref: Businger, 1973, Turbulent Transfer in the Atmospheric Surface 
+(   76) ! Layer, in Workshop on Micormeteorology, pages 67-100.
+(   77) !
+(   78) ! Code writen March, 1999 by Bjorn Stevens
+(   79) !
+(   80) ! Code corrected 8th June 1999 (obukhov length was wrong way up,
+(   81) ! so now used as reciprocal of obukhov length)
+(   82) # 83 "crmsurface.F90"
+(   83)       real(RR) function diag_ustar(z,bflx,wnd,z0)
+(   84) # 85 "crmsurface.F90"
+(   85)       use real_size
+(   86)       implicit none
+(   87)       real(RR), parameter      :: vonk =  0.4   ! von Karmans constant
+(   88)       real(RR), parameter      :: g    = 9.81   ! gravitational acceleration
+(   89)       real(RR), parameter      :: am   =  4.8   !   "          "         "
+(   90)       real(RR), parameter      :: bm   = 19.3   !   "          "         "
+(   91)       real(RR), parameter      :: eps  = 1.e-10 ! non-zero, small number
+(   92) # 93 "crmsurface.F90"
+(   93)       real(RR), intent (in)    :: z             ! height where u locates
+(   94)       real(RR), intent (in)    :: bflx          ! surface buoyancy flux (m^2/s^3)
+(   95)       real(RR), intent (in)    :: wnd           ! wind speed at z
+(   96)       real(RR), intent (in)    :: z0            ! momentum roughness height
+(   97) # 98 "crmsurface.F90"
+(   98)       integer :: iterate
+(   99)       real(RR)    :: lnz, klnz, c1, x, psi1, zeta, rlmo, ustar
+(  100) # 101 "crmsurface.F90"
+(  101)       lnz   = log(z/z0) 
+(  102)       klnz  = vonk/lnz              
+(  103)       c1    = 3.14159/2. - 3.*log(2.)
+(  104) # 105 "crmsurface.F90"
+(  105)       ustar =  wnd*klnz
+(  106)       if (bflx /= 0.0) then 
+(  107)         do iterate=1,8
+(  108)           rlmo   = -bflx * vonk/(ustar**3 + eps)   !reciprocal of
+(  109)                                                    !obukhov length
+(  110)           zeta  = min(1.,z*rlmo)
+(  111)           if (zeta > 0.) then
+(  112)             ustar =  vonk*wnd  /(lnz + am*zeta)
+(  113)           else
+(  114)             x     = sqrt( sqrt( 1.0 - bm*zeta ) )
+(  115)             psi1  = 2.*log(1.0+x) + log(1.0+x*x) - 2.*atan(x) + c1
+(  116)             ustar = wnd*vonk/(lnz - psi1)
+(  117)           end if
+(  118)         end do
+(  119)       end if
+(  120) # 121 "crmsurface.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:41      page 8
+
+(  121)       diag_ustar = ustar
+(  122) # 123 "crmsurface.F90"
+(  123)       return
+(  124)       end function diag_ustar
+(  125) ! ----------------------------------------------------------------------
+(  126) # 129 "crmsurface.F90"
+(  129)       real(RR) function z0_est(z,bflx,wnd,ustar)
+(  130) # 131 "crmsurface.F90"
+(  131) !
+(  132) ! Compute z0 from buoyancy flux, wind, and friction velocity
+(  133) !
+(  134) ! 2004, Marat Khairoutdinov
+(  135) !
+(  136)       use real_size
+(  137)       implicit none
+(  138)       real(RR), parameter      :: vonk =  0.4   ! von Karmans constant
+(  139)       real(RR), parameter      :: g    = 9.81   ! gravitational acceleration
+(  140)       real(RR), parameter      :: am   =  4.8   !   "          "         "
+(  141)       real(RR), parameter      :: bm   = 19.3   !   "          "         "
+(  142)       real(RR), parameter      :: eps  = 1.e-10 ! non-zero, small number
+(  143) # 144 "crmsurface.F90"
+(  144)       real(RR), intent (in)    :: z             ! height where u locates
+(  145)       real(RR), intent (in)    :: bflx          ! surface buoyancy flux (m^2/s^3)
+(  146)       real(RR), intent (in)    :: wnd           ! wind speed at z
+(  147)       real(RR), intent (in)    :: ustar         ! friction velocity
+(  148) # 149 "crmsurface.F90"
+(  149)       real(RR)    :: lnz, klnz, c1, x, psi1, zeta, rlmo
+(  150) # 151 "crmsurface.F90"
+(  151)       c1    = 3.14159/2. - 3.*log(2.)
+(  152)       rlmo   = -bflx*vonk/(ustar**3+eps)   !reciprocal of
+(  153)       zeta   = min(1.,z*rlmo)
+(  154)       if (zeta >= 0.) then
+(  155)             psi1 = -am*zeta
+(  156)       else
+(  157)             x     = sqrt( sqrt( 1.0 - bm*zeta ) )
+(  158)             psi1  = 2.*log(1.0+x) + log(1.0+x*x) - 2.*atan(x) + c1
+(  159)       end if
+(  160)       lnz = max(0.,vonk*wnd/(ustar + eps) + psi1)
+(  161)       z0_est = z*exp(-lnz)
+(  162) # 163 "crmsurface.F90"
+(  163)       return
+(  164)       end function z0_est
+(  165) ! ----------------------------------------------------------------------

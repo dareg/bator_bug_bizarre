@@ -1,0 +1,21 @@
+!depfile:get_isba_confn.F90
+MODULE MODI_GET_ISBA_CONF_n 
+INTERFACE
+      SUBROUTINE GET_ISBA_CONF_n (IO, KSNOW_LAYER_IN, &
+                                  HISBA, KPATCH,KGROUND_LAYER,KSNOW_LAYER,KNBIOMASS,  &
+                                   KNLITTER, KNLITTLEVS, KNSOILCARB)  
+USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+TYPE(ISBA_OPTIONS_t), INTENT(IN) :: IO
+INTEGER, INTENT(IN) :: KSNOW_LAYER_IN
+CHARACTER(LEN=3), INTENT(OUT) :: HISBA
+INTEGER, INTENT(OUT) :: KPATCH        ! number of patchs
+INTEGER, INTENT(OUT) :: KGROUND_LAYER ! number of ground layers
+INTEGER, INTENT(OUT) :: KSNOW_LAYER   ! number of snow layers
+INTEGER, INTENT(OUT) :: KNBIOMASS     ! number of biomass pools
+INTEGER, INTENT(OUT) :: KNLITTER      ! number of litter pools
+INTEGER, INTENT(OUT) :: KNLITTLEVS    ! number of litter levels
+INTEGER, INTENT(OUT) :: KNSOILCARB    ! number of soil carbon pools
+END SUBROUTINE GET_ISBA_CONF_n
+
+END INTERFACE
+END MODULE MODI_GET_ISBA_CONF_n 

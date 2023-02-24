@@ -1,0 +1,906 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: ssort.F
+
+(    1) *DECK SSORT
+(    2)       SUBROUTINE SSORT (DX, DY, N, KFLAG)
+(    3) C***BEGIN PROLOGUE  SSORT
+(    4) C***PURPOSE  SORT AN ARRAY AND OPTIONALLY MAKE THE SAME INTERCHANGES IN
+(    5) C            AN AUXILIARY ARRAY.  THE ARRAY MAY BE SORTED IN INCREASING
+(    6) C            OR DECREASING ORDER.  A SLIGHTLY MODIFIED QUICKSORT
+(    7) C            ALGORITHM IS USED.
+(    8) C***LIBRARY   SLATEC
+(    9) C***CATEGORY  N6A2B
+(   10) C***TYPE      REAL (SSORT-S, SSORT-D, ISORT-I)
+(   11) C***KEYWORDS  SINGLETON QUICKSORT, SORT, SORTING
+(   12) C***AUTHOR  JONES, R. E., (SNLA)
+(   13) C           WISNIEWSKI, J. A., (SNLA)
+(   14) C***DESCRIPTION
+(   15) C
+(   16) C   SSORT SORTS ARRAY DX AND OPTIONALLY MAKES THE SAME INTERCHANGES IN
+(   17) C   ARRAY DY.  THE ARRAY DX MAY BE SORTED IN INCREASING ORDER OR
+(   18) C   DECREASING ORDER.  A SLIGHTLY MODIFIED QUICKSORT ALGORITHM IS USED.
+(   19) C
+(   20) C   DESCRIPTION OF PARAMETERS
+(   21) C      DX - ARRAY OF VALUES TO BE SORTED   (USUALLY ABSCISSAS)
+(   22) C      DY - ARRAY TO BE (OPTIONALLY) CARRIED ALONG
+(   23) C      N  - NUMBER OF VALUES IN ARRAY DX TO BE SORTED
+(   24) C      KFLAG - CONTROL PARAMETER
+(   25) C            =  2  MEANS SORT DX IN INCREASING ORDER AND CARRY DY ALONG.
+(   26) C            =  1  MEANS SORT DX IN INCREASING ORDER (IGNORING DY)
+(   27) C            = -1  MEANS SORT DX IN DECREASING ORDER (IGNORING DY)
+(   28) C            = -2  MEANS SORT DX IN DECREASING ORDER AND CARRY DY ALONG.
+(   29) C
+(   30) C***REFERENCES  R. C. SINGLETON, ALGORITHM 347, AN EFFICIENT ALGORITHM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 3
+
+(   31) C                 FOR SORTING WITH MINIMAL STORAGE, COMMUNICATIONS OF
+(   32) C                 THE ACM, 12, 3 (1969), PP. 185-187.
+(   33) C***ROUTINES CALLED  XERMSG
+(   34) C***REVISION HISTORY  (YYMMDD)
+(   35) C   761101  DATE WRITTEN
+(   36) C   761118  MODIFIED TO USE THE SINGLETON QUICKSORT ALGORITHM.  (JAW)
+(   37) C   890531  CHANGED ALL SPECIFIC INTRINSICS TO GENERIC.  (WRB)
+(   38) C   890831  MODIFIED ARRAY DECLARATIONS.  (WRB)
+(   39) C   891009  REMOVED UNREFERENCED STATEMENT LABELS.  (WRB)
+(   40) C   891024  CHANGED CATEGORY.  (WRB)
+(   41) C   891024  REVISION DATE FROM VERSION 3.2
+(   42) C   891214  PROLOGUE CONVERTED TO VERSION 4.0 FORMAT.  (BAB)
+(   43) C   900315  CALLS TO XERROR CHANGED TO CALLS TO XERMSG.  (THJ)
+(   44) C   901012  DECLARED ALL VARIABLES; CHANGED X,Y TO DX,DY; CHANGED
+(   45) C           CODE TO PARALLEL SSORT. (M. MCCLAIN)
+(   46) C   920501  REFORMATTED THE REFERENCES SECTION.  (DWL, WRB)
+(   47) C   920519  CLARIFIED ERROR MESSAGES.  (DWL)
+(   48) C   920801  DECLARATIONS SECTION REBUILT AND CODE RESTRUCTURED TO USE
+(   49) C           IF-THEN-ELSE-ENDIF.  (RWC, WRB)
+(   50) C***END PROLOGUE  SSORT
+(   51) C     .. SCALAR ARGUMENTS ..
+(   52)       INTEGER KFLAG, N
+(   53) C     .. ARRAY ARGUMENTS ..
+(   54)       REAL DX(*), DY(*)
+(   55) C     .. LOCAL SCALARS ..
+(   56)       REAL R, T, TT, TTY, TY
+(   57)       INTEGER I, IJ, J, K, KK, L, M, NN
+(   58) C     .. LOCAL ARRAYS ..
+(   59)       INTEGER IL(21), IU(21)
+(   60) C     .. EXTERNAL SUBROUTINES ..
+(   61) C      EXTERNAL XERMSG
+(   62) C     .. INTRINSIC FUNCTIONS ..
+(   63)       INTRINSIC ABS, INT
+(   64) C***FIRST EXECUTABLE STATEMENT  SSORT
+(   65)       NN = N
+(   66)       IF (NN .LT. 1) THEN
+(   67)           WRITE(6,*)  
+(   68)      +   "The number of values to be sorted is not positive."
+(   69) 
+(   70) C         CALL XERMSG ('SLATEC', 'SSORT',
+(   71) C     +      'The number of values to be sorted is not positive.', 1, 1)
+(   72) 
+(   73)          RETURN
+(   74)       ENDIF
+(   75) C
+(   76)       KK = ABS(KFLAG)
+(   77)       IF (KK.NE.1 .AND. KK.NE.2) THEN
+(   78) 
+(   79)           WRITE(6,*) 
+(   80)      +    "The sort control parameter, K is bad."
+(   81) C         CALL XERMSG ('SLATEC', 'SSORT',
+(   82) C     +      'The sort control parameter, K, is not 2, 1, -1, or -2.', 2,
+(   83) C     +      1)
+(   84)          RETURN
+(   85)       ENDIF
+(   86) C
+(   87) C     ALTER ARRAY DX TO GET DECREASING ORDER IF NEEDED
+(   88) C
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 4
+
+(   89)       IF (KFLAG .LE. -1) THEN
+(   90)          DO 10 I=1,NN
+(   91)             DX(I) = -DX(I)
+(   92)    10    CONTINUE
+(   93)       ENDIF
+(   94) C
+(   95)       IF (KK .EQ. 2) GO TO 100
+(   96) C
+(   97) C     SORT DX ONLY
+(   98) C
+(   99)       M = 1
+(  100)       I = 1
+(  101)       J = NN
+(  102)       R = 0.375D0
+(  103) C
+(  104)    20 IF (I .EQ. J) GO TO 60
+(  105)       IF (R .LE. 0.5898437D0) THEN
+(  106)          R = R+3.90625D-2
+(  107)       ELSE
+(  108)          R = R-0.21875D0
+(  109)       ENDIF
+(  110) C
+(  111)    30 K = I
+(  112) C
+(  113) C     SELECT A CENTRAL ELEMENT OF THE ARRAY AND SAVE IT IN LOCATION T
+(  114) C
+(  115)       IJ = I + INT((J-I)*R)
+(  116)       T = DX(IJ)
+(  117) C
+(  118) C     IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  119) C
+(  120)       IF (DX(I) .GT. T) THEN
+(  121)          DX(IJ) = DX(I)
+(  122)          DX(I) = T
+(  123)          T = DX(IJ)
+(  124)       ENDIF
+(  125)       L = J
+(  126) C
+(  127) C     IF LAST ELEMENT OF ARRAY IS LESS THAN THAN T, INTERCHANGE WITH T
+(  128) C
+(  129)       IF (DX(J) .LT. T) THEN
+(  130)          DX(IJ) = DX(J)
+(  131)          DX(J) = T
+(  132)          T = DX(IJ)
+(  133) C
+(  134) C        IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  135) C
+(  136)          IF (DX(I) .GT. T) THEN
+(  137)             DX(IJ) = DX(I)
+(  138)             DX(I) = T
+(  139)             T = DX(IJ)
+(  140)          ENDIF
+(  141)       ENDIF
+(  142) C
+(  143) C     FIND AN ELEMENT IN THE SECOND HALF OF THE ARRAY WHICH IS SMALLER
+(  144) C     THAN T
+(  145) C
+(  146)    40 L = L-1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 5
+
+(  147)       IF (DX(L) .GT. T) GO TO 40
+(  148) C
+(  149) C     FIND AN ELEMENT IN THE FIRST HALF OF THE ARRAY WHICH IS GREATER
+(  150) C     THAN T
+(  151) C
+(  152)    50 K = K+1
+(  153)       IF (DX(K) .LT. T) GO TO 50
+(  154) C
+(  155) C     INTERCHANGE THESE ELEMENTS
+(  156) C
+(  157)       IF (K .LE. L) THEN
+(  158)          TT = DX(L)
+(  159)          DX(L) = DX(K)
+(  160)          DX(K) = TT
+(  161)          GO TO 40
+(  162)       ENDIF
+(  163) C
+(  164) C     SAVE UPPER AND LOWER SUBSCRIPTS OF THE ARRAY YET TO BE SORTED
+(  165) C
+(  166)       IF (L-I .GT. J-K) THEN
+(  167)          IL(M) = I
+(  168)          IU(M) = L
+(  169)          I = K
+(  170)          M = M+1
+(  171)       ELSE
+(  172)          IL(M) = K
+(  173)          IU(M) = J
+(  174)          J = L
+(  175)          M = M+1
+(  176)       ENDIF
+(  177)       GO TO 70
+(  178) C
+(  179) C     BEGIN AGAIN ON ANOTHER PORTION OF THE UNSORTED ARRAY
+(  180) C
+(  181)    60 M = M-1
+(  182)       IF (M .EQ. 0) GO TO 190
+(  183)       I = IL(M)
+(  184)       J = IU(M)
+(  185) C
+(  186)    70 IF (J-I .GE. 1) GO TO 30
+(  187)       IF (I .EQ. 1) GO TO 20
+(  188)       I = I-1
+(  189) C
+(  190)    80 I = I+1
+(  191)       IF (I .EQ. J) GO TO 60
+(  192)       T = DX(I+1)
+(  193)       IF (DX(I) .LE. T) GO TO 80
+(  194)       K = I
+(  195) C
+(  196)    90 DX(K+1) = DX(K)
+(  197)       K = K-1
+(  198)       IF (T .LT. DX(K)) GO TO 90
+(  199)       DX(K+1) = T
+(  200)       GO TO 80
+(  201) C
+(  202) C     SORT DX AND CARRY DY ALONG
+(  203) C
+(  204)   100 M = 1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 6
+
+(  205)       I = 1
+(  206)       J = NN
+(  207)       R = 0.375D0
+(  208) C
+(  209)   110 IF (I .EQ. J) GO TO 150
+(  210)       IF (R .LE. 0.5898437D0) THEN
+(  211)          R = R+3.90625D-2
+(  212)       ELSE
+(  213)          R = R-0.21875D0
+(  214)       ENDIF
+(  215) C
+(  216)   120 K = I
+(  217) C
+(  218) C     SELECT A CENTRAL ELEMENT OF THE ARRAY AND SAVE IT IN LOCATION T
+(  219) C
+(  220)       IJ = I + INT((J-I)*R)
+(  221)       T = DX(IJ)
+(  222)       TY = DY(IJ)
+(  223) C
+(  224) C     IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  225) C
+(  226)       IF (DX(I) .GT. T) THEN
+(  227)          DX(IJ) = DX(I)
+(  228)          DX(I) = T
+(  229)          T = DX(IJ)
+(  230)          DY(IJ) = DY(I)
+(  231)          DY(I) = TY
+(  232)          TY = DY(IJ)
+(  233)       ENDIF
+(  234)       L = J
+(  235) C
+(  236) C     IF LAST ELEMENT OF ARRAY IS LESS THAN T, INTERCHANGE WITH T
+(  237) C
+(  238)       IF (DX(J) .LT. T) THEN
+(  239)          DX(IJ) = DX(J)
+(  240)          DX(J) = T
+(  241)          T = DX(IJ)
+(  242)          DY(IJ) = DY(J)
+(  243)          DY(J) = TY
+(  244)          TY = DY(IJ)
+(  245) C
+(  246) C        IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  247) C
+(  248)          IF (DX(I) .GT. T) THEN
+(  249)             DX(IJ) = DX(I)
+(  250)             DX(I) = T
+(  251)             T = DX(IJ)
+(  252)             DY(IJ) = DY(I)
+(  253)             DY(I) = TY
+(  254)             TY = DY(IJ)
+(  255)          ENDIF
+(  256)       ENDIF
+(  257) C
+(  258) C     FIND AN ELEMENT IN THE SECOND HALF OF THE ARRAY WHICH IS SMALLER
+(  259) C     THAN T
+(  260) C
+(  261)   130 L = L-1
+(  262)       IF (DX(L) .GT. T) GO TO 130
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 7
+
+(  263) C
+(  264) C     FIND AN ELEMENT IN THE FIRST HALF OF THE ARRAY WHICH IS GREATER
+(  265) C     THAN T
+(  266) C
+(  267)   140 K = K+1
+(  268)       IF (DX(K) .LT. T) GO TO 140
+(  269) C
+(  270) C     INTERCHANGE THESE ELEMENTS
+(  271) C
+(  272)       IF (K .LE. L) THEN
+(  273)          TT = DX(L)
+(  274)          DX(L) = DX(K)
+(  275)          DX(K) = TT
+(  276)          TTY = DY(L)
+(  277)          DY(L) = DY(K)
+(  278)          DY(K) = TTY
+(  279)          GO TO 130
+(  280)       ENDIF
+(  281) C
+(  282) C     SAVE UPPER AND LOWER SUBSCRIPTS OF THE ARRAY YET TO BE SORTED
+(  283) C
+(  284)       IF (L-I .GT. J-K) THEN
+(  285)          IL(M) = I
+(  286)          IU(M) = L
+(  287)          I = K
+(  288)          M = M+1
+(  289)       ELSE
+(  290)          IL(M) = K
+(  291)          IU(M) = J
+(  292)          J = L
+(  293)          M = M+1
+(  294)       ENDIF
+(  295)       GO TO 160
+(  296) C
+(  297) C     BEGIN AGAIN ON ANOTHER PORTION OF THE UNSORTED ARRAY
+(  298) C
+(  299)   150 M = M-1
+(  300)       IF (M .EQ. 0) GO TO 190
+(  301)       I = IL(M)
+(  302)       J = IU(M)
+(  303) C
+(  304)   160 IF (J-I .GE. 1) GO TO 120
+(  305)       IF (I .EQ. 1) GO TO 110
+(  306)       I = I-1
+(  307) C
+(  308)   170 I = I+1
+(  309)       IF (I .EQ. J) GO TO 150
+(  310)       T = DX(I+1)
+(  311)       TY = DY(I+1)
+(  312)       IF (DX(I) .LE. T) GO TO 170
+(  313)       K = I
+(  314) C
+(  315)   180 DX(K+1) = DX(K)
+(  316)       DY(K+1) = DY(K)
+(  317)       K = K-1
+(  318)       IF (T .LT. DX(K)) GO TO 180
+(  319)       DX(K+1) = T
+(  320)       DY(K+1) = TY
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 8
+
+(  321)       GO TO 170
+(  322) C
+(  323) C     CLEAN UP
+(  324) C
+(  325)   190 IF (KFLAG .LE. -1) THEN
+(  326)          DO 200 I=1,NN
+(  327)             DX(I) = -DX(I)
+(  328)   200    CONTINUE
+(  329)       ENDIF
+(  330)       RETURN
+(  331)       END SUBROUTINE SSORT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 9
+
+(    1) # 1 "ssort.F"
+(    1) *DECK SSORT
+(    2)       SUBROUTINE SSORT (DX, DY, N, KFLAG)
+(    3) C***BEGIN PROLOGUE  SSORT
+(    4) C***PURPOSE  SORT AN ARRAY AND OPTIONALLY MAKE THE SAME INTERCHANGES IN
+(    5) C            AN AUXILIARY ARRAY.  THE ARRAY MAY BE SORTED IN INCREASING
+(    6) C            OR DECREASING ORDER.  A SLIGHTLY MODIFIED QUICKSORT
+(    7) C            ALGORITHM IS USED.
+(    8) C***LIBRARY   SLATEC
+(    9) C***CATEGORY  N6A2B
+(   10) C***TYPE      REAL (SSORT-S, SSORT-D, ISORT-I)
+(   11) C***KEYWORDS  SINGLETON QUICKSORT, SORT, SORTING
+(   12) C***AUTHOR  JONES, R. E., (SNLA)
+(   13) C           WISNIEWSKI, J. A., (SNLA)
+(   14) C***DESCRIPTION
+(   15) C
+(   16) C   SSORT SORTS ARRAY DX AND OPTIONALLY MAKES THE SAME INTERCHANGES IN
+(   17) C   ARRAY DY.  THE ARRAY DX MAY BE SORTED IN INCREASING ORDER OR
+(   18) C   DECREASING ORDER.  A SLIGHTLY MODIFIED QUICKSORT ALGORITHM IS USED.
+(   19) C
+(   20) C   DESCRIPTION OF PARAMETERS
+(   21) C      DX - ARRAY OF VALUES TO BE SORTED   (USUALLY ABSCISSAS)
+(   22) C      DY - ARRAY TO BE (OPTIONALLY) CARRIED ALONG
+(   23) C      N  - NUMBER OF VALUES IN ARRAY DX TO BE SORTED
+(   24) C      KFLAG - CONTROL PARAMETER
+(   25) C            =  2  MEANS SORT DX IN INCREASING ORDER AND CARRY DY ALONG.
+(   26) C            =  1  MEANS SORT DX IN INCREASING ORDER (IGNORING DY)
+(   27) C            = -1  MEANS SORT DX IN DECREASING ORDER (IGNORING DY)
+(   28) C            = -2  MEANS SORT DX IN DECREASING ORDER AND CARRY DY ALONG.
+(   29) C
+(   30) C***REFERENCES  R. C. SINGLETON, ALGORITHM 347, AN EFFICIENT ALGORITHM
+(   31) C                 FOR SORTING WITH MINIMAL STORAGE, COMMUNICATIONS OF
+(   32) C                 THE ACM, 12, 3 (1969), PP. 185-187.
+(   33) C***ROUTINES CALLED  XERMSG
+(   34) C***REVISION HISTORY  (YYMMDD)
+(   35) C   761101  DATE WRITTEN
+(   36) C   761118  MODIFIED TO USE THE SINGLETON QUICKSORT ALGORITHM.  (JAW)
+(   37) C   890531  CHANGED ALL SPECIFIC INTRINSICS TO GENERIC.  (WRB)
+(   38) C   890831  MODIFIED ARRAY DECLARATIONS.  (WRB)
+(   39) C   891009  REMOVED UNREFERENCED STATEMENT LABELS.  (WRB)
+(   40) C   891024  CHANGED CATEGORY.  (WRB)
+(   41) C   891024  REVISION DATE FROM VERSION 3.2
+(   42) C   891214  PROLOGUE CONVERTED TO VERSION 4.0 FORMAT.  (BAB)
+(   43) C   900315  CALLS TO XERROR CHANGED TO CALLS TO XERMSG.  (THJ)
+(   44) C   901012  DECLARED ALL VARIABLES; CHANGED X,Y TO DX,DY; CHANGED
+(   45) C           CODE TO PARALLEL SSORT. (M. MCCLAIN)
+(   46) C   920501  REFORMATTED THE REFERENCES SECTION.  (DWL, WRB)
+(   47) C   920519  CLARIFIED ERROR MESSAGES.  (DWL)
+(   48) C   920801  DECLARATIONS SECTION REBUILT AND CODE RESTRUCTURED TO USE
+(   49) C           IF-THEN-ELSE-ENDIF.  (RWC, WRB)
+(   50) C***END PROLOGUE  SSORT
+(   51) C     .. SCALAR ARGUMENTS ..
+(   52)       INTEGER KFLAG, N
+(   53) C     .. ARRAY ARGUMENTS ..
+(   54)       REAL DX(*), DY(*)
+(   55) C     .. LOCAL SCALARS ..
+(   56)       REAL R, T, TT, TTY, TY
+(   57)       INTEGER I, IJ, J, K, KK, L, M, NN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 10
+
+(   58) C     .. LOCAL ARRAYS ..
+(   59)       INTEGER IL(21), IU(21)
+(   60) C     .. EXTERNAL SUBROUTINES ..
+(   61) C      EXTERNAL XERMSG
+(   62) C     .. INTRINSIC FUNCTIONS ..
+(   63)       INTRINSIC ABS, INT
+(   64) C***FIRST EXECUTABLE STATEMENT  SSORT
+(   65)       NN = N
+(   66)       IF (NN .LT. 1) THEN
+(   67)           WRITE(6,*)  
+(   68)      +   "The number of values to be sorted is not positive."
+(   69) # 70 "ssort.F"
+(   70) C         CALL XERMSG ('SLATEC', 'SSORT',
+(   71) C     +      'The number of values to be sorted is not positive.', 1, 1)
+(   72) # 73 "ssort.F"
+(   73)          RETURN
+(   74)       ENDIF
+(   75) C
+(   76)       KK = ABS(KFLAG)
+(   77)       IF (KK.NE.1 .AND. KK.NE.2) THEN
+(   78) # 79 "ssort.F"
+(   79)           WRITE(6,*) 
+(   80)      +    "The sort control parameter, K is bad."
+(   81) C         CALL XERMSG ('SLATEC', 'SSORT',
+(   82) C     +      'The sort control parameter, K, is not 2, 1, -1, or -2.', 2
+(   83) C     +      1)
+(   84)          RETURN
+(   85)       ENDIF
+(   86) C
+(   87) C     ALTER ARRAY DX TO GET DECREASING ORDER IF NEEDED
+(   88) C
+(   89)       IF (KFLAG .LE. -1) THEN
+(   90)          DO 10 I=1,NN
+(   91)             DX(I) = -DX(I)
+(   92)    10    CONTINUE
+(   93)       ENDIF
+(   94) C
+(   95)       IF (KK .EQ. 2) GO TO 100
+(   96) C
+(   97) C     SORT DX ONLY
+(   98) C
+(   99)       M = 1
+(  100)       I = 1
+(  101)       J = NN
+(  102)       R = 0.375D0
+(  103) C
+(  104)    20 IF (I .EQ. J) GO TO 60
+(  105)       IF (R .LE. 0.5898437D0) THEN
+(  106)          R = R+3.90625D-2
+(  107)       ELSE
+(  108)          R = R-0.21875D0
+(  109)       ENDIF
+(  110) C
+(  111)    30 K = I
+(  112) C
+(  113) C     SELECT A CENTRAL ELEMENT OF THE ARRAY AND SAVE IT IN LOCATION T
+(  114) C
+(  115)       IJ = I + INT((J-I)*R)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 11
+
+(  116)       T = DX(IJ)
+(  117) C
+(  118) C     IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  119) C
+(  120)       IF (DX(I) .GT. T) THEN
+(  121)          DX(IJ) = DX(I)
+(  122)          DX(I) = T
+(  123)          T = DX(IJ)
+(  124)       ENDIF
+(  125)       L = J
+(  126) C
+(  127) C     IF LAST ELEMENT OF ARRAY IS LESS THAN THAN T, INTERCHANGE WITH T
+(  128) C
+(  129)       IF (DX(J) .LT. T) THEN
+(  130)          DX(IJ) = DX(J)
+(  131)          DX(J) = T
+(  132)          T = DX(IJ)
+(  133) C
+(  134) C        IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  135) C
+(  136)          IF (DX(I) .GT. T) THEN
+(  137)             DX(IJ) = DX(I)
+(  138)             DX(I) = T
+(  139)             T = DX(IJ)
+(  140)          ENDIF
+(  141)       ENDIF
+(  142) C
+(  143) C     FIND AN ELEMENT IN THE SECOND HALF OF THE ARRAY WHICH IS SMALLER
+(  144) C     THAN T
+(  145) C
+(  146)    40 L = L-1
+(  147)       IF (DX(L) .GT. T) GO TO 40
+(  148) C
+(  149) C     FIND AN ELEMENT IN THE FIRST HALF OF THE ARRAY WHICH IS GREATER
+(  150) C     THAN T
+(  151) C
+(  152)    50 K = K+1
+(  153)       IF (DX(K) .LT. T) GO TO 50
+(  154) C
+(  155) C     INTERCHANGE THESE ELEMENTS
+(  156) C
+(  157)       IF (K .LE. L) THEN
+(  158)          TT = DX(L)
+(  159)          DX(L) = DX(K)
+(  160)          DX(K) = TT
+(  161)          GO TO 40
+(  162)       ENDIF
+(  163) C
+(  164) C     SAVE UPPER AND LOWER SUBSCRIPTS OF THE ARRAY YET TO BE SORTED
+(  165) C
+(  166)       IF (L-I .GT. J-K) THEN
+(  167)          IL(M) = I
+(  168)          IU(M) = L
+(  169)          I = K
+(  170)          M = M+1
+(  171)       ELSE
+(  172)          IL(M) = K
+(  173)          IU(M) = J
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 12
+
+(  174)          J = L
+(  175)          M = M+1
+(  176)       ENDIF
+(  177)       GO TO 70
+(  178) C
+(  179) C     BEGIN AGAIN ON ANOTHER PORTION OF THE UNSORTED ARRAY
+(  180) C
+(  181)    60 M = M-1
+(  182)       IF (M .EQ. 0) GO TO 190
+(  183)       I = IL(M)
+(  184)       J = IU(M)
+(  185) C
+(  186)    70 IF (J-I .GE. 1) GO TO 30
+(  187)       IF (I .EQ. 1) GO TO 20
+(  188)       I = I-1
+(  189) C
+(  190)    80 I = I+1
+(  191)       IF (I .EQ. J) GO TO 60
+(  192)       T = DX(I+1)
+(  193)       IF (DX(I) .LE. T) GO TO 80
+(  194)       K = I
+(  195) C
+(  196)    90 DX(K+1) = DX(K)
+(  197)       K = K-1
+(  198)       IF (T .LT. DX(K)) GO TO 90
+(  199)       DX(K+1) = T
+(  200)       GO TO 80
+(  201) C
+(  202) C     SORT DX AND CARRY DY ALONG
+(  203) C
+(  204)   100 M = 1
+(  205)       I = 1
+(  206)       J = NN
+(  207)       R = 0.375D0
+(  208) C
+(  209)   110 IF (I .EQ. J) GO TO 150
+(  210)       IF (R .LE. 0.5898437D0) THEN
+(  211)          R = R+3.90625D-2
+(  212)       ELSE
+(  213)          R = R-0.21875D0
+(  214)       ENDIF
+(  215) C
+(  216)   120 K = I
+(  217) C
+(  218) C     SELECT A CENTRAL ELEMENT OF THE ARRAY AND SAVE IT IN LOCATION T
+(  219) C
+(  220)       IJ = I + INT((J-I)*R)
+(  221)       T = DX(IJ)
+(  222)       TY = DY(IJ)
+(  223) C
+(  224) C     IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  225) C
+(  226)       IF (DX(I) .GT. T) THEN
+(  227)          DX(IJ) = DX(I)
+(  228)          DX(I) = T
+(  229)          T = DX(IJ)
+(  230)          DY(IJ) = DY(I)
+(  231)          DY(I) = TY
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 13
+
+(  232)          TY = DY(IJ)
+(  233)       ENDIF
+(  234)       L = J
+(  235) C
+(  236) C     IF LAST ELEMENT OF ARRAY IS LESS THAN T, INTERCHANGE WITH T
+(  237) C
+(  238)       IF (DX(J) .LT. T) THEN
+(  239)          DX(IJ) = DX(J)
+(  240)          DX(J) = T
+(  241)          T = DX(IJ)
+(  242)          DY(IJ) = DY(J)
+(  243)          DY(J) = TY
+(  244)          TY = DY(IJ)
+(  245) C
+(  246) C        IF FIRST ELEMENT OF ARRAY IS GREATER THAN T, INTERCHANGE WITH T
+(  247) C
+(  248)          IF (DX(I) .GT. T) THEN
+(  249)             DX(IJ) = DX(I)
+(  250)             DX(I) = T
+(  251)             T = DX(IJ)
+(  252)             DY(IJ) = DY(I)
+(  253)             DY(I) = TY
+(  254)             TY = DY(IJ)
+(  255)          ENDIF
+(  256)       ENDIF
+(  257) C
+(  258) C     FIND AN ELEMENT IN THE SECOND HALF OF THE ARRAY WHICH IS SMALLER
+(  259) C     THAN T
+(  260) C
+(  261)   130 L = L-1
+(  262)       IF (DX(L) .GT. T) GO TO 130
+(  263) C
+(  264) C     FIND AN ELEMENT IN THE FIRST HALF OF THE ARRAY WHICH IS GREATER
+(  265) C     THAN T
+(  266) C
+(  267)   140 K = K+1
+(  268)       IF (DX(K) .LT. T) GO TO 140
+(  269) C
+(  270) C     INTERCHANGE THESE ELEMENTS
+(  271) C
+(  272)       IF (K .LE. L) THEN
+(  273)          TT = DX(L)
+(  274)          DX(L) = DX(K)
+(  275)          DX(K) = TT
+(  276)          TTY = DY(L)
+(  277)          DY(L) = DY(K)
+(  278)          DY(K) = TTY
+(  279)          GO TO 130
+(  280)       ENDIF
+(  281) C
+(  282) C     SAVE UPPER AND LOWER SUBSCRIPTS OF THE ARRAY YET TO BE SORTED
+(  283) C
+(  284)       IF (L-I .GT. J-K) THEN
+(  285)          IL(M) = I
+(  286)          IU(M) = L
+(  287)          I = K
+(  288)          M = M+1
+(  289)       ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:39      page 14
+
+(  290)          IL(M) = K
+(  291)          IU(M) = J
+(  292)          J = L
+(  293)          M = M+1
+(  294)       ENDIF
+(  295)       GO TO 160
+(  296) C
+(  297) C     BEGIN AGAIN ON ANOTHER PORTION OF THE UNSORTED ARRAY
+(  298) C
+(  299)   150 M = M-1
+(  300)       IF (M .EQ. 0) GO TO 190
+(  301)       I = IL(M)
+(  302)       J = IU(M)
+(  303) C
+(  304)   160 IF (J-I .GE. 1) GO TO 120
+(  305)       IF (I .EQ. 1) GO TO 110
+(  306)       I = I-1
+(  307) C
+(  308)   170 I = I+1
+(  309)       IF (I .EQ. J) GO TO 150
+(  310)       T = DX(I+1)
+(  311)       TY = DY(I+1)
+(  312)       IF (DX(I) .LE. T) GO TO 170
+(  313)       K = I
+(  314) C
+(  315)   180 DX(K+1) = DX(K)
+(  316)       DY(K+1) = DY(K)
+(  317)       K = K-1
+(  318)       IF (T .LT. DX(K)) GO TO 180
+(  319)       DX(K+1) = T
+(  320)       DY(K+1) = TY
+(  321)       GO TO 170
+(  322) C
+(  323) C     CLEAN UP
+(  324) C
+(  325)   190 IF (KFLAG .LE. -1) THEN
+(  326)          DO 200 I=1,NN
+(  327)             DX(I) = -DX(I)
+(  328)   200    CONTINUE
+(  329)       ENDIF
+(  330)       RETURN
+(  331)       END SUBROUTINE SSORT

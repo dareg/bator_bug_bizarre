@@ -1,0 +1,260 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:41      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:41      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: blackbox.F90
+
+(    1)  SUBROUTINE blackbox( &
+(    2) &     KOUT, KATEGORY, KPRINT, &
+(    3) &     KTEST_MDI, KFILL_FBVECTOR, &
+(    4) &     KCMBLI, ZCMCCC, &
+(    5) &     KFEEDBACK, KFEEDBACK_SIZE, &
+(    6) &     ZDATA, KDATA)
+(    7) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(    8) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(    9) IMPLICIT NONE
+(   10) INTEGER(KIND=JPIM), INTENT(IN)  :: KOUT, KATEGORY, KPRINT, KTEST_MDI, KFILL_FBVECTOR
+(   11) INTEGER(KIND=JPIM), INTENT(OUT) :: KCMBLI
+(   12) REAL(KIND=JPRB),    INTENT(OUT) :: ZCMCCC
+(   13) INTEGER(KIND=JPIM), INTENT(IN)  :: KFEEDBACK_SIZE, KDATA
+(   14) INTEGER(KIND=JPIM), INTENT(OUT) :: KFEEDBACK(0:KFEEDBACK_SIZE)
+(   15) REAL(KIND=JPRB), INTENT(IN)     :: ZDATA(KDATA)
+(   16) ! === END OF INTERFACE BLOCK ===
+(   17) 
+(   18) !--   NAME_INDEX-definition
+(   19) #include "yomblackbox.h"
+(   20) 
+(   21) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   22) 
+(   23) !     
+(   24) !     Call the C-interface layer of the BLACKLIST condition stuff
+(   25) !
+(   26) 
+(   27) IF (LHOOK) CALL DR_HOOK('BLACKBOX', 0, ZHOOK_HANDLE)
+(   28) 
+(   29)  IF (KFILL_FBVECTOR > 0) KFEEDBACK(:) = 0
+(   30)  CALL blacklist( &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:41      page 3
+
+(   31) &     KATEGORY, KPRINT, &
+(   32) &     KTEST_MDI, KFILL_FBVECTOR, &
+(   33) &     KCMBLI, ZCMCCC, &
+(   34) &     KFEEDBACK(0), 1+KFEEDBACK_SIZE, &
+(   35) &     NAME_INDEX(0), NAME_INDEX_LEN, &
+(   36) &     ZDATA(1), KDATA)
+(   37) 
+(   38) IF (LHOOK) CALL DR_HOOK('BLACKBOX', 1, ZHOOK_HANDLE)
+(   39) 
+(   40) END SUBROUTINE blackbox
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:41      page 4
+
+(    1) # 1 "blackbox.F90"
+(    1)  SUBROUTINE blackbox( &
+(    2) &     KOUT, KATEGORY, KPRINT, &
+(    3) &     KTEST_MDI, KFILL_FBVECTOR, &
+(    4) &     KCMBLI, ZCMCCC, &
+(    5) &     KFEEDBACK, KFEEDBACK_SIZE, &
+(    6) &     ZDATA, KDATA)
+(    7) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(    8) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(    9) IMPLICIT NONE
+(   10) INTEGER(KIND=JPIM), INTENT(IN)  :: KOUT, KATEGORY, KPRINT, KTEST_MDI, KFILL_FBVECTOR
+(   11) INTEGER(KIND=JPIM), INTENT(OUT) :: KCMBLI
+(   12) REAL(KIND=JPRB),    INTENT(OUT) :: ZCMCCC
+(   13) INTEGER(KIND=JPIM), INTENT(IN)  :: KFEEDBACK_SIZE, KDATA
+(   14) INTEGER(KIND=JPIM), INTENT(OUT) :: KFEEDBACK(0:KFEEDBACK_SIZE)
+(   15) REAL(KIND=JPRB), INTENT(IN)     :: ZDATA(KDATA)
+(   16) ! === END OF INTERFACE BLOCK ===
+(   17) # 18 "blackbox.F90"
+(   18) !--   NAME_INDEX-definition
+(   19) # 19 "blackbox.F90"
+(   19) # 1 ".D[57]/yomblackbox.h"
+(    1) !
+(    2) !**   Cray PVP note: The following variables are set to COMMON
+(    3) !                    instead of TASK COMMON, therefore if used
+(    4) !                    from a macrotasked program, the COMMON-variables
+(    5) !                    *MUST BE* initialized BEFORE branching off
+(    6) !                    to the parallel processing.
+(    7) !                    
+(    8) !
+(    9)       INTEGER(KIND=JPIM), POINTER :: NAME_INDEX(:)
+(   10)       INTEGER(KIND=JPIM) NAME_INDEX_LEN
+(   11) # 12 ".D[57]/yomblackbox.h"
+(   12)       COMMON /YOMBLACKBOX_LEN / NAME_INDEX_LEN
+(   13)       COMMON /YOMBLACKBOX_DATA/ NAME_INDEX
+(   14) # 20 "blackbox.F90"
+(   20) # 21 "blackbox.F90"
+(   21) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   22) # 23 "blackbox.F90"
+(   23) !     
+(   24) !     Call the C-interface layer of the BLACKLIST condition stuff
+(   25) !
+(   26) # 27 "blackbox.F90"
+(   27) IF (LHOOK) CALL DR_HOOK('BLACKBOX', 0, ZHOOK_HANDLE)
+(   28) # 29 "blackbox.F90"
+(   29)  IF (KFILL_FBVECTOR > 0) KFEEDBACK(:) = 0
+(   30)  CALL blacklist( &
+(   31) &     KATEGORY, KPRINT, &
+(   32) &     KTEST_MDI, KFILL_FBVECTOR, &
+(   33) &     KCMBLI, ZCMCCC, &
+(   34) &     KFEEDBACK(0), 1+KFEEDBACK_SIZE, &
+(   35) &     NAME_INDEX(0), NAME_INDEX_LEN, &
+(   36) &     ZDATA(1), KDATA)
+(   37) # 38 "blackbox.F90"
+(   38) IF (LHOOK) CALL DR_HOOK('BLACKBOX', 1, ZHOOK_HANDLE)
+(   39) # 40 "blackbox.F90"
+(   40) END SUBROUTINE blackbox

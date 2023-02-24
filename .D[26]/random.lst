@@ -1,0 +1,280 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:53      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:53      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: random.F90
+
+(    1) ! Simple random number generator in the range [0,1]
+(    2) ! ranset_(iseed) initializes with iseed
+(    3) ! ranf_() returns next random numer
+(    4) 
+(    5) 
+(    6) !************* LICENSE START *****************
+(    7) !
+(    8) ! Copyright 2015 Marat Khairoutdinov 
+(    9) ! School of Marine & Atmospheric Sciences
+(   10) ! Stony Brook University
+(   11) ! This software is distributed under the terms of
+(   12) ! the Apache License version 2.0.
+(   13) !
+(   14) !************** LICENSE END ******************
+(   15) 
+(   16)       real (RR) function ranf_()
+(   17)        use vars
+(   18)        use real_size
+(   19)        implicit none
+(   20)        real (RR) rand_
+(   21) !      ranf_ = rand_(0)
+(   22)        call random_number(ranf_)
+(   23)        return
+(   24)       end
+(   25) 
+(   26) 
+(   27)       subroutine ranset_(iseed)
+(   28)        use vars
+(   29)        use real_size
+(   30)       implicit none
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:53      page 3
+
+(   31)       real (RR) rand_,ranf_
+(   32)       integer iseed, i, m, nsteps
+(   33) !     i = rand_(1) ! reinitialize (reset) 
+(   34)       nsteps = iseed*10000
+(   35)       do i = 1,nsteps
+(   36)       m = ranf_()
+(   37) !     m = rand_(0)
+(   38)       end do
+(   39)       return
+(   40)       end
+(   41) 
+(   42) 
+(   43) 
+(   44) 
+(   45) 
+(   46)       real (RR) function rand_(iseed)
+(   47)        use vars
+(   48)        use real_size
+(   49)       implicit none
+(   50)       integer iseed
+(   51)       integer ia1, ia0, ia1ma0, ic, ix1, ix0, iy0, iy1
+(   52)       save ia1, ia0, ia1ma0, ic, ix1, ix0
+(   53)       data ix1, ix0, ia1, ia0, ia1ma0, ic/0,0,1536,1029,507,1731/
+(   54)       if (iseed.ne.0) then   
+(   55)         ia1 = 1536
+(   56)         ia0 = 1029
+(   57)         ia1ma0 = 507
+(   58)         ic = 1731
+(   59)         ix1 = 0
+(   60)         ix0 = 0
+(   61)         rand_ = 0
+(   62)       else
+(   63)        iy0 = ia0*ix0
+(   64)        iy1 = ia1*ix1 + ia1ma0*(ix0-ix1) + iy0
+(   65)        iy0 = iy0 + ic
+(   66)        ix0 = mod (iy0, 2048)
+(   67)        iy1 = iy1 + (iy0-ix0)/2048
+(   68)        ix1 = mod (iy1, 2048)
+(   69)        rand_ = ix1*2048 + ix0
+(   70)        rand_ = rand_ / 4194304.
+(   71)       end if
+(   72)       return
+(   73)       end
+(   74) 
+(   75) 
+(   76) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:53      page 4
+
+(    1) # 1 "random.F90"
+(    1) ! Simple random number generator in the range [0,1]
+(    2) ! ranset_(iseed) initializes with iseed
+(    3) ! ranf_() returns next random numer
+(    4) # 6 "random.F90"
+(    6) !************* LICENSE START *****************
+(    7) !
+(    8) ! Copyright 2015 Marat Khairoutdinov 
+(    9) ! School of Marine & Atmospheric Sciences
+(   10) ! Stony Brook University
+(   11) ! This software is distributed under the terms of
+(   12) ! the Apache License version 2.0.
+(   13) !
+(   14) !************** LICENSE END ******************
+(   15) # 16 "random.F90"
+(   16)       real (RR) function ranf_()
+(   17)        use vars
+(   18)        use real_size
+(   19)        implicit none
+(   20)        real (RR) rand_
+(   21) !      ranf_ = rand_(0)
+(   22)        call random_number(ranf_)
+(   23)        return
+(   24)       end
+(   25) # 27 "random.F90"
+(   27)       subroutine ranset_(iseed)
+(   28)        use vars
+(   29)        use real_size
+(   30)       implicit none
+(   31)       real (RR) rand_,ranf_
+(   32)       integer iseed, i, m, nsteps
+(   33) !     i = rand_(1) ! reinitialize (reset) 
+(   34)       nsteps = iseed*10000
+(   35)       do i = 1,nsteps
+(   36)       m = ranf_()
+(   37) !     m = rand_(0)
+(   38)       end do
+(   39)       return
+(   40)       end
+(   41) # 46 "random.F90"
+(   46)       real (RR) function rand_(iseed)
+(   47)        use vars
+(   48)        use real_size
+(   49)       implicit none
+(   50)       integer iseed
+(   51)       integer ia1, ia0, ia1ma0, ic, ix1, ix0, iy0, iy1
+(   52)       save ia1, ia0, ia1ma0, ic, ix1, ix0
+(   53)       data ix1, ix0, ia1, ia0, ia1ma0, ic/0,0,1536,1029,507,1731/
+(   54)       if (iseed.ne.0) then   
+(   55)         ia1 = 1536
+(   56)         ia0 = 1029
+(   57)         ia1ma0 = 507
+(   58)         ic = 1731
+(   59)         ix1 = 0
+(   60)         ix0 = 0
+(   61)         rand_ = 0
+(   62)       else
+(   63)        iy0 = ia0*ix0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:53      page 5
+
+(   64)        iy1 = ia1*ix1 + ia1ma0*(ix0-ix1) + iy0
+(   65)        iy0 = iy0 + ic
+(   66)        ix0 = mod (iy0, 2048)
+(   67)        iy1 = iy1 + (iy0-ix0)/2048
+(   68)        ix1 = mod (iy1, 2048)
+(   69)        rand_ = ix1*2048 + ix0
+(   70)        rand_ = rand_ / 4194304.
+(   71)       end if
+(   72)       return
+(   73)       end

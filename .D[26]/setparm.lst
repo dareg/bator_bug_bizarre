@@ -1,0 +1,684 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: setparm.F90
+
+(    1) 
+(    2) subroutine setparm
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) !       initialize parameters:
+(   15) 
+(   16) use vars
+(   17) !use micro_params
+(   18) use params
+(   19) use microphysics, only: micro_setparm
+(   20) implicit none
+(   21) 
+(   22) integer icondavg, ierr
+(   23) 
+(   24) !NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
+(   25) !                dolongwave, doshortwave, dosgs, &
+(   26) !                docoriolis, dosurface, dolargescale, doradforcing, &
+(   27) !                nadams,fluxt0,fluxq0,tau0,tabs_s,z0,tauls,nelapse, &
+(   28) !                dt, dx, dy, fcor, ug, vg, nstop, caseid, &
+(   29) !                nstat, nstatfrq, nprint, nrestart, doradsimple, &
+(   30) !                nsave3D, nsave3Dstart, nsave3Dend, dosfcforcing, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 3
+
+(   31) !                donudging_uv, donudging_tq, dosmagor, doscalar,  &
+(   32) !                timelargescale, longitude0, latitude0, day0, nrad, &
+(   33) !                CEM,LES,OCEAN,LAND,SFC_FLX_FXD,SFC_TAU_FXD, soil_wetness, &
+(   34) !                doensemble, nensemble, doxy, dowallx, dowally, &
+(   35) !                nsave2D, nsave2Dstart, nsave2Dend, qnsave3D, & 
+(   36) !                docolumn, save2Dbin, save2Davg, save3Dbin, &
+(   37) !                save2Dsep, save3Dsep, dogzip2D, dogzip3D, restart_sep, &
+(   38) !                doseasons, doperpetual, doradhomo, dosfchomo, doisccp, &
+(   39) !                dodynamicocean, ocean_type, &
+(   40) !                dosolarconstant, solar_constant, zenith_angle, rundatadir, &
+(   41) !                dotracers, output_sep, perturb_type, &
+(   42) !                doSAMconditionals, dosatupdnconditionals, &
+(   43) !                doscamiopdata, iopfile, dozero_out_day0, &
+(   44) !                nstatmom, nstatmomstart, nstatmomend, savemomsep, savemombin, &
+(   45) !                nmovie, nmoviestart, nmovieend, nrestart_skip, &
+(   46) !                bubble_x0,bubble_y0,bubble_z0,bubble_radius_hor, &
+(   47) !                bubble_radius_ver,bubble_dtemp,bubble_dq, dosmoke
+(   48) 
+(   49) !----------------------------
+(   50) !  Set defaults:
+(   51) 
+(   52) dodamping       = .false.
+(   53) doupperbound    = .false.
+(   54) docloud         = .false.
+(   55) doprecip        = .false.
+(   56) dolongwave      = .false.
+(   57) doshortwave     = .false.
+(   58) doradsimple     = .false.
+(   59) dosgs           = .false.
+(   60) dosmagor        = .false.
+(   61) doscalar        = .false.
+(   62) dosubsidence    = .false.
+(   63) docoriolis      = .false.
+(   64) dosurface       = .false.
+(   65) dolargescale    = .false.
+(   66) doradforcing    = .false.
+(   67) dosfcforcing    = .false.
+(   68) donudging_uv    = .false.
+(   69) donudging_tq    = .false.
+(   70) doensemble      = .false.
+(   71) doxy            = .false.
+(   72) dowallx         = .false.
+(   73) dowally         = .false.
+(   74) docup           = .false.
+(   75) docolumn        = .false.
+(   76) doseasons       = .false.
+(   77) doperpetual     = .false.
+(   78) doradhomo       = .false.
+(   79) dosfchomo       = .false.
+(   80) doisccp         = .false.
+(   81) domodis         = .false.
+(   82) domisr          = .false.
+(   83) dodynamicocean  = .false.
+(   84) dosolarconstant = .false.
+(   85) dotracers       = .false.
+(   86) dosmoke         = .false.
+(   87) CEM             = .false.
+(   88) LES             = .false.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 4
+
+(   89) OCEAN           = .false.
+(   90) LAND            = .false.
+(   91) SFC_FLX_FXD     = .false.
+(   92) SFC_TAU_FXD     = .false.
+(   93) 
+(   94) rank            = 0
+(   95) dompi           = .false.
+(   96) nadams          = 3
+(   97) dt              = 0
+(   98) dx              = 0
+(   99) dy              = 0
+(  100) longitude0      = 0.
+(  101) latitude0       = 0.
+(  102) fcor            = -999.
+(  103) day0            = 0.
+(  104) nrad            = 1
+(  105) ug              = 0.
+(  106) vg              = 0.
+(  107) fluxt0          = 0.
+(  108) fluxq0          = 0.
+(  109) tau0            = 0.
+(  110) taux0           = 0.
+(  111) tauy0           = 0.
+(  112) z0              = 0.035
+(  113) soil_wetness    = 1.
+(  114) timelargescale  = 0.
+(  115) tauls           = 7200.
+(  116) tabs_s          = 0.
+(  117) nstop           = 0
+(  118) nelapse         = 999999999
+(  119) caseid          = 'les00000'
+(  120) nstat           = 1000
+(  121) nstatfrq        = 50
+(  122) nprint          = 1000
+(  123) nrestart        = 0
+(  124) restart_sep     = .false.
+(  125) nrestart_skip   = 0
+(  126) output_sep      = .false.
+(  127) save3Dbin       = .false.
+(  128) save2Dsep       = .false.
+(  129) save3Dsep       = .false.
+(  130) nsave3D         = 1
+(  131) nsave3Dstart    = 99999999
+(  132) nsave3Dend      = 999999999
+(  133) dogzip2D        = .false.
+(  134) dogzip3D        = .false.
+(  135) save2Dbin       = .false.
+(  136) save2Davg       = .false.
+(  137) nsave2D         = 1
+(  138) nsave2Dstart    = 99999999
+(  139) nsave2Dend      = 999999999
+(  140) savemombin      = .false.
+(  141) savemomsep      = .false.
+(  142) nstatmom        = 1
+(  143) nstatmomstart   = 99999999
+(  144) nstatmomend     = 999999999
+(  145) nmovie          = 1
+(  146) nmoviestart     = 99999999
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 5
+
+(  147) nmovieend       = 999999999
+(  148) nensemble       = 0
+(  149) qnsave3D        = 0.
+(  150) ocean_type      = 0 
+(  151) rundatadir      = './RUNDATA'
+(  152) perturb_type    = 0
+(  153) bubble_x0       = 0.
+(  154) bubble_y0       = 0.
+(  155) bubble_z0       = 0.
+(  156) bubble_radius_hor=0. 
+(  157) bubble_radius_ver=0. 
+(  158) bubble_dtemp     =0. 
+(  159) bubble_dq        =0.
+(  160) 
+(  161) 
+(  162)         ! Specify solar constant and zenith angle for perpetual insolation.
+(  163)         ! Note that if doperpetual=.true. and dosolarconstant=.false.
+(  164)         ! the insolation will be set to the daily-averaged value on day0.
+(  165) 
+(  166)         solar_constant = 685. ! Values from Tompkins & Craig, J. Climate (1998)
+(  167)         zenith_angle = 51.7
+(  168) 
+(  169)         !bloss: add option for core updraft, core downdraft conditional statistics
+(  170)         doSAMconditionals = .true.
+(  171) 
+(  172)         !bloss: add option for additional conditional averages:
+(  173)         !        cloudy updrafts, cloudy downdrafts and cloud-free.
+(  174)         dosatupdnconditionals = .false.
+(  175)         ! Allow sounding, forcing and surface data to be read in
+(  176)         ! from a SCAM IOP input file in netcdf format.
+(  177)         doscamiopdata = .false.
+(  178)         iopfile = trim(case) // '.nc' ! default name: CASENAME.nc
+(  179)         dozero_out_day0 = .false.
+(  180) 
+(  181) !----------------------------------
+(  182) !  Read namelist variables from the standard input:
+(  183) !------------
+(  184) 
+(  185) !open(55,file='./'//trim(case)//'/prm', status='old',form='formatted') 
+(  186) !read (55,PARAMETERS)
+(  187) !close(55)
+(  188) 
+(  189) docloud   = .true.
+(  190) doprecip        = .true.
+(  191) dosgs= .true.
+(  192) dosmagor= .true.
+(  193) dosurface= .true.
+(  194) dodamping = .true.
+(  195) dt= CRM_DT
+(  196) dx= CRM_DX
+(  197) dy= CRM_DY
+(  198) !------------------------------------
+(  199) !  Set parameters 
+(  200) 
+(  201) 
+(  202)         ! Allow only special cases for separate output:
+(  203) 
+(  204)         output_sep = output_sep.and.RUN3D
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 6
+
+(  205)         if(output_sep)  save2Dsep = .true.
+(  206) 
+(  207) if(RUN2D) dy=dx
+(  208) 
+(  209) if(RUN2D.and.YES3D.eq.1) then
+(  210)   print*,'Error: 2D run and YES3D is set to 1. Exitting...'
+(  211)   call task_abort()
+(  212) endif
+(  213) if(RUN3D.and.YES3D.eq.0) then
+(  214)   print*,'Error: 3D run and YES3D is set to 0. Exitting...'
+(  215)   call task_abort()
+(  216) endif
+(  217) 
+(  218) pi = acos(-1.)
+(  219) if(fcor.eq.-999.) fcor= 4*pi/86400.*sin(latitude0*pi/180.)
+(  220) fcorz = sqrt(4.*(2*pi/(3600.*24.))**2-fcor**2)  
+(  221) coszrs = 0.637 ! default mean solar zenith angle
+(  222) 
+(  223) if(ny.eq.1) dy=dx
+(  224) 
+(  225) na = 1
+(  226) nb = 2
+(  227) nc = 3
+(  228) nstep = 0
+(  229)         time = 0.
+(  230) dtn = dt
+(  231) 
+(  232) notopened2D = .true.
+(  233) notopened3D = .true.
+(  234) 
+(  235)         call micro_setparm() ! read in microphysical options from prm file.
+(  236) 
+(  237)         if(dosmoke) then
+(  238)            epsv=0.
+(  239)         else    
+(  240)            epsv=0.61
+(  241)         endif   
+(  242) 
+(  243)         if(navgmom_x.lt.0.or.navgmom_y.lt.0) then  
+(  244)             nstatmom        = 1
+(  245)             nstatmomstart    = 99999999
+(  246)             nstatmomend      = 999999999
+(  247)         end if
+(  248) 
+(  249)         masterproc = rank.eq.0
+(  250)           
+(  251) end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 7
+
+(    1) # 1 "setparm.F90"
+(    1) # 2 "setparm.F90"
+(    2) subroutine setparm
+(    3) # 4 "setparm.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "setparm.F90"
+(   14) !       initialize parameters:
+(   15) # 16 "setparm.F90"
+(   16) use vars
+(   17) !use micro_params
+(   18) use params
+(   19) use microphysics, only: micro_setparm
+(   20) implicit none
+(   21) # 22 "setparm.F90"
+(   22) integer icondavg, ierr
+(   23) # 24 "setparm.F90"
+(   24) !NAMELIST /PARAMETERS/ dodamping, doupperbound, docloud, doprecip, &
+(   25) !                dolongwave, doshortwave, dosgs, &
+(   26) !                docoriolis, dosurface, dolargescale, doradforcing, &
+(   27) !                nadams,fluxt0,fluxq0,tau0,tabs_s,z0,tauls,nelapse, &
+(   28) !                dt, dx, dy, fcor, ug, vg, nstop, caseid, &
+(   29) !                nstat, nstatfrq, nprint, nrestart, doradsimple, &
+(   30) !                nsave3D, nsave3Dstart, nsave3Dend, dosfcforcing, &
+(   31) !                donudging_uv, donudging_tq, dosmagor, doscalar,  &
+(   32) !                timelargescale, longitude0, latitude0, day0, nrad, &
+(   33) !                CEM,LES,OCEAN,LAND,SFC_FLX_FXD,SFC_TAU_FXD, soil_wetness, &
+(   34) !                doensemble, nensemble, doxy, dowallx, dowally, &
+(   35) !                nsave2D, nsave2Dstart, nsave2Dend, qnsave3D, & 
+(   36) !                docolumn, save2Dbin, save2Davg, save3Dbin, &
+(   37) !                save2Dsep, save3Dsep, dogzip2D, dogzip3D, restart_sep, &
+(   38) !                doseasons, doperpetual, doradhomo, dosfchomo, doisccp, &
+(   39) !                dodynamicocean, ocean_type, &
+(   40) !                dosolarconstant, solar_constant, zenith_angle, rundatadir, &
+(   41) !                dotracers, output_sep, perturb_type, &
+(   42) !                doSAMconditionals, dosatupdnconditionals, &
+(   43) !                doscamiopdata, iopfile, dozero_out_day0, &
+(   44) !                nstatmom, nstatmomstart, nstatmomend, savemomsep, savemombin, &
+(   45) !                nmovie, nmoviestart, nmovieend, nrestart_skip, &
+(   46) !                bubble_x0,bubble_y0,bubble_z0,bubble_radius_hor, &
+(   47) !                bubble_radius_ver,bubble_dtemp,bubble_dq, dosmoke
+(   48) # 49 "setparm.F90"
+(   49) !----------------------------
+(   50) !  Set defaults:
+(   51) # 52 "setparm.F90"
+(   52) dodamping       = .false.
+(   53) doupperbound    = .false.
+(   54) docloud         = .false.
+(   55) doprecip        = .false.
+(   56) dolongwave      = .false.
+(   57) doshortwave     = .false.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 8
+
+(   58) doradsimple     = .false.
+(   59) dosgs           = .false.
+(   60) dosmagor        = .false.
+(   61) doscalar        = .false.
+(   62) dosubsidence    = .false.
+(   63) docoriolis      = .false.
+(   64) dosurface       = .false.
+(   65) dolargescale    = .false.
+(   66) doradforcing    = .false.
+(   67) dosfcforcing    = .false.
+(   68) donudging_uv    = .false.
+(   69) donudging_tq    = .false.
+(   70) doensemble      = .false.
+(   71) doxy            = .false.
+(   72) dowallx         = .false.
+(   73) dowally         = .false.
+(   74) docup           = .false.
+(   75) docolumn        = .false.
+(   76) doseasons       = .false.
+(   77) doperpetual     = .false.
+(   78) doradhomo       = .false.
+(   79) dosfchomo       = .false.
+(   80) doisccp         = .false.
+(   81) domodis         = .false.
+(   82) domisr          = .false.
+(   83) dodynamicocean  = .false.
+(   84) dosolarconstant = .false.
+(   85) dotracers       = .false.
+(   86) dosmoke         = .false.
+(   87) CEM             = .false.
+(   88) LES             = .false.
+(   89) OCEAN           = .false.
+(   90) LAND            = .false.
+(   91) SFC_FLX_FXD     = .false.
+(   92) SFC_TAU_FXD     = .false.
+(   93) # 94 "setparm.F90"
+(   94) rank            = 0
+(   95) dompi           = .false.
+(   96) nadams          = 3
+(   97) dt              = 0
+(   98) dx              = 0
+(   99) dy              = 0
+(  100) longitude0      = 0.
+(  101) latitude0       = 0.
+(  102) fcor            = -999.
+(  103) day0            = 0.
+(  104) nrad            = 1
+(  105) ug              = 0.
+(  106) vg              = 0.
+(  107) fluxt0          = 0.
+(  108) fluxq0          = 0.
+(  109) tau0            = 0.
+(  110) taux0           = 0.
+(  111) tauy0           = 0.
+(  112) z0              = 0.035
+(  113) soil_wetness    = 1.
+(  114) timelargescale  = 0.
+(  115) tauls           = 7200.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 9
+
+(  116) tabs_s          = 0.
+(  117) nstop           = 0
+(  118) nelapse         = 999999999
+(  119) caseid          = 'les00000'
+(  120) nstat           = 1000
+(  121) nstatfrq        = 50
+(  122) nprint          = 1000
+(  123) nrestart        = 0
+(  124) restart_sep     = .false.
+(  125) nrestart_skip   = 0
+(  126) output_sep      = .false.
+(  127) save3Dbin       = .false.
+(  128) save2Dsep       = .false.
+(  129) save3Dsep       = .false.
+(  130) nsave3D         = 1
+(  131) nsave3Dstart    = 99999999
+(  132) nsave3Dend      = 999999999
+(  133) dogzip2D        = .false.
+(  134) dogzip3D        = .false.
+(  135) save2Dbin       = .false.
+(  136) save2Davg       = .false.
+(  137) nsave2D         = 1
+(  138) nsave2Dstart    = 99999999
+(  139) nsave2Dend      = 999999999
+(  140) savemombin      = .false.
+(  141) savemomsep      = .false.
+(  142) nstatmom        = 1
+(  143) nstatmomstart   = 99999999
+(  144) nstatmomend     = 999999999
+(  145) nmovie          = 1
+(  146) nmoviestart     = 99999999
+(  147) nmovieend       = 999999999
+(  148) nensemble       = 0
+(  149) qnsave3D        = 0.
+(  150) ocean_type      = 0 
+(  151) rundatadir      = './RUNDATA'
+(  152) perturb_type    = 0
+(  153) bubble_x0       = 0.
+(  154) bubble_y0       = 0.
+(  155) bubble_z0       = 0.
+(  156) bubble_radius_hor=0. 
+(  157) bubble_radius_ver=0. 
+(  158) bubble_dtemp     =0. 
+(  159) bubble_dq        =0.
+(  160) # 162 "setparm.F90"
+(  162)         ! Specify solar constant and zenith angle for perpetual insolation.
+(  163)         ! Note that if doperpetual=.true. and dosolarconstant=.false.
+(  164)         ! the insolation will be set to the daily-averaged value on day0.
+(  165) # 166 "setparm.F90"
+(  166)         solar_constant = 685. ! Values from Tompkins & Craig, J. Climate (1998)
+(  167)         zenith_angle = 51.7
+(  168) # 169 "setparm.F90"
+(  169)         !bloss: add option for core updraft, core downdraft conditional statistics
+(  170)         doSAMconditionals = .true.
+(  171) # 172 "setparm.F90"
+(  172)         !bloss: add option for additional conditional averages:
+(  173)         !        cloudy updrafts, cloudy downdrafts and cloud-free.
+(  174)         dosatupdnconditionals = .false.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 10
+
+(  175)         ! Allow sounding, forcing and surface data to be read in
+(  176)         ! from a SCAM IOP input file in netcdf format.
+(  177)         doscamiopdata = .false.
+(  178)         iopfile = trim(case) // '.nc' ! default name: CASENAME.nc
+(  179)         dozero_out_day0 = .false.
+(  180) # 181 "setparm.F90"
+(  181) !----------------------------------
+(  182) !  Read namelist variables from the standard input:
+(  183) !------------
+(  184) # 185 "setparm.F90"
+(  185) !open(55,file='./'//trim(case)//'/prm', status='old',form='formatted') 
+(  186) !read (55,PARAMETERS)
+(  187) !close(55)
+(  188) # 189 "setparm.F90"
+(  189) docloud   = .true.
+(  190) doprecip        = .true.
+(  191) dosgs= .true.
+(  192) dosmagor= .true.
+(  193) dosurface= .true.
+(  194) dodamping = .true.
+(  195) dt= CRM_DT
+(  196) dx= CRM_DX
+(  197) dy= CRM_DY
+(  198) !------------------------------------
+(  199) !  Set parameters 
+(  200) # 202 "setparm.F90"
+(  202)         ! Allow only special cases for separate output:
+(  203) # 204 "setparm.F90"
+(  204)         output_sep = output_sep.and.RUN3D
+(  205)         if(output_sep)  save2Dsep = .true.
+(  206) # 207 "setparm.F90"
+(  207) if(RUN2D) dy=dx
+(  208) # 209 "setparm.F90"
+(  209) if(RUN2D.and.YES3D.eq.1) then
+(  210)   print*,'Error: 2D run and YES3D is set to 1. Exitting...'
+(  211)   call task_abort()
+(  212) endif
+(  213) if(RUN3D.and.YES3D.eq.0) then
+(  214)   print*,'Error: 3D run and YES3D is set to 0. Exitting...'
+(  215)   call task_abort()
+(  216) endif
+(  217) # 218 "setparm.F90"
+(  218) pi = acos(-1.)
+(  219) if(fcor.eq.-999.) fcor= 4*pi/86400.*sin(latitude0*pi/180.)
+(  220) fcorz = sqrt(4.*(2*pi/(3600.*24.))**2-fcor**2)  
+(  221) coszrs = 0.637 ! default mean solar zenith angle
+(  222) # 223 "setparm.F90"
+(  223) if(ny.eq.1) dy=dx
+(  224) # 225 "setparm.F90"
+(  225) na = 1
+(  226) nb = 2
+(  227) nc = 3
+(  228) nstep = 0
+(  229)         time = 0.
+(  230) dtn = dt
+(  231) # 232 "setparm.F90"
+(  232) notopened2D = .true.
+(  233) notopened3D = .true.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:51      page 11
+
+(  234) # 235 "setparm.F90"
+(  235)         call micro_setparm() ! read in microphysical options from prm file.
+(  236) # 237 "setparm.F90"
+(  237)         if(dosmoke) then
+(  238)            epsv=0.
+(  239)         else    
+(  240)            epsv=0.61
+(  241)         endif   
+(  242) # 243 "setparm.F90"
+(  243)         if(navgmom_x.lt.0.or.navgmom_y.lt.0) then  
+(  244)             nstatmom        = 1
+(  245)             nstatmomstart    = 99999999
+(  246)             nstatmomend      = 999999999
+(  247)         end if
+(  248) # 249 "setparm.F90"
+(  249)         masterproc = rank.eq.0
+(  250)           
+(  251) end

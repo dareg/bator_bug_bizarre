@@ -1,0 +1,247 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:30      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:30      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Binary_reader.F90
+
+(    1) program reader
+(    2) implicit none
+(    3) real(8), allocatable :: matrix(:,:)
+(    4) integer channel
+(    5) integer nbytes, nrows, ncols, nchunks, rc
+(    6) integer j, jch, jrows, jcol, jj
+(    7) integer zero(2)
+(    8) real(8) buffer(10)
+(    9) character(len=40) fmt
+(   10) character(len=256) filename
+(   11) call getarg(1, filename)
+(   12) CALL binary_open(channel, trim(filename), 'r', rc)
+(   13) nbytes = 8 * 3
+(   14) CALL binary_get(channel, buffer, nbytes, rc)
+(   15) nrows = buffer(1)
+(   16) ncols = buffer(2)
+(   17) nchunks = buffer(3)
+(   18) write(0,*) 'nrows, ncols, nchunks=',nrows, ncols, nchunks
+(   19) write(fmt,'("(1x,",i4,"e15.7)")') ncols
+(   20) write(0,*)'fmt="'//trim(fmt)//'"'
+(   21) do j=1,nchunks
+(   22)   nbytes = 8 * 2 
+(   23)   CALL binary_get(channel, buffer, nbytes, rc)
+(   24)   jch = buffer(1)
+(   25)   jrows = buffer(2)
+(   26)   write(0,*) j,': jch, jrows=',jch, jrows
+(   27)   allocate(matrix(jrows, ncols))
+(   28)   nbytes = 8 * jrows
+(   29)   do jcol=1,ncols
+(   30)     CALL binary_get(channel, matrix(1,jcol), nbytes, rc)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:30      page 3
+
+(   31)   enddo
+(   32)   write(0,*) j,': nbytes, rc=',nbytes, rc
+(   33)   do jj=1,jrows
+(   34)     write(0,fmt=trim(fmt)) matrix(jj,1:ncols)
+(   35)   enddo
+(   36)   deallocate(matrix)
+(   37) enddo
+(   38) nbytes = 8 * 2
+(   39) CALL binary_get(channel, buffer, nbytes, rc)
+(   40) zero(1:2) = buffer(1:2)
+(   41) write(0,*) 'zero(1:2)=',zero(1:2)
+(   42) end program reader
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:30      page 4
+
+(    1) # 1 "Binary_reader.F90"
+(    1) program reader
+(    2) implicit none
+(    3) real(8), allocatable :: matrix(:,:)
+(    4) integer channel
+(    5) integer nbytes, nrows, ncols, nchunks, rc
+(    6) integer j, jch, jrows, jcol, jj
+(    7) integer zero(2)
+(    8) real(8) buffer(10)
+(    9) character(len=40) fmt
+(   10) character(len=256) filename
+(   11) call getarg(1, filename)
+(   12) CALL binary_open(channel, trim(filename), 'r', rc)
+(   13) nbytes = 8 * 3
+(   14) CALL binary_get(channel, buffer, nbytes, rc)
+(   15) nrows = buffer(1)
+(   16) ncols = buffer(2)
+(   17) nchunks = buffer(3)
+(   18) write(0,*) 'nrows, ncols, nchunks=',nrows, ncols, nchunks
+(   19) write(fmt,'("(1x,",i4,"e15.7)")') ncols
+(   20) write(0,*)'fmt="'//trim(fmt)//'"'
+(   21) do j=1,nchunks
+(   22)   nbytes = 8 * 2 
+(   23)   CALL binary_get(channel, buffer, nbytes, rc)
+(   24)   jch = buffer(1)
+(   25)   jrows = buffer(2)
+(   26)   write(0,*) j,': jch, jrows=',jch, jrows
+(   27)   allocate(matrix(jrows, ncols))
+(   28)   nbytes = 8 * jrows
+(   29)   do jcol=1,ncols
+(   30)     CALL binary_get(channel, matrix(1,jcol), nbytes, rc)
+(   31)   enddo
+(   32)   write(0,*) j,': nbytes, rc=',nbytes, rc
+(   33)   do jj=1,jrows
+(   34)     write(0,fmt=trim(fmt)) matrix(jj,1:ncols)
+(   35)   enddo
+(   36)   deallocate(matrix)
+(   37) enddo
+(   38) nbytes = 8 * 2
+(   39) CALL binary_get(channel, buffer, nbytes, rc)
+(   40) zero(1:2) = buffer(1:2)
+(   41) write(0,*) 'zero(1:2)=',zero(1:2)
+(   42) end program reader

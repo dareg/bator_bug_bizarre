@@ -1,0 +1,500 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: precip_proc.F90
+
+(    1)   
+(    2) subroutine precip_proc
+(    3) 
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) 
+(   14) use vars
+(   15) use microphysics
+(   16) use micro_params
+(   17) use params
+(   18) use real_size
+(   19) 
+(   20) implicit none
+(   21) 
+(   22) integer i,j,k
+(   23) real(RR) autor, autos, accrr, accris, accrcs, accrig, accrcg
+(   24) real(RR) dq, omn, omp, omg, qsatt
+(   25) real(RR) pows1, pows2, powg1, powg2, powr1, powr2, tmp
+(   26) real(RR) qii, qcc, qrr, qss, qgg
+(   27) 
+(   28) powr1 = (3 + b_rain) / 4.
+(   29) powr2 = (5 + b_rain) / 8.
+(   30) pows1 = (3 + b_snow) / 4.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 3
+
+(   31) pows2 = (5 + b_snow) / 8.
+(   32) powg1 = (3 + b_grau) / 4.
+(   33) powg2 = (5 + b_grau) / 8.
+(   34)       
+(   35) ! call t_startf ('precip_proc') ! commented by Phani
+(   36)      
+(   37) associate(q=>micro_field(:,:,:,1),qp=>micro_field(:,:,:,2))
+(   38) 
+(   39) do k=1,nzm
+(   40) ! qpsrc(k)=0.
+(   41) ! qpevp(k)=0.
+(   42)  do j=1,ny
+(   43)   do i=1,nx  
+(   44)   
+(   45) !-------     Autoconversion/accretion 
+(   46) 
+(   47)    if(qn(i,j,k)+qp(i,j,k).gt.0.) then
+(   48) 
+(   49) 
+(   50)          omn = max(0.,min(1.,(tabs(i,j,k)-tbgmin)*a_bg))
+(   51)          omp = max(0.,min(1.,(tabs(i,j,k)-tprmin)*a_pr))
+(   52)          omg = max(0.,min(1.,(tabs(i,j,k)-tgrmin)*a_gr))
+(   53) 
+(   54)    if(qn(i,j,k).gt.0.) then
+(   55)      
+(   56)            qcc = qn(i,j,k) * omn
+(   57)            qii = qn(i,j,k) * (1.-omn)
+(   58) 
+(   59)            if(qcc .gt. qcw0) then
+(   60)             autor = alphaelq
+(   61)            else
+(   62)             autor = 0.
+(   63)            endif 
+(   64) 
+(   65)            if(qii .gt. qci0) then
+(   66)             autos = betaelq*coefice(k)
+(   67)            else
+(   68)             autos = 0.
+(   69)            endif 
+(   70) 
+(   71)            accrr = 0.
+(   72)            if(omp.gt.0.001) then
+(   73)              qrr = qp(i,j,k) * omp
+(   74)              accrr = accrrc(k) * qrr ** powr1
+(   75)            end if
+(   76)            accrcs = 0.
+(   77)            accris = 0. 
+(   78)            if(omp.lt.0.999.and.omg.lt.0.999) then
+(   79)              qss = qp(i,j,k) * (1.-omp)*(1.-omg)
+(   80)              tmp = qss ** pows1
+(   81)              accrcs = accrsc(k) * tmp
+(   82)              accris = accrsi(k) * tmp 
+(   83)            end if
+(   84)            accrcg = 0.
+(   85)            accrig = 0. 
+(   86)            if(omp.lt.0.999.and.omg.gt.0.001) then
+(   87)              qgg = qp(i,j,k) * (1.-omp)*omg
+(   88)              tmp = qgg ** powg1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 4
+
+(   89)              accrcg = accrgc(k) * tmp
+(   90)              accrig = accrgi(k) * tmp 
+(   91)            endif
+(   92)            qcc = (qcc+dtn*autor*qcw0)/(1.+dtn*(accrr+accrcs+accrcg+autor))
+(   93)            qii = (qii+dtn*autos*qci0)/(1.+dtn*(accris+accrig+autos))
+(   94)            dq = dtn *(accrr*qcc + autor*(qcc-qcw0)+ &
+(   95)              (accris+accrig)*qii + (accrcs+accrcg)*qcc + autos*(qii-qci0))
+(   96)            dq = min(dq,qn(i,j,k))
+(   97)            qp(i,j,k) = qp(i,j,k) + dq
+(   98)            q(i,j,k) = q(i,j,k) - dq
+(   99)            qn(i,j,k) = qn(i,j,k) - dq
+(  100)            qpsrc(k) = qpsrc(k) + dq
+(  101) 
+(  102)          elseif(qp(i,j,k).gt.qp_threshold.and.qn(i,j,k).eq.0.) then
+(  103) 
+(  104)            qsatt = 0.
+(  105)            if(omn.gt.0.001) qsatt = qsatt + omn*qsatw_crm(tabs(i,j,k),pres(k))
+(  106)            if(omn.lt.0.999) qsatt = qsatt + (1.-omn)*qsati_crm(tabs(i,j,k),pres(k))
+(  107)            dq = 0.
+(  108)            if(omp.gt.0.001) then
+(  109)              qrr = qp(i,j,k) * omp
+(  110)              dq = dq + evapr1(k)*sqrt(qrr) + evapr2(k)*qrr**powr2 
+(  111)            end if
+(  112)            if(omp.lt.0.999.and.omg.lt.0.999) then
+(  113)              qss = qp(i,j,k) * (1.-omp)*(1.-omg)
+(  114)              dq = dq + evaps1(k)*sqrt(qss) + evaps2(k)*qss**pows2 
+(  115)            end if
+(  116)            if(omp.lt.0.999.and.omg.gt.0.001) then
+(  117)              qgg = qp(i,j,k) * (1.-omp)*omg
+(  118)              dq = dq + evapg1(k)*sqrt(qgg) + evapg2(k)*qgg**powg2
+(  119)            end if
+(  120)            dq = dq * dtn * (q(i,j,k) /qsatt-1.) 
+(  121)            dq = max(-0.5*qp(i,j,k),dq) 
+(  122)            qp(i,j,k) = qp(i,j,k) + dq
+(  123)            q(i,j,k) = q(i,j,k) - dq
+(  124)            qpevp(k) = qpevp(k) + dq
+(  125) 
+(  126)     else
+(  127) 
+(  128)            q(i,j,k) = q(i,j,k) + qp(i,j,k)
+(  129)            qpevp(k) = qpevp(k) - qp(i,j,k)
+(  130)            qp(i,j,k) = 0.
+(  131) 
+(  132)          endif
+(  133) 
+(  134)     endif
+(  135) 
+(  136)     dq = qp(i,j,k)
+(  137)     qp(i,j,k)=max(0.,qp(i,j,k))
+(  138)     q(i,j,k) = q(i,j,k) + (dq-qp(i,j,k))
+(  139) 
+(  140)   end do
+(  141)  enddo
+(  142) enddo
+(  143)     
+(  144) end associate
+(  145) 
+(  146) ! call t_stopf ('precip_proc') ! commented by Phani
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 5
+
+(  147) 
+(  148) end subroutine precip_proc
+(  149) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 6
+
+(    1) # 1 "precip_proc.F90"
+(    1)   
+(    2) subroutine precip_proc
+(    3) # 4 "precip_proc.F90"
+(    4) !************* LICENSE START *****************
+(    5) !
+(    6) ! Copyright 2015 Marat Khairoutdinov 
+(    7) ! School of Marine & Atmospheric Sciences
+(    8) ! Stony Brook University
+(    9) ! This software is distributed under the terms of
+(   10) ! the Apache License version 2.0.
+(   11) !
+(   12) !************** LICENSE END ******************
+(   13) # 14 "precip_proc.F90"
+(   14) use vars
+(   15) use microphysics
+(   16) use micro_params
+(   17) use params
+(   18) use real_size
+(   19) # 20 "precip_proc.F90"
+(   20) implicit none
+(   21) # 22 "precip_proc.F90"
+(   22) integer i,j,k
+(   23) real(RR) autor, autos, accrr, accris, accrcs, accrig, accrcg
+(   24) real(RR) dq, omn, omp, omg, qsatt
+(   25) real(RR) pows1, pows2, powg1, powg2, powr1, powr2, tmp
+(   26) real(RR) qii, qcc, qrr, qss, qgg
+(   27) # 28 "precip_proc.F90"
+(   28) powr1 = (3 + b_rain) / 4.
+(   29) powr2 = (5 + b_rain) / 8.
+(   30) pows1 = (3 + b_snow) / 4.
+(   31) pows2 = (5 + b_snow) / 8.
+(   32) powg1 = (3 + b_grau) / 4.
+(   33) powg2 = (5 + b_grau) / 8.
+(   34)       
+(   35) ! call t_startf ('precip_proc') ! commented by Phani
+(   36)      
+(   37) associate(q=>micro_field(:,:,:,1),qp=>micro_field(:,:,:,2))
+(   38) # 39 "precip_proc.F90"
+(   39) do k=1,nzm
+(   40) ! qpsrc(k)=0.
+(   41) ! qpevp(k)=0.
+(   42)  do j=1,ny
+(   43)   do i=1,nx  
+(   44)   
+(   45) !-------     Autoconversion/accretion 
+(   46) # 47 "precip_proc.F90"
+(   47)    if(qn(i,j,k)+qp(i,j,k).gt.0.) then
+(   48) # 50 "precip_proc.F90"
+(   50)          omn = max(0.,min(1.,(tabs(i,j,k)-tbgmin)*a_bg))
+(   51)          omp = max(0.,min(1.,(tabs(i,j,k)-tprmin)*a_pr))
+(   52)          omg = max(0.,min(1.,(tabs(i,j,k)-tgrmin)*a_gr))
+(   53) # 54 "precip_proc.F90"
+(   54)    if(qn(i,j,k).gt.0.) then
+(   55)      
+(   56)            qcc = qn(i,j,k) * omn
+(   57)            qii = qn(i,j,k) * (1.-omn)
+(   58) # 59 "precip_proc.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 7
+
+(   59)            if(qcc .gt. qcw0) then
+(   60)             autor = alphaelq
+(   61)            else
+(   62)             autor = 0.
+(   63)            endif 
+(   64) # 65 "precip_proc.F90"
+(   65)            if(qii .gt. qci0) then
+(   66)             autos = betaelq*coefice(k)
+(   67)            else
+(   68)             autos = 0.
+(   69)            endif 
+(   70) # 71 "precip_proc.F90"
+(   71)            accrr = 0.
+(   72)            if(omp.gt.0.001) then
+(   73)              qrr = qp(i,j,k) * omp
+(   74)              accrr = accrrc(k) * qrr ** powr1
+(   75)            end if
+(   76)            accrcs = 0.
+(   77)            accris = 0. 
+(   78)            if(omp.lt.0.999.and.omg.lt.0.999) then
+(   79)              qss = qp(i,j,k) * (1.-omp)*(1.-omg)
+(   80)              tmp = qss ** pows1
+(   81)              accrcs = accrsc(k) * tmp
+(   82)              accris = accrsi(k) * tmp 
+(   83)            end if
+(   84)            accrcg = 0.
+(   85)            accrig = 0. 
+(   86)            if(omp.lt.0.999.and.omg.gt.0.001) then
+(   87)              qgg = qp(i,j,k) * (1.-omp)*omg
+(   88)              tmp = qgg ** powg1
+(   89)              accrcg = accrgc(k) * tmp
+(   90)              accrig = accrgi(k) * tmp 
+(   91)            endif
+(   92)            qcc = (qcc+dtn*autor*qcw0)/(1.+dtn*(accrr+accrcs+accrcg+autor))
+(   93)            qii = (qii+dtn*autos*qci0)/(1.+dtn*(accris+accrig+autos))
+(   94)            dq = dtn *(accrr*qcc + autor*(qcc-qcw0)+ &
+(   95)              (accris+accrig)*qii + (accrcs+accrcg)*qcc + autos*(qii-qci0))
+(   96)            dq = min(dq,qn(i,j,k))
+(   97)            qp(i,j,k) = qp(i,j,k) + dq
+(   98)            q(i,j,k) = q(i,j,k) - dq
+(   99)            qn(i,j,k) = qn(i,j,k) - dq
+(  100)            qpsrc(k) = qpsrc(k) + dq
+(  101) # 102 "precip_proc.F90"
+(  102)          elseif(qp(i,j,k).gt.qp_threshold.and.qn(i,j,k).eq.0.) then
+(  103) # 104 "precip_proc.F90"
+(  104)            qsatt = 0.
+(  105)            if(omn.gt.0.001) qsatt = qsatt + omn*qsatw_crm(tabs(i,j,k),pres(k))
+(  106)            if(omn.lt.0.999) qsatt = qsatt + (1.-omn)*qsati_crm(tabs(i,j,k),pres(k))
+(  107)            dq = 0.
+(  108)            if(omp.gt.0.001) then
+(  109)              qrr = qp(i,j,k) * omp
+(  110)              dq = dq + evapr1(k)*sqrt(qrr) + evapr2(k)*qrr**powr2 
+(  111)            end if
+(  112)            if(omp.lt.0.999.and.omg.lt.0.999) then
+(  113)              qss = qp(i,j,k) * (1.-omp)*(1.-omg)
+(  114)              dq = dq + evaps1(k)*sqrt(qss) + evaps2(k)*qss**pows2 
+(  115)            end if
+(  116)            if(omp.lt.0.999.and.omg.gt.0.001) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:31      page 8
+
+(  117)              qgg = qp(i,j,k) * (1.-omp)*omg
+(  118)              dq = dq + evapg1(k)*sqrt(qgg) + evapg2(k)*qgg**powg2
+(  119)            end if
+(  120)            dq = dq * dtn * (q(i,j,k) /qsatt-1.) 
+(  121)            dq = max(-0.5*qp(i,j,k),dq) 
+(  122)            qp(i,j,k) = qp(i,j,k) + dq
+(  123)            q(i,j,k) = q(i,j,k) - dq
+(  124)            qpevp(k) = qpevp(k) + dq
+(  125) # 126 "precip_proc.F90"
+(  126)     else
+(  127) # 128 "precip_proc.F90"
+(  128)            q(i,j,k) = q(i,j,k) + qp(i,j,k)
+(  129)            qpevp(k) = qpevp(k) - qp(i,j,k)
+(  130)            qp(i,j,k) = 0.
+(  131) # 132 "precip_proc.F90"
+(  132)          endif
+(  133) # 134 "precip_proc.F90"
+(  134)     endif
+(  135) # 136 "precip_proc.F90"
+(  136)     dq = qp(i,j,k)
+(  137)     qp(i,j,k)=max(0.,qp(i,j,k))
+(  138)     q(i,j,k) = q(i,j,k) + (dq-qp(i,j,k))
+(  139) # 140 "precip_proc.F90"
+(  140)   end do
+(  141)  enddo
+(  142) enddo
+(  143)     
+(  144) end associate
+(  145) # 146 "precip_proc.F90"
+(  146) ! call t_stopf ('precip_proc') ! commented by Phani
+(  147) # 148 "precip_proc.F90"
+(  148) end subroutine precip_proc

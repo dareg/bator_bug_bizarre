@@ -1,0 +1,15 @@
+!depfile:open_file.F90
+MODULE MODI_OPEN_FILE
+INTERFACE
+      SUBROUTINE OPEN_FILE(HPROGRAM,KUNIT,HFILE,HFORM,HACTION,HACCESS,KRECL)
+ CHARACTER(LEN=6),  INTENT(IN)           :: HPROGRAM ! main program
+INTEGER,           INTENT(OUT)          :: KUNIT    ! logical unit
+ CHARACTER(LEN=*),  INTENT(IN)           :: HFILE    ! file to open
+ CHARACTER(LEN=*),  INTENT(IN)           :: HFORM    ! type of file
+ CHARACTER(LEN=*),  INTENT(IN), OPTIONAL :: HACTION  ! action
+ CHARACTER(LEN=*),  INTENT(IN), OPTIONAL :: HACCESS  ! access type
+INTEGER,           INTENT(IN), OPTIONAL :: KRECL    ! record length
+END SUBROUTINE OPEN_FILE
+
+END INTERFACE
+END MODULE MODI_OPEN_FILE

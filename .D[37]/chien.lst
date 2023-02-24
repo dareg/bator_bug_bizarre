@@ -1,0 +1,1104 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: chien.F90
+
+(    1) SUBROUTINE CHIEN(CDNAMC,KTYPTR,PSLAPO,PLOCEN,&
+(    2)  & PCODIL,KTRONC,KDGL,KNXLON,KNLOPA,KNOZPA,&
+(    3)  & KHTYP,KFLEV,PREF,PVALH,PVBH,KQUAD,KINF,&
+(    4)  & KDGSA,KDGEN,PEPS,LDFICP,KULOUT)  
+(    5) 
+(    6) !**** *CHIEN*  - CHeck Input ENvironment
+(    7) 
+(    8) !     Purpose.
+(    9) !     --------
+(   10) !           It controls coherence between defined geometry and ARPEGE
+(   11) !       file. In the case of inconsistency it calls ABORT. This
+(   12) !       routine could be also used in order to simply get full
+(   13) !       information from the cadre.
+(   14) 
+(   15) !**   Interface.
+(   16) !     ----------
+(   17) !        *CALL* *CHIEN(CDNAMC,KTYPTR,PSLAPO,PLOCEN,
+(   18) !    &           PCODIL,KTRONC,KDGL,KNXLON,KNLOPA,KNOZPA,
+(   19) !    &           KHTYP,KFLEV,PREF,PVALH,PVBH,KQUAD,KINF,
+(   20) !    &           KDGSA,KDGEN,PEPS,LDFICP,KULOUT)
+(   21) 
+(   22) !        Explicit arguments :
+(   23) !        --------------------
+(   24) 
+(   25) !        Input (Output case is now done in *RIEN*) :
+(   26) !        ----------------------------
+(   27) 
+(   28) !        CDNAMC        ...   Name of the cadre
+(   29) 
+(   30) !        Determination of reference geometry:
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 3
+
+(   31) 
+(   32) !        KTYPTR        ...   Type of Schmidt transform
+(   33) !                            1  ===>  Pole is at geog. North Pole
+(   34) !                            and stretching is equal to 1
+(   35) !                            2  ===>  General case
+(   36) !        PSLAPO        ...   Sinus latitude of pole of dilatation
+(   37) !        PLOCEN        ...   Longitude of pole of dilatation
+(   38) !        PCODIL        ...   Stretching factor
+(   39) !        KTRONC        ...   Truncation
+(   40) !        KDGL          ...   Number of latitudes without poles
+(   41) !        KNXLON        ...   Max. number of longitudes at a parallel
+(   42) !        KNLOPA        ...   Number of longitudes at a parallel
+(   43) !        KNOZPA        ...   Max. wave number at a parallel
+(   44) !        KHTYP         ...   Type of collocation grid
+(   45) !                            0 ==>   regular grid
+(   46) !                            2 ==>   reduced grid towards the poles
+(   47) !        KFLEV         ...   Number of vertical levels
+(   48) !        PREF          ...   Reference pressure
+(   49) !        PVALH         ...   "A" coefficients of vertical system
+(   50) !        PVBH          ...   "B" coefficients of vertical system
+(   51) !        KQUAD         ...   Quadrature ( 1 : Gauss ; 2 : Lobatto)
+(   52) !        LDFICP        ...   .TRUE.  if file contains the poles
+(   53) !   -----------------------------------------------------------------
+(   54) !        Input :
+(   55) !        -------
+(   56) 
+(   57) !        KDGSA         ...   First row of arrays KNLOPA and KNOZPA
+(   58) !        KDGEN         ...   Last row of arrays KNLOPA and KNOZPA
+(   59) !        PEPS          ...   Precision of the tests on real variables
+(   60) !        KINF          ...   Key:
+(   61) !                            -1 ==> Minimum checks for climate file
+(   62) !                            and call abort; if O.K. it
+(   63) !                            gives back LDFICP
+(   64) !                            0 ==> Check and call abort; if O.K. it
+(   65) !                            gives back LDFICP
+(   66) !                            1 ==> Simply gives back full information
+(   67) !        KULOUT        ...   Output file unit
+(   68) !   -----------------------------------------------------------------
+(   69) 
+(   70) !   -----------------------------------------------------------------
+(   71) 
+(   72) !        Implicit arguments :
+(   73) !        --------------------
+(   74) !        None.
+(   75) 
+(   76) !     Method.
+(   77) !     -------
+(   78) !        See documentation
+(   79) 
+(   80) !     Externals.
+(   81) !     ----------
+(   82) 
+(   83) !     Reference.
+(   84) !     ----------
+(   85) !        ARPEGE/ALADIN Documentation.
+(   86) !        Document 'Control of coherence between namelist and Arpege File'
+(   87) !        by R. El Khatib
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 4
+
+(   89) !     Author.
+(   90) !     -------
+(   91) !        Radmila Bubnova *GMAP/COMPAS - stage MICECO*
+(   92) 
+(   93) !     Remark.
+(   94) !     -------
+(   95) !******  This routine is a small christmas gift for our friend
+(   96) !******  Ryad El Khatib **************************************
+(   97) ! (hopefully without too much bugs)
+(   98) 
+(   99) !     Modifications.
+(  100) !     --------------
+(  101) !        Original : 91-12-10
+(  102) !        R El Khatib : 92-02-07
+(  103) !        R El Khatib : 92-06-01 (option KINF=-1)
+(  104) !        M Hamrud    : 92-10-01 (NHTYP=2)
+(  105) !        R El Khatib : 93-03-03 (NHTYP=2 recoded)
+(  106) !        R El Khatib : 93-05-04 (KNOZPA NOT tested when KINF=-1)
+(  107) !        R El Khatib : 97-07-22 (Deep cleanup)
+(  108) !        K. YESSAD   : 98-08-10 removal of LRPOLE option.
+(  109) !         -> LDPOLE, LLPOLE become .false. and disappear.
+(  110) !        R El Khatib : 99-09-02  (KNOZPA NOW tested again when KINF=-1)
+(  111) !        M.Hamrud    : 01-Oct-2003 CY28 Cleaning
+(  112) !        R El Khatib : 05-03-01  Cleanups
+(  113) !        O. Marsden  : May 2016  Moved the KINF==1 case to a new routine (RIEN) 
+(  114) !                                and changed argument intents to IN wherever possible
+(  115) !      R. El Khatib 21-Sep-2020 Harmonize with LAM version of the code by enhancing the 
+(  116) !                               accuracy of check for VALH : normalize by geometric mean of reference pressure
+(  117) !     ------------------------------------------------------------------
+(  118) 
+(  119) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(  120) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(  121) 
+(  122) !     ------------------------------------------------------------------
+(  123) 
+(  124) IMPLICIT NONE
+(  125) 
+(  126) INTEGER(KIND=JPIM),INTENT(IN)  :: KFLEV 
+(  127) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGSA 
+(  128) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGEN 
+(  129) CHARACTER(LEN=16) ,INTENT(IN)  :: CDNAMC
+(  130) INTEGER(KIND=JPIM),INTENT(IN)  :: KTYPTR 
+(  131) REAL(KIND=JPRB)   ,INTENT(IN)  :: PSLAPO 
+(  132) REAL(KIND=JPRB)   ,INTENT(IN)  :: PLOCEN 
+(  133) REAL(KIND=JPRB)   ,INTENT(IN)  :: PCODIL 
+(  134) INTEGER(KIND=JPIM),INTENT(IN)  :: KTRONC 
+(  135) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGL 
+(  136) INTEGER(KIND=JPIM),INTENT(IN)  :: KNXLON 
+(  137) INTEGER(KIND=JPIM),INTENT(IN)  :: KNLOPA(KDGSA:KDGEN) 
+(  138) INTEGER(KIND=JPIM),INTENT(IN)  :: KNOZPA(KDGSA:KDGEN) 
+(  139) INTEGER(KIND=JPIM),INTENT(IN)  :: KHTYP 
+(  140) REAL(KIND=JPRB)   ,INTENT(IN)  :: PREF 
+(  141) REAL(KIND=JPRB)   ,INTENT(IN)  :: PVALH(0:KFLEV) 
+(  142) REAL(KIND=JPRB)   ,INTENT(IN)  :: PVBH(0:KFLEV) 
+(  143) INTEGER(KIND=JPIM),INTENT(IN)  :: KQUAD 
+(  144) INTEGER(KIND=JPIM),INTENT(IN)  :: KINF 
+(  145) REAL(KIND=JPRB)   ,INTENT(IN)  :: PEPS 
+(  146) LOGICAL           ,INTENT(OUT) :: LDFICP 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 5
+
+(  147) INTEGER(KIND=JPIM),INTENT(IN)  :: KULOUT 
+(  148) 
+(  149) !     ------------------------------------------------------------------
+(  150) 
+(  151) INTEGER(KIND=JPIM), ALLOCATABLE :: INLOPA(:),INOZPA(:)
+(  152) REAL(KIND=JPRB), ALLOCATABLE :: ZVALH(:),ZVBH(:)
+(  153) REAL(KIND=JPRB), ALLOCATABLE :: ZSINLA(:)
+(  154) LOGICAL :: LLGARD
+(  155) 
+(  156) INTEGER(KIND=JPIM) :: IDGL, IDGNH, IERR, IERRA, IHTYP, INIVER, INLATI, &
+(  157)  & INXLON, IQUADF, ISTROW, ITRONC, ITYPTR, JFLEV, JL, JLAT, JLEV, IMAXLEV, &
+(  158)  & IMAXGL, IMAXLON, IMAXTRUNC 
+(  159) 
+(  160) REAL(KIND=JPRB) :: ZCLOPO, ZCODIL, ZMUNPOL, ZREF, ZSLAPO, ZSLOPO, ZX1
+(  161) REAL(KIND=JPRB) :: ZX2
+(  162) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  163) 
+(  164) !     ------------------------------------------------------------------
+(  165) 
+(  166) #include "abor1.intfb.h"
+(  167) 
+(  168) !     ------------------------------------------------------------------
+(  169) 
+(  170) IF (LHOOK) CALL DR_HOOK('CHIEN',0,ZHOOK_HANDLE)
+(  171) 
+(  172) !     ------------------------------------------------------------------
+(  173) 
+(  174) !*       0.    Get software limits
+(  175) !              -------------------
+(  176) 
+(  177) CALL FALIMU(IMAXLEV,IMAXTRUNC,IMAXGL,IMAXLON)
+(  178) ALLOCATE(INLOPA(IMAXGL))
+(  179) ALLOCATE(INOZPA(IMAXGL))
+(  180) ALLOCATE(ZSINLA(IMAXGL))
+(  181) ALLOCATE(ZVALH(0:IMAXLEV))
+(  182) ALLOCATE(ZVBH(0:IMAXLEV))
+(  183) 
+(  184) !*       1.    Read file characteristics
+(  185) !              -------------------------
+(  186) 
+(  187) WRITE(KULOUT,*) ' HAF, HAF : CADRE : ',CDNAMC
+(  188) CALL FACIES(CDNAMC,ITYPTR,ZSLAPO,ZCLOPO,ZSLOPO,ZCODIL,ITRONC,&
+(  189)  & INLATI,INXLON,INLOPA,INOZPA,ZSINLA,INIVER,ZREF,ZVALH,ZVBH,LLGARD)  
+(  190) 
+(  191) IF (KINF == 1) THEN
+(  192)   IF (INLATI > KDGEN-KDGSA+1) THEN
+(  193)     CALL ABOR1('CHIEN : MAX. NUMBER OF LATITUDE ROWS IN MODEL TOO SMALL !')
+(  194)   ENDIF
+(  195)   IF (INIVER > KFLEV) THEN
+(  196)     CALL ABOR1('CHIEN : MAX. NUMBER OF LEVEL IN MODEL TOO SMALL !')
+(  197)   ENDIF
+(  198) ENDIF
+(  199) 
+(  200) !*       2.    Preliminary tests
+(  201) !              -----------------
+(  202) 
+(  203) !              Test - type of file
+(  204) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 6
+
+(  205) IF(ITYPTR < 0) THEN
+(  206)   WRITE(KULOUT,*) 'YOU ARE USING A FILE ALADIN ',&
+(  207)    & 'WHILE THE MODEL EXPECTS A FILE ARPEGE'  
+(  208)   CALL ABOR1('CHIEN: ABOR1 CALLED 2a')
+(  209) ENDIF
+(  210) 
+(  211) !              Test - type of collocation grid
+(  212) 
+(  213) IF(INLOPA(1) == INLOPA(INT(INLATI/2))) THEN
+(  214)   IHTYP = 0
+(  215)   WRITE(KULOUT,*) 'FILE HAS REGULAR GRID '
+(  216) ELSE
+(  217)   IHTYP = 2
+(  218)   WRITE(KULOUT,*) 'FILE HAS REDUCED GRID '
+(  219) ENDIF
+(  220) 
+(  221) !              Poles story
+(  222) 
+(  223) ZMUNPOL = 0.9999999999_JPRB
+(  224) IF(ZSINLA(1) >= ZMUNPOL) THEN
+(  225)   WRITE(KULOUT,*) ' FILE CONTAINS THE POLES '
+(  226)   LDFICP = .TRUE.
+(  227)   IDGL = INLATI - 2
+(  228)   IDGNH = (IDGL+1)/2
+(  229) !       The following test ensures that the fields of the file
+(  230) !       will be read properly :
+(  231)   IF(INLOPA(1) /= INLOPA(2)) THEN
+(  232)     WRITE(KULOUT,*) ' FILE ROWS #1 AND #2 DO NOT HAVE THE ',&
+(  233)      & 'SAME NUMBER OF LONGITUDES'  
+(  234)     WRITE(KULOUT,*) ' THIS MAKES THE MODEL UNABLE TO READ THE '&
+(  235)      & ,'FILE PROPERLY'  
+(  236)     CALL ABOR1('CHIEN: ABOR1 CALLED 2b')
+(  237)   ENDIF
+(  238) ELSE
+(  239)   WRITE(KULOUT,*) ' FILE DOES NOT CONTAINS THE POLES '
+(  240)   LDFICP = .FALSE.
+(  241)   IDGL = INLATI
+(  242)   IDGNH = (IDGL+1)/2
+(  243) ENDIF
+(  244) 
+(  245) !              Test - Gaussian or Lobatto truncation
+(  246) 
+(  247) IF(LDFICP) THEN
+(  248)   ZX1 = 1.0_JPRB - ZSINLA(2)
+(  249)   ZX2 = ZSINLA(2) - ZSINLA(3)
+(  250)   IF (ZX1 > ZX2) THEN
+(  251)     IQUADF = 2
+(  252)     WRITE(KULOUT,*) 'FILE HAS LOBATTO QUADRATURE'
+(  253)     IF(MOD(INLATI,2) == 0) THEN
+(  254)       WRITE(KULOUT,*) ' WARNING ! INLATI IS EVEN !'
+(  255)     ENDIF
+(  256)   ELSE
+(  257)     IQUADF = 1
+(  258)     WRITE(KULOUT,*) 'FILE HAS GAUSSIAN QUADRATURE'
+(  259)     IF(MOD(INLATI,2) == 1) THEN
+(  260)       WRITE(KULOUT,*) ' WARNING ! INLATI IS ODD !'
+(  261)     ENDIF
+(  262)   ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 7
+
+(  263) ELSE
+(  264)   IQUADF = 1
+(  265)   WRITE(KULOUT,*) 'FILE HAS GAUSSIAN QUADRATURE'
+(  266)   IF(MOD(INLATI,2) == 1) THEN
+(  267)     WRITE(KULOUT,*) ' WARNING ! INLATI IS ODD !'
+(  268)   ENDIF
+(  269) ENDIF
+(  270) 
+(  271) IF ((KINF == 0).OR.(KINF == -1)) THEN
+(  272) 
+(  273) !*       3.    Checklist
+(  274) !              ---------
+(  275) 
+(  276)   IERR=0
+(  277) 
+(  278) !*      3.1  Spectral dimensions
+(  279) 
+(  280)   IF(ITRONC /= KTRONC) THEN
+(  281)     WRITE(KULOUT,*) ' TRUNCATION MISMATCH : '&
+(  282)      & ,'FILE = ',ITRONC, ' ; ARGUMENT = ',KTRONC  
+(  283)     IERR=1
+(  284)   ENDIF
+(  285) 
+(  286) !*      3.2  Spectral-related dimensions
+(  287) 
+(  288)   IF(INXLON /= KNXLON) THEN
+(  289)     WRITE(KULOUT,*) ' MAX. NUMBER OF LONGITUDES MISMATCH : '&
+(  290)      & ,'FILE = ',INXLON, ' ; ARGUMENT = ',KNXLON  
+(  291)     IERR=1
+(  292)   ENDIF
+(  293)   IF (LDFICP) THEN
+(  294)     IF(INLATI /= (KDGL+2)) THEN
+(  295)       WRITE(KULOUT,*) 'MAX. NUMBER OF LATITUDES MISMATCH : '&
+(  296)        & ,'FILE = ',INLATI, ' INCLUDING POLES ; ARGUMENT = ',KDGL  
+(  297)       IERR=1
+(  298)     ELSE
+(  299)       ISTROW=1
+(  300)       DO JLAT = ISTROW, (INLATI-1)/2
+(  301)         IF(KNLOPA(JLAT) /= INLOPA(JLAT+1)) THEN
+(  302)           WRITE(KULOUT,*) ' NUMBER OF LONGITUDES MISMATCH ON ',&
+(  303)            & 'ROW ',JLAT,' : ', &
+(  304)            & 'FILE = ',INLOPA(JLAT+1), ' ; ARGUMENT = ',KNLOPA(JLAT)  
+(  305)           IERR=1
+(  306)         ENDIF
+(  307)         IF(KNOZPA(JLAT) /= INOZPA(JLAT+1)) THEN
+(  308)           WRITE(KULOUT,*) ' WAVES NUMBER MISMATCH ON ',&
+(  309)            & 'ROW ',JLAT,' : ', &
+(  310)            & 'FILE = ',INOZPA(JLAT+1), ' ; ARGUMENT = ',KNOZPA(JLAT)  
+(  311)           IERR=1
+(  312)         ENDIF
+(  313)       ENDDO
+(  314)     ENDIF
+(  315)   ELSE
+(  316)     IF(INLATI /= (KDGL)) THEN
+(  317)       WRITE(KULOUT,*) 'NUMBER OF LATITUDES MISMATCH : '&
+(  318)        & ,'FILE = ',INLATI, ' (NO POLES) ; ARGUMENT = ',KDGL  
+(  319)       IERR=1
+(  320)     ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 8
+
+(  321)       DO JLAT = 1, (INLATI+1)/2
+(  322)         IF(KNLOPA(JLAT) /= INLOPA(JLAT)) THEN
+(  323)           WRITE(KULOUT,*) ' NUMBER OF LONGITUDES MISMATCH ON ',&
+(  324)            & 'ROW ',JLAT,' : ', &
+(  325)            & 'FILE = ',INLOPA(JLAT), ' ; ARGUMENT = ',KNLOPA(JLAT)  
+(  326)           IERR=1
+(  327)         ENDIF
+(  328)         IF(KNOZPA(JLAT) /= INOZPA(JLAT)) THEN
+(  329)           WRITE(KULOUT,*) ' WAVES NUMBER MISMATCH ON ',&
+(  330)            & 'ROW ',JLAT,' : ', &
+(  331)            & 'FILE = ',INOZPA(JLAT), ' ; ARGUMENT = ',KNOZPA(JLAT)  
+(  332)           IERR=1
+(  333)         ENDIF
+(  334)       ENDDO
+(  335)     ENDIF
+(  336)   ENDIF
+(  337) 
+(  338) !*      3.3  Horizontal geometry
+(  339) 
+(  340)   IF(IHTYP /= KHTYP) THEN
+(  341)     WRITE(KULOUT,*) ' HORIZONTAL GRID MISMATCH : '&
+(  342)      & ,'FILE = ',IHTYP, ' ; ARGUMENT = ',KHTYP  
+(  343)     IERR=1
+(  344)   ENDIF
+(  345)   IF(ITYPTR /= KTYPTR) THEN
+(  346)     WRITE(KULOUT,*) ' TRANSFORMATION MISMATCH : '&
+(  347)      & ,'FILE = ',ITYPTR, ' ; ARGUMENT = ',KTYPTR  
+(  348)     IERR=1
+(  349)   ENDIF
+(  350)   IF(ABS(PSLAPO-ZSLAPO) > PEPS) THEN
+(  351)     WRITE(KULOUT,*) ' SINE OF LATITUDE OF POLE MISMATCH  : '&
+(  352)      & ,'FILE = ',ZSLAPO, ' ; ARGUMENT = ',PSLAPO  
+(  353)     IERR=1
+(  354)   ENDIF
+(  355)   IF(ABS(COS(PLOCEN)-ZCLOPO) > PEPS) THEN
+(  356)     WRITE(KULOUT,*) ' COSINE OF LONGITUDE OF POLE MISMATCH : '&
+(  357)      & ,'FILE = ',ZCLOPO, ' ; ARGUMENT = ',COS(PLOCEN)  
+(  358)     IERR=1
+(  359)   ENDIF
+(  360)   IF(ABS(SIN(PLOCEN)-ZSLOPO) > PEPS) THEN
+(  361)     WRITE(KULOUT,*) ' SINE OF LONGITUDE OF POLE MISMATCH : '&
+(  362)      & ,'FILE = ',ZSLOPO, ' ; ARGUMENT = ',SIN(PLOCEN)  
+(  363)     IERR=1
+(  364)   ENDIF
+(  365)   IF(ABS(ZCODIL-PCODIL) > PEPS) THEN
+(  366)     WRITE(KULOUT,*) ' STRETCHING MISMATCH : '&
+(  367)      & ,'FILE = ',ZCODIL, ' ; ARGUMENT = ',PCODIL  
+(  368)     IERR=1
+(  369)   ENDIF
+(  370)   IF(KQUAD /= IQUADF) THEN
+(  371)     WRITE(KULOUT,*) ' QUADRATURE MISMATCH : ',&
+(  372)      & 'FILE = ',IQUADF, ' ; ARGUMENT = ',KQUAD  
+(  373)     IERR=1
+(  374)   ENDIF
+(  375) 
+(  376) !*      3.4  Vertical levels
+(  377) 
+(  378)   IF (KINF == 0) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 9
+
+(  379)     IF(INIVER /= KFLEV) THEN
+(  380)       WRITE(KULOUT,*) ' NUMBER OF LEVELS MISMATCH : '&
+(  381)        & ,'FILE = ',INIVER, ' ; ARGUMENT = ',KFLEV  
+(  382)       IERR=1
+(  383)     ELSE
+(  384)       IERRA=0
+(  385)       DO JFLEV = 0,KFLEV
+(  386)         IF(ABS(ZVALH(JFLEV)*ZREF-PVALH(JFLEV)*PREF)/SQRT(ZREF*PREF) > PEPS) THEN
+(  387)           WRITE(KULOUT,*) ' VERTICAL FUNCTION *A* MISMATCH ON ',&
+(  388)            & 'LEVEL ',JFLEV,' : ',&
+(  389)            & 'FILE = ',ZVALH(JFLEV), ' ; ARGUMENT = ',PVALH(JFLEV)  
+(  390)           IERRA=1
+(  391)           IERR=1
+(  392)         ENDIF
+(  393)         IF(ABS(ZVBH(JFLEV)-PVBH(JFLEV)) > PEPS) THEN
+(  394)           WRITE(KULOUT,*) ' VERTICAL FUNCTION *B* MISMATCH ON ',&
+(  395)            & 'LEVEL ',JFLEV,' : ',&
+(  396)            & 'FILE = ',ZVBH(JFLEV), ' ; ARGUMENT = ',PVBH(JFLEV)  
+(  397)           IERR=1
+(  398)         ENDIF
+(  399)       ENDDO
+(  400)       IF (IERRA /= 0) THEN
+(  401)         WRITE(KULOUT,*) ' REFERENCE PRESSURE : ',&
+(  402)          & 'FILE = ',ZREF, ' ; ARGUMENT = ',PREF  
+(  403)       ENDIF
+(  404)     ENDIF
+(  405)   ENDIF
+(  406) 
+(  407)   IF(IERR /= 0) THEN
+(  408)     CALL ABOR1('CHIEN: ABOR1 CALLED 3.4')
+(  409)   ENDIF
+(  410) 
+(  411) ELSEIF(KINF == 1) THEN
+(  412) 
+(  413)   WRITE(KULOUT,*) 'CHIEN ERROR : CHIEN(..., KINF=1,...) HAS BEEN REPLACED BY RIEN(...)'
+(  414)   CALL ABOR1('CHIEN: ABOR1 CALLED 4.1')
+(  415) 
+(  416) ELSE
+(  417)   WRITE(KULOUT,*) 'INTERNAL ERROR : KINF=',KINF
+(  418)   CALL ABOR1('CHIEN: ABOR1 CALLED 4.2')
+(  419) ENDIF
+(  420) 
+(  421) DEALLOCATE(INLOPA)
+(  422) DEALLOCATE(INOZPA)
+(  423) DEALLOCATE(ZSINLA)
+(  424) DEALLOCATE(ZVALH)
+(  425) DEALLOCATE(ZVBH)
+(  426) 
+(  427) !     ------------------------------------------------------------------
+(  428) 
+(  429) IF (LHOOK) CALL DR_HOOK('CHIEN',1,ZHOOK_HANDLE)
+(  430) END SUBROUTINE CHIEN
+(  431) 
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 10
+
+(    1) # 1 "chien.F90"
+(    1) SUBROUTINE CHIEN(CDNAMC,KTYPTR,PSLAPO,PLOCEN,&
+(    2)  & PCODIL,KTRONC,KDGL,KNXLON,KNLOPA,KNOZPA,&
+(    3)  & KHTYP,KFLEV,PREF,PVALH,PVBH,KQUAD,KINF,&
+(    4)  & KDGSA,KDGEN,PEPS,LDFICP,KULOUT)  
+(    5) # 6 "chien.F90"
+(    6) !**** *CHIEN*  - CHeck Input ENvironment
+(    7) # 8 "chien.F90"
+(    8) !     Purpose.
+(    9) !     --------
+(   10) !           It controls coherence between defined geometry and ARPEGE
+(   11) !       file. In the case of inconsistency it calls ABORT. This
+(   12) !       routine could be also used in order to simply get full
+(   13) !       information from the cadre.
+(   14) # 15 "chien.F90"
+(   15) !**   Interface.
+(   16) !     ----------
+(   17) !        *CALL* *CHIEN(CDNAMC,KTYPTR,PSLAPO,PLOCEN,
+(   18) !    &           PCODIL,KTRONC,KDGL,KNXLON,KNLOPA,KNOZPA,
+(   19) !    &           KHTYP,KFLEV,PREF,PVALH,PVBH,KQUAD,KINF,
+(   20) !    &           KDGSA,KDGEN,PEPS,LDFICP,KULOUT)
+(   21) # 22 "chien.F90"
+(   22) !        Explicit arguments :
+(   23) !        --------------------
+(   24) # 25 "chien.F90"
+(   25) !        Input (Output case is now done in *RIEN*) :
+(   26) !        ----------------------------
+(   27) # 28 "chien.F90"
+(   28) !        CDNAMC        ...   Name of the cadre
+(   29) # 30 "chien.F90"
+(   30) !        Determination of reference geometry:
+(   31) # 32 "chien.F90"
+(   32) !        KTYPTR        ...   Type of Schmidt transform
+(   33) !                            1  ===>  Pole is at geog. North Pole
+(   34) !                            and stretching is equal to 1
+(   35) !                            2  ===>  General case
+(   36) !        PSLAPO        ...   Sinus latitude of pole of dilatation
+(   37) !        PLOCEN        ...   Longitude of pole of dilatation
+(   38) !        PCODIL        ...   Stretching factor
+(   39) !        KTRONC        ...   Truncation
+(   40) !        KDGL          ...   Number of latitudes without poles
+(   41) !        KNXLON        ...   Max. number of longitudes at a parallel
+(   42) !        KNLOPA        ...   Number of longitudes at a parallel
+(   43) !        KNOZPA        ...   Max. wave number at a parallel
+(   44) !        KHTYP         ...   Type of collocation grid
+(   45) !                            0 ==>   regular grid
+(   46) !                            2 ==>   reduced grid towards the poles
+(   47) !        KFLEV         ...   Number of vertical levels
+(   48) !        PREF          ...   Reference pressure
+(   49) !        PVALH         ...   "A" coefficients of vertical system
+(   50) !        PVBH          ...   "B" coefficients of vertical system
+(   51) !        KQUAD         ...   Quadrature ( 1 : Gauss ; 2 : Lobatto)
+(   52) !        LDFICP        ...   .TRUE.  if file contains the poles
+(   53) !   -----------------------------------------------------------------
+(   54) !        Input :
+(   55) !        -------
+(   56) # 57 "chien.F90"
+(   57) !        KDGSA         ...   First row of arrays KNLOPA and KNOZPA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 11
+
+(   58) !        KDGEN         ...   Last row of arrays KNLOPA and KNOZPA
+(   59) !        PEPS          ...   Precision of the tests on real variables
+(   60) !        KINF          ...   Key:
+(   61) !                            -1 ==> Minimum checks for climate file
+(   62) !                            and call abort; if O.K. it
+(   63) !                            gives back LDFICP
+(   64) !                            0 ==> Check and call abort; if O.K. it
+(   65) !                            gives back LDFICP
+(   66) !                            1 ==> Simply gives back full information
+(   67) !        KULOUT        ...   Output file unit
+(   68) !   -----------------------------------------------------------------
+(   69) # 70 "chien.F90"
+(   70) !   -----------------------------------------------------------------
+(   71) # 72 "chien.F90"
+(   72) !        Implicit arguments :
+(   73) !        --------------------
+(   74) !        None.
+(   75) # 76 "chien.F90"
+(   76) !     Method.
+(   77) !     -------
+(   78) !        See documentation
+(   79) # 80 "chien.F90"
+(   80) !     Externals.
+(   81) !     ----------
+(   82) # 83 "chien.F90"
+(   83) !     Reference.
+(   84) !     ----------
+(   85) !        ARPEGE/ALADIN Documentation.
+(   86) !        Document 'Control of coherence between namelist and Arpege File'
+(   87) !        by R. El Khatib
+(   88) # 89 "chien.F90"
+(   89) !     Author.
+(   90) !     -------
+(   91) !        Radmila Bubnova *GMAP/COMPAS - stage MICECO*
+(   92) # 93 "chien.F90"
+(   93) !     Remark.
+(   94) !     -------
+(   95) !******  This routine is a small christmas gift for our friend
+(   96) !******  Ryad El Khatib **************************************
+(   97) ! (hopefully without too much bugs)
+(   98) # 99 "chien.F90"
+(   99) !     Modifications.
+(  100) !     --------------
+(  101) !        Original : 91-12-10
+(  102) !        R El Khatib : 92-02-07
+(  103) !        R El Khatib : 92-06-01 (option KINF=-1)
+(  104) !        M Hamrud    : 92-10-01 (NHTYP=2)
+(  105) !        R El Khatib : 93-03-03 (NHTYP=2 recoded)
+(  106) !        R El Khatib : 93-05-04 (KNOZPA NOT tested when KINF=-1)
+(  107) !        R El Khatib : 97-07-22 (Deep cleanup)
+(  108) !        K. YESSAD   : 98-08-10 removal of LRPOLE option.
+(  109) !         -> LDPOLE, LLPOLE become .false. and disappear.
+(  110) !        R El Khatib : 99-09-02  (KNOZPA NOW tested again when KINF=-1)
+(  111) !        M.Hamrud    : 01-Oct-2003 CY28 Cleaning
+(  112) !        R El Khatib : 05-03-01  Cleanups
+(  113) !        O. Marsden  : May 2016  Moved the KINF==1 case to a new routine (RIEN) 
+(  114) !                                and changed argument intents to IN wherever possible
+(  115) !      R. El Khatib 21-Sep-2020 Harmonize with LAM version of the code by enhancing the 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 12
+
+(  116) !                               accuracy of check for VALH : normalize by geometric mean of reference pressure
+(  117) !     ------------------------------------------------------------------
+(  118) # 119 "chien.F90"
+(  119) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(  120) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(  121) # 122 "chien.F90"
+(  122) !     ------------------------------------------------------------------
+(  123) # 124 "chien.F90"
+(  124) IMPLICIT NONE
+(  125) # 126 "chien.F90"
+(  126) INTEGER(KIND=JPIM),INTENT(IN)  :: KFLEV 
+(  127) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGSA 
+(  128) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGEN 
+(  129) CHARACTER(LEN=16) ,INTENT(IN)  :: CDNAMC
+(  130) INTEGER(KIND=JPIM),INTENT(IN)  :: KTYPTR 
+(  131) REAL(KIND=JPRB)   ,INTENT(IN)  :: PSLAPO 
+(  132) REAL(KIND=JPRB)   ,INTENT(IN)  :: PLOCEN 
+(  133) REAL(KIND=JPRB)   ,INTENT(IN)  :: PCODIL 
+(  134) INTEGER(KIND=JPIM),INTENT(IN)  :: KTRONC 
+(  135) INTEGER(KIND=JPIM),INTENT(IN)  :: KDGL 
+(  136) INTEGER(KIND=JPIM),INTENT(IN)  :: KNXLON 
+(  137) INTEGER(KIND=JPIM),INTENT(IN)  :: KNLOPA(KDGSA:KDGEN) 
+(  138) INTEGER(KIND=JPIM),INTENT(IN)  :: KNOZPA(KDGSA:KDGEN) 
+(  139) INTEGER(KIND=JPIM),INTENT(IN)  :: KHTYP 
+(  140) REAL(KIND=JPRB)   ,INTENT(IN)  :: PREF 
+(  141) REAL(KIND=JPRB)   ,INTENT(IN)  :: PVALH(0:KFLEV) 
+(  142) REAL(KIND=JPRB)   ,INTENT(IN)  :: PVBH(0:KFLEV) 
+(  143) INTEGER(KIND=JPIM),INTENT(IN)  :: KQUAD 
+(  144) INTEGER(KIND=JPIM),INTENT(IN)  :: KINF 
+(  145) REAL(KIND=JPRB)   ,INTENT(IN)  :: PEPS 
+(  146) LOGICAL           ,INTENT(OUT) :: LDFICP 
+(  147) INTEGER(KIND=JPIM),INTENT(IN)  :: KULOUT 
+(  148) # 149 "chien.F90"
+(  149) !     ------------------------------------------------------------------
+(  150) # 151 "chien.F90"
+(  151) INTEGER(KIND=JPIM), ALLOCATABLE :: INLOPA(:),INOZPA(:)
+(  152) REAL(KIND=JPRB), ALLOCATABLE :: ZVALH(:),ZVBH(:)
+(  153) REAL(KIND=JPRB), ALLOCATABLE :: ZSINLA(:)
+(  154) LOGICAL :: LLGARD
+(  155) # 156 "chien.F90"
+(  156) INTEGER(KIND=JPIM) :: IDGL, IDGNH, IERR, IERRA, IHTYP, INIVER, INLATI, &
+(  157)  & INXLON, IQUADF, ISTROW, ITRONC, ITYPTR, JFLEV, JL, JLAT, JLEV, IMAXLEV, &
+(  158)  & IMAXGL, IMAXLON, IMAXTRUNC 
+(  159) # 160 "chien.F90"
+(  160) REAL(KIND=JPRB) :: ZCLOPO, ZCODIL, ZMUNPOL, ZREF, ZSLAPO, ZSLOPO, ZX1
+(  161) REAL(KIND=JPRB) :: ZX2
+(  162) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  163) # 164 "chien.F90"
+(  164) !     ------------------------------------------------------------------
+(  165) # 166 "chien.F90"
+(  166) # 1 ".D[61]/abor1.intfb.h"
+(    1) INTERFACE
+(    2) # 3 ".D[61]/abor1.intfb.h"
+(    3) SUBROUTINE ABOR1(CDTEXT)
+(    4) CHARACTER(LEN=*), INTENT(IN) :: CDTEXT
+(    5) END SUBROUTINE ABOR1
+(    6) # 7 ".D[61]/abor1.intfb.h"
+(    7) SUBROUTINE ABOR1FL(CDFILE, KLINENUM, CDTEXT)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 13
+
+(    8) USE PARKIND1  ,ONLY : JPIM
+(    9) CHARACTER(LEN=*), INTENT(IN) :: CDFILE,CDTEXT
+(   10) INTEGER(KIND=JPIM), INTENT(IN) :: KLINENUM
+(   11) END SUBROUTINE ABOR1FL
+(   12) # 13 ".D[61]/abor1.intfb.h"
+(   13) SUBROUTINE ABOR1_EXCEPTION_HANDLER()
+(   14) END SUBROUTINE ABOR1_EXCEPTION_HANDLER
+(   15) # 16 ".D[61]/abor1.intfb.h"
+(   16) END INTERFACE
+(   17) # 167 "chien.F90"
+(  167) # 168 "chien.F90"
+(  168) !     ------------------------------------------------------------------
+(  169) # 170 "chien.F90"
+(  170) IF (LHOOK) CALL DR_HOOK('CHIEN',0,ZHOOK_HANDLE)
+(  171) # 172 "chien.F90"
+(  172) !     ------------------------------------------------------------------
+(  173) # 174 "chien.F90"
+(  174) !*       0.    Get software limits
+(  175) !              -------------------
+(  176) # 177 "chien.F90"
+(  177) CALL FALIMU(IMAXLEV,IMAXTRUNC,IMAXGL,IMAXLON)
+(  178) ALLOCATE(INLOPA(IMAXGL))
+(  179) ALLOCATE(INOZPA(IMAXGL))
+(  180) ALLOCATE(ZSINLA(IMAXGL))
+(  181) ALLOCATE(ZVALH(0:IMAXLEV))
+(  182) ALLOCATE(ZVBH(0:IMAXLEV))
+(  183) # 184 "chien.F90"
+(  184) !*       1.    Read file characteristics
+(  185) !              -------------------------
+(  186) # 187 "chien.F90"
+(  187) WRITE(KULOUT,*) ' HAF, HAF : CADRE : ',CDNAMC
+(  188) CALL FACIES(CDNAMC,ITYPTR,ZSLAPO,ZCLOPO,ZSLOPO,ZCODIL,ITRONC,&
+(  189)  & INLATI,INXLON,INLOPA,INOZPA,ZSINLA,INIVER,ZREF,ZVALH,ZVBH,LLGARD)  
+(  190) # 191 "chien.F90"
+(  191) IF (KINF == 1) THEN
+(  192)   IF (INLATI > KDGEN-KDGSA+1) THEN
+(  193)     CALL ABOR1('CHIEN : MAX. NUMBER OF LATITUDE ROWS IN MODEL TOO SMALL !')
+(  194)   ENDIF
+(  195)   IF (INIVER > KFLEV) THEN
+(  196)     CALL ABOR1('CHIEN : MAX. NUMBER OF LEVEL IN MODEL TOO SMALL !')
+(  197)   ENDIF
+(  198) ENDIF
+(  199) # 200 "chien.F90"
+(  200) !*       2.    Preliminary tests
+(  201) !              -----------------
+(  202) # 203 "chien.F90"
+(  203) !              Test - type of file
+(  204) # 205 "chien.F90"
+(  205) IF(ITYPTR < 0) THEN
+(  206)   WRITE(KULOUT,*) 'YOU ARE USING A FILE ALADIN ',&
+(  207)    & 'WHILE THE MODEL EXPECTS A FILE ARPEGE'  
+(  208)   CALL ABOR1('CHIEN: ABOR1 CALLED 2a')
+(  209) ENDIF
+(  210) # 211 "chien.F90"
+(  211) !              Test - type of collocation grid
+(  212) # 213 "chien.F90"
+(  213) IF(INLOPA(1) == INLOPA(INT(INLATI/2))) THEN
+(  214)   IHTYP = 0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 14
+
+(  215)   WRITE(KULOUT,*) 'FILE HAS REGULAR GRID '
+(  216) ELSE
+(  217)   IHTYP = 2
+(  218)   WRITE(KULOUT,*) 'FILE HAS REDUCED GRID '
+(  219) ENDIF
+(  220) # 221 "chien.F90"
+(  221) !              Poles story
+(  222) # 223 "chien.F90"
+(  223) ZMUNPOL = 0.9999999999_JPRB
+(  224) IF(ZSINLA(1) >= ZMUNPOL) THEN
+(  225)   WRITE(KULOUT,*) ' FILE CONTAINS THE POLES '
+(  226)   LDFICP = .TRUE.
+(  227)   IDGL = INLATI - 2
+(  228)   IDGNH = (IDGL+1)/2
+(  229) !       The following test ensures that the fields of the file
+(  230) !       will be read properly :
+(  231)   IF(INLOPA(1) /= INLOPA(2)) THEN
+(  232)     WRITE(KULOUT,*) ' FILE ROWS #1 AND #2 DO NOT HAVE THE ',&
+(  233)      & 'SAME NUMBER OF LONGITUDES'  
+(  234)     WRITE(KULOUT,*) ' THIS MAKES THE MODEL UNABLE TO READ THE '&
+(  235)      & ,'FILE PROPERLY'  
+(  236)     CALL ABOR1('CHIEN: ABOR1 CALLED 2b')
+(  237)   ENDIF
+(  238) ELSE
+(  239)   WRITE(KULOUT,*) ' FILE DOES NOT CONTAINS THE POLES '
+(  240)   LDFICP = .FALSE.
+(  241)   IDGL = INLATI
+(  242)   IDGNH = (IDGL+1)/2
+(  243) ENDIF
+(  244) # 245 "chien.F90"
+(  245) !              Test - Gaussian or Lobatto truncation
+(  246) # 247 "chien.F90"
+(  247) IF(LDFICP) THEN
+(  248)   ZX1 = 1.0_JPRB - ZSINLA(2)
+(  249)   ZX2 = ZSINLA(2) - ZSINLA(3)
+(  250)   IF (ZX1 > ZX2) THEN
+(  251)     IQUADF = 2
+(  252)     WRITE(KULOUT,*) 'FILE HAS LOBATTO QUADRATURE'
+(  253)     IF(MOD(INLATI,2) == 0) THEN
+(  254)       WRITE(KULOUT,*) ' WARNING ! INLATI IS EVEN !'
+(  255)     ENDIF
+(  256)   ELSE
+(  257)     IQUADF = 1
+(  258)     WRITE(KULOUT,*) 'FILE HAS GAUSSIAN QUADRATURE'
+(  259)     IF(MOD(INLATI,2) == 1) THEN
+(  260)       WRITE(KULOUT,*) ' WARNING ! INLATI IS ODD !'
+(  261)     ENDIF
+(  262)   ENDIF
+(  263) ELSE
+(  264)   IQUADF = 1
+(  265)   WRITE(KULOUT,*) 'FILE HAS GAUSSIAN QUADRATURE'
+(  266)   IF(MOD(INLATI,2) == 1) THEN
+(  267)     WRITE(KULOUT,*) ' WARNING ! INLATI IS ODD !'
+(  268)   ENDIF
+(  269) ENDIF
+(  270) # 271 "chien.F90"
+(  271) IF ((KINF == 0).OR.(KINF == -1)) THEN
+(  272) # 273 "chien.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 15
+
+(  273) !*       3.    Checklist
+(  274) !              ---------
+(  275) # 276 "chien.F90"
+(  276)   IERR=0
+(  277) # 278 "chien.F90"
+(  278) !*      3.1  Spectral dimensions
+(  279) # 280 "chien.F90"
+(  280)   IF(ITRONC /= KTRONC) THEN
+(  281)     WRITE(KULOUT,*) ' TRUNCATION MISMATCH : '&
+(  282)      & ,'FILE = ',ITRONC, ' ; ARGUMENT = ',KTRONC  
+(  283)     IERR=1
+(  284)   ENDIF
+(  285) # 286 "chien.F90"
+(  286) !*      3.2  Spectral-related dimensions
+(  287) # 288 "chien.F90"
+(  288)   IF(INXLON /= KNXLON) THEN
+(  289)     WRITE(KULOUT,*) ' MAX. NUMBER OF LONGITUDES MISMATCH : '&
+(  290)      & ,'FILE = ',INXLON, ' ; ARGUMENT = ',KNXLON  
+(  291)     IERR=1
+(  292)   ENDIF
+(  293)   IF (LDFICP) THEN
+(  294)     IF(INLATI /= (KDGL+2)) THEN
+(  295)       WRITE(KULOUT,*) 'MAX. NUMBER OF LATITUDES MISMATCH : '&
+(  296)        & ,'FILE = ',INLATI, ' INCLUDING POLES ; ARGUMENT = ',KDGL  
+(  297)       IERR=1
+(  298)     ELSE
+(  299)       ISTROW=1
+(  300)       DO JLAT = ISTROW, (INLATI-1)/2
+(  301)         IF(KNLOPA(JLAT) /= INLOPA(JLAT+1)) THEN
+(  302)           WRITE(KULOUT,*) ' NUMBER OF LONGITUDES MISMATCH ON ',&
+(  303)            & 'ROW ',JLAT,' : ', &
+(  304)            & 'FILE = ',INLOPA(JLAT+1), ' ; ARGUMENT = ',KNLOPA(JLAT)  
+(  305)           IERR=1
+(  306)         ENDIF
+(  307)         IF(KNOZPA(JLAT) /= INOZPA(JLAT+1)) THEN
+(  308)           WRITE(KULOUT,*) ' WAVES NUMBER MISMATCH ON ',&
+(  309)            & 'ROW ',JLAT,' : ', &
+(  310)            & 'FILE = ',INOZPA(JLAT+1), ' ; ARGUMENT = ',KNOZPA(JLAT)  
+(  311)           IERR=1
+(  312)         ENDIF
+(  313)       ENDDO
+(  314)     ENDIF
+(  315)   ELSE
+(  316)     IF(INLATI /= (KDGL)) THEN
+(  317)       WRITE(KULOUT,*) 'NUMBER OF LATITUDES MISMATCH : '&
+(  318)        & ,'FILE = ',INLATI, ' (NO POLES) ; ARGUMENT = ',KDGL  
+(  319)       IERR=1
+(  320)     ELSE
+(  321)       DO JLAT = 1, (INLATI+1)/2
+(  322)         IF(KNLOPA(JLAT) /= INLOPA(JLAT)) THEN
+(  323)           WRITE(KULOUT,*) ' NUMBER OF LONGITUDES MISMATCH ON ',&
+(  324)            & 'ROW ',JLAT,' : ', &
+(  325)            & 'FILE = ',INLOPA(JLAT), ' ; ARGUMENT = ',KNLOPA(JLAT)  
+(  326)           IERR=1
+(  327)         ENDIF
+(  328)         IF(KNOZPA(JLAT) /= INOZPA(JLAT)) THEN
+(  329)           WRITE(KULOUT,*) ' WAVES NUMBER MISMATCH ON ',&
+(  330)            & 'ROW ',JLAT,' : ', &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 16
+
+(  331)            & 'FILE = ',INOZPA(JLAT), ' ; ARGUMENT = ',KNOZPA(JLAT)  
+(  332)           IERR=1
+(  333)         ENDIF
+(  334)       ENDDO
+(  335)     ENDIF
+(  336)   ENDIF
+(  337) # 338 "chien.F90"
+(  338) !*      3.3  Horizontal geometry
+(  339) # 340 "chien.F90"
+(  340)   IF(IHTYP /= KHTYP) THEN
+(  341)     WRITE(KULOUT,*) ' HORIZONTAL GRID MISMATCH : '&
+(  342)      & ,'FILE = ',IHTYP, ' ; ARGUMENT = ',KHTYP  
+(  343)     IERR=1
+(  344)   ENDIF
+(  345)   IF(ITYPTR /= KTYPTR) THEN
+(  346)     WRITE(KULOUT,*) ' TRANSFORMATION MISMATCH : '&
+(  347)      & ,'FILE = ',ITYPTR, ' ; ARGUMENT = ',KTYPTR  
+(  348)     IERR=1
+(  349)   ENDIF
+(  350)   IF(ABS(PSLAPO-ZSLAPO) > PEPS) THEN
+(  351)     WRITE(KULOUT,*) ' SINE OF LATITUDE OF POLE MISMATCH  : '&
+(  352)      & ,'FILE = ',ZSLAPO, ' ; ARGUMENT = ',PSLAPO  
+(  353)     IERR=1
+(  354)   ENDIF
+(  355)   IF(ABS(COS(PLOCEN)-ZCLOPO) > PEPS) THEN
+(  356)     WRITE(KULOUT,*) ' COSINE OF LONGITUDE OF POLE MISMATCH : '&
+(  357)      & ,'FILE = ',ZCLOPO, ' ; ARGUMENT = ',COS(PLOCEN)  
+(  358)     IERR=1
+(  359)   ENDIF
+(  360)   IF(ABS(SIN(PLOCEN)-ZSLOPO) > PEPS) THEN
+(  361)     WRITE(KULOUT,*) ' SINE OF LONGITUDE OF POLE MISMATCH : '&
+(  362)      & ,'FILE = ',ZSLOPO, ' ; ARGUMENT = ',SIN(PLOCEN)  
+(  363)     IERR=1
+(  364)   ENDIF
+(  365)   IF(ABS(ZCODIL-PCODIL) > PEPS) THEN
+(  366)     WRITE(KULOUT,*) ' STRETCHING MISMATCH : '&
+(  367)      & ,'FILE = ',ZCODIL, ' ; ARGUMENT = ',PCODIL  
+(  368)     IERR=1
+(  369)   ENDIF
+(  370)   IF(KQUAD /= IQUADF) THEN
+(  371)     WRITE(KULOUT,*) ' QUADRATURE MISMATCH : ',&
+(  372)      & 'FILE = ',IQUADF, ' ; ARGUMENT = ',KQUAD  
+(  373)     IERR=1
+(  374)   ENDIF
+(  375) # 376 "chien.F90"
+(  376) !*      3.4  Vertical levels
+(  377) # 378 "chien.F90"
+(  378)   IF (KINF == 0) THEN
+(  379)     IF(INIVER /= KFLEV) THEN
+(  380)       WRITE(KULOUT,*) ' NUMBER OF LEVELS MISMATCH : '&
+(  381)        & ,'FILE = ',INIVER, ' ; ARGUMENT = ',KFLEV  
+(  382)       IERR=1
+(  383)     ELSE
+(  384)       IERRA=0
+(  385)       DO JFLEV = 0,KFLEV
+(  386)         IF(ABS(ZVALH(JFLEV)*ZREF-PVALH(JFLEV)*PREF)/SQRT(ZREF*PREF) > PEPS) THEN
+(  387)           WRITE(KULOUT,*) ' VERTICAL FUNCTION *A* MISMATCH ON ',&
+(  388)            & 'LEVEL ',JFLEV,' : ',&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:02      page 17
+
+(  389)            & 'FILE = ',ZVALH(JFLEV), ' ; ARGUMENT = ',PVALH(JFLEV)  
+(  390)           IERRA=1
+(  391)           IERR=1
+(  392)         ENDIF
+(  393)         IF(ABS(ZVBH(JFLEV)-PVBH(JFLEV)) > PEPS) THEN
+(  394)           WRITE(KULOUT,*) ' VERTICAL FUNCTION *B* MISMATCH ON ',&
+(  395)            & 'LEVEL ',JFLEV,' : ',&
+(  396)            & 'FILE = ',ZVBH(JFLEV), ' ; ARGUMENT = ',PVBH(JFLEV)  
+(  397)           IERR=1
+(  398)         ENDIF
+(  399)       ENDDO
+(  400)       IF (IERRA /= 0) THEN
+(  401)         WRITE(KULOUT,*) ' REFERENCE PRESSURE : ',&
+(  402)          & 'FILE = ',ZREF, ' ; ARGUMENT = ',PREF  
+(  403)       ENDIF
+(  404)     ENDIF
+(  405)   ENDIF
+(  406) # 407 "chien.F90"
+(  407)   IF(IERR /= 0) THEN
+(  408)     CALL ABOR1('CHIEN: ABOR1 CALLED 3.4')
+(  409)   ENDIF
+(  410) # 411 "chien.F90"
+(  411) ELSEIF(KINF == 1) THEN
+(  412) # 413 "chien.F90"
+(  413)   WRITE(KULOUT,*) 'CHIEN ERROR : CHIEN(..., KINF=1,...) HAS BEEN REPLACED BY RIEN(...)'
+(  414)   CALL ABOR1('CHIEN: ABOR1 CALLED 4.1')
+(  415) # 416 "chien.F90"
+(  416) ELSE
+(  417)   WRITE(KULOUT,*) 'INTERNAL ERROR : KINF=',KINF
+(  418)   CALL ABOR1('CHIEN: ABOR1 CALLED 4.2')
+(  419) ENDIF
+(  420) # 421 "chien.F90"
+(  421) DEALLOCATE(INLOPA)
+(  422) DEALLOCATE(INOZPA)
+(  423) DEALLOCATE(ZSINLA)
+(  424) DEALLOCATE(ZVALH)
+(  425) DEALLOCATE(ZVBH)
+(  426) # 427 "chien.F90"
+(  427) !     ------------------------------------------------------------------
+(  428) # 429 "chien.F90"
+(  429) IF (LHOOK) CALL DR_HOOK('CHIEN',1,ZHOOK_HANDLE)
+(  430) END SUBROUTINE CHIEN

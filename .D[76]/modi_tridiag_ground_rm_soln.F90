@@ -1,0 +1,11 @@
+!depfile:tridiag_ground_rm_soln.F90
+MODULE MODI_TRIDIAG_GROUND_RM_SOLN
+INTERFACE
+SUBROUTINE TRIDIAG_GROUND_RM_SOLN(PSOLN,PA_COEF,PB_COEF)
+REAL, DIMENSION(:,:), INTENT(IN)    :: PA_COEF     ! RM67 A-soil coefficient           (-)
+REAL, DIMENSION(:,:), INTENT(IN)    :: PB_COEF     ! RM67 B-soil coefficient           (K)
+REAL, DIMENSION(:,:), INTENT(INOUT) :: PSOLN       ! solution vector                   
+END SUBROUTINE TRIDIAG_GROUND_RM_SOLN
+
+END INTERFACE
+END MODULE MODI_TRIDIAG_GROUND_RM_SOLN

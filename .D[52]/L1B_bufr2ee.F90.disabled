@@ -1,0 +1,209 @@
+program L1B_bufr2ee
+  !  #[ Documentation:
+  ! - a program to read a L1B file in BUFR format
+  !   and write it in Earth Explorer Format
+  !
+  ! - written by: J. de Kloe
+  !
+  ! Modifications:
+  !   31-May-2007 J. de Kloe  original version
+  !   05-Jun-2008 J. de Kloe  some small fixes to let this preliminary version
+  !                           compile.
+  !   17-Jul-2008 J. de Kloe  added a temporary initialisation for nobservation
+  !   27-Oct-2008 J. de Kloe  adapted interface to Init_L1B_BRC_DataStructure
+  !   01-Apr-2009 J. de Kloe  add calls to InitBufrMsg and DeleteBufrMsg
+  !   02-Nov-2012 J. de Kloe  remove unused use imports
+  !
+  !  #]
+  !  #[ Modules used
+  USE L1B_BufrUtil, only: !rvind, &
+                          !jsec0, jsec1, jsec2, jsec3, jsec4, kelem, kvals, &
+                          !ksec0, ksec1, ksec2, ksec3, ksec4, &
+                          !ktdlst_size,ktdlst, &
+                          !key, &
+                          !kbufr, &
+                          !cvals, cvals, &
+                          !cnames, cunits, &
+                          !values, &
+                          !NELEMENTS_L1B_HEAD, &
+                          !NELEMENTS_L1B_OBS, &
+                          !NELEMENTS_L1B_MEAS
+  USE L1B_DataStructure, only: L1B_HDR_DataType, L1B_BRC_DataType, &
+                               Init_L1B_HDR_DataStructure, &
+                               Init_L1B_BRC_DataStructure, &
+                               Delete_L1B_HDR_DataStructure, &
+                               Delete_L1B_BRC_DataStructure
+  USE BufrWrapper, only: InitBufrFile, SetBufrFileName, SetBufrFileMode, &
+                         BufrFileType, BufrMessageType, mode_read, &
+                         OpenBufrFile, ReadNextBufrMsg, CloseBufrFile, &
+                         GetNrBufrMsgs, InitBufrMsg, DeleteBufrMsg
+!  USE EE_CFI_Datatypes, only: IntAul
+
+  USE ErrorHandler, only: no_error, error_cmdline_options
+  !                        error_opening_file, error_writing_file
+  USE logging, only: program_abort
+  USE Compiler_Features, only: iargc_aeolus,getarg_aeolus
+!  USE Numerics, only: r8_
+  !  #]
+  !  #[ variables
+  implicit none
+
+  ! constants
+!  integer, parameter :: jsup       = 9
+
+!  real(r8_), parameter :: eps      = 10.E-8
+
+  ! local variables
+  TYPE(BufrFileType)    :: BufrFile
+  TYPE(BufrMessageType) :: BufrMsg
+
+  TYPE(L1B_HDR_DataType) :: L1B_Headers
+  TYPE(L1B_BRC_DataType) :: L1B
+
+!  integer ::             ksup(JSUP)
+!  integer  ::            ktdexp(kelem)
+
+  integer :: error_flag
+  integer :: i, nr_msgs, iobservation, nobservation
+  !, istring, ivalue, &
+  !no_element_start, &
+  !no_element_end, &
+  !imeasurement, &
+  integer :: nr_of_arguments
+  !isubset, &
+  !kbufr_size_byte, &
+  !kbufr_size_word, &
+  !ktdexp_size 
+
+
+  character(len=256) :: filename, &      ! without extension
+                        filename_bufr    ! with    extension 
+!                        carg
+
+  !  #]
+  !  #[ main program
+
+  !  #[ handle command line arguments
+  nr_of_arguments = iargc_aeolus()
+  IF (nr_of_arguments .ne. 1) THEN
+     print *,"Usage: L1B_bufr2ee <filename[without extension]>"
+     call program_abort(error_cmdline_options,"L1B_bufr2ee")
+  END IF
+
+  call getarg_aeolus(1,filename)
+  filename_bufr = trim(filename)//".BUFR"
+  !  #]
+  !  #[ open BUFR file
+  call InitBufrFile(BufrFile,error_flag,filename_bufr,mode_read)
+  if (error_flag .ne. no_error) &
+       call program_abort(error_flag,"InitBufrFile")
+
+  ! determine how many BUFR messages there are in this file
+  nr_msgs=GetNrBufrMsgs(BufrFile)
+  print *,"this BUFR file contains ",nr_msgs," messages"
+
+  call OpenBufrFile(BufrFile,error_flag)
+  if (error_flag .ne. no_error) &
+       call program_abort(error_flag,"OpenBufrFile")
+  !  #]
+
+  ! read all messages
+  ! the current format has 1 bufr msg for 1 L1B file
+  ! and n subsets for n observations
+  msgloop: do i=1,nr_msgs
+     ! allocate the needed memory to store the encoded BUFR message
+     call InitBufrMsg(BufrMsg,error_flag)
+     if (error_flag .ne. no_error) call program_abort(error_flag,"InitBufrMsg")
+     ! optional input: MaxBufrMsgSizeWords=25000 ! words
+     ! default for this setting is: 1600000 words
+
+     call ReadNextBufrMsg(BufrFile,BufrMsg,error_flag)
+     if (error_flag .ne. no_error) &
+          call program_abort(error_flag,"ReadNextBufrMsg")
+
+     ! fill L1B Header
+     call Init_L1B_HDR_DataStructure(L1B_Headers,error_flag )
+     IF (error_flag .ne. no_error) &
+          call program_abort(error_flag,"Init_L1B_HDR_DataStructure")
+
+     ! this should be the opposite from fill_L1B_bufr_header()
+     ! which is defined in L1B_BufrUtil.F90
+     ! with elements added from L1B_bufr_encode_init
+     ! and L1B_bufr_encode_finish
+     !call Fill_L1B_Header(BufrMsg,L1B_Headers,error_flag)
+     !IF (error_flag .ne. no_error) &
+     !     call program_abort(error_flag,"Fill_L1B_Header")
+     print *,"placeholder for: Fill_L1B_Header()"
+
+     ! this one should decode the header and check 
+     ! wether the descriptor list is as expected or not
+
+     !  kbufr_size_word = kbufr_size_byte / 4 + 1
+     !
+     !  ! decode sections
+     !  call bus012(kbufr_size_word, kbufr, ksup, &
+     !              ksec0, ksec1, ksec2, error_flag)
+     !  if(error_flag.ne.0) then
+     !    print*,'error bus012 ', error_flag
+     !    stop 2
+     !  end if
+     
+     ! 4.3 descriptor list
+     !  call busel(ktdlst_size, ktdlst, ktdexp_size, ktdexp, error_flag) 
+     !  if(error_flag.ne.0) then
+     !    print*,'error busel ', error_flag
+     !    stop 2
+     !  end if
+
+     nobservation = 1 ! dummy value for now, to prevent compiler warnings
+     ! todo: retrieve this from section 1
+
+     obsloop: do iobservation = 1,nobservation
+        ! fill DSR
+        call Init_L1B_BRC_DataStructure(L1B)
+
+        ! to be added when the L1B writer is fully coded
+        !call Allocate_L1B_BRC_DataStructure(L1B,...)
+
+        ! this should be the oppostie of L1B_bufr_encode
+        ! call L1B_bufr_decode()
+        print *,"placeholder for: L1B_bufr_decode()"
+
+        ! this one should do the bufrex call:
+        !  call bufrex(kbufr_size_word, kbufr, ksup, &
+        !              ksec0, ksec1, ksec2, ksec3, ksec4, &
+        !              kelem, cnames, cunits, kvals, values, cvals, & 
+        !              error_flag)
+        !  if(error_flag.ne.0) then
+        !    print*,'error bufrex ', error_flag
+        !    stop 2
+        !  end if
+
+        ! clean up
+        call Delete_L1B_BRC_DataStructure(L1B)
+
+     end do obsloop
+
+     ! save L1B file
+
+     ! this should be the opposite from ReadL1Bfile() 
+     ! defined in  readl1bdata.F90
+     ! call WriteL1Bfile() 
+     print *,"placeholder for: WriteL1Bfile()"
+
+     ! clean up
+     call Delete_L1B_HDR_DataStructure(L1B_Headers)
+     
+     ! free the memory used by the encoded BUFR message
+     call DeleteBufrMsg(BufrMsg,error_flag)
+     if (error_flag .ne. no_error) &
+          call program_abort(error_flag,"DeleteBufrMsg")
+
+  enddo msgloop
+
+  ! close file
+  call CloseBufrFile(BufrFile,error_flag)
+  if (error_flag .ne. no_error) call program_abort(error_flag,"CloseBufrFile")
+
+  !  #]
+end program L1B_bufr2ee

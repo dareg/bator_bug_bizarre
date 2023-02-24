@@ -1,0 +1,2523 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: crm.F90
+
+(    1) !)---------------------------------------------------------------
+(    2) !  Interface for a cloud-resolving model
+(    3) !---------------------------------------------------------------
+(    4) 
+(    5) subroutine crm        (icol, plev, tl, ql, qll, qil, cldl, ul, vl, &
+(    6)                        pmid, pint, del, phil, phii, dt_gl, crm_buffer, &
+(    7)                        landmask, stout)
+(    8) 
+(    9) !************* LICENSE START *****************
+(   10) !
+(   11) ! Copyright 2015 Marat Khairoutdinov 
+(   12) ! School of Marine & Atmospheric Sciences
+(   13) ! Stony Brook University
+(   14) ! This software is distributed under the terms of
+(   15) ! the Apache License version 2.0.
+(   16) !
+(   17) !************** LICENSE END ******************
+(   18) !---------------------------------------------------------------
+(   19) 
+(   20) USE PARKIND1  ,ONLY : JPIM,JPRB
+(   21)         use vars
+(   22)         use params
+(   23)         use microphysics
+(   24)         use crmtracers
+(   25)         use grid, only: nx, ny, nz
+(   26)         use crm_inout, only: crm_stat_out
+(   27)         use crmdims, only: crmvars    
+(   28)         use cam_rad_parameterizations
+(   29)         use real_size
+(   30)         implicit none
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 3
+
+(   31) 
+(   32)         integer, parameter :: r8 = JPRB
+(   33)         integer, parameter :: i8 = JPIM
+(   34) 
+(   35) !  Input:
+(   36) 
+(   37)          integer(i8), intent(in) :: icol    ! global grid's coumn index
+(   38)          integer(i8), intent(in) :: plev    ! global grid's number of levels
+(   39)          real(r8), intent(in) :: pmid(crm_nz) ! Global grid pressure (Pa)
+(   40)          real(r8), intent(in) :: pint(crm_nz+1) ! Global grid interface pressure (Pa)
+(   41)          real(r8), intent(in) :: del(crm_nz) ! Layer's pressure thickness (Pa)
+(   42)          real(r8), intent(in) :: phil(crm_nz) ! mid-level geopotential (m2/s2)
+(   43)          real(r8), intent(in) :: phii(crm_nz+1)! interface geopotential (m2/s2)
+(   44)          real(r8), intent(in) :: dt_gl ! global model's time step
+(   45)          real(r8), intent(in) :: landmask ! land/ocn mask (=0/1/2)
+(   46)          real(r8), intent(in) :: tl(crm_nz) ! Global grid temperature (K)
+(   47)          real(r8), intent(in) :: ql(crm_nz) ! Global grid water vapor (g/g)
+(   48)          real(r8), intent(in) :: ul(crm_nz) ! Global grid u (m/s)
+(   49)          real(r8), intent(in) :: vl(crm_nz) ! Global grid v (m/s)
+(   50)          real(r8), intent(in) :: qll(crm_nz)! Global grid cloud liquid water (g/g)
+(   51)          real(r8), intent(in) :: qil(crm_nz)! Global grid cloud ice (g/g)
+(   52)          real(r8), intent(in) :: cldl(crm_nz)!Global cloud fraction
+(   53) 
+(   54) !  Input/Output:
+(   55)          
+(   56)          real(r8), intent(inout), target :: crm_buffer(crm_nx, crm_ny, plev, 1:max(7,crmvars))
+(   57) 
+(   58) !  Output
+(   59) 
+(   60)          type(crm_stat_out), intent(out) :: stout  ! output statistics 
+(   61) !
+(   62) ! Local:
+(   63)          
+(   64)          real(r8) :: t_rad (nx, ny, nzm) ! rad temperuture
+(   65)          real(r8) :: qv_rad(nx, ny, nzm) ! rad vapor
+(   66)          real(r8) :: qc_rad(nx, ny, nzm) ! rad cloud water
+(   67)          real(r8) :: qi_rad(nx, ny, nzm) ! rad cloud ice
+(   68)          real(r8) :: cld_rad(nx, ny, nzm) ! rad cloud fraction
+(   69)          real(r8) :: reffc_rad(nx, ny, nzm) ! rad cloud drop optical path
+(   70)          real(r8) :: reffi_rad(nx, ny, nzm) ! rad cloud ice optical path
+(   71)          real(r8) :: qc_crm (nx, ny, nzm)! CRM cloud water
+(   72)          real(r8) :: qi_crm (nx, ny, nzm)! CRM cloud ice
+(   73)          real(r8) :: qpc_crm(nx, ny, nzm)! CRM precip water
+(   74)          real(r8) :: qpi_crm(nx, ny, nzm)! CRM precip ice
+(   75)          real(r8) :: prec_crm(nx, ny)! CRM precipiation rate
+(   76) 
+(   77)          real(r8) :: ocnfrac ! area fraction of the ocean
+(   78)          real(r8) :: tau00  ! large-scale surface stress (N/m2)
+(   79)          real(r8) :: wnd  ! large-scale surface wind (m/s)
+(   80)          real(r8) :: bflxls  ! large-scale surface buoyancy flux (K m/s)
+(   81)          real(r8) :: tabs_s0 ! surface temperature
+(   82)          real(r8) :: ccn_tot     ! ccn count
+(   83)          real(r8) :: in_tot     ! in count
+(   84) 
+(   85) 
+(   86) !  Local space:
+(   87) 
+(   88)         real(r8), pointer :: u_crm  (:,:,:) ! CRM v-wind component
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 4
+
+(   89)         real(r8), pointer :: v_crm  (:,:,:) ! CRM v-wind component
+(   90)         real(r8), pointer :: w_crm  (:,:,:) ! CRM w-wind component
+(   91)         real(r8), pointer :: t_crm  (:,:,:) ! CRM temperuture
+(   92)         real(RR) dummy(nz), t00(nz), q00(nz)
+(   93)         real(RR) fluxbtmp(nx,ny), fluxttmp(nx,ny) !bloss
+(   94)         real(r8) tln(crm_nz), qln(crm_nz), qlln(crm_nz), qiln(crm_nz)
+(   95)         real(r8) ull(crm_nz), vll(crm_nz), uln(crm_nz), vln(crm_nz), cldln(crm_nz)
+(   96)         real(RR) pdel(crm_nz), cwp(nx,ny), cwph(nx,ny), cwpm(nx,ny), cwpl(nx,ny)
+(   97)         real(r8) factor_xy, idt_gl
+(   98)         real(RR) tmp1, tmp2, omn
+(   99)         real(RR) u2z,v2z,w2z
+(  100)         integer i,j,k,nn,icyc, nstatsteps
+(  101)         real(r8) umax ! maxumum ampitude of the l.s. wind
+(  102)         real(RR), parameter :: wmin = 2.   ! minimum up/downdraft velocity for stat
+(  103)         real(RR) cwp_threshold  ! threshold for cloud condensate for shaded fraction calculation
+(  104)         real(RR), parameter :: dt_stat = 120.  ! cloud statistics sampling interval (s)
+(  105)         logical flag_top(nx,ny)
+(  106)         real(RR) ustar, bflx, z0_est, qsat, omg
+(  107)         real(RR) colprec,colprecs
+(  108)         real(RR) landfrac, icefrac
+(  109) !-----------------------------------------------
+(  110)         idt_gl = 1._r8/dt_gl
+(  111)         factor_xy = 1._r8/dble(nx*ny)
+(  112)         dummy = 0.
+(  113)         t_rad = 0.
+(  114)         qv_rad = 0.
+(  115)         qc_rad = 0.
+(  116)         qi_rad = 0.
+(  117)         cld_rad = 0.
+(  118)         reffc_rad = 0.
+(  119)         reffi_rad = 0.
+(  120) ! Temporary initialization. Should be eventually removed. -M
+(  121)         tau00 = 0.
+(  122)         wnd = 0.
+(  123)         bflxls = 0.
+(  124)         tabs_s0 = 300.
+(  125) 
+(  126)         ocnfrac = 1.
+(  127)         icefrac = 0.
+(  128)         landfrac = 0.
+(  129)         if(landmask.lt.0.5_JPRB) then
+(  130)           landfrac = 0.
+(  131)           ocnfrac = 1.
+(  132)           icefrac = 0.
+(  133)         else
+(  134)           landfrac = 1.
+(  135)           ocnfrac = 0.
+(  136)           icefrac = 0.
+(  137)         end if
+(  138) 
+(  139)         bflx = bflxls
+(  140)  
+(  141)         call setparm()
+(  142) 
+(  143)         cwp_threshold = 0.0001
+(  144) 
+(  145)         dt           = crm_dt
+(  146)         dx           = crm_dx
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 5
+
+(  147)         dy           = crm_dy
+(  148)         doprecip     = .true.
+(  149)         dosmagor     = .true.
+(  150)         doisccp = .true.
+(  151)         domodis = .true.
+(  152)         domisr = .true.
+(  153) 
+(  154)         umax = 0.5*dx/dt
+(  155) 
+(  156) 
+(  157) !        doshortwave = doshort
+(  158) !        dolongwave = dolong
+(  159) !        day0 = day00-dt_gl/86400.
+(  160) !        latitude = latitude00
+(  161) !        longitude = longitude00
+(  162) !        pres0 = pres00
+(  163) !        tabs_s = tabs_s0
+(  164) !        case = case0
+(  165) 
+(  166)         if(ocnfrac.gt.0.5) then
+(  167)            OCEAN = .true.
+(  168)         else
+(  169)            LAND = .true.
+(  170)         end if
+(  171)         tabs_s = tabs_s0
+(  172)         sstxy = tabs_s
+(  173) 
+(  174) !        create CRM vertical grid and initialize some vertical reference arrays:
+(  175) !
+(  176)         do k = 1, nzm
+(  177)            z(k) = (phil(k)-phii(1))/ggr
+(  178)            zi(k) = (phii(k)-phii(1))/ggr
+(  179)            pres(k) = pmid(k)*0.01 ! convert from Pa to mb
+(  180)            presi(k) = pint(k)*0.01
+(  181)            bet(k) = ggr/tl(k)
+(  182)            gamaz(k)=ggr/cp*z(k)
+(  183)            pdel(k) = del(k)  ! pdel in Pa
+(  184)         end do ! k
+(  185)         zi(nz) =  (phii(nz)-phii(1))/ggr
+(  186)         presi(nz) =  pint(nz)*0.01
+(  187) 
+(  188)         dz = 0.5*(z(1)+z(2))
+(  189)         do k=2,nzm
+(  190)            adzw(k) = (z(k)-z(k-1))/dz
+(  191)         end do
+(  192)         adzw(1) = 1.
+(  193)         adzw(nz) = adzw(nzm)
+(  194)         adz(1) = 1.
+(  195)         do k=2,nzm-1
+(  196)           adz(k) = 0.5*(z(k+1)-z(k-1))/dz
+(  197)         end do
+(  198)         adz(nzm) = adzw(nzm)
+(  199) 
+(  200) 
+(  201)         do k=1,nzm
+(  202)            grdf_x(k) = min(16.,dx**2/(adz(k)*dz)**2)
+(  203)            grdf_y(k) = min(16.,dy**2/(adz(k)*dz)**2)
+(  204)            grdf_z(k) = 1.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 6
+
+(  205)         end do
+(  206)         
+(  207)         do k = 1,nzm
+(  208)           rho(k) = pdel(k)/ggr/(adz(k)*dz)
+(  209)         end do
+(  210)         do k=2,nzm
+(  211)           rhow(k) = 0.5*(rho(k)+rho(k-1))
+(  212)         end do
+(  213)         rhow(1) = 2*rhow(2) - rhow(3)
+(  214)         rhow(nz)= 2*rhow(nzm) - rhow(nzm-1)
+(  215)         colprec=0
+(  216)         colprecs=0
+(  217) 
+(  218) !  
+(  219) !  Initialize:
+(  220) !       
+(  221)         u_crm => crm_buffer(:,:,:,1)
+(  222)         v_crm => crm_buffer(:,:,:,2)
+(  223) 
+(  224) ! limit the velocity at the very first step:
+(  225)         
+(  226)         if(u_crm(1,1,1).eq.u_crm(2,1,1).and.u_crm(3,1,2).eq.u_crm(4,1,2)) then
+(  227)          do k=1,nzm
+(  228)           do j=1,ny
+(  229)            do i=1,nx
+(  230)              u_crm(i,j,k) = min( umax, max(-umax,u_crm(i,j,k)) )
+(  231)              v_crm(i,j,k) = min( umax, max(-umax,v_crm(i,j,k)) )*YES3D
+(  232)            end do
+(  233)           end do
+(  234)          end do
+(  235)         
+(  236)         end if
+(  237) 
+(  238)         u(1:nx,1:ny,1:nzm) = u_crm(1:nx,1:ny,1:nzm)
+(  239)         v(1:nx,1:ny,1:nzm) = v_crm(1:nx,1:ny,1:nzm)*YES3D
+(  240)         w_crm => crm_buffer(:,:,:,3)
+(  241)         w(1:nx,1:ny,1:nzm) = w_crm(1:nx,1:ny,1:nzm)
+(  242)         t_crm => crm_buffer(:,:,:,4)
+(  243)         tabs(1:nx,1:ny,1:nzm) = t_crm(1:nx,1:ny,1:nzm)
+(  244) !#ifdef sam1mom 
+(  245)         micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields) = crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields)
+(  246)         qn(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,7)
+(  247) !#endif
+(  248) !#ifdef samccn
+(  249) !        micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields) = crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields)
+(  250) !        qn(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,8)
+(  251) !        CCN_C = ccn_tot
+(  252) !#endif
+(  253) !#ifdef m2005
+(  254) !        micro_field(1:nx,1:ny,1:nzm,iqv) = crm_buffer(1:nx,1:ny,1:nzm,5)
+(  255) !        micro_field(1:nx,1:ny,1:nzm,iqci) = crm_buffer(1:nx,1:ny,1:nzm,7)
+(  256) !        micro_field(1:nx,1:ny,1:nzm,inci) = crm_buffer(1:nx,1:ny,1:nzm,8)
+(  257) !        micro_field(1:nx,1:ny,1:nzm,iqr) = crm_buffer(1:nx,1:ny,1:nzm,9)
+(  258) !        micro_field(1:nx,1:ny,1:nzm,inr) = crm_buffer(1:nx,1:ny,1:nzm,10)
+(  259) !        micro_field(1:nx,1:ny,1:nzm,iqs) = crm_buffer(1:nx,1:ny,1:nzm,11)
+(  260) !        micro_field(1:nx,1:ny,1:nzm,ins) = crm_buffer(1:nx,1:ny,1:nzm,12)
+(  261) !        micro_field(1:nx,1:ny,1:nzm,iqg) = crm_buffer(1:nx,1:ny,1:nzm,13)
+(  262) !        micro_field(1:nx,1:ny,1:nzm,ing) = crm_buffer(1:nx,1:ny,1:nzm,14)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 7
+
+(  263) !        if(dopredictNc) then
+(  264) !         micro_field(1:nx,1:ny,1:nzm,incl) = crm_buffer(1:nx,1:ny,1:nzm,15)
+(  265) !        endif
+(  266) !        cloudliq(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,6)
+(  267) !        ccnconst = ccn_tot
+(  268) !        in_count = max(0.01_r8,in_tot)
+(  269) !#endif
+(  270) 
+(  271)         w(:,:,nz)=0.
+(  272)         dudt(1:nx,1:ny,1:nzm,1:3) = 0.
+(  273)         dvdt(1:nx,1:ny,1:nzm,1:3) = 0.
+(  274)         dwdt(1:nx,1:ny,1:nz,1:3) = 0.
+(  275)         tke(1:nx,1:ny,1:nzm) = 0.
+(  276)         tk(1:nx,1:ny,1:nzm) = 0.
+(  277)         tkh(1:nx,1:ny,1:nzm) = 0.
+(  278)         p(1:nx,1:ny,1:nzm) = 0.
+(  279) 
+(  280)         call micro_init
+(  281) 
+(  282)         do k=1,nzm
+(  283)           
+(  284)           u0(k)=0.
+(  285)           v0(k)=0.
+(  286)           t0(k)=0.
+(  287)           t00(k)=0.
+(  288)           tabs0(k)=0.
+(  289)           q0(k)=0.
+(  290)           q00(k)=0.
+(  291)           qv0(k)=0.
+(  292)           
+(  293)           do j=1,ny
+(  294)            do i=1,nx
+(  295)             
+(  296)             t(i,j,k) = tabs(i,j,k)+gamaz(k) &
+(  297)                         -fac_cond*qcl(i,j,k)-fac_sub*qci(i,j,k) &
+(  298)                         -fac_cond*qpl(i,j,k)-fac_sub*qpi(i,j,k)
+(  299)             colprec=colprec+(qpl(i,j,k)+qpi(i,j,k))*pdel(k)
+(  300)             colprecs=colprecs+qpi(i,j,k)*pdel(k)
+(  301)             u0(k)=u0(k)+u(i,j,k)
+(  302)             v0(k)=v0(k)+v(i,j,k)
+(  303)             t0(k)=t0(k)+t(i,j,k)
+(  304)             t00(k)=t00(k)+t(i,j,k)+fac_cond*qpl(i,j,k)+fac_sub*qpi(i,j,k)
+(  305)             tabs0(k)=tabs0(k)+tabs(i,j,k)
+(  306)             q0(k)=q0(k)+qv(i,j,k)+qcl(i,j,k)+qci(i,j,k)
+(  307)             qv0(k) = qv0(k) + qv(i,j,k)
+(  308)             qn0(k) = qn0(k) + qcl(i,j,k) + qci(i,j,k)
+(  309)             qp0(k) = qp0(k) + qpl(i,j,k) + qpi(i,j,k)
+(  310)             tke0(k)=tke0(k)+tke(i,j,k)
+(  311) 
+(  312)            end do
+(  313)           end do
+(  314) 
+(  315)           u0(k) = u0(k) * factor_xy
+(  316)           v0(k) = v0(k) * factor_xy
+(  317)           t0(k) = t0(k) * factor_xy
+(  318)           t00(k) = t00(k) * factor_xy
+(  319)           tabs0(k) = tabs0(k) * factor_xy
+(  320)           q0(k) = q0(k) * factor_xy
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 8
+
+(  321)           qv0(k) = qv0(k) * factor_xy
+(  322)           qn0(k) = qn0(k) * factor_xy
+(  323)           qp0(k) = qp0(k) * factor_xy
+(  324)           tke0(k) = tke0(k) * factor_xy
+(  325) 
+(  326)           uln(k) = min( umax, max(-umax,ul(k)) )
+(  327)           vln(k) = min( umax, max(-umax,vl(k)) )*YES3D
+(  328)           ttend(k) = (tl(k)+gamaz(k)-fac_cond*qll(k)-fac_sub*qil(k)-t00(k))*idt_gl
+(  329)           qtend(k) = (max(0._r8,ql(k)+qll(k)+qil(k))-q0(k))*idt_gl
+(  330)           utend(k) = (uln(k)-u0(k))*idt_gl
+(  331)           vtend(k) = (vln(k)-v0(k))*idt_gl
+(  332)           ug0(k) = uln(k)
+(  333)           vg0(k) = vln(k)
+(  334) 
+(  335)         end do ! k
+(  336)        
+(  337)         uhl = u0(1)
+(  338)         vhl = v0(1)
+(  339) 
+(  340) ! estimate roughness length assuming logarithmic profile of velocity near the surface:
+(  341) 
+(  342)         ustar = sqrt(tau00/rho(1))
+(  343)         z0 = z0_est(z(1),bflx,wnd,ustar)
+(  344)         z0 = max(0.00001,min(1.,z0))
+(  345) 
+(  346) 
+(  347) 
+(  348)         fluxbu=0.
+(  349)         fluxbv=0.
+(  350)         fluxbt=0.
+(  351)         fluxbq=0.
+(  352)         fluxtu=0.
+(  353)         fluxtv=0.
+(  354)         fluxtt=0.
+(  355)         fluxtq=0.
+(  356)         fzero =0.
+(  357)         precsfc=0.
+(  358)         precssfc=0.
+(  359) 
+(  360) !---------------------------------------------------
+(  361)         stout%precc = 0.
+(  362)         stout%precsc = 0.
+(  363)         stout%precl = 0.
+(  364)         stout%precsl = 0.
+(  365)         stout%cltot = 0.
+(  366)         stout%clhgh = 0.
+(  367)         stout%clmed = 0.
+(  368)         stout%cllow = 0.
+(  369)         stout%cld = 0.
+(  370)         stout%cldtop = 0.
+(  371)         stout%rad_qc = 0.
+(  372)         stout%rad_qi = 0.
+(  373)         stout%gicewp = 0.
+(  374)         stout%gliqwp = 0.
+(  375)         stout%gicewpcld = 0.
+(  376)         stout%gliqwpcld = 0.
+(  377)         stout%mc = 0.
+(  378)         stout%mcup = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 9
+
+(  379)         stout%mcdn = 0.
+(  380)         stout%mcuup = 0.
+(  381)         stout%mcudn = 0. 
+(  382)         stout%crm_qc = 0.
+(  383)         stout%crm_qi = 0.
+(  384)         stout%crm_qs = 0.
+(  385)         stout%crm_qg = 0.
+(  386)         stout%crm_qr = 0.
+(  387)         stout%crm_nc = 0.
+(  388)         stout%crm_ni = 0.
+(  389)         stout%flux_qt = 0.
+(  390)         stout%flux_u = 0.
+(  391)         stout%flux_v = 0.
+(  392)         stout%fluxsgs_qt = 0.
+(  393)         stout%tkez = 0.
+(  394)         stout%tkesgsz = 0. 
+(  395)         stout%flux_qp = 0.
+(  396)         stout%pflx = 0.
+(  397)         stout%qt_trans = 0.
+(  398)         stout%qp_trans = 0.
+(  399)         stout%qp_fall = 0.
+(  400)         stout%qp_evp = 0.
+(  401)         stout%qp_src = 0.
+(  402)         stout%qt_ls = 0.
+(  403)         stout%t_ls = 0.
+(  404)         stout%timing_factor=0.
+(  405) 
+(  406)         stout%prectend=colprec
+(  407)         stout%precstend=colprecs
+(  408) 
+(  409)         uwle = 0.
+(  410)         uwsb = 0.
+(  411)         vwle = 0.
+(  412)         vwsb = 0.
+(  413) 
+(  414) !#if defined sam1mom || defined samccn
+(  415)         qpsrc = 0.
+(  416)         qpfall = 0.
+(  417)         qpevp = 0.
+(  418) !#endif
+(  419)         precflux = 0.
+(  420) 
+(  421) !--------------------------------------------------
+(  422) !#if defined sam1mom || defined samccn
+(  423)      if(doprecip) call precip_init()
+(  424) !#endif
+(  425) 
+(  426) 
+(  427)         if(u(1,1,1).eq.u(2,1,1).and.u(3,1,2).eq.u(4,1,2)) &
+(  428)                     call setperturb()
+(  429) 
+(  430)         nstop = dt_gl/dt
+(  431)         dt = dt_gl/nstop
+(  432)         nstatis = nint(dt_gl/dt_stat)
+(  433)         nstat = 0
+(  434)         nsave3D = nint(60/dt)
+(  435) !       if(nint(nsave3D*dt).ne.60)then
+(  436) !          print *,'CRM: time step=',dt,' is not divisible by 60 seconds'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 10
+
+(  437) !          print *,'this is needed for output every 60 seconds'
+(  438) !          stop
+(  439) !       endif
+(  440)         nstep = 0
+(  441)         nprint = 1
+(  442)         ncycle = 0
+(  443) !        nrad = nstop/nrad0
+(  444)         day=day0
+(  445) !        call stepout
+(  446) !------------------------------------------------------------------
+(  447) !   Main time loop    
+(  448) !------------------------------------------------------------------
+(  449) 
+(  450) do while(nstep.lt.nstop) 
+(  451)         
+(  452)   nstep = nstep + 1
+(  453)   time = time + dt
+(  454)   day = day0 + time/86400.
+(  455)   stout%timing_factor = stout%timing_factor+1
+(  456) !------------------------------------------------------------------
+(  457) !  Check if the dynamical time step should be decreased 
+(  458) !  to handle the cases when the flow being locally linearly unstable
+(  459) !------------------------------------------------------------------
+(  460) 
+(  461)   ncycle = 1
+(  462) 
+(  463)   call kurant()
+(  464) 
+(  465)   if(ncycle.gt.ncycle_max) then
+(  466)     open(92,file='out.92',form='formatted')
+(  467)     write(92,*) r8,i8,icol, plev, tl, ql, qll, qil, cldl, ul, vl, &
+(  468)                        pmid, pint, del,  &
+(  469)                        phil, phii, dt_gl, crm_buffer,landmask
+(  470)      close (92)
+(  471)      call stepout 
+(  472)      print*,">>>>>>>>>>> crm crash!!! Stopping.>>>>>>>>> ncycle=",ncycle
+(  473)      call ABOR1('stopping crm...')
+(  474)      stop
+(  475)   endif
+(  476) 
+(  477)   do icyc=1,ncycle
+(  478) 
+(  479)      icycle = icyc
+(  480)      dtn = dt/ncycle
+(  481)      dt3(na) = dtn
+(  482)      dtfactor = dtn/dt
+(  483) 
+(  484) !---------------------------------------------
+(  485) !  	the Adams-Bashforth scheme in time
+(  486) 
+(  487)      call abcoefs()
+(  488)  
+(  489) !---------------------------------------------
+(  490) !  	initialize stuff: 
+(  491) 
+(  492)      call zero()
+(  493) 
+(  494) !-----------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 11
+
+(  495) !       Buoyancy term:
+(  496) 
+(  497)      call buoyancy()
+(  498) 
+(  499) !------------------------------------------------------------
+(  500) !       Large-scale and surface forcing:
+(  501) 
+(  502)      call forcing()
+(  503) 
+(  504) !     do k=1,nzm
+(  505) !      do j=1,ny
+(  506) !        do i=1,nx
+(  507) !          t(i,j,k) = t(i,j,k) + qrad_crm(i,j,k)*dtn
+(  508) !        end do
+(  509) !      end do
+(  510) !     end do
+(  511) 
+(  512) 
+(  513) 
+(  514) !----------------------------------------------------------
+(  515) !   	suppress turbulence near the upper boundary (spange):
+(  516) 
+(  517)      if(dodamping) call damping()
+(  518) 
+(  519) !----------------------------------------------------------
+(  520) !      Update the subdomain's boundaries for velocity
+(  521) 
+(  522)      call boundaries(0)
+(  523) 
+(  524) !---------------------------------------------------------
+(  525) !	SGS TKE equation:     	
+(  526) 
+(  527)      if(dosgs) call tke_full()
+(  528) 
+(  529) !---------------------------------------------------------
+(  530) !   Ice fall-out
+(  531)    
+(  532)       if(docloud) then
+(  533)           call ice_fall()
+(  534)       end if
+(  535) 
+(  536) !---------------------------------------------------------
+(  537) !        Update boundaries for scalars, sst,  SGS exchange coefficients 
+(  538) 
+(  539)      call boundaries(2)
+(  540) 
+(  541) !-----------------------------------------------
+(  542) !       advection of momentum:
+(  543)      call advect_mom()
+(  544) 
+(  545) 
+(  546) !-----------------------------------------------
+(  547) !   	surface fluxes:
+(  548) 
+(  549)      if(dosurface) then
+(  550) 
+(  551)        call crmsurface(bflx)
+(  552) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 12
+
+(  553)      end if
+(  554) !----------------------------------------------------------
+(  555) !	SGS diffusion of momentum:
+(  556) 
+(  557)      if(dosgs) call diffuse_mom()
+(  558) 
+(  559) !-----------------------------------------------------------
+(  560) !       Coriolis force:
+(  561) 
+(  562)      if(docoriolis) call coriolis()
+(  563) 
+(  564) !---------------------------------------------------------
+(  565) !       compute rhs of the Poisson equation and solve it for pressure. 
+(  566) 
+(  567)      call pressure()
+(  568) 
+(  569) 
+(  570) !---------------------------------------------------------
+(  571) !       find velocity field at n+1/2 timestep needed for advection of scalars:
+(  572) 
+(  573)      call adams()
+(  574) 
+(  575) !----------------------------------------------------------
+(  576) !     Update boundaries for velocity fields to use for advection of scalars:
+(  577) 
+(  578)      call boundaries(1)
+(  579) 
+(  580) !---------------------------------------------------------
+(  581) !      advection of scalars :
+(  582) 
+(  583)      call advect_scalar(t,tadv,twle,t2leadv,t2legrad,twleadv,.true.)
+(  584)      
+(  585)      if(dosgs.and..not.dosmagor) then
+(  586)       call advect_scalar(tke,dummy,tkewle,dummy,dummy,dummy,.false.)
+(  587)      else if(doscalar) then
+(  588)       call advect_scalar(tke,dummy,tkewle,s2leadv,s2legrad,swleadv,.true.)
+(  589)      end if
+(  590) 
+(  591) !
+(  592) !    Advection of microphysics prognostics:
+(  593) !
+(  594)      do k = 1,nmicro_fields
+(  595)         if(   k.eq.index_water_vapor             &! transport water-vapor variable no metter what
+(  596)          .or. docloud.and.flag_precip(k).ne.1    & ! transport non-precipitation vars
+(  597)          .or. doprecip.and.flag_precip(k).eq.1 ) &
+(  598)            call advect_scalar(micro_field(:,:,:,k),mkadv(:,k),mkwle(:,k),dummy,dummy,dummy,.false.)
+(  599)      end do
+(  600) 
+(  601) !   Precipitation fallout:
+(  602) !
+(  603)     if(doprecip) then
+(  604) 
+(  605)        call micro_precip_fall()
+(  606) 
+(  607)     end if
+(  608) 
+(  609) !---------------------------------------------------------
+(  610) !      diffusion of scalars :
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 13
+
+(  611) 
+(  612) !        Update boundaries for scalars:
+(  613) 
+(  614)       if(dosgs) call boundaries(3)
+(  615) 
+(  616)       call diffuse_scalar(t,t0,fluxbt,fluxtt,tdiff,twsb, &
+(  617)                            t2lediff,t2lediss,twlediff,.true.)
+(  618)      
+(  619)       if(.not.dosmagor) then
+(  620)           call diffuse_scalar(tke,fzero,fzero,fzero,dummy,tkewsb, &
+(  621)                                     dummy,dummy,dummy,.false.)
+(  622)       else if(doscalar) then
+(  623)           call diffuse_scalar(tke,fzero,fluxbq,fluxtq,dummy,tkewsb, &
+(  624)                            s2lediff,s2lediss,swlediff,.true.)
+(  625)       end if
+(  626) 
+(  627) 
+(  628) !
+(  629) !    diffusion of microphysics prognostics:
+(  630) !
+(  631)       call micro_flux()
+(  632) 
+(  633)       do k = 1,nmicro_fields
+(  634)         if(   k.eq.index_water_vapor) then  ! transport water-vapor variable no metter what
+(  635)            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
+(  636)            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
+(  637)            call diffuse_scalar(micro_field(:,:,:,k),q0,fluxbtmp,fluxttmp, &
+(  638)                 mkdiff(:,k),mkwsb(:,k), dummy,dummy,dummy,.false.)
+(  639)         elseif(docloud.and.flag_precip(k).ne.1    & ! transport non-precipitation vars
+(  640)           .or. doprecip.and.flag_precip(k).eq.1 ) then
+(  641)            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
+(  642)            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
+(  643)            call diffuse_scalar(micro_field(:,:,:,k),fzero,fluxbtmp,fluxttmp, &
+(  644)                 mkdiff(:,k),mkwsb(:,k), dummy,dummy,dummy,.false.)
+(  645)         end if
+(  646)       end do
+(  647) 
+(  648)  ! diffusion of tracers:
+(  649) 
+(  650)       if(dotracers) then
+(  651) 
+(  652)         call tracers_flux()
+(  653) 
+(  654)         do k = 1,ntracers
+(  655) 
+(  656)           fluxbtmp = fluxbtr(:,:,k)
+(  657)           fluxttmp = fluxttr(:,:,k)
+(  658)           call diffuse_scalar(tracer(:,:,:,k),fzero,fluxbtmp,fluxttmp, &
+(  659)                trdiff(:,k),trwsb(:,k), &
+(  660)                dummy,dummy,dummy,.false.)
+(  661)  
+(  662)         end do
+(  663) 
+(  664)       end if
+(  665) !-----------------------------------------------------------
+(  666) !    Update velocity field:
+(  667) 
+(  668)       call uvw()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 14
+
+(  669) 
+(  670) !-----------------------------------------------------------
+(  671) !       Cloud condensation/evaporation and precipitation processes:
+(  672) 
+(  673)       if(docloud.or.dosmoke) call micro_proc()
+(  674) 
+(  675) !-----------------------------------------------------------
+(  676) !    Compute field diagnostics:
+(  677) 
+(  678)       call diagnose()
+(  679) 
+(  680) !----------------------------------------------------------
+(  681) ! Rotate the dynamic tendency arrays for Adams-bashforth scheme:
+(  682) 
+(  683)       nn=na
+(  684)       na=nc
+(  685)       nc=nb
+(  686)       nb=nn
+(  687) 
+(  688)    end do ! icycle	
+(  689)           
+(  690) !----------------------------------------------------------
+(  691) !----------------------------------------------------------
+(  692)     if(mod(nstep,nstatis).eq.0) then
+(  693) 
+(  694)         nstat = nstat + 1
+(  695) 
+(  696)         cwp = 0.
+(  697)         cwph = 0.
+(  698)         cwpm = 0.
+(  699)         cwpl = 0.
+(  700) 
+(  701)         flag_top(:,:) = .true.
+(  702) 
+(  703) !#ifdef m2005
+(  704) !        nn = inci
+(  705) !        if(dopredictNc) nn = incl
+(  706) !#endif
+(  707) 
+(  708)         do k=1,nzm
+(  709)          tmp2=pres(nz-k)/presi(1)
+(  710)          do j=1,ny
+(  711)           do i=1,nx
+(  712) 
+(  713)            stout%crm_qc(k) = stout%crm_qc(k) + qcl(i,j,k)
+(  714)            stout%crm_qi(k) = stout%crm_qi(k) + qci(i,j,k)
+(  715)            stout%crm_qr(k) = stout%crm_qr(k) + qpl(i,j,k)
+(  716) !#if defined sam1mom || defined samccn
+(  717)            omg = max(0.,min(1.,(tabs(i,j,k)-tgrmin)*a_gr))
+(  718)            stout%crm_qg(k) = stout%crm_qg(k) + qpi(i,j,k)*omg
+(  719)            stout%crm_qs(k) = stout%crm_qs(k) + qpi(i,j,k)*(1.-omg)
+(  720) !#else
+(  721) !           stout%crm_qg(k) = stout%crm_qg(k) + qpi(i,j,k)
+(  722) !           stout%crm_qs(k) = stout%crm_qs(k) + 0.     ! temporerary solution
+(  723) !#endif
+(  724) 
+(  725) 
+(  726)            tmp1 = rho(nz-k)*adz(nz-k)*dz*(qcl(i,j,nz-k)+qci(i,j,nz-k))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 15
+
+(  727)            cwp(i,j) = cwp(i,j)+tmp1
+(  728)            if(cwp(i,j).gt.cwp_threshold.and.flag_top(i,j)) then
+(  729)                stout%cldtop(k) = stout%cldtop(k) + 1
+(  730)                flag_top(i,j) = .false.
+(  731)            end if
+(  732)              ! make compatible with ECMWF definitions (used in CLDPP)
+(  733)            if(tmp2.ge.0.8) then
+(  734)                cwpl(i,j) = cwpl(i,j)+tmp1
+(  735)            else if(tmp2.le.0.45) then
+(  736)                cwph(i,j) = cwph(i,j)+tmp1
+(  737)            else
+(  738)                cwpm(i,j) = cwpm(i,j)+tmp1
+(  739)            end if
+(  740) 
+(  741)       !     qsat = qsatw_crm(tabs(i,j,k),pres(k))
+(  742)       !     if(qcl(i,j,k)+qci(i,j,k).gt.min(1.e-5,0.01*qsat)) then
+(  743) 
+(  744)            tmp1 = rho(k)*adz(k)*dz
+(  745)            if(tmp1*(qcl(i,j,k)+qci(i,j,k)).gt.cwp_threshold) then
+(  746)                 stout%cld(k) = stout%cld(k) + 1.
+(  747)                 stout%rad_qc(k) = stout%rad_qc(k) + qcl(i,j,k)
+(  748)                 stout%rad_qi(k) = stout%rad_qi(k) + qci(i,j,k)
+(  749)                 cld_rad(i,j,k) = cld_rad(i,j,k) + 1.
+(  750)                 qc_rad(i,j,k) = qc_rad(i,j,k)+qcl(i,j,k)
+(  751)                 qi_rad(i,j,k) = qi_rad(i,j,k)+qci(i,j,k)
+(  752) !#ifdef samccn
+(  753) !                ! weight reff by cloud water/ice mass
+(  754) !                reffc_rad(i,j,k) = reffc_rad(i,j,k) + reffc(i,j,k)*qcl(i,j,k)
+(  755) !                stout%crm_nc(k) = stout%crm_nc(k) + micro_field(i,j,k,nn)*rho(k)*qci(i,j,k)
+(  756) !#endif
+(  757) !#ifdef m2005
+(  758) !                ! weight reff by cloud water/ice mass
+(  759) !                reffc_rad(i,j,k) = reffc_rad(i,j,k) + reffc(i,j,k)*qcl(i,j,k)
+(  760) !                reffi_rad(i,j,k) = reffi_rad(i,j,k) + reffi(i,j,k)*qci(i,j,k)
+(  761) !                stout%crm_ni(k) = stout%crm_ni(k) + micro_field(i,j,k,inci)*rho(k)*qcl(i,j,k)
+(  762) !                stout%crm_nc(k) = stout%crm_nc(k) + micro_field(i,j,k,nn)*rho(k)*qci(i,j,k)
+(  763) !#endif
+(  764)                 if(w(i,j,k+1)+w(i,j,k).gt.2*wmin) then
+(  765)                   stout%mcup(k) = stout%mcup(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  766)                 end if
+(  767)                 if(w(i,j,k+1)+w(i,j,k).lt.-2*wmin) then
+(  768)                   stout%mcdn(k) = stout%mcdn(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  769)                 end if
+(  770)            else 
+(  771)                 if(w(i,j,k+1)+w(i,j,k).gt.2*wmin) then
+(  772)                   stout%mcuup(k) = stout%mcuup(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  773)                 end if
+(  774)                 if(w(i,j,k+1)+w(i,j,k).lt.-2*wmin) then
+(  775)                   stout%mcudn(k) = stout%mcudn(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  776)                 end if
+(  777)            end if
+(  778)            
+(  779)            t_rad (i,j,k) = t_rad (i,j,k)+tabs(i,j,k)
+(  780)            qv_rad(i,j,k) = qv_rad(i,j,k)+max(0.,qv(i,j,k))
+(  781) 
+(  782)            stout%gliqwp(k)=stout%gliqwp(k)+qcl(i,j,k)
+(  783)            stout%gicewp(k)=stout%gicewp(k)+qci(i,j,k)
+(  784)           
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 16
+
+(  785)           end do
+(  786)          end do
+(  787)         end do
+(  788) 
+(  789) 
+(  790) !        do k=1,nzm
+(  791) !         radlwup0(k)=radlwup0(k)+radlwup(k)
+(  792) !         radlwdn0(k)=radlwdn0(k)+radlwdn(k)
+(  793) !         radqrlw0(k)=radqrlw0(k)+radqrlw(k)
+(  794) !         radswup0(k)=radswup0(k)+radswup(k)
+(  795) !         radswdn0(k)=radswdn0(k)+radswdn(k)
+(  796) !         radqrsw0(k)=radqrsw0(k)+radqrsw(k)
+(  797) !        end do
+(  798)         
+(  799)         do j=1,ny
+(  800)          do i=1,nx
+(  801)            if(cwph(i,j).gt.cwp_threshold) then
+(  802)                 stout%clhgh = stout%clhgh + 1.
+(  803)            elseif(cwpm(i,j).gt.cwp_threshold) then
+(  804)                 stout%clmed = stout%clmed + 1.
+(  805)            elseif(cwpl(i,j).gt.cwp_threshold) then
+(  806)                 stout%cllow = stout%cllow + 1.
+(  807)            end if
+(  808)          end do
+(  809)         end do
+(  810) 
+(  811) 
+(  812)     end if ! mod(nstop,nstatis....     
+(  813) 
+(  814) !    call stepout
+(  815) !----------------------------------------------------------
+(  816)         end do ! main loop
+(  817) !----------------------------------------------------------
+(  818) 
+(  819) !#ifdef samccn
+(  820) !        reffc_rad = reffc_rad / (qc_rad+1.e-8)
+(  821) !        stout%crm_nc = stout%crm_nc / (stout%crm_qc+1.e-8) * 1.e-6
+(  822) !#endif
+(  823) !#ifdef m2005
+(  824) !        reffc_rad = reffc_rad / (qc_rad+1.e-8)
+(  825) !        reffi_rad = reffi_rad / (qi_rad+1.e-8)
+(  826) !        stout%crm_ni = stout%crm_ni / (stout%crm_qi+1.e-8) * 1.e-6
+(  827) !        if(dopredictNc) then
+(  828) !             stout%crm_nc = stout%crm_nc / (crm_qc+1.e-8) * 1.e-6
+(  829) !        else
+(  830) !             stout%crm_nc = Nc0
+(  831) !        end if
+(  832) !#endif
+(  833)         tmp1 = 1._r8/ dble(nstat)
+(  834)         t_rad = t_rad * tmp1
+(  835)         qv_rad = qv_rad * tmp1
+(  836)         qc_rad = qc_rad * tmp1
+(  837)         qi_rad = qi_rad * tmp1
+(  838)         cld_rad = cld_rad * tmp1
+(  839) 
+(  840) 
+(  841) !  Compute tendencies due to CRM:
+(  842)         
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 17
+
+(  843)         tln(:) = 0.
+(  844)         qln(:) = 0.
+(  845)         qlln(:)= 0.
+(  846)         qiln(:)= 0.
+(  847)         cldln(:) = 0.
+(  848)         ull(:) = 0.
+(  849)         vll(:) = 0.
+(  850)         colprec=0
+(  851)         colprecs=0
+(  852)         do k = 1,nzm
+(  853)          tmp1 = rho(k)*adz(k)*dz
+(  854)          do i=1,nx
+(  855)           do j=1,ny
+(  856)              colprec=colprec+(qpl(i,j,k)+qpi(i,j,k))*pdel(k)
+(  857)              colprecs=colprecs+qpi(i,j,k)*pdel(k)
+(  858)              tln(k) = tln(k)+tabs(i,j,k)
+(  859)              qln(k) = qln(k)+qv(i,j,k)
+(  860)              qlln(k)= qlln(k)+qcl(i,j,k)
+(  861)              qiln(k)= qiln(k)+qci(i,j,k)
+(  862)              ull(k) = ull(k)+u(i,j,k)
+(  863)              vll(k) = vll(k)+v(i,j,k)
+(  864)              if(tmp1*(qcl(i,j,k)+qci(i,j,k)).gt.cwp_threshold) &
+(  865)                 cldln(k) = cldln(k) + 1.
+(  866)           end do 
+(  867)          end do
+(  868)         end do 
+(  869)         tln(:) = tln(:) * factor_xy
+(  870)         qln(:) = qln(:) * factor_xy
+(  871)         qlln(:) = qlln(:) * factor_xy
+(  872)         qiln(:) = qiln(:) * factor_xy
+(  873)         cldln(:) = cldln(:) * factor_xy
+(  874)         ull(:) = ull(:) * factor_xy
+(  875)         vll(:) = vll(:) * factor_xy
+(  876) 
+(  877)         stout%ultend = (ull - uln) * idt_gl
+(  878)         stout%vltend = (vll - vln) * idt_gl
+(  879)         stout%tltend = (tln - tl) * idt_gl
+(  880)         stout%qltend = (qln - ql) * idt_gl
+(  881)         stout%qlltend = (qlln - qll) * idt_gl
+(  882)         stout%qiltend = (qiln - qil) * idt_gl
+(  883)         stout%cldltend = (cldln - cldl) * idt_gl
+(  884)         stout%cldl = cldln
+(  885)         stout%prectend=(colprec-stout%prectend)/ggr*factor_xy * idt_gl
+(  886)         stout%precstend=(colprecs-stout%precstend)/ggr*factor_xy * idt_gl
+(  887) 
+(  888) ! Coupling to GCM is here (no coupling of horizonal wind):
+(  889) 
+(  890) !        tl = tln
+(  891) !        ql = qln
+(  892) !        qll = qlln
+(  893) !        qil = qiln
+(  894) !        cldl = cldln
+(  895) 
+(  896) !-------------------------------------------------------------
+(  897) ! 
+(  898) ! Save the last step to the permanent core:
+(  899)         
+(  900)         u_crm  (1:nx,1:ny,1:nzm) = u   (1:nx,1:ny,1:nzm)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 18
+
+(  901)         v_crm  (1:nx,1:ny,1:nzm) = v   (1:nx,1:ny,1:nzm)
+(  902)         w_crm  (1:nx,1:ny,1:nzm) = w   (1:nx,1:ny,1:nzm)
+(  903)         t_crm  (1:nx,1:ny,1:nzm) = tabs(1:nx,1:ny,1:nzm)
+(  904) !#ifdef sam1mom
+(  905)         crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields) = micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields)
+(  906)         crm_buffer(1:nx,1:ny,1:nzm,7) = qn(1:nx,1:ny,1:nzm)
+(  907) !#endif
+(  908) !#ifdef samccn
+(  909) !        crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields) = micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields)
+(  910) !        crm_buffer(1:nx,1:ny,1:nzm,8) = qn(1:nx,1:ny,1:nzm)
+(  911) !#endif
+(  912) !#ifdef m2005
+(  913) !        crm_buffer(1:nx,1:ny,1:nzm,5) = micro_field(1:nx,1:ny,1:nzm,iqv) 
+(  914) !        crm_buffer(1:nx,1:ny,1:nzm,7) = micro_field(1:nx,1:ny,1:nzm,iqci) 
+(  915) !        crm_buffer(1:nx,1:ny,1:nzm,8) = micro_field(1:nx,1:ny,1:nzm,inci) 
+(  916) !        crm_buffer(1:nx,1:ny,1:nzm,9) = micro_field(1:nx,1:ny,1:nzm,iqr) 
+(  917) !        crm_buffer(1:nx,1:ny,1:nzm,10) = micro_field(1:nx,1:ny,1:nzm,inr) 
+(  918) !        crm_buffer(1:nx,1:ny,1:nzm,11) = micro_field(1:nx,1:ny,1:nzm,iqs) 
+(  919) !        crm_buffer(1:nx,1:ny,1:nzm,12) = micro_field(1:nx,1:ny,1:nzm,ins) 
+(  920) !        crm_buffer(1:nx,1:ny,1:nzm,13) = micro_field(1:nx,1:ny,1:nzm,iqg) 
+(  921) !        crm_buffer(1:nx,1:ny,1:nzm,14) = micro_field(1:nx,1:ny,1:nzm,ing) 
+(  922) !        if(dopredictNc) then
+(  923) !         crm_buffer(1:nx,1:ny,1:nzm,15) = micro_field(1:nx,1:ny,1:nzm,incl) 
+(  924) !        endif
+(  925) !         crm_buffer(1:nx,1:ny,1:nzm,6) = cloudliq(1:nx,1:ny,1:nzm)
+(  926) !#endif
+(  927) 
+(  928)         do k=1,nzm
+(  929)          do j=1,ny
+(  930)           do i=1,nx
+(  931)             qc_crm(i,j,k) = qcl(i,j,k)
+(  932)             qi_crm(i,j,k) = qci(i,j,k)
+(  933)             qpc_crm(i,j,k) = qpl(i,j,k)
+(  934)             qpi_crm(i,j,k) = qpi(i,j,k)
+(  935)           end do
+(  936)          end do
+(  937)         end do
+(  938)         stout%z0m = z0 
+(  939)         stout%taux_crm = taux0 / dble(nstop)
+(  940)         stout%tauy_crm = tauy0 / dble(nstop)
+(  941) 
+(  942) !---------------------------------------------------------------
+(  943) !
+(  944) !  Diagnostics:
+(  945) 
+(  946)         stout%cld = min(1._r8,stout%cld/float(nstat)*factor_xy)
+(  947)         stout%cldtop = min(1._r8,stout%cldtop/float(nstat)*factor_xy)
+(  948)         stout%rad_qc = stout%rad_qc / float(nstat) * factor_xy
+(  949)         stout%rad_qi = stout%rad_qi / float(nstat) * factor_xy
+(  950)         stout%gicewp(:)=stout%gicewp*pdel(:)*1000./ggr/float(nstat)*factor_xy
+(  951)         stout%gliqwp(:)=stout%gliqwp*pdel(:)*1000./ggr/float(nstat)*factor_xy
+(  952)         stout%mcup = stout%mcup / float(nstat) * factor_xy
+(  953)         stout%mcdn = stout%mcdn / float(nstat) * factor_xy
+(  954)         stout%mcuup = stout%mcuup / float(nstat) * factor_xy
+(  955)         stout%mcudn = stout%mcudn / float(nstat) * factor_xy
+(  956)         stout%mc = stout%mcup + stout%mcdn + stout%mcuup + stout%mcudn
+(  957)         stout%crm_qc = stout%crm_qc / float(nstat) * factor_xy
+(  958)         stout%crm_qi = stout%crm_qi / float(nstat) * factor_xy
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 19
+
+(  959)         stout%crm_qs = stout%crm_qs / float(nstat) * factor_xy
+(  960)         stout%crm_qg = stout%crm_qg / float(nstat) * factor_xy
+(  961)         stout%crm_qr = stout%crm_qr / float(nstat) * factor_xy
+(  962) ! compute in-incloud properties for radiation computations:
+(  963)         do k=1,nzm
+(  964)             if(stout%cld(k).gt.0.) then
+(  965)               stout%gicewpcld(k)=stout%gicewp(k)/stout%cld(k)
+(  966)               stout%gliqwpcld(k)=stout%gliqwp(k)/stout%cld(k)
+(  967)             else
+(  968)               stout%gicewpcld(k)= 0.
+(  969)               stout%gliqwpcld(k)= 0.
+(  970)             end if
+(  971)             tmp1 = tl(k)
+(  972)             stout%reffliq(k) = computeRe_Liquid(tmp1, landfrac, icefrac)
+(  973)             stout%reffice(k) = computeRe_Ice(tmp1)
+(  974)         end do
+(  975) 
+(  976) 
+(  977)         do j=1,ny
+(  978)          do i=1,nx
+(  979)           precsfc(i,j) = precsfc(i,j)*dz/dt/dble(nstop)
+(  980)           precssfc(i,j) = precssfc(i,j)*dz/dt/dble(nstop)
+(  981)           if(precsfc(i,j).gt.10./86400.) then
+(  982)              stout%precc = stout%precc + precsfc(i,j)
+(  983)              stout%precsc = stout%precsc + precssfc(i,j)
+(  984)           else
+(  985)              stout%precl = stout%precl + precsfc(i,j)
+(  986)              stout%precsl = stout%precsl + precssfc(i,j)
+(  987)           end if
+(  988)          end do
+(  989)         end do
+(  990)         prec_crm = precsfc/1000.
+(  991)         stout%precc = stout%precc*factor_xy/1000.
+(  992)         stout%precl = stout%precl*factor_xy/1000.
+(  993)         stout%precsc = stout%precsc*factor_xy/1000.
+(  994)         stout%precsl = stout%precsl*factor_xy/1000.
+(  995) 
+(  996)         stout%clhgh = stout%clhgh *factor_xy/nstat
+(  997)         stout%clmed = stout%clmed *factor_xy/nstat
+(  998)         stout%cllow = stout%cllow *factor_xy/nstat
+(  999)         stout%cltot = stout%clhgh + stout%clmed + stout%cllow
+( 1000) 
+( 1001) !-------------------------------------------------------------
+( 1002) !       Fluxes and other stat:
+( 1003) !-------------------------------------------------------------
+( 1004)         do k=1,nzm
+( 1005)           u2z = 0.
+( 1006)           v2z = 0.
+( 1007)           w2z = 0.
+( 1008)           do j=1,ny
+( 1009)            do i=1,nx
+( 1010)              u2z = u2z+(u(i,j,k)-u0(k))**2
+( 1011)              v2z = v2z+(v(i,j,k)-v0(k))**2
+( 1012)              w2z = w2z+0.5*(w(i,j,k+1)**2+w(i,j,k)**2)
+( 1013)            end do
+( 1014)           end do
+( 1015)           tmp1 = dz/rhow(k)
+( 1016)           tmp2 = tmp1/dtn
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 20
+
+( 1017)           mkwsb(k,:) = mkwsb(k,:) * tmp1*rhow(k) * factor_xy/nstop
+( 1018)           mkwle(k,:) = mkwle(k,:) * tmp2*rhow(k) * factor_xy/nstop
+( 1019)           mkadv(k,:) = mkadv(k,:) * factor_xy*idt_gl
+( 1020)           mkdiff(k,:) = mkdiff(k,:) * factor_xy*idt_gl
+( 1021) !#if defined sam1mom || defined samccn
+( 1022)           qpsrc(k) = qpsrc(k) * factor_xy*idt_gl
+( 1023)           qpevp(k) = qpevp(k) * factor_xy*idt_gl
+( 1024)           qpfall(k) = qpfall(k) * factor_xy*idt_gl
+( 1025) !#endif
+( 1026)           precflux(k) = precflux(k) * factor_xy*dz/dt/nstop
+( 1027)           stout%flux_u(k) = (uwle(k) + uwsb(k))*tmp1*factor_xy/nstop
+( 1028)           stout%flux_v(k) = (vwle(k) + vwsb(k))*tmp1*factor_xy/nstop
+( 1029) !#if defined sam1mom || defined samccn
+( 1030)           stout%flux_qt(k) = mkwle(k,1) + mkwsb(k,1)
+( 1031)           stout%fluxsgs_qt(k) =  mkwsb(k,1)
+( 1032)           stout%flux_qp(k) = mkwle(k,2) + mkwsb(k,2)
+( 1033)           stout%qt_trans(k) = mkadv(k,1) + mkdiff(k,1)
+( 1034)           stout%qp_trans(k) = mkadv(k,2) + mkdiff(k,2)
+( 1035) !#endif
+( 1036) !#ifdef m2005
+( 1037) !          stout%flux_qt(k) = mkwle(k,1) + mkwsb(k,1) +  &
+( 1038) !                   mkwle(k,iqcl) + mkwsb(k,iqcl) + mkwle(k,iqci) + mkwsb(k,iqci)
+( 1039) !          stout%fluxsgs_qt(k) =  mkwsb(k,1) + mkwsb(k,iqcl) + mkwsb(k,iqci)
+( 1040) !          stout%flux_qp(k) = mkwle(k,iqr) + mkwsb(k,iqr) +  &
+( 1041) !                   mkwle(k,iqs) + mkwsb(k,iqs) + mkwle(k,iqg) + mkwsb(k,iqg)
+( 1042) !          stout%qt_trans(k) = mkadv(k,1) + mkadv(k,iqcl) + mkadv(k,iqci) + &
+( 1043) !                   mkdiff(k,1) + mkdiff(k,iqcl) + mkdiff(k,iqci) 
+( 1044) !          stout%qp_trans(k) = mkadv(k,iqr) + mkadv(k,iqs) + mkadv(k,iqg) + &
+( 1045) !                   mkdiff(k,iqr) + mkdiff(k,iqs) + mkdiff(k,iqg) 
+( 1046) !#endif
+( 1047) 
+( 1048)           stout%tkesgsz(k)= rho(k)*sum(tke(1:nx,1:ny,k))*factor_xy
+( 1049)           stout%tkez(k)= rho(k)*0.5*(u2z+v2z*YES3D+w2z)*factor_xy + stout%tkesgsz(k)
+( 1050)           stout%pflx(k) = precflux(k)/1000.
+( 1051) !#if defined sam1mom || defined samccn
+( 1052)           stout%qp_fall(k) = qpfall(k)
+( 1053)           stout%qp_evp(k) = qpevp(k)
+( 1054)           stout%qp_src(k) = qpsrc(k)
+( 1055) !#endif
+( 1056) !#ifdef m2005
+( 1057) !          stout%qp_fall(k) = 0.
+( 1058) !          stout%qp_evp(k) = 0.
+( 1059) !          stout%qp_src(k) = 0.
+( 1060) !#endif
+( 1061)           stout%qt_ls(k) = qtend(k)
+( 1062)           stout%t_ls(k) = ttend(k)
+( 1063) 
+( 1064)         end do
+( 1065)         
+( 1066)         stout%timing_factor = stout%timing_factor / nstop
+( 1067) 
+( 1068) end
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 21
+
+(    1) # 1 "crm.F90"
+(    1) !)---------------------------------------------------------------
+(    2) !  Interface for a cloud-resolving model
+(    3) !---------------------------------------------------------------
+(    4) # 5 "crm.F90"
+(    5) subroutine crm        (icol, plev, tl, ql, qll, qil, cldl, ul, vl, &
+(    6)                        pmid, pint, del, phil, phii, dt_gl, crm_buffer, &
+(    7)                        landmask, stout)
+(    8) # 9 "crm.F90"
+(    9) !************* LICENSE START *****************
+(   10) !
+(   11) ! Copyright 2015 Marat Khairoutdinov 
+(   12) ! School of Marine & Atmospheric Sciences
+(   13) ! Stony Brook University
+(   14) ! This software is distributed under the terms of
+(   15) ! the Apache License version 2.0.
+(   16) !
+(   17) !************** LICENSE END ******************
+(   18) !---------------------------------------------------------------
+(   19) # 20 "crm.F90"
+(   20) USE PARKIND1  ,ONLY : JPIM,JPRB
+(   21)         use vars
+(   22)         use params
+(   23)         use microphysics
+(   24)         use crmtracers
+(   25)         use grid, only: nx, ny, nz
+(   26)         use crm_inout, only: crm_stat_out
+(   27)         use crmdims, only: crmvars    
+(   28)         use cam_rad_parameterizations
+(   29)         use real_size
+(   30)         implicit none
+(   31) # 32 "crm.F90"
+(   32)         integer, parameter :: r8 = JPRB
+(   33)         integer, parameter :: i8 = JPIM
+(   34) # 35 "crm.F90"
+(   35) !  Input:
+(   36) # 37 "crm.F90"
+(   37)          integer(i8), intent(in) :: icol    ! global grid's coumn index
+(   38)          integer(i8), intent(in) :: plev    ! global grid's number of levels
+(   39)          real(r8), intent(in) :: pmid(crm_nz) ! Global grid pressure (Pa)
+(   40)          real(r8), intent(in) :: pint(crm_nz+1) ! Global grid interface pressure (Pa)
+(   41)          real(r8), intent(in) :: del(crm_nz) ! Layer's pressure thickness (Pa)
+(   42)          real(r8), intent(in) :: phil(crm_nz) ! mid-level geopotential (m2/s2)
+(   43)          real(r8), intent(in) :: phii(crm_nz+1)! interface geopotential (m2/s2)
+(   44)          real(r8), intent(in) :: dt_gl ! global model's time step
+(   45)          real(r8), intent(in) :: landmask ! land/ocn mask (=0/1/2)
+(   46)          real(r8), intent(in) :: tl(crm_nz) ! Global grid temperature (K)
+(   47)          real(r8), intent(in) :: ql(crm_nz) ! Global grid water vapor (g/g)
+(   48)          real(r8), intent(in) :: ul(crm_nz) ! Global grid u (m/s)
+(   49)          real(r8), intent(in) :: vl(crm_nz) ! Global grid v (m/s)
+(   50)          real(r8), intent(in) :: qll(crm_nz)! Global grid cloud liquid water (g/g)
+(   51)          real(r8), intent(in) :: qil(crm_nz)! Global grid cloud ice (g/g)
+(   52)          real(r8), intent(in) :: cldl(crm_nz)!Global cloud fraction
+(   53) # 54 "crm.F90"
+(   54) !  Input/Output:
+(   55)          
+(   56)          real(r8), intent(inout), target :: crm_buffer(crm_nx, crm_ny, plev, 1:max(7,crmvars))
+(   57) # 58 "crm.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 22
+
+(   58) !  Output
+(   59) # 60 "crm.F90"
+(   60)          type(crm_stat_out), intent(out) :: stout  ! output statistics 
+(   61) !
+(   62) ! Local:
+(   63)          
+(   64)          real(r8) :: t_rad (nx, ny, nzm) ! rad temperuture
+(   65)          real(r8) :: qv_rad(nx, ny, nzm) ! rad vapor
+(   66)          real(r8) :: qc_rad(nx, ny, nzm) ! rad cloud water
+(   67)          real(r8) :: qi_rad(nx, ny, nzm) ! rad cloud ice
+(   68)          real(r8) :: cld_rad(nx, ny, nzm) ! rad cloud fraction
+(   69)          real(r8) :: reffc_rad(nx, ny, nzm) ! rad cloud drop optical path
+(   70)          real(r8) :: reffi_rad(nx, ny, nzm) ! rad cloud ice optical path
+(   71)          real(r8) :: qc_crm (nx, ny, nzm)! CRM cloud water
+(   72)          real(r8) :: qi_crm (nx, ny, nzm)! CRM cloud ice
+(   73)          real(r8) :: qpc_crm(nx, ny, nzm)! CRM precip water
+(   74)          real(r8) :: qpi_crm(nx, ny, nzm)! CRM precip ice
+(   75)          real(r8) :: prec_crm(nx, ny)! CRM precipiation rate
+(   76) # 77 "crm.F90"
+(   77)          real(r8) :: ocnfrac ! area fraction of the ocean
+(   78)          real(r8) :: tau00  ! large-scale surface stress (N/m2)
+(   79)          real(r8) :: wnd  ! large-scale surface wind (m/s)
+(   80)          real(r8) :: bflxls  ! large-scale surface buoyancy flux (K m/s)
+(   81)          real(r8) :: tabs_s0 ! surface temperature
+(   82)          real(r8) :: ccn_tot     ! ccn count
+(   83)          real(r8) :: in_tot     ! in count
+(   84) # 86 "crm.F90"
+(   86) !  Local space:
+(   87) # 88 "crm.F90"
+(   88)         real(r8), pointer :: u_crm  (:,:,:) ! CRM v-wind component
+(   89)         real(r8), pointer :: v_crm  (:,:,:) ! CRM v-wind component
+(   90)         real(r8), pointer :: w_crm  (:,:,:) ! CRM w-wind component
+(   91)         real(r8), pointer :: t_crm  (:,:,:) ! CRM temperuture
+(   92)         real(RR) dummy(nz), t00(nz), q00(nz)
+(   93)         real(RR) fluxbtmp(nx,ny), fluxttmp(nx,ny) !bloss
+(   94)         real(r8) tln(crm_nz), qln(crm_nz), qlln(crm_nz), qiln(crm_nz)
+(   95)         real(r8) ull(crm_nz), vll(crm_nz), uln(crm_nz), vln(crm_nz), cldln(crm_nz)
+(   96)         real(RR) pdel(crm_nz), cwp(nx,ny), cwph(nx,ny), cwpm(nx,ny), cwpl(nx,ny)
+(   97)         real(r8) factor_xy, idt_gl
+(   98)         real(RR) tmp1, tmp2, omn
+(   99)         real(RR) u2z,v2z,w2z
+(  100)         integer i,j,k,nn,icyc, nstatsteps
+(  101)         real(r8) umax ! maxumum ampitude of the l.s. wind
+(  102)         real(RR), parameter :: wmin = 2.   ! minimum up/downdraft velocity for stat
+(  103)         real(RR) cwp_threshold  ! threshold for cloud condensate for shaded fraction calculation
+(  104)         real(RR), parameter :: dt_stat = 120.  ! cloud statistics sampling interval (s)
+(  105)         logical flag_top(nx,ny)
+(  106)         real(RR) ustar, bflx, z0_est, qsat, omg
+(  107)         real(RR) colprec,colprecs
+(  108)         real(RR) landfrac, icefrac
+(  109) !-----------------------------------------------
+(  110)         idt_gl = 1._r8/dt_gl
+(  111)         factor_xy = 1._r8/dble(nx*ny)
+(  112)         dummy = 0.
+(  113)         t_rad = 0.
+(  114)         qv_rad = 0.
+(  115)         qc_rad = 0.
+(  116)         qi_rad = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 23
+
+(  117)         cld_rad = 0.
+(  118)         reffc_rad = 0.
+(  119)         reffi_rad = 0.
+(  120) ! Temporary initialization. Should be eventually removed. -M
+(  121)         tau00 = 0.
+(  122)         wnd = 0.
+(  123)         bflxls = 0.
+(  124)         tabs_s0 = 300.
+(  125) # 126 "crm.F90"
+(  126)         ocnfrac = 1.
+(  127)         icefrac = 0.
+(  128)         landfrac = 0.
+(  129)         if(landmask.lt.0.5_JPRB) then
+(  130)           landfrac = 0.
+(  131)           ocnfrac = 1.
+(  132)           icefrac = 0.
+(  133)         else
+(  134)           landfrac = 1.
+(  135)           ocnfrac = 0.
+(  136)           icefrac = 0.
+(  137)         end if
+(  138) # 139 "crm.F90"
+(  139)         bflx = bflxls
+(  140)  
+(  141)         call setparm()
+(  142) # 143 "crm.F90"
+(  143)         cwp_threshold = 0.0001
+(  144) # 145 "crm.F90"
+(  145)         dt           = crm_dt
+(  146)         dx           = crm_dx
+(  147)         dy           = crm_dy
+(  148)         doprecip     = .true.
+(  149)         dosmagor     = .true.
+(  150)         doisccp = .true.
+(  151)         domodis = .true.
+(  152)         domisr = .true.
+(  153) # 154 "crm.F90"
+(  154)         umax = 0.5*dx/dt
+(  155) # 157 "crm.F90"
+(  157) !        doshortwave = doshort
+(  158) !        dolongwave = dolong
+(  159) !        day0 = day00-dt_gl/86400.
+(  160) !        latitude = latitude00
+(  161) !        longitude = longitude00
+(  162) !        pres0 = pres00
+(  163) !        tabs_s = tabs_s0
+(  164) !        case = case0
+(  165) # 166 "crm.F90"
+(  166)         if(ocnfrac.gt.0.5) then
+(  167)            OCEAN = .true.
+(  168)         else
+(  169)            LAND = .true.
+(  170)         end if
+(  171)         tabs_s = tabs_s0
+(  172)         sstxy = tabs_s
+(  173) # 174 "crm.F90"
+(  174) !        create CRM vertical grid and initialize some vertical reference arrays:
+(  175) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 24
+
+(  176)         do k = 1, nzm
+(  177)            z(k) = (phil(k)-phii(1))/ggr
+(  178)            zi(k) = (phii(k)-phii(1))/ggr
+(  179)            pres(k) = pmid(k)*0.01 ! convert from Pa to mb
+(  180)            presi(k) = pint(k)*0.01
+(  181)            bet(k) = ggr/tl(k)
+(  182)            gamaz(k)=ggr/cp*z(k)
+(  183)            pdel(k) = del(k)  ! pdel in Pa
+(  184)         end do ! k
+(  185)         zi(nz) =  (phii(nz)-phii(1))/ggr
+(  186)         presi(nz) =  pint(nz)*0.01
+(  187) # 188 "crm.F90"
+(  188)         dz = 0.5*(z(1)+z(2))
+(  189)         do k=2,nzm
+(  190)            adzw(k) = (z(k)-z(k-1))/dz
+(  191)         end do
+(  192)         adzw(1) = 1.
+(  193)         adzw(nz) = adzw(nzm)
+(  194)         adz(1) = 1.
+(  195)         do k=2,nzm-1
+(  196)           adz(k) = 0.5*(z(k+1)-z(k-1))/dz
+(  197)         end do
+(  198)         adz(nzm) = adzw(nzm)
+(  199) # 201 "crm.F90"
+(  201)         do k=1,nzm
+(  202)            grdf_x(k) = min(16.,dx**2/(adz(k)*dz)**2)
+(  203)            grdf_y(k) = min(16.,dy**2/(adz(k)*dz)**2)
+(  204)            grdf_z(k) = 1.
+(  205)         end do
+(  206)         
+(  207)         do k = 1,nzm
+(  208)           rho(k) = pdel(k)/ggr/(adz(k)*dz)
+(  209)         end do
+(  210)         do k=2,nzm
+(  211)           rhow(k) = 0.5*(rho(k)+rho(k-1))
+(  212)         end do
+(  213)         rhow(1) = 2*rhow(2) - rhow(3)
+(  214)         rhow(nz)= 2*rhow(nzm) - rhow(nzm-1)
+(  215)         colprec=0
+(  216)         colprecs=0
+(  217) # 218 "crm.F90"
+(  218) !  
+(  219) !  Initialize:
+(  220) !       
+(  221)         u_crm => crm_buffer(:,:,:,1)
+(  222)         v_crm => crm_buffer(:,:,:,2)
+(  223) # 224 "crm.F90"
+(  224) ! limit the velocity at the very first step:
+(  225)         
+(  226)         if(u_crm(1,1,1).eq.u_crm(2,1,1).and.u_crm(3,1,2).eq.u_crm(4,1,2)) then
+(  227)          do k=1,nzm
+(  228)           do j=1,ny
+(  229)            do i=1,nx
+(  230)              u_crm(i,j,k) = min( umax, max(-umax,u_crm(i,j,k)) )
+(  231)              v_crm(i,j,k) = min( umax, max(-umax,v_crm(i,j,k)) )*YES3D
+(  232)            end do
+(  233)           end do
+(  234)          end do
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 25
+
+(  235)         
+(  236)         end if
+(  237) # 238 "crm.F90"
+(  238)         u(1:nx,1:ny,1:nzm) = u_crm(1:nx,1:ny,1:nzm)
+(  239)         v(1:nx,1:ny,1:nzm) = v_crm(1:nx,1:ny,1:nzm)*YES3D
+(  240)         w_crm => crm_buffer(:,:,:,3)
+(  241)         w(1:nx,1:ny,1:nzm) = w_crm(1:nx,1:ny,1:nzm)
+(  242)         t_crm => crm_buffer(:,:,:,4)
+(  243)         tabs(1:nx,1:ny,1:nzm) = t_crm(1:nx,1:ny,1:nzm)
+(  244) !#ifdef sam1mom 
+(  245)         micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields) = crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields)
+(  246)         qn(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,7)
+(  247) !#endif
+(  248) !#ifdef samccn
+(  249) !        micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields) = crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields)
+(  250) !        qn(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,8)
+(  251) !        CCN_C = ccn_tot
+(  252) !#endif
+(  253) !#ifdef m2005
+(  254) !        micro_field(1:nx,1:ny,1:nzm,iqv) = crm_buffer(1:nx,1:ny,1:nzm,5)
+(  255) !        micro_field(1:nx,1:ny,1:nzm,iqci) = crm_buffer(1:nx,1:ny,1:nzm,7)
+(  256) !        micro_field(1:nx,1:ny,1:nzm,inci) = crm_buffer(1:nx,1:ny,1:nzm,8)
+(  257) !        micro_field(1:nx,1:ny,1:nzm,iqr) = crm_buffer(1:nx,1:ny,1:nzm,9)
+(  258) !        micro_field(1:nx,1:ny,1:nzm,inr) = crm_buffer(1:nx,1:ny,1:nzm,10)
+(  259) !        micro_field(1:nx,1:ny,1:nzm,iqs) = crm_buffer(1:nx,1:ny,1:nzm,11)
+(  260) !        micro_field(1:nx,1:ny,1:nzm,ins) = crm_buffer(1:nx,1:ny,1:nzm,12)
+(  261) !        micro_field(1:nx,1:ny,1:nzm,iqg) = crm_buffer(1:nx,1:ny,1:nzm,13)
+(  262) !        micro_field(1:nx,1:ny,1:nzm,ing) = crm_buffer(1:nx,1:ny,1:nzm,14)
+(  263) !        if(dopredictNc) then
+(  264) !         micro_field(1:nx,1:ny,1:nzm,incl) = crm_buffer(1:nx,1:ny,1:nzm,15)
+(  265) !        endif
+(  266) !        cloudliq(1:nx,1:ny,1:nzm) =  crm_buffer(1:nx,1:ny,1:nzm,6)
+(  267) !        ccnconst = ccn_tot
+(  268) !        in_count = max(0.01_r8,in_tot)
+(  269) !#endif
+(  270) # 271 "crm.F90"
+(  271)         w(:,:,nz)=0.
+(  272)         dudt(1:nx,1:ny,1:nzm,1:3) = 0.
+(  273)         dvdt(1:nx,1:ny,1:nzm,1:3) = 0.
+(  274)         dwdt(1:nx,1:ny,1:nz,1:3) = 0.
+(  275)         tke(1:nx,1:ny,1:nzm) = 0.
+(  276)         tk(1:nx,1:ny,1:nzm) = 0.
+(  277)         tkh(1:nx,1:ny,1:nzm) = 0.
+(  278)         p(1:nx,1:ny,1:nzm) = 0.
+(  279) # 280 "crm.F90"
+(  280)         call micro_init
+(  281) # 282 "crm.F90"
+(  282)         do k=1,nzm
+(  283)           
+(  284)           u0(k)=0.
+(  285)           v0(k)=0.
+(  286)           t0(k)=0.
+(  287)           t00(k)=0.
+(  288)           tabs0(k)=0.
+(  289)           q0(k)=0.
+(  290)           q00(k)=0.
+(  291)           qv0(k)=0.
+(  292)           
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 26
+
+(  293)           do j=1,ny
+(  294)            do i=1,nx
+(  295)             
+(  296)             t(i,j,k) = tabs(i,j,k)+gamaz(k) &
+(  297)                         -fac_cond*qcl(i,j,k)-fac_sub*qci(i,j,k) &
+(  298)                         -fac_cond*qpl(i,j,k)-fac_sub*qpi(i,j,k)
+(  299)             colprec=colprec+(qpl(i,j,k)+qpi(i,j,k))*pdel(k)
+(  300)             colprecs=colprecs+qpi(i,j,k)*pdel(k)
+(  301)             u0(k)=u0(k)+u(i,j,k)
+(  302)             v0(k)=v0(k)+v(i,j,k)
+(  303)             t0(k)=t0(k)+t(i,j,k)
+(  304)             t00(k)=t00(k)+t(i,j,k)+fac_cond*qpl(i,j,k)+fac_sub*qpi(i,j,k)
+(  305)             tabs0(k)=tabs0(k)+tabs(i,j,k)
+(  306)             q0(k)=q0(k)+qv(i,j,k)+qcl(i,j,k)+qci(i,j,k)
+(  307)             qv0(k) = qv0(k) + qv(i,j,k)
+(  308)             qn0(k) = qn0(k) + qcl(i,j,k) + qci(i,j,k)
+(  309)             qp0(k) = qp0(k) + qpl(i,j,k) + qpi(i,j,k)
+(  310)             tke0(k)=tke0(k)+tke(i,j,k)
+(  311) # 312 "crm.F90"
+(  312)            end do
+(  313)           end do
+(  314) # 315 "crm.F90"
+(  315)           u0(k) = u0(k) * factor_xy
+(  316)           v0(k) = v0(k) * factor_xy
+(  317)           t0(k) = t0(k) * factor_xy
+(  318)           t00(k) = t00(k) * factor_xy
+(  319)           tabs0(k) = tabs0(k) * factor_xy
+(  320)           q0(k) = q0(k) * factor_xy
+(  321)           qv0(k) = qv0(k) * factor_xy
+(  322)           qn0(k) = qn0(k) * factor_xy
+(  323)           qp0(k) = qp0(k) * factor_xy
+(  324)           tke0(k) = tke0(k) * factor_xy
+(  325) # 326 "crm.F90"
+(  326)           uln(k) = min( umax, max(-umax,ul(k)) )
+(  327)           vln(k) = min( umax, max(-umax,vl(k)) )*YES3D
+(  328)           ttend(k) = (tl(k)+gamaz(k)-fac_cond*qll(k)-fac_sub*qil(k)-t00(k))*idt_gl
+(  329)           qtend(k) = (max(0._r8,ql(k)+qll(k)+qil(k))-q0(k))*idt_gl
+(  330)           utend(k) = (uln(k)-u0(k))*idt_gl
+(  331)           vtend(k) = (vln(k)-v0(k))*idt_gl
+(  332)           ug0(k) = uln(k)
+(  333)           vg0(k) = vln(k)
+(  334) # 335 "crm.F90"
+(  335)         end do ! k
+(  336)        
+(  337)         uhl = u0(1)
+(  338)         vhl = v0(1)
+(  339) # 340 "crm.F90"
+(  340) ! estimate roughness length assuming logarithmic profile of velocity near the surface:
+(  341) # 342 "crm.F90"
+(  342)         ustar = sqrt(tau00/rho(1))
+(  343)         z0 = z0_est(z(1),bflx,wnd,ustar)
+(  344)         z0 = max(0.00001,min(1.,z0))
+(  345) # 348 "crm.F90"
+(  348)         fluxbu=0.
+(  349)         fluxbv=0.
+(  350)         fluxbt=0.
+(  351)         fluxbq=0.
+(  352)         fluxtu=0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 27
+
+(  353)         fluxtv=0.
+(  354)         fluxtt=0.
+(  355)         fluxtq=0.
+(  356)         fzero =0.
+(  357)         precsfc=0.
+(  358)         precssfc=0.
+(  359) # 360 "crm.F90"
+(  360) !---------------------------------------------------
+(  361)         stout%precc = 0.
+(  362)         stout%precsc = 0.
+(  363)         stout%precl = 0.
+(  364)         stout%precsl = 0.
+(  365)         stout%cltot = 0.
+(  366)         stout%clhgh = 0.
+(  367)         stout%clmed = 0.
+(  368)         stout%cllow = 0.
+(  369)         stout%cld = 0.
+(  370)         stout%cldtop = 0.
+(  371)         stout%rad_qc = 0.
+(  372)         stout%rad_qi = 0.
+(  373)         stout%gicewp = 0.
+(  374)         stout%gliqwp = 0.
+(  375)         stout%gicewpcld = 0.
+(  376)         stout%gliqwpcld = 0.
+(  377)         stout%mc = 0.
+(  378)         stout%mcup = 0.
+(  379)         stout%mcdn = 0.
+(  380)         stout%mcuup = 0.
+(  381)         stout%mcudn = 0. 
+(  382)         stout%crm_qc = 0.
+(  383)         stout%crm_qi = 0.
+(  384)         stout%crm_qs = 0.
+(  385)         stout%crm_qg = 0.
+(  386)         stout%crm_qr = 0.
+(  387)         stout%crm_nc = 0.
+(  388)         stout%crm_ni = 0.
+(  389)         stout%flux_qt = 0.
+(  390)         stout%flux_u = 0.
+(  391)         stout%flux_v = 0.
+(  392)         stout%fluxsgs_qt = 0.
+(  393)         stout%tkez = 0.
+(  394)         stout%tkesgsz = 0. 
+(  395)         stout%flux_qp = 0.
+(  396)         stout%pflx = 0.
+(  397)         stout%qt_trans = 0.
+(  398)         stout%qp_trans = 0.
+(  399)         stout%qp_fall = 0.
+(  400)         stout%qp_evp = 0.
+(  401)         stout%qp_src = 0.
+(  402)         stout%qt_ls = 0.
+(  403)         stout%t_ls = 0.
+(  404)         stout%timing_factor=0.
+(  405) # 406 "crm.F90"
+(  406)         stout%prectend=colprec
+(  407)         stout%precstend=colprecs
+(  408) # 409 "crm.F90"
+(  409)         uwle = 0.
+(  410)         uwsb = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 28
+
+(  411)         vwle = 0.
+(  412)         vwsb = 0.
+(  413) # 414 "crm.F90"
+(  414) !#if defined sam1mom || defined samccn
+(  415)         qpsrc = 0.
+(  416)         qpfall = 0.
+(  417)         qpevp = 0.
+(  418) !#endif
+(  419)         precflux = 0.
+(  420) # 421 "crm.F90"
+(  421) !--------------------------------------------------
+(  422) !#if defined sam1mom || defined samccn
+(  423)      if(doprecip) call precip_init()
+(  424) !#endif
+(  425) # 427 "crm.F90"
+(  427)         if(u(1,1,1).eq.u(2,1,1).and.u(3,1,2).eq.u(4,1,2)) &
+(  428)                     call setperturb()
+(  429) # 430 "crm.F90"
+(  430)         nstop = dt_gl/dt
+(  431)         dt = dt_gl/nstop
+(  432)         nstatis = nint(dt_gl/dt_stat)
+(  433)         nstat = 0
+(  434)         nsave3D = nint(60/dt)
+(  435) !       if(nint(nsave3D*dt).ne.60)then
+(  436) !          print *,'CRM: time step=',dt,' is not divisible by 60 seconds'
+(  437) !          print *,'this is needed for output every 60 seconds'
+(  438) !          stop
+(  439) !       endif
+(  440)         nstep = 0
+(  441)         nprint = 1
+(  442)         ncycle = 0
+(  443) !        nrad = nstop/nrad0
+(  444)         day=day0
+(  445) !        call stepout
+(  446) !------------------------------------------------------------------
+(  447) !   Main time loop    
+(  448) !------------------------------------------------------------------
+(  449) # 450 "crm.F90"
+(  450) do while(nstep.lt.nstop) 
+(  451)         
+(  452)   nstep = nstep + 1
+(  453)   time = time + dt
+(  454)   day = day0 + time/86400.
+(  455)   stout%timing_factor = stout%timing_factor+1
+(  456) !------------------------------------------------------------------
+(  457) !  Check if the dynamical time step should be decreased 
+(  458) !  to handle the cases when the flow being locally linearly unstable
+(  459) !------------------------------------------------------------------
+(  460) # 461 "crm.F90"
+(  461)   ncycle = 1
+(  462) # 463 "crm.F90"
+(  463)   call kurant()
+(  464) # 465 "crm.F90"
+(  465)   if(ncycle.gt.ncycle_max) then
+(  466)     open(92,file='out.92',form='formatted')
+(  467)     write(92,*) r8,i8,icol, plev, tl, ql, qll, qil, cldl, ul, vl, &
+(  468)                        pmid, pint, del,  &
+(  469)                        phil, phii, dt_gl, crm_buffer,landmask
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 29
+
+(  470)      close (92)
+(  471)      call stepout 
+(  472)      print*,">>>>>>>>>>> crm crash!!! Stopping.>>>>>>>>> ncycle=",ncycle
+(  473)      call ABOR1('stopping crm...')
+(  474)      stop
+(  475)   endif
+(  476) # 477 "crm.F90"
+(  477)   do icyc=1,ncycle
+(  478) # 479 "crm.F90"
+(  479)      icycle = icyc
+(  480)      dtn = dt/ncycle
+(  481)      dt3(na) = dtn
+(  482)      dtfactor = dtn/dt
+(  483) # 484 "crm.F90"
+(  484) !---------------------------------------------
+(  485) !  	the Adams-Bashforth scheme in time
+(  486) # 487 "crm.F90"
+(  487)      call abcoefs()
+(  488)  
+(  489) !---------------------------------------------
+(  490) !  	initialize stuff: 
+(  491) # 492 "crm.F90"
+(  492)      call zero()
+(  493) # 494 "crm.F90"
+(  494) !-----------------------------------------------------------
+(  495) !       Buoyancy term:
+(  496) # 497 "crm.F90"
+(  497)      call buoyancy()
+(  498) # 499 "crm.F90"
+(  499) !------------------------------------------------------------
+(  500) !       Large-scale and surface forcing:
+(  501) # 502 "crm.F90"
+(  502)      call forcing()
+(  503) # 504 "crm.F90"
+(  504) !     do k=1,nzm
+(  505) !      do j=1,ny
+(  506) !        do i=1,nx
+(  507) !          t(i,j,k) = t(i,j,k) + qrad_crm(i,j,k)*dtn
+(  508) !        end do
+(  509) !      end do
+(  510) !     end do
+(  511) # 514 "crm.F90"
+(  514) !----------------------------------------------------------
+(  515) !   	suppress turbulence near the upper boundary (spange):
+(  516) # 517 "crm.F90"
+(  517)      if(dodamping) call damping()
+(  518) # 519 "crm.F90"
+(  519) !----------------------------------------------------------
+(  520) !      Update the subdomain's boundaries for velocity
+(  521) # 522 "crm.F90"
+(  522)      call boundaries(0)
+(  523) # 524 "crm.F90"
+(  524) !---------------------------------------------------------
+(  525) !	SGS TKE equation:     	
+(  526) # 527 "crm.F90"
+(  527)      if(dosgs) call tke_full()
+(  528) # 529 "crm.F90"
+(  529) !---------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 30
+
+(  530) !   Ice fall-out
+(  531)    
+(  532)       if(docloud) then
+(  533)           call ice_fall()
+(  534)       end if
+(  535) # 536 "crm.F90"
+(  536) !---------------------------------------------------------
+(  537) !        Update boundaries for scalars, sst,  SGS exchange coefficients 
+(  538) # 539 "crm.F90"
+(  539)      call boundaries(2)
+(  540) # 541 "crm.F90"
+(  541) !-----------------------------------------------
+(  542) !       advection of momentum:
+(  543)      call advect_mom()
+(  544) # 546 "crm.F90"
+(  546) !-----------------------------------------------
+(  547) !   	surface fluxes:
+(  548) # 549 "crm.F90"
+(  549)      if(dosurface) then
+(  550) # 551 "crm.F90"
+(  551)        call crmsurface(bflx)
+(  552) # 553 "crm.F90"
+(  553)      end if
+(  554) !----------------------------------------------------------
+(  555) !	SGS diffusion of momentum:
+(  556) # 557 "crm.F90"
+(  557)      if(dosgs) call diffuse_mom()
+(  558) # 559 "crm.F90"
+(  559) !-----------------------------------------------------------
+(  560) !       Coriolis force:
+(  561) # 562 "crm.F90"
+(  562)      if(docoriolis) call coriolis()
+(  563) # 564 "crm.F90"
+(  564) !---------------------------------------------------------
+(  565) !       compute rhs of the Poisson equation and solve it for pressure. 
+(  566) # 567 "crm.F90"
+(  567)      call pressure()
+(  568) # 570 "crm.F90"
+(  570) !---------------------------------------------------------
+(  571) !       find velocity field at n+1/2 timestep needed for advection of scalars:
+(  572) # 573 "crm.F90"
+(  573)      call adams()
+(  574) # 575 "crm.F90"
+(  575) !----------------------------------------------------------
+(  576) !     Update boundaries for velocity fields to use for advection of scalars:
+(  577) # 578 "crm.F90"
+(  578)      call boundaries(1)
+(  579) # 580 "crm.F90"
+(  580) !---------------------------------------------------------
+(  581) !      advection of scalars :
+(  582) # 583 "crm.F90"
+(  583)      call advect_scalar(t,tadv,twle,t2leadv,t2legrad,twleadv,.true.)
+(  584)      
+(  585)      if(dosgs.and..not.dosmagor) then
+(  586)       call advect_scalar(tke,dummy,tkewle,dummy,dummy,dummy,.false.)
+(  587)      else if(doscalar) then
+(  588)       call advect_scalar(tke,dummy,tkewle,s2leadv,s2legrad,swleadv,.true.)
+(  589)      end if
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 31
+
+(  590) # 591 "crm.F90"
+(  591) !
+(  592) !    Advection of microphysics prognostics:
+(  593) !
+(  594)      do k = 1,nmicro_fields
+(  595)         if(   k.eq.index_water_vapor             &! transport water-vapor variable no metter what
+(  596)          .or. docloud.and.flag_precip(k).ne.1    & ! transport non-precipitation vars
+(  597)          .or. doprecip.and.flag_precip(k).eq.1 ) &
+(  598)            call advect_scalar(micro_field(:,:,:,k),mkadv(:,k),mkwle(:,k),dummy,dummy,dummy,.false.)
+(  599)      end do
+(  600) # 601 "crm.F90"
+(  601) !   Precipitation fallout:
+(  602) !
+(  603)     if(doprecip) then
+(  604) # 605 "crm.F90"
+(  605)        call micro_precip_fall()
+(  606) # 607 "crm.F90"
+(  607)     end if
+(  608) # 609 "crm.F90"
+(  609) !---------------------------------------------------------
+(  610) !      diffusion of scalars :
+(  611) # 612 "crm.F90"
+(  612) !        Update boundaries for scalars:
+(  613) # 614 "crm.F90"
+(  614)       if(dosgs) call boundaries(3)
+(  615) # 616 "crm.F90"
+(  616)       call diffuse_scalar(t,t0,fluxbt,fluxtt,tdiff,twsb, &
+(  617)                            t2lediff,t2lediss,twlediff,.true.)
+(  618)      
+(  619)       if(.not.dosmagor) then
+(  620)           call diffuse_scalar(tke,fzero,fzero,fzero,dummy,tkewsb, &
+(  621)                                     dummy,dummy,dummy,.false.)
+(  622)       else if(doscalar) then
+(  623)           call diffuse_scalar(tke,fzero,fluxbq,fluxtq,dummy,tkewsb, &
+(  624)                            s2lediff,s2lediss,swlediff,.true.)
+(  625)       end if
+(  626) # 628 "crm.F90"
+(  628) !
+(  629) !    diffusion of microphysics prognostics:
+(  630) !
+(  631)       call micro_flux()
+(  632) # 633 "crm.F90"
+(  633)       do k = 1,nmicro_fields
+(  634)         if(   k.eq.index_water_vapor) then  ! transport water-vapor variable no metter what
+(  635)            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
+(  636)            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
+(  637)            call diffuse_scalar(micro_field(:,:,:,k),q0,fluxbtmp,fluxttmp, &
+(  638)                 mkdiff(:,k),mkwsb(:,k), dummy,dummy,dummy,.false.)
+(  639)         elseif(docloud.and.flag_precip(k).ne.1    & ! transport non-precipitation vars
+(  640)           .or. doprecip.and.flag_precip(k).eq.1 ) then
+(  641)            fluxbtmp(1:nx,1:ny) = fluxbmk(1:nx,1:ny,k)
+(  642)            fluxttmp(1:nx,1:ny) = fluxtmk(1:nx,1:ny,k)
+(  643)            call diffuse_scalar(micro_field(:,:,:,k),fzero,fluxbtmp,fluxttmp, &
+(  644)                 mkdiff(:,k),mkwsb(:,k), dummy,dummy,dummy,.false.)
+(  645)         end if
+(  646)       end do
+(  647) # 648 "crm.F90"
+(  648)  ! diffusion of tracers:
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 32
+
+(  649) # 650 "crm.F90"
+(  650)       if(dotracers) then
+(  651) # 652 "crm.F90"
+(  652)         call tracers_flux()
+(  653) # 654 "crm.F90"
+(  654)         do k = 1,ntracers
+(  655) # 656 "crm.F90"
+(  656)           fluxbtmp = fluxbtr(:,:,k)
+(  657)           fluxttmp = fluxttr(:,:,k)
+(  658)           call diffuse_scalar(tracer(:,:,:,k),fzero,fluxbtmp,fluxttmp, &
+(  659)                trdiff(:,k),trwsb(:,k), &
+(  660)                dummy,dummy,dummy,.false.)
+(  661)  
+(  662)         end do
+(  663) # 664 "crm.F90"
+(  664)       end if
+(  665) !-----------------------------------------------------------
+(  666) !    Update velocity field:
+(  667) # 668 "crm.F90"
+(  668)       call uvw()
+(  669) # 670 "crm.F90"
+(  670) !-----------------------------------------------------------
+(  671) !       Cloud condensation/evaporation and precipitation processes:
+(  672) # 673 "crm.F90"
+(  673)       if(docloud.or.dosmoke) call micro_proc()
+(  674) # 675 "crm.F90"
+(  675) !-----------------------------------------------------------
+(  676) !    Compute field diagnostics:
+(  677) # 678 "crm.F90"
+(  678)       call diagnose()
+(  679) # 680 "crm.F90"
+(  680) !----------------------------------------------------------
+(  681) ! Rotate the dynamic tendency arrays for Adams-bashforth scheme:
+(  682) # 683 "crm.F90"
+(  683)       nn=na
+(  684)       na=nc
+(  685)       nc=nb
+(  686)       nb=nn
+(  687) # 688 "crm.F90"
+(  688)    end do ! icycle	
+(  689)           
+(  690) !----------------------------------------------------------
+(  691) !----------------------------------------------------------
+(  692)     if(mod(nstep,nstatis).eq.0) then
+(  693) # 694 "crm.F90"
+(  694)         nstat = nstat + 1
+(  695) # 696 "crm.F90"
+(  696)         cwp = 0.
+(  697)         cwph = 0.
+(  698)         cwpm = 0.
+(  699)         cwpl = 0.
+(  700) # 701 "crm.F90"
+(  701)         flag_top(:,:) = .true.
+(  702) # 703 "crm.F90"
+(  703) !#ifdef m2005
+(  704) !        nn = inci
+(  705) !        if(dopredictNc) nn = incl
+(  706) !#endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 33
+
+(  707) # 708 "crm.F90"
+(  708)         do k=1,nzm
+(  709)          tmp2=pres(nz-k)/presi(1)
+(  710)          do j=1,ny
+(  711)           do i=1,nx
+(  712) # 713 "crm.F90"
+(  713)            stout%crm_qc(k) = stout%crm_qc(k) + qcl(i,j,k)
+(  714)            stout%crm_qi(k) = stout%crm_qi(k) + qci(i,j,k)
+(  715)            stout%crm_qr(k) = stout%crm_qr(k) + qpl(i,j,k)
+(  716) !#if defined sam1mom || defined samccn
+(  717)            omg = max(0.,min(1.,(tabs(i,j,k)-tgrmin)*a_gr))
+(  718)            stout%crm_qg(k) = stout%crm_qg(k) + qpi(i,j,k)*omg
+(  719)            stout%crm_qs(k) = stout%crm_qs(k) + qpi(i,j,k)*(1.-omg)
+(  720) !#else
+(  721) !           stout%crm_qg(k) = stout%crm_qg(k) + qpi(i,j,k)
+(  722) !           stout%crm_qs(k) = stout%crm_qs(k) + 0.     ! temporerary solution
+(  723) !#endif
+(  724) # 726 "crm.F90"
+(  726)            tmp1 = rho(nz-k)*adz(nz-k)*dz*(qcl(i,j,nz-k)+qci(i,j,nz-k))
+(  727)            cwp(i,j) = cwp(i,j)+tmp1
+(  728)            if(cwp(i,j).gt.cwp_threshold.and.flag_top(i,j)) then
+(  729)                stout%cldtop(k) = stout%cldtop(k) + 1
+(  730)                flag_top(i,j) = .false.
+(  731)            end if
+(  732)              ! make compatible with ECMWF definitions (used in CLDPP)
+(  733)            if(tmp2.ge.0.8) then
+(  734)                cwpl(i,j) = cwpl(i,j)+tmp1
+(  735)            else if(tmp2.le.0.45) then
+(  736)                cwph(i,j) = cwph(i,j)+tmp1
+(  737)            else
+(  738)                cwpm(i,j) = cwpm(i,j)+tmp1
+(  739)            end if
+(  740) # 741 "crm.F90"
+(  741)       !     qsat = qsatw_crm(tabs(i,j,k),pres(k))
+(  742)       !     if(qcl(i,j,k)+qci(i,j,k).gt.min(1.e-5,0.01*qsat)) then
+(  743) # 744 "crm.F90"
+(  744)            tmp1 = rho(k)*adz(k)*dz
+(  745)            if(tmp1*(qcl(i,j,k)+qci(i,j,k)).gt.cwp_threshold) then
+(  746)                 stout%cld(k) = stout%cld(k) + 1.
+(  747)                 stout%rad_qc(k) = stout%rad_qc(k) + qcl(i,j,k)
+(  748)                 stout%rad_qi(k) = stout%rad_qi(k) + qci(i,j,k)
+(  749)                 cld_rad(i,j,k) = cld_rad(i,j,k) + 1.
+(  750)                 qc_rad(i,j,k) = qc_rad(i,j,k)+qcl(i,j,k)
+(  751)                 qi_rad(i,j,k) = qi_rad(i,j,k)+qci(i,j,k)
+(  752) !#ifdef samccn
+(  753) !                ! weight reff by cloud water/ice mass
+(  754) !                reffc_rad(i,j,k) = reffc_rad(i,j,k) + reffc(i,j,k)*qcl(i,j,k)
+(  755) !                stout%crm_nc(k) = stout%crm_nc(k) + micro_field(i,j,k,nn)*rho(k)*qci(i,j,k)
+(  756) !#endif
+(  757) !#ifdef m2005
+(  758) !                ! weight reff by cloud water/ice mass
+(  759) !                reffc_rad(i,j,k) = reffc_rad(i,j,k) + reffc(i,j,k)*qcl(i,j,k)
+(  760) !                reffi_rad(i,j,k) = reffi_rad(i,j,k) + reffi(i,j,k)*qci(i,j,k)
+(  761) !                stout%crm_ni(k) = stout%crm_ni(k) + micro_field(i,j,k,inci)*rho(k)*qcl(i,j,k)
+(  762) !                stout%crm_nc(k) = stout%crm_nc(k) + micro_field(i,j,k,nn)*rho(k)*qci(i,j,k)
+(  763) !#endif
+(  764)                 if(w(i,j,k+1)+w(i,j,k).gt.2*wmin) then
+(  765)                   stout%mcup(k) = stout%mcup(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 34
+
+(  766)                 end if
+(  767)                 if(w(i,j,k+1)+w(i,j,k).lt.-2*wmin) then
+(  768)                   stout%mcdn(k) = stout%mcdn(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  769)                 end if
+(  770)            else 
+(  771)                 if(w(i,j,k+1)+w(i,j,k).gt.2*wmin) then
+(  772)                   stout%mcuup(k) = stout%mcuup(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  773)                 end if
+(  774)                 if(w(i,j,k+1)+w(i,j,k).lt.-2*wmin) then
+(  775)                   stout%mcudn(k) = stout%mcudn(k) + rho(k)*0.5*(w(i,j,k+1)+w(i,j,k))
+(  776)                 end if
+(  777)            end if
+(  778)            
+(  779)            t_rad (i,j,k) = t_rad (i,j,k)+tabs(i,j,k)
+(  780)            qv_rad(i,j,k) = qv_rad(i,j,k)+max(0.,qv(i,j,k))
+(  781) # 782 "crm.F90"
+(  782)            stout%gliqwp(k)=stout%gliqwp(k)+qcl(i,j,k)
+(  783)            stout%gicewp(k)=stout%gicewp(k)+qci(i,j,k)
+(  784)           
+(  785)           end do
+(  786)          end do
+(  787)         end do
+(  788) # 790 "crm.F90"
+(  790) !        do k=1,nzm
+(  791) !         radlwup0(k)=radlwup0(k)+radlwup(k)
+(  792) !         radlwdn0(k)=radlwdn0(k)+radlwdn(k)
+(  793) !         radqrlw0(k)=radqrlw0(k)+radqrlw(k)
+(  794) !         radswup0(k)=radswup0(k)+radswup(k)
+(  795) !         radswdn0(k)=radswdn0(k)+radswdn(k)
+(  796) !         radqrsw0(k)=radqrsw0(k)+radqrsw(k)
+(  797) !        end do
+(  798)         
+(  799)         do j=1,ny
+(  800)          do i=1,nx
+(  801)            if(cwph(i,j).gt.cwp_threshold) then
+(  802)                 stout%clhgh = stout%clhgh + 1.
+(  803)            elseif(cwpm(i,j).gt.cwp_threshold) then
+(  804)                 stout%clmed = stout%clmed + 1.
+(  805)            elseif(cwpl(i,j).gt.cwp_threshold) then
+(  806)                 stout%cllow = stout%cllow + 1.
+(  807)            end if
+(  808)          end do
+(  809)         end do
+(  810) # 812 "crm.F90"
+(  812)     end if ! mod(nstop,nstatis....     
+(  813) # 814 "crm.F90"
+(  814) !    call stepout
+(  815) !----------------------------------------------------------
+(  816)         end do ! main loop
+(  817) !----------------------------------------------------------
+(  818) # 819 "crm.F90"
+(  819) !#ifdef samccn
+(  820) !        reffc_rad = reffc_rad / (qc_rad+1.e-8)
+(  821) !        stout%crm_nc = stout%crm_nc / (stout%crm_qc+1.e-8) * 1.e-6
+(  822) !#endif
+(  823) !#ifdef m2005
+(  824) !        reffc_rad = reffc_rad / (qc_rad+1.e-8)
+(  825) !        reffi_rad = reffi_rad / (qi_rad+1.e-8)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 35
+
+(  826) !        stout%crm_ni = stout%crm_ni / (stout%crm_qi+1.e-8) * 1.e-6
+(  827) !        if(dopredictNc) then
+(  828) !             stout%crm_nc = stout%crm_nc / (crm_qc+1.e-8) * 1.e-6
+(  829) !        else
+(  830) !             stout%crm_nc = Nc0
+(  831) !        end if
+(  832) !#endif
+(  833)         tmp1 = 1._r8/ dble(nstat)
+(  834)         t_rad = t_rad * tmp1
+(  835)         qv_rad = qv_rad * tmp1
+(  836)         qc_rad = qc_rad * tmp1
+(  837)         qi_rad = qi_rad * tmp1
+(  838)         cld_rad = cld_rad * tmp1
+(  839) # 841 "crm.F90"
+(  841) !  Compute tendencies due to CRM:
+(  842)         
+(  843)         tln(:) = 0.
+(  844)         qln(:) = 0.
+(  845)         qlln(:)= 0.
+(  846)         qiln(:)= 0.
+(  847)         cldln(:) = 0.
+(  848)         ull(:) = 0.
+(  849)         vll(:) = 0.
+(  850)         colprec=0
+(  851)         colprecs=0
+(  852)         do k = 1,nzm
+(  853)          tmp1 = rho(k)*adz(k)*dz
+(  854)          do i=1,nx
+(  855)           do j=1,ny
+(  856)              colprec=colprec+(qpl(i,j,k)+qpi(i,j,k))*pdel(k)
+(  857)              colprecs=colprecs+qpi(i,j,k)*pdel(k)
+(  858)              tln(k) = tln(k)+tabs(i,j,k)
+(  859)              qln(k) = qln(k)+qv(i,j,k)
+(  860)              qlln(k)= qlln(k)+qcl(i,j,k)
+(  861)              qiln(k)= qiln(k)+qci(i,j,k)
+(  862)              ull(k) = ull(k)+u(i,j,k)
+(  863)              vll(k) = vll(k)+v(i,j,k)
+(  864)              if(tmp1*(qcl(i,j,k)+qci(i,j,k)).gt.cwp_threshold) &
+(  865)                 cldln(k) = cldln(k) + 1.
+(  866)           end do 
+(  867)          end do
+(  868)         end do 
+(  869)         tln(:) = tln(:) * factor_xy
+(  870)         qln(:) = qln(:) * factor_xy
+(  871)         qlln(:) = qlln(:) * factor_xy
+(  872)         qiln(:) = qiln(:) * factor_xy
+(  873)         cldln(:) = cldln(:) * factor_xy
+(  874)         ull(:) = ull(:) * factor_xy
+(  875)         vll(:) = vll(:) * factor_xy
+(  876) # 877 "crm.F90"
+(  877)         stout%ultend = (ull - uln) * idt_gl
+(  878)         stout%vltend = (vll - vln) * idt_gl
+(  879)         stout%tltend = (tln - tl) * idt_gl
+(  880)         stout%qltend = (qln - ql) * idt_gl
+(  881)         stout%qlltend = (qlln - qll) * idt_gl
+(  882)         stout%qiltend = (qiln - qil) * idt_gl
+(  883)         stout%cldltend = (cldln - cldl) * idt_gl
+(  884)         stout%cldl = cldln
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 36
+
+(  885)         stout%prectend=(colprec-stout%prectend)/ggr*factor_xy * idt_gl
+(  886)         stout%precstend=(colprecs-stout%precstend)/ggr*factor_xy * idt_gl
+(  887) # 888 "crm.F90"
+(  888) ! Coupling to GCM is here (no coupling of horizonal wind):
+(  889) # 890 "crm.F90"
+(  890) !        tl = tln
+(  891) !        ql = qln
+(  892) !        qll = qlln
+(  893) !        qil = qiln
+(  894) !        cldl = cldln
+(  895) # 896 "crm.F90"
+(  896) !-------------------------------------------------------------
+(  897) ! 
+(  898) ! Save the last step to the permanent core:
+(  899)         
+(  900)         u_crm  (1:nx,1:ny,1:nzm) = u   (1:nx,1:ny,1:nzm)
+(  901)         v_crm  (1:nx,1:ny,1:nzm) = v   (1:nx,1:ny,1:nzm)
+(  902)         w_crm  (1:nx,1:ny,1:nzm) = w   (1:nx,1:ny,1:nzm)
+(  903)         t_crm  (1:nx,1:ny,1:nzm) = tabs(1:nx,1:ny,1:nzm)
+(  904) !#ifdef sam1mom
+(  905)         crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields) = micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields)
+(  906)         crm_buffer(1:nx,1:ny,1:nzm,7) = qn(1:nx,1:ny,1:nzm)
+(  907) !#endif
+(  908) !#ifdef samccn
+(  909) !        crm_buffer(1:nx,1:ny,1:nzm,5:4+nmicro_fields) = micro_field(1:nx,1:ny,1:nzm,1:nmicro_fields)
+(  910) !        crm_buffer(1:nx,1:ny,1:nzm,8) = qn(1:nx,1:ny,1:nzm)
+(  911) !#endif
+(  912) !#ifdef m2005
+(  913) !        crm_buffer(1:nx,1:ny,1:nzm,5) = micro_field(1:nx,1:ny,1:nzm,iqv) 
+(  914) !        crm_buffer(1:nx,1:ny,1:nzm,7) = micro_field(1:nx,1:ny,1:nzm,iqci) 
+(  915) !        crm_buffer(1:nx,1:ny,1:nzm,8) = micro_field(1:nx,1:ny,1:nzm,inci) 
+(  916) !        crm_buffer(1:nx,1:ny,1:nzm,9) = micro_field(1:nx,1:ny,1:nzm,iqr) 
+(  917) !        crm_buffer(1:nx,1:ny,1:nzm,10) = micro_field(1:nx,1:ny,1:nzm,inr) 
+(  918) !        crm_buffer(1:nx,1:ny,1:nzm,11) = micro_field(1:nx,1:ny,1:nzm,iqs) 
+(  919) !        crm_buffer(1:nx,1:ny,1:nzm,12) = micro_field(1:nx,1:ny,1:nzm,ins) 
+(  920) !        crm_buffer(1:nx,1:ny,1:nzm,13) = micro_field(1:nx,1:ny,1:nzm,iqg) 
+(  921) !        crm_buffer(1:nx,1:ny,1:nzm,14) = micro_field(1:nx,1:ny,1:nzm,ing) 
+(  922) !        if(dopredictNc) then
+(  923) !         crm_buffer(1:nx,1:ny,1:nzm,15) = micro_field(1:nx,1:ny,1:nzm,incl) 
+(  924) !        endif
+(  925) !         crm_buffer(1:nx,1:ny,1:nzm,6) = cloudliq(1:nx,1:ny,1:nzm)
+(  926) !#endif
+(  927) # 928 "crm.F90"
+(  928)         do k=1,nzm
+(  929)          do j=1,ny
+(  930)           do i=1,nx
+(  931)             qc_crm(i,j,k) = qcl(i,j,k)
+(  932)             qi_crm(i,j,k) = qci(i,j,k)
+(  933)             qpc_crm(i,j,k) = qpl(i,j,k)
+(  934)             qpi_crm(i,j,k) = qpi(i,j,k)
+(  935)           end do
+(  936)          end do
+(  937)         end do
+(  938)         stout%z0m = z0 
+(  939)         stout%taux_crm = taux0 / dble(nstop)
+(  940)         stout%tauy_crm = tauy0 / dble(nstop)
+(  941) # 942 "crm.F90"
+(  942) !---------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 37
+
+(  943) !
+(  944) !  Diagnostics:
+(  945) # 946 "crm.F90"
+(  946)         stout%cld = min(1._r8,stout%cld/float(nstat)*factor_xy)
+(  947)         stout%cldtop = min(1._r8,stout%cldtop/float(nstat)*factor_xy)
+(  948)         stout%rad_qc = stout%rad_qc / float(nstat) * factor_xy
+(  949)         stout%rad_qi = stout%rad_qi / float(nstat) * factor_xy
+(  950)         stout%gicewp(:)=stout%gicewp*pdel(:)*1000./ggr/float(nstat)*factor_xy
+(  951)         stout%gliqwp(:)=stout%gliqwp*pdel(:)*1000./ggr/float(nstat)*factor_xy
+(  952)         stout%mcup = stout%mcup / float(nstat) * factor_xy
+(  953)         stout%mcdn = stout%mcdn / float(nstat) * factor_xy
+(  954)         stout%mcuup = stout%mcuup / float(nstat) * factor_xy
+(  955)         stout%mcudn = stout%mcudn / float(nstat) * factor_xy
+(  956)         stout%mc = stout%mcup + stout%mcdn + stout%mcuup + stout%mcudn
+(  957)         stout%crm_qc = stout%crm_qc / float(nstat) * factor_xy
+(  958)         stout%crm_qi = stout%crm_qi / float(nstat) * factor_xy
+(  959)         stout%crm_qs = stout%crm_qs / float(nstat) * factor_xy
+(  960)         stout%crm_qg = stout%crm_qg / float(nstat) * factor_xy
+(  961)         stout%crm_qr = stout%crm_qr / float(nstat) * factor_xy
+(  962) ! compute in-incloud properties for radiation computations:
+(  963)         do k=1,nzm
+(  964)             if(stout%cld(k).gt.0.) then
+(  965)               stout%gicewpcld(k)=stout%gicewp(k)/stout%cld(k)
+(  966)               stout%gliqwpcld(k)=stout%gliqwp(k)/stout%cld(k)
+(  967)             else
+(  968)               stout%gicewpcld(k)= 0.
+(  969)               stout%gliqwpcld(k)= 0.
+(  970)             end if
+(  971)             tmp1 = tl(k)
+(  972)             stout%reffliq(k) = computeRe_Liquid(tmp1, landfrac, icefrac)
+(  973)             stout%reffice(k) = computeRe_Ice(tmp1)
+(  974)         end do
+(  975) # 977 "crm.F90"
+(  977)         do j=1,ny
+(  978)          do i=1,nx
+(  979)           precsfc(i,j) = precsfc(i,j)*dz/dt/dble(nstop)
+(  980)           precssfc(i,j) = precssfc(i,j)*dz/dt/dble(nstop)
+(  981)           if(precsfc(i,j).gt.10./86400.) then
+(  982)              stout%precc = stout%precc + precsfc(i,j)
+(  983)              stout%precsc = stout%precsc + precssfc(i,j)
+(  984)           else
+(  985)              stout%precl = stout%precl + precsfc(i,j)
+(  986)              stout%precsl = stout%precsl + precssfc(i,j)
+(  987)           end if
+(  988)          end do
+(  989)         end do
+(  990)         prec_crm = precsfc/1000.
+(  991)         stout%precc = stout%precc*factor_xy/1000.
+(  992)         stout%precl = stout%precl*factor_xy/1000.
+(  993)         stout%precsc = stout%precsc*factor_xy/1000.
+(  994)         stout%precsl = stout%precsl*factor_xy/1000.
+(  995) # 996 "crm.F90"
+(  996)         stout%clhgh = stout%clhgh *factor_xy/nstat
+(  997)         stout%clmed = stout%clmed *factor_xy/nstat
+(  998)         stout%cllow = stout%cllow *factor_xy/nstat
+(  999)         stout%cltot = stout%clhgh + stout%clmed + stout%cllow
+( 1000) # 1001 "crm.F90"
+( 1001) !-------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 38
+
+( 1002) !       Fluxes and other stat:
+( 1003) !-------------------------------------------------------------
+( 1004)         do k=1,nzm
+( 1005)           u2z = 0.
+( 1006)           v2z = 0.
+( 1007)           w2z = 0.
+( 1008)           do j=1,ny
+( 1009)            do i=1,nx
+( 1010)              u2z = u2z+(u(i,j,k)-u0(k))**2
+( 1011)              v2z = v2z+(v(i,j,k)-v0(k))**2
+( 1012)              w2z = w2z+0.5*(w(i,j,k+1)**2+w(i,j,k)**2)
+( 1013)            end do
+( 1014)           end do
+( 1015)           tmp1 = dz/rhow(k)
+( 1016)           tmp2 = tmp1/dtn
+( 1017)           mkwsb(k,:) = mkwsb(k,:) * tmp1*rhow(k) * factor_xy/nstop
+( 1018)           mkwle(k,:) = mkwle(k,:) * tmp2*rhow(k) * factor_xy/nstop
+( 1019)           mkadv(k,:) = mkadv(k,:) * factor_xy*idt_gl
+( 1020)           mkdiff(k,:) = mkdiff(k,:) * factor_xy*idt_gl
+( 1021) !#if defined sam1mom || defined samccn
+( 1022)           qpsrc(k) = qpsrc(k) * factor_xy*idt_gl
+( 1023)           qpevp(k) = qpevp(k) * factor_xy*idt_gl
+( 1024)           qpfall(k) = qpfall(k) * factor_xy*idt_gl
+( 1025) !#endif
+( 1026)           precflux(k) = precflux(k) * factor_xy*dz/dt/nstop
+( 1027)           stout%flux_u(k) = (uwle(k) + uwsb(k))*tmp1*factor_xy/nstop
+( 1028)           stout%flux_v(k) = (vwle(k) + vwsb(k))*tmp1*factor_xy/nstop
+( 1029) !#if defined sam1mom || defined samccn
+( 1030)           stout%flux_qt(k) = mkwle(k,1) + mkwsb(k,1)
+( 1031)           stout%fluxsgs_qt(k) =  mkwsb(k,1)
+( 1032)           stout%flux_qp(k) = mkwle(k,2) + mkwsb(k,2)
+( 1033)           stout%qt_trans(k) = mkadv(k,1) + mkdiff(k,1)
+( 1034)           stout%qp_trans(k) = mkadv(k,2) + mkdiff(k,2)
+( 1035) !#endif
+( 1036) !#ifdef m2005
+( 1037) !          stout%flux_qt(k) = mkwle(k,1) + mkwsb(k,1) +  &
+( 1038) !                   mkwle(k,iqcl) + mkwsb(k,iqcl) + mkwle(k,iqci) + mkwsb(k,iqci)
+( 1039) !          stout%fluxsgs_qt(k) =  mkwsb(k,1) + mkwsb(k,iqcl) + mkwsb(k,iqci)
+( 1040) !          stout%flux_qp(k) = mkwle(k,iqr) + mkwsb(k,iqr) +  &
+( 1041) !                   mkwle(k,iqs) + mkwsb(k,iqs) + mkwle(k,iqg) + mkwsb(k,iqg)
+( 1042) !          stout%qt_trans(k) = mkadv(k,1) + mkadv(k,iqcl) + mkadv(k,iqci) + &
+( 1043) !                   mkdiff(k,1) + mkdiff(k,iqcl) + mkdiff(k,iqci) 
+( 1044) !          stout%qp_trans(k) = mkadv(k,iqr) + mkadv(k,iqs) + mkadv(k,iqg) + &
+( 1045) !                   mkdiff(k,iqr) + mkdiff(k,iqs) + mkdiff(k,iqg) 
+( 1046) !#endif
+( 1047) # 1048 "crm.F90"
+( 1048)           stout%tkesgsz(k)= rho(k)*sum(tke(1:nx,1:ny,k))*factor_xy
+( 1049)           stout%tkez(k)= rho(k)*0.5*(u2z+v2z*YES3D+w2z)*factor_xy + stout%tkesgsz(k)
+( 1050)           stout%pflx(k) = precflux(k)/1000.
+( 1051) !#if defined sam1mom || defined samccn
+( 1052)           stout%qp_fall(k) = qpfall(k)
+( 1053)           stout%qp_evp(k) = qpevp(k)
+( 1054)           stout%qp_src(k) = qpsrc(k)
+( 1055) !#endif
+( 1056) !#ifdef m2005
+( 1057) !          stout%qp_fall(k) = 0.
+( 1058) !          stout%qp_evp(k) = 0.
+( 1059) !          stout%qp_src(k) = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:46      page 39
+
+( 1060) !#endif
+( 1061)           stout%qt_ls(k) = qtend(k)
+( 1062)           stout%t_ls(k) = ttend(k)
+( 1063) # 1064 "crm.F90"
+( 1064)         end do
+( 1065)         
+( 1066)         stout%timing_factor = stout%timing_factor / nstop
+( 1067) # 1068 "crm.F90"
+( 1068) end

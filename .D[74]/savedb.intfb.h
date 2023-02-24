@@ -1,0 +1,6 @@
+INTERFACE
+SUBROUTINE savedb()
+USE yomdb
+USE odb_module
+END SUBROUTINE savedb
+END INTERFACE

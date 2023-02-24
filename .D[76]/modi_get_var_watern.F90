@@ -1,0 +1,20 @@
+!depfile:get_var_watern.F90
+MODULE MODI_GET_VAR_WATER_n 
+INTERFACE
+      SUBROUTINE GET_VAR_WATER_n (DFO, DF, DWO, DW, &
+                                  HPROGRAM,KI,HWATER,PQS,PZ0,PZ0H)
+USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+TYPE(DIAG_OPTIONS_t), INTENT(IN) :: DFO
+TYPE(DIAG_t), INTENT(INOUT) :: DF
+TYPE(DIAG_OPTIONS_t), INTENT(IN) :: DWO
+TYPE(DIAG_t), INTENT(INOUT) :: DW
+ CHARACTER(LEN=6),     INTENT(IN)     :: HPROGRAM
+ CHARACTER(LEN=6),     INTENT(IN)     :: HWATER
+INTEGER,              INTENT(IN)     :: KI      ! Number of points
+REAL, DIMENSION(KI),  INTENT(OUT)    :: PQS     ! surface humidity
+REAL, DIMENSION(KI),  INTENT(OUT)    :: PZ0     ! surface roughness length
+REAL, DIMENSION(KI),  INTENT(OUT)    :: PZ0H    ! surface roughness length for heat
+END SUBROUTINE GET_VAR_WATER_n
+
+END INTERFACE
+END MODULE MODI_GET_VAR_WATER_n 

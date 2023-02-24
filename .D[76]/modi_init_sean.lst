@@ -1,0 +1,260 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:03      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:03      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_init_sean.F90
+
+(    1) !depfile:init_sean.F90
+(    2) MODULE MODI_INIT_SEA_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE INIT_SEA_n (DTCO, OREAD_BUDGETC, UG, U, GCP, SM, &
+(    5)                              DGO, DL, DLC, HPROGRAM,HINIT,KI,KSV,KSW,  &
+(    6)                              HSV,PCO2,PRHOA,                            &
+(    7)                              PZENITH,PAZIM,PSW_BANDS,PDIR_ALB,PSCA_ALB, &
+(    8)                              PEMIS,PTSRAD,PTSURF,                       &
+(    9)                              KYEAR, KMONTH,KDAY, PTIME, AT,             &
+(   10)                              HATMFILE,HATMFILETYPE,                     &
+(   11)                              HTEST                                      )  
+(   12) USE MODD_SURFEX_n, ONLY : SEAFLUX_MODEL_t
+(   13) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   14) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   15) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   16) USE MODD_GRID_CONF_PROJ_n, ONLY : GRID_CONF_PROJ_t
+(   17) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   18) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   19) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   20) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   21) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+(   22) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   23) TYPE(GRID_CONF_PROJ_t),INTENT(INOUT) :: GCP
+(   24) TYPE(SEAFLUX_MODEL_t), INTENT(INOUT) :: SM
+(   25) TYPE(DIAG_OPTIONS_t), INTENT(INOUT) :: DGO
+(   26) TYPE(DIAG_t), INTENT(INOUT) :: DL
+(   27) TYPE(DIAG_t), INTENT(INOUT) :: DLC
+(   28)  CHARACTER(LEN=6),                 INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   29)  CHARACTER(LEN=3),                 INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   30) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:03      page 3
+
+(   31) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+(   32) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   33)  CHARACTER(LEN=6), DIMENSION(KSV), INTENT(IN)  :: HSV       ! name of all scalar variables
+(   34) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   35) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   36) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   37) REAL,             DIMENSION(KI),  INTENT(IN)  :: PAZIM     ! solar azimuthal angle (rad from N, clock)
+(   38) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   39) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   40) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   41) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   42) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   43) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   44) INTEGER,                          INTENT(IN)  :: KYEAR     ! current year (UTC)
+(   45) INTEGER,                          INTENT(IN)  :: KMONTH    ! current month (UTC)
+(   46) INTEGER,                          INTENT(IN)  :: KDAY      ! current day (UTC)
+(   47) REAL,                             INTENT(IN)  :: PTIME     ! current time since
+(   48) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   49)  CHARACTER(LEN=28),                INTENT(IN)  :: HATMFILE    ! atmospheric file name
+(   50)  CHARACTER(LEN=6),                 INTENT(IN)  :: HATMFILETYPE! atmospheric file type
+(   51)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   52) END SUBROUTINE INIT_SEA_n
+(   53) 
+(   54) END INTERFACE
+(   55) END MODULE MODI_INIT_SEA_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:03      page 4
+
+(    1) # 1 "modi_init_sean.F90"
+(    1) !depfile:init_sean.F90
+(    2) MODULE MODI_INIT_SEA_n 
+(    3) INTERFACE
+(    4)       SUBROUTINE INIT_SEA_n (DTCO, OREAD_BUDGETC, UG, U, GCP, SM, &
+(    5)                              DGO, DL, DLC, HPROGRAM,HINIT,KI,KSV,KSW,  &
+(    6)                              HSV,PCO2,PRHOA,                            &
+(    7)                              PZENITH,PAZIM,PSW_BANDS,PDIR_ALB,PSCA_ALB, &
+(    8)                              PEMIS,PTSRAD,PTSURF,                       &
+(    9)                              KYEAR, KMONTH,KDAY, PTIME, AT,             &
+(   10)                              HATMFILE,HATMFILETYPE,                     &
+(   11)                              HTEST                                      )  
+(   12) USE MODD_SURFEX_n, ONLY : SEAFLUX_MODEL_t
+(   13) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   14) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   15) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   16) USE MODD_GRID_CONF_PROJ_n, ONLY : GRID_CONF_PROJ_t
+(   17) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   18) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   19) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   20) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   21) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+(   22) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   23) TYPE(GRID_CONF_PROJ_t),INTENT(INOUT) :: GCP
+(   24) TYPE(SEAFLUX_MODEL_t), INTENT(INOUT) :: SM
+(   25) TYPE(DIAG_OPTIONS_t), INTENT(INOUT) :: DGO
+(   26) TYPE(DIAG_t), INTENT(INOUT) :: DL
+(   27) TYPE(DIAG_t), INTENT(INOUT) :: DLC
+(   28)  CHARACTER(LEN=6),                 INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   29)  CHARACTER(LEN=3),                 INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   30) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+(   31) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+(   32) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   33)  CHARACTER(LEN=6), DIMENSION(KSV), INTENT(IN)  :: HSV       ! name of all scalar variables
+(   34) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   35) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   36) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   37) REAL,             DIMENSION(KI),  INTENT(IN)  :: PAZIM     ! solar azimuthal angle (rad from N, clock)
+(   38) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   39) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   40) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   41) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   42) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   43) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   44) INTEGER,                          INTENT(IN)  :: KYEAR     ! current year (UTC)
+(   45) INTEGER,                          INTENT(IN)  :: KMONTH    ! current month (UTC)
+(   46) INTEGER,                          INTENT(IN)  :: KDAY      ! current day (UTC)
+(   47) REAL,                             INTENT(IN)  :: PTIME     ! current time since
+(   48) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   49)  CHARACTER(LEN=28),                INTENT(IN)  :: HATMFILE    ! atmospheric file name
+(   50)  CHARACTER(LEN=6),                 INTENT(IN)  :: HATMFILETYPE! atmospheric file type
+(   51)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   52) END SUBROUTINE INIT_SEA_n
+(   53) # 54 "modi_init_sean.F90"
+(   54) END INTERFACE
+(   55) END MODULE MODI_INIT_SEA_n 

@@ -1,0 +1,291 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:44:36      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:44:36      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_snowcro.F90
+
+(    1) !depfile:snowcro.F90
+(    2) MODULE MODI_SNOWCRO
+(    3) INTERFACE
+(    4)       SUBROUTINE SNOWCRO(HSNOWRES, TPTIME, OMEB, OGLACIER, HIMPLICIT_WIND,      &
+(    5)                       PPEW_A_COEF, PPEW_B_COEF,                                 &
+(    6)                       PPET_A_COEF, PPEQ_A_COEF, PPET_B_COEF, PPEQ_B_COEF,       &
+(    7)                       PSNOWSWE,PSNOWRHO,PSNOWHEAT,PSNOWALB,                     &
+(    8)                       PSNOWGRAN1,PSNOWGRAN2,PSNOWHIST,PSNOWAGE, PSNOWIMPUR,     &
+(    9)                       PTSTEP,PPS,PSR,PRR,PPSN3L,                                &
+(   10)                       PTA,PTG,PSW_RAD,PQA,PVMOD,PLW_RAD, PRHOA,                 &
+(   11)                       PUREF,PEXNS,PEXNA,PDIRCOSZW,                              &
+(   12)                       PZREF,PZ0,PZ0EFF,PZ0H,PALB,                               &
+(   13)                       PSOILCOND,PD_G,                                           &
+(   14)                       PSNOWLIQ,PSNOWTEMP,PSNOWDZ,                               &
+(   15)                       PTHRUFAL,PGRNDFLUX,PEVAPCOR, PGFLXCOR,                    &
+(   16)                       PSWNETSNOW,PSWNETSNOWS,PLWNETSNOW,                        &
+(   17)                       PRNSNOW,PHSNOW,PGFLUXSNOW,                                &
+(   18)                       PHPSNOW,PLES3L,PLEL3L,PEVAP,PSNDRIFT,PRI,                 &
+(   19)                       PEMISNOW,PCDSNOW,PUSTAR,PCHSNOW,PSNOWHMASS,PQS,           &
+(   20)                       PPERMSNOWFRAC,PZENITH,PANGL_ILLUM,PXLAT,PXLON,PBLOWSNW,   &
+(   21)                       HSNOWDRIFT,OSNOWDRIFT_SUBLIM,OSNOW_ABS_ZENITH,            &
+(   22)                       HSNOWMETAMO,HSNOWRAD,OATMORAD,P_DIR_SW, P_SCA_SW,         &
+(   23)                       PSPEC_ALB, PDIFF_RATIO,PIMPWET,PIMPDRY, HSNOWFALL,        &
+(   24)                       HSNOWCOND, HSNOWHOLD,HSNOWCOMP,HSNOWZREF,                 &
+(   25)                       PSNOWMAK, OSNOWCOMPACT_BOOL, OSNOWMAK_BOOL, OSNOWTILLER,  &
+(   26)                       OSELF_PROD, OSNOWMAK_PROP, OPRODSNOWMAK )
+(   27) USE MODD_TYPE_DATE_SURF, ONLY: DATE_TIME
+(   28) USE MODD_PREP_SNOW, ONLY : NIMPUR
+(   29) USE MODD_CONST_ATM, ONLY: JPNBANDS_ATM
+(   30) REAL, INTENT(IN)                    :: PTSTEP
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:44:36      page 3
+
+(   31) TYPE(DATE_TIME), INTENT(IN)         :: TPTIME      ! current date and time
+(   32)  CHARACTER(LEN=*), INTENT(IN)       :: HSNOWRES
+(   33) LOGICAL, INTENT(IN)                 :: OMEB       ! True = coupled to MEB. This means surface fluxes ae IMPOSED
+(   34) LOGICAL, INTENT(IN)                 :: OGLACIER   ! True = Over permanent snow and ice, 
+(   35)  CHARACTER(LEN=*), INTENT(IN)       :: HIMPLICIT_WIND   ! wind implicitation option
+(   36) REAL, DIMENSION(:), INTENT(IN)      :: PPS, PTA, PSW_RAD, PQA, PVMOD, PLW_RAD, PSR, PRR 
+(   37) REAL, DIMENSION(:,:), INTENT(IN)   :: P_DIR_SW, P_SCA_SW ! direct and diffuse spectral irradiance (W/m2/um)
+(   38) REAL, DIMENSION(:,:), INTENT(IN)   :: PIMPWET, PIMPDRY  !Dry and wet deposit coefficient from Forcing File(g/m²/s)
+(   39) REAL, DIMENSION(:), INTENT(IN)      :: PTG, PSOILCOND, PD_G, PPSN3L
+(   40) REAL, DIMENSION(:), INTENT(IN)      :: PZREF, PUREF, PEXNS, PEXNA, PDIRCOSZW, PRHOA, PZ0, PZ0EFF, &
+(   41)                                        PALB, PZ0H, PPERMSNOWFRAC 
+(   42) REAL, DIMENSION(:), INTENT(IN)      :: PPEW_A_COEF, PPEW_B_COEF,                   &
+(   43)                                         PPET_A_COEF, PPEQ_A_COEF, PPET_B_COEF,      &
+(   44)                                         PPEQ_B_COEF  
+(   45) REAL, DIMENSION(:), INTENT(INOUT)   :: PSNOWALB
+(   46) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWHEAT, PSNOWRHO, PSNOWSWE
+(   47) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWGRAN1, PSNOWGRAN2, PSNOWHIST
+(   48) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWAGE  ! Snow grain age
+(   49) REAL, DIMENSION(:,:,:), INTENT(INOUT)  :: PSNOWIMPUR  ! Snow impurity content (g) (LOCATION,LAYER,NIMPUR)) Impur type :1/BC 
+(   50) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWTEMP
+(   51) REAL, DIMENSION(:,:), INTENT(OUT)    :: PSNOWLIQ, PSNOWDZ
+(   52) REAL, DIMENSION(:), INTENT(OUT)      :: PTHRUFAL,  PEVAPCOR,  PGFLXCOR
+(   53) REAL, DIMENSION(:,:), INTENT(OUT)       :: PSPEC_ALB, PDIFF_RATIO !! spectral albedo and diffuse to total irradiance ratio
+(   54) REAL, DIMENSION(:), INTENT(INOUT)      :: PGRNDFLUX 
+(   55) REAL, DIMENSION(:), INTENT(INOUT)    :: PRNSNOW, PHSNOW, PGFLUXSNOW, PLES3L, PLEL3L, &
+(   56)                                         PHPSNOW, PCDSNOW, PUSTAR, PEVAP
+(   57) REAL, DIMENSION(:), INTENT(OUT)      :: PSNDRIFT
+(   58) REAL, DIMENSION(:), INTENT(INOUT) :: PSWNETSNOW, PLWNETSNOW, PSWNETSNOWS
+(   59) REAL, DIMENSION(:), INTENT(INOUT)    :: PCHSNOW,PRI
+(   60) REAL, DIMENSION(:), INTENT(OUT)      :: PEMISNOW, PSNOWHMASS
+(   61) REAL, DIMENSION(:), INTENT(OUT)      ::  PQS
+(   62) REAL, DIMENSION(:), INTENT(IN)        :: PZENITH ! solar zenith angle
+(   63) REAL, DIMENSION(:), INTENT(IN)        :: PANGL_ILLUM ! Effective illumination angle, Angle between the sun and the normal to
+(   64) REAL, DIMENSION(:), INTENT(IN)        :: PXLAT,PXLON ! LAT/LON after packing
+(   65) REAL, DIMENSION(:,:), INTENT(IN)      :: PBLOWSNW !  Properties of deposited blowing snow (from Sytron or Meso-NH/Crocus)
+(   66) CHARACTER(4), INTENT(IN)            :: HSNOWDRIFT        ! Snowdrift scheme :
+(   67) LOGICAL, INTENT(IN)                   :: OSNOWDRIFT_SUBLIM ! activate sublimation during drift
+(   68) REAL, DIMENSION (:), INTENT(IN)       ::  PSNOWMAK        ! Snowmaking thickness (m)
+(   69) LOGICAL, INTENT(IN)                   :: OSNOWCOMPACT_BOOL, OSNOWMAK_BOOL, OSNOWTILLER, &
+(   70)                                          OSELF_PROD, OSNOWMAK_PROP
+(   71) LOGICAL, DIMENSION(:), INTENT(INOUT)  :: OPRODSNOWMAK
+(   72) LOGICAL, INTENT(IN)                   :: OSNOW_ABS_ZENITH ! activate parametrization of solar absorption for polar regions
+(   73)  CHARACTER(3), INTENT(IN)             :: HSNOWMETAMO, HSNOWRAD, HSNOWFALL, HSNOWCOND, HSNOWHOLD, HSNOWCOMP, HSNOWZREF
+(   74) LOGICAL, INTENT(IN)                   :: OATMORAD ! activate atmotartes scheme
+(   75) END SUBROUTINE SNOWCRO
+(   76) 
+(   77) END INTERFACE
+(   78) END MODULE MODI_SNOWCRO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:44:36      page 4
+
+(    1) # 1 "modi_snowcro.F90"
+(    1) !depfile:snowcro.F90
+(    2) MODULE MODI_SNOWCRO
+(    3) INTERFACE
+(    4)       SUBROUTINE SNOWCRO(HSNOWRES, TPTIME, OMEB, OGLACIER, HIMPLICIT_WIND,      &
+(    5)                       PPEW_A_COEF, PPEW_B_COEF,                                 &
+(    6)                       PPET_A_COEF, PPEQ_A_COEF, PPET_B_COEF, PPEQ_B_COEF,       &
+(    7)                       PSNOWSWE,PSNOWRHO,PSNOWHEAT,PSNOWALB,                     &
+(    8)                       PSNOWGRAN1,PSNOWGRAN2,PSNOWHIST,PSNOWAGE, PSNOWIMPUR,     &
+(    9)                       PTSTEP,PPS,PSR,PRR,PPSN3L,                                &
+(   10)                       PTA,PTG,PSW_RAD,PQA,PVMOD,PLW_RAD, PRHOA,                 &
+(   11)                       PUREF,PEXNS,PEXNA,PDIRCOSZW,                              &
+(   12)                       PZREF,PZ0,PZ0EFF,PZ0H,PALB,                               &
+(   13)                       PSOILCOND,PD_G,                                           &
+(   14)                       PSNOWLIQ,PSNOWTEMP,PSNOWDZ,                               &
+(   15)                       PTHRUFAL,PGRNDFLUX,PEVAPCOR, PGFLXCOR,                    &
+(   16)                       PSWNETSNOW,PSWNETSNOWS,PLWNETSNOW,                        &
+(   17)                       PRNSNOW,PHSNOW,PGFLUXSNOW,                                &
+(   18)                       PHPSNOW,PLES3L,PLEL3L,PEVAP,PSNDRIFT,PRI,                 &
+(   19)                       PEMISNOW,PCDSNOW,PUSTAR,PCHSNOW,PSNOWHMASS,PQS,           &
+(   20)                       PPERMSNOWFRAC,PZENITH,PANGL_ILLUM,PXLAT,PXLON,PBLOWSNW,   &
+(   21)                       HSNOWDRIFT,OSNOWDRIFT_SUBLIM,OSNOW_ABS_ZENITH,            &
+(   22)                       HSNOWMETAMO,HSNOWRAD,OATMORAD,P_DIR_SW, P_SCA_SW,         &
+(   23)                       PSPEC_ALB, PDIFF_RATIO,PIMPWET,PIMPDRY, HSNOWFALL,        &
+(   24)                       HSNOWCOND, HSNOWHOLD,HSNOWCOMP,HSNOWZREF,                 &
+(   25)                       PSNOWMAK, OSNOWCOMPACT_BOOL, OSNOWMAK_BOOL, OSNOWTILLER,  &
+(   26)                       OSELF_PROD, OSNOWMAK_PROP, OPRODSNOWMAK )
+(   27) USE MODD_TYPE_DATE_SURF, ONLY: DATE_TIME
+(   28) USE MODD_PREP_SNOW, ONLY : NIMPUR
+(   29) USE MODD_CONST_ATM, ONLY: JPNBANDS_ATM
+(   30) REAL, INTENT(IN)                    :: PTSTEP
+(   31) TYPE(DATE_TIME), INTENT(IN)         :: TPTIME      ! current date and time
+(   32)  CHARACTER(LEN=*), INTENT(IN)       :: HSNOWRES
+(   33) LOGICAL, INTENT(IN)                 :: OMEB       ! True = coupled to MEB. This means surface fluxes ae IMPOSED
+(   34) LOGICAL, INTENT(IN)                 :: OGLACIER   ! True = Over permanent snow and ice, 
+(   35)  CHARACTER(LEN=*), INTENT(IN)       :: HIMPLICIT_WIND   ! wind implicitation option
+(   36) REAL, DIMENSION(:), INTENT(IN)      :: PPS, PTA, PSW_RAD, PQA, PVMOD, PLW_RAD, PSR, PRR 
+(   37) REAL, DIMENSION(:,:), INTENT(IN)   :: P_DIR_SW, P_SCA_SW ! direct and diffuse spectral irradiance (W/m2/um)
+(   38) REAL, DIMENSION(:,:), INTENT(IN)   :: PIMPWET, PIMPDRY  !Dry and wet deposit coefficient from Forcing File(g/m²/s)
+(   39) REAL, DIMENSION(:), INTENT(IN)      :: PTG, PSOILCOND, PD_G, PPSN3L
+(   40) REAL, DIMENSION(:), INTENT(IN)      :: PZREF, PUREF, PEXNS, PEXNA, PDIRCOSZW, PRHOA, PZ0, PZ0EFF, &
+(   41)                                        PALB, PZ0H, PPERMSNOWFRAC 
+(   42) REAL, DIMENSION(:), INTENT(IN)      :: PPEW_A_COEF, PPEW_B_COEF,                   &
+(   43)                                         PPET_A_COEF, PPEQ_A_COEF, PPET_B_COEF,      &
+(   44)                                         PPEQ_B_COEF  
+(   45) REAL, DIMENSION(:), INTENT(INOUT)   :: PSNOWALB
+(   46) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWHEAT, PSNOWRHO, PSNOWSWE
+(   47) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWGRAN1, PSNOWGRAN2, PSNOWHIST
+(   48) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWAGE  ! Snow grain age
+(   49) REAL, DIMENSION(:,:,:), INTENT(INOUT)  :: PSNOWIMPUR  ! Snow impurity content (g) (LOCATION,LAYER,NIMPUR)) Impur type :1/BC 2/Dust
+(   50) REAL, DIMENSION(:,:), INTENT(INOUT)  :: PSNOWTEMP
+(   51) REAL, DIMENSION(:,:), INTENT(OUT)    :: PSNOWLIQ, PSNOWDZ
+(   52) REAL, DIMENSION(:), INTENT(OUT)      :: PTHRUFAL,  PEVAPCOR,  PGFLXCOR
+(   53) REAL, DIMENSION(:,:), INTENT(OUT)       :: PSPEC_ALB, PDIFF_RATIO !! spectral albedo and diffuse to total irradiance ratio
+(   54) REAL, DIMENSION(:), INTENT(INOUT)      :: PGRNDFLUX 
+(   55) REAL, DIMENSION(:), INTENT(INOUT)    :: PRNSNOW, PHSNOW, PGFLUXSNOW, PLES3L, PLEL3L, &
+(   56)                                         PHPSNOW, PCDSNOW, PUSTAR, PEVAP
+(   57) REAL, DIMENSION(:), INTENT(OUT)      :: PSNDRIFT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:44:36      page 5
+
+(   58) REAL, DIMENSION(:), INTENT(INOUT) :: PSWNETSNOW, PLWNETSNOW, PSWNETSNOWS
+(   59) REAL, DIMENSION(:), INTENT(INOUT)    :: PCHSNOW,PRI
+(   60) REAL, DIMENSION(:), INTENT(OUT)      :: PEMISNOW, PSNOWHMASS
+(   61) REAL, DIMENSION(:), INTENT(OUT)      ::  PQS
+(   62) REAL, DIMENSION(:), INTENT(IN)        :: PZENITH ! solar zenith angle
+(   63) REAL, DIMENSION(:), INTENT(IN)        :: PANGL_ILLUM ! Effective illumination angle, Angle between the sun and the normal to the ground (=zenith if no slope) used in TARTES
+(   64) REAL, DIMENSION(:), INTENT(IN)        :: PXLAT,PXLON ! LAT/LON after packing
+(   65) REAL, DIMENSION(:,:), INTENT(IN)      :: PBLOWSNW !  Properties of deposited blowing snow (from Sytron or Meso-NH/Crocus)
+(   66) CHARACTER(4), INTENT(IN)            :: HSNOWDRIFT        ! Snowdrift scheme :
+(   67) LOGICAL, INTENT(IN)                   :: OSNOWDRIFT_SUBLIM ! activate sublimation during drift
+(   68) REAL, DIMENSION (:), INTENT(IN)       ::  PSNOWMAK        ! Snowmaking thickness (m)
+(   69) LOGICAL, INTENT(IN)                   :: OSNOWCOMPACT_BOOL, OSNOWMAK_BOOL, OSNOWTILLER, &
+(   70)                                          OSELF_PROD, OSNOWMAK_PROP
+(   71) LOGICAL, DIMENSION(:), INTENT(INOUT)  :: OPRODSNOWMAK
+(   72) LOGICAL, INTENT(IN)                   :: OSNOW_ABS_ZENITH ! activate parametrization of solar absorption for polar regions
+(   73)  CHARACTER(3), INTENT(IN)             :: HSNOWMETAMO, HSNOWRAD, HSNOWFALL, HSNOWCOND, HSNOWHOLD, HSNOWCOMP, HSNOWZREF
+(   74) LOGICAL, INTENT(IN)                   :: OATMORAD ! activate atmotartes scheme
+(   75) END SUBROUTINE SNOWCRO
+(   76) # 77 "modi_snowcro.F90"
+(   77) END INTERFACE
+(   78) END MODULE MODI_SNOWCRO

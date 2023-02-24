@@ -1,0 +1,248 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:52      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:52      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_ecume_seaflux.F90
+
+(    1) !depfile:ecume_seaflux.F90
+(    2) MODULE MODI_ECUME_SEAFLUX
+(    3) INTERFACE
+(    4)     SUBROUTINE ECUME_SEAFLUX(S,PMASK,KSIZE_WATER,KSIZE_ICE,       &
+(    5)                               PTA,PEXNA,PRHOA,PSST,PEXNS,PQA,     &
+(    6)                               PRAIN,PSNOW,PVMOD,PZREF,PUREF,PPS,PPA,   &
+(    7)                               PQSAT,PSFTH,PSFTQ,PUSTAR,AT,PCD,       &
+(    8)                               PCDN,PCH,PCE,PRI,PRESA,PZ0HSEA      ) 
+(    9) USE MODD_SEAFLUX_n, ONLY : SEAFLUX_t
+(   10) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   11) TYPE(SEAFLUX_t), INTENT(INOUT) :: S
+(   12) REAL, DIMENSION(:), INTENT(IN)   :: PMASK        ! Either a mask positive for open sea, or a seaice fraction
+(   13) INTEGER           , INTENT(IN)   :: KSIZE_WATER  ! number of points with some sea water 
+(   14) INTEGER           , INTENT(IN)   :: KSIZE_ICE    ! number of points with some sea ice
+(   15) REAL, DIMENSION(:), INTENT(IN)    :: PTA   ! air temperature at atm. level (K)
+(   16) REAL, DIMENSION(:), INTENT(IN)    :: PQA   ! air humidity at atm. level (kg/kg)
+(   17) REAL, DIMENSION(:), INTENT(IN)    :: PEXNA ! Exner function at atm. level
+(   18) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA ! air density at atm. level
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PVMOD ! module of wind at atm. wind level (m/s)
+(   20) REAL, DIMENSION(:), INTENT(IN)    :: PZREF ! atm. level for temp. and humidity (m)
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PUREF ! atm. level for wind (m)
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PSST  ! Sea Surface Temperature (K)
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS ! Exner function at sea surface
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PPS   ! air pressure at sea surface (Pa)
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PPA   ! air pressure at atm. level (Pa)
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PRAIN ! precipitation rate (kg/s/m2)
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PSNOW ! snow rate (kg/s/m2)
+(   28) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   29) REAL, DIMENSION(:), INTENT(OUT)      :: PSFTH ! heat flux (W/m2)
+(   30) REAL, DIMENSION(:), INTENT(OUT)      :: PSFTQ ! water flux (kg/m2/s)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:52      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(OUT)      :: PUSTAR! friction velocity (m/s)
+(   32) REAL, DIMENSION(:), INTENT(OUT)      :: PQSAT ! humidity at saturation
+(   33) REAL, DIMENSION(:), INTENT(OUT)      :: PCD   ! heat drag coefficient
+(   34) REAL, DIMENSION(:), INTENT(OUT)      :: PCDN  ! momentum drag coefficient
+(   35) REAL, DIMENSION(:), INTENT(OUT)      :: PCH   ! neutral momentum drag coefficient
+(   36) REAL, DIMENSION(:), INTENT(OUT)      :: PCE   !transfer coef. for latent heat flux
+(   37) REAL, DIMENSION(:), INTENT(OUT)      :: PRI   ! Richardson number
+(   38) REAL, DIMENSION(:), INTENT(OUT)      :: PRESA ! aerodynamical resistance
+(   39) REAL, DIMENSION(:), INTENT(OUT)      :: PZ0HSEA ! heat roughness length
+(   40) END SUBROUTINE ECUME_SEAFLUX
+(   41) 
+(   42) END INTERFACE
+(   43) END MODULE MODI_ECUME_SEAFLUX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:52      page 4
+
+(    1) # 1 "modi_ecume_seaflux.F90"
+(    1) !depfile:ecume_seaflux.F90
+(    2) MODULE MODI_ECUME_SEAFLUX
+(    3) INTERFACE
+(    4)     SUBROUTINE ECUME_SEAFLUX(S,PMASK,KSIZE_WATER,KSIZE_ICE,       &
+(    5)                               PTA,PEXNA,PRHOA,PSST,PEXNS,PQA,     &
+(    6)                               PRAIN,PSNOW,PVMOD,PZREF,PUREF,PPS,PPA,   &
+(    7)                               PQSAT,PSFTH,PSFTQ,PUSTAR,AT,PCD,       &
+(    8)                               PCDN,PCH,PCE,PRI,PRESA,PZ0HSEA      ) 
+(    9) USE MODD_SEAFLUX_n, ONLY : SEAFLUX_t
+(   10) USE MODD_SURF_ATM_TURB_n, ONLY : SURF_ATM_TURB_t
+(   11) TYPE(SEAFLUX_t), INTENT(INOUT) :: S
+(   12) REAL, DIMENSION(:), INTENT(IN)   :: PMASK        ! Either a mask positive for open sea, or a seaice fraction
+(   13) INTEGER           , INTENT(IN)   :: KSIZE_WATER  ! number of points with some sea water 
+(   14) INTEGER           , INTENT(IN)   :: KSIZE_ICE    ! number of points with some sea ice
+(   15) REAL, DIMENSION(:), INTENT(IN)    :: PTA   ! air temperature at atm. level (K)
+(   16) REAL, DIMENSION(:), INTENT(IN)    :: PQA   ! air humidity at atm. level (kg/kg)
+(   17) REAL, DIMENSION(:), INTENT(IN)    :: PEXNA ! Exner function at atm. level
+(   18) REAL, DIMENSION(:), INTENT(IN)    :: PRHOA ! air density at atm. level
+(   19) REAL, DIMENSION(:), INTENT(IN)    :: PVMOD ! module of wind at atm. wind level (m/s)
+(   20) REAL, DIMENSION(:), INTENT(IN)    :: PZREF ! atm. level for temp. and humidity (m)
+(   21) REAL, DIMENSION(:), INTENT(IN)    :: PUREF ! atm. level for wind (m)
+(   22) REAL, DIMENSION(:), INTENT(IN)    :: PSST  ! Sea Surface Temperature (K)
+(   23) REAL, DIMENSION(:), INTENT(IN)    :: PEXNS ! Exner function at sea surface
+(   24) REAL, DIMENSION(:), INTENT(IN)    :: PPS   ! air pressure at sea surface (Pa)
+(   25) REAL, DIMENSION(:), INTENT(IN)    :: PPA   ! air pressure at atm. level (Pa)
+(   26) REAL, DIMENSION(:), INTENT(IN)    :: PRAIN ! precipitation rate (kg/s/m2)
+(   27) REAL, DIMENSION(:), INTENT(IN)    :: PSNOW ! snow rate (kg/s/m2)
+(   28) TYPE(SURF_ATM_TURB_t), INTENT(IN) :: AT         ! atmospheric turbulence parameters
+(   29) REAL, DIMENSION(:), INTENT(OUT)      :: PSFTH ! heat flux (W/m2)
+(   30) REAL, DIMENSION(:), INTENT(OUT)      :: PSFTQ ! water flux (kg/m2/s)
+(   31) REAL, DIMENSION(:), INTENT(OUT)      :: PUSTAR! friction velocity (m/s)
+(   32) REAL, DIMENSION(:), INTENT(OUT)      :: PQSAT ! humidity at saturation
+(   33) REAL, DIMENSION(:), INTENT(OUT)      :: PCD   ! heat drag coefficient
+(   34) REAL, DIMENSION(:), INTENT(OUT)      :: PCDN  ! momentum drag coefficient
+(   35) REAL, DIMENSION(:), INTENT(OUT)      :: PCH   ! neutral momentum drag coefficient
+(   36) REAL, DIMENSION(:), INTENT(OUT)      :: PCE   !transfer coef. for latent heat flux
+(   37) REAL, DIMENSION(:), INTENT(OUT)      :: PRI   ! Richardson number
+(   38) REAL, DIMENSION(:), INTENT(OUT)      :: PRESA ! aerodynamical resistance
+(   39) REAL, DIMENSION(:), INTENT(OUT)      :: PZ0HSEA ! heat roughness length
+(   40) END SUBROUTINE ECUME_SEAFLUX
+(   41) # 42 "modi_ecume_seaflux.F90"
+(   42) END INTERFACE
+(   43) END MODULE MODI_ECUME_SEAFLUX

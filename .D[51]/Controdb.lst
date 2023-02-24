@@ -1,0 +1,1070 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Controdb.F90
+
+(    1) 
+(    2) PROGRAM controdb
+(    3) 
+(    4) !=====================================================================
+(    5) !  Objet : controle du nombre d'obs
+(    6) !     a integrer dans batodb par la suite
+(    7) !  Appels : 
+(    8) !
+(    9) !  Auteur : Puech D.    CNRM/GMAP/AAD
+(   10) !---------------------------------------------------------------------
+(   11) ! 01/08/2001 : V01 : re-ecriture pour odb (version assim obsob)
+(   12) !=====================================================================
+(   13) 
+(   14) 
+(   15) !---------------------  INITIALISATIONS  -----------------------------
+(   16) 
+(   17) !  - 0 -  Declaration et initialisation des variables
+(   18) 
+(   19) USE PARKIND1, ONLY : JPIM, JPRD
+(   20) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(   21) USE YOMDB
+(   22) implicit none
+(   23) 
+(   24) ! definitions odb
+(   25)   character(len=4) :: nombase = 'ECMA'
+(   26)   character clig*100, cprod*3, ccodmes*3
+(   27)   character*15 cmess(2000),cmess0,nomfic
+(   28)   character*1 cpr(2000,4),cpr0(4)
+(   29)   INTEGER(KIND=JPIM) :: info(32), ligne, k, ierr, indic, iprod
+(   30)   INTEGER(KIND=JPIM) :: ji, lmax, jerr, iterr(0:2000,2), nberr, i0, ipb
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 3
+
+(   31)   INTEGER(KIND=JPIM) :: nbobs, NULOUT, jobs, icdt, idate, iheure
+(   32)   INTEGER(KIND=JPIM) :: nbv0(4), nbval(2000,4), inbobs(2000)
+(   33)   INTEGER(KIND=JPIM) :: iobstype, itsum(2000,3)
+(   34)   INTEGER(KIND=JPIM),PARAMETER :: NSATEM=7, NSATOB=3, NSCATT=9
+(   35)   REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   36) 
+(   37) #include "openmp_obs.h"
+(   38) 
+(   39) !  - 1 - initialisations
+(   40) !-----------------------------------
+(   41)   IF (LHOOK) CALL DR_HOOK('CONTRODB',0,ZHOOK_HANDLE)
+(   42)   NULOUT=6
+(   43)   ierr=0; lmax=0; iterr(:,:)=0; nberr=0
+(   44)   inbobs(:)=0; nbval(:,:)=0; cmess(:)=''; cpr(:,:)='';  itsum(:,:)=0
+(   45) 
+(   46)   nomfic='fic_nbobs'
+(   47)   open(11,FILE=nomfic,FORM='FORMATTED',STATUS='OLD',ERR=901)
+(   48)   do ligne=1,4
+(   49)     read(11,'(a100)',ERR=902,END=902) clig
+(   50)   enddo
+(   51)   do ligne=1,120
+(   52)     read(11,'(a100)',ERR=902,END=902) clig
+(   53)     if (clig(1:1) == '!' ) exit
+(   54)     read(clig,'(i3,1x,a12,2(i3,1x),4a1,2x,4i7)',ERR=903)  &
+(   55)         & icdt,cmess0,indic,iprod,(cpr0(k),k=1,4),(nbv0(k),k=1,4)
+(   56)     cmess(ligne)=cmess0
+(   57)     if(indic > 0) write(cmess(ligne),'(a6,1x,i3)') cmess0(1:6),indic
+(   58)     do k=1,4
+(   59)       cpr(ligne,k)=cpr0(k)
+(   60)       nbval(ligne,k)=nbv0(k)
+(   61)     enddo
+(   62)     itsum(ligne,1)=icdt; itsum(ligne,2)=indic; itsum(ligne,3)=iprod
+(   63)     lmax=ligne
+(   64)   enddo
+(   65)   close(11)
+(   66) 
+(   67) !  - 2 -  lecture des donnees
+(   68) !-----------------------------------
+(   69)   call opendb(nombase,'READONLY',info,0)
+(   70)   info(:)=0
+(   71)   info(1)=-1
+(   72)   info(2)=-1 ! nb pools 
+(   73)   call getatdb('@DESC',-1,info,2)
+(   74)   idate=ROBHDR(1,MDB_ANDATE_AT_DESC)
+(   75)   iheure=ROBHDR(1,MDB_ANTIME_AT_DESC)/10000
+(   76)   write(NULOUT,111) mod(idate,100),mod(idate/100,100),idate/10000,iheure 
+(   77)   info(1)=-1
+(   78)   call putatdb('@DESC',-1,info,2)
+(   79)   info(:)=0
+(   80)   info(1)=-1
+(   81)   info(2)=-1 ! nb pools 
+(   82)   call getatdb('@HDR',-1,info,2)
+(   83)   nbobs=info(1)
+(   84) 
+(   85) !  - 3 -  decompte des obs
+(   86) !------------------------------------------------------------------
+(   87)   do jobs=1,nbobs    
+(   88)     icdt=int(ROBHDR(jobs,MDB_CODETYPE_AT_HDR))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 4
+
+(   89)     if (icdt == 14) icdt=11
+(   90)     if ( (icdt >= 21).and.(icdt <= 24) ) icdt=21
+(   91)     iprod=0; indic=0
+(   92)     iobstype=int(ROBHDR(jobs,MDBOTP))
+(   93)     select case (iobstype)
+(   94)     case (NSATOB)
+(   95)       iprod=int(ROBHDR(jobs,MDB_INSTTYPE_AT_HDR))
+(   96) !*AF wrong MDB_IDENT_AT_HDR does not exist any more platform is in sat table
+(   97) !*AF only valid with satellite data (should take sat table too...)
+(   98) !*AF not sure why a retrieval is not used intead of getting the full hdr table...
+(   99) !*AF      indic=int(ROBHDR(jobs,MDB_IDENT_AT_HDR))
+(  100)     indic=-1
+(  101)     case (NSATEM)
+(  102)       iprod=int(ROBHDR(jobs,MDB_INSTTYPE_AT_HDR))
+(  103) !*AF      indic=int(ROBHDR(jobs,MDB_IDENT_AT_HDR))
+(  104)       indic=-1
+(  105)     case (NSCATT)
+(  106) !*AF      indic=int(ROBHDR(jobs,MDB_IDENT_AT_HDR))
+(  107)     indic=-1
+(  108)     end select
+(  109)     ipb=1
+(  110)     do ji=1,lmax
+(  111)       if (itsum(ji,1) == icdt) then 
+(  112)         if ((itsum(ji,2) == indic).or.(itsum(ji,2) == 0)) then
+(  113)           if ((itsum(ji,3) == iprod).or.(itsum(ji,3) == 0)) then
+(  114)             inbobs(ji)=inbobs(ji)+1
+(  115)             ipb=0
+(  116)           endif
+(  117)         endif
+(  118)       endif
+(  119)     enddo
+(  120)     if (ipb == 1) then
+(  121)       i0=icdt+indic*1000+iprod*1000000
+(  122)       jerr=0
+(  123) 21    jerr=jerr+1
+(  124)       if ((i0 /= iterr(jerr,1)).and.(jerr <= nberr)) go to 21
+(  125)       iterr(jerr,1)=i0
+(  126)       iterr(jerr,2)=iterr(jerr,2)+1
+(  127)       if(jerr > nberr) nberr=jerr
+(  128)     endif
+(  129)   enddo
+(  130) 
+(  131) ! infos - messages indispensables
+(  132) !----------------------------------
+(  133)   write(NULOUT,112)  
+(  134)   do ji=1,lmax
+(  135)     cmess0=cmess(ji)
+(  136)     if (cpr(ji,iheure/6+1) == 'T' ) then
+(  137)       if (itsum(ji,3) == 0) then
+(  138)         write(NULOUT,113) itsum(ji,1),cmess0
+(  139)       else
+(  140)        write(NULOUT,114) itsum(ji,1),cmess0,itsum(ji,3)
+(  141)       endif
+(  142)     endif
+(  143)   enddo
+(  144)         
+(  145) ! decompte des valeurs
+(  146) !----------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 5
+
+(  147)   write(NULOUT,115)
+(  148)   do ji=1,lmax
+(  149)     icdt=itsum(ji,1); indic=itsum(ji,2); iprod=itsum(ji,3)
+(  150)     cprod=''; if(iprod /= 0) write(cprod,'(i3)') iprod
+(  151)     ccodmes=''; write(ccodmes,'(i3)') icdt
+(  152)     cmess0=cmess(ji)
+(  153)     write(NULOUT,116) cmess0,ccodmes,cprod,inbobs(ji),nbval(ji,iheure/6+1),cpr(ji,iheure/6+1)
+(  154)     if (cpr(ji,iheure/6+1) == 'T' ) then
+(  155)       if (inbobs(ji) < nbval(ji,iheure/6+1)) then   ! erreur
+(  156)         if (ierr == 0) call open_ctr(NULOUT,idate,iheure,ierr)
+(  157)         write(11,116) cmess0,ccodmes,cprod,inbobs(ji),nbval(ji,iheure/6+1),cpr(ji,iheure/6+1)
+(  158)       endif
+(  159)     endif
+(  160)   enddo
+(  161) 
+(  162) ! valeurs "inconnues"
+(  163) !-------------------------
+(  164)   write(11,*); write(6,*) 
+(  165)   if (nberr > 0) then
+(  166)     do jerr=1,nberr
+(  167)       icdt=mod(iterr(jerr,1),1000); indic=mod(iterr(jerr,1)/1000,1000) ; iprod=iterr(jerr,1)/1000000
+(  168)       write(6,117) icdt,indic,iprod,iterr(jerr,2)
+(  169)       write(11,117) icdt,indic,iprod,iterr(jerr,2)
+(  170)     enddo
+(  171)   endif
+(  172) 
+(  173)   write(NULOUT,118)
+(  174)   if (ierr == 1) then
+(  175)     write(11,118)
+(  176)     close(11)
+(  177)   endif
+(  178)   info(1)=-1
+(  179)   call putatdb('@HDR',-1,info,2)
+(  180) 
+(  181) !  - 4 -  Fin de programme
+(  182) !------------------------------------------------------------------
+(  183)   call closedb(.false.)
+(  184)   IF (LHOOK) CALL DR_HOOK('CONTRODB',1,ZHOOK_HANDLE)
+(  185) 
+(  186)   STOP
+(  187) 
+(  188) !------------------ FORMATS et ERREURS -------------------------------
+(  189) 
+(  190) !  - 5 -  Formats
+(  191) 
+(  192)  111  format(//,10x,10('*'),' Debut du controle du nombre d''observations ',10('*'),//, &
+(  193)        &     ' fichier initial d''observation (input screening arpege) ',/, &
+(  194)        &     ' date et heure  : ',2(i2.2,'/'),i4,' a ',i2.2,' h ',/)
+(  195)  112  format(' Liste des types de messages indispensables : ',/,1x,42('-'))
+(  196)  113  format(4x,i3,1x,a15)
+(  197)  114  format(4x,i3,1x,a15,' prod = ',i3)
+(  198)  115  format(/,24x,'centre',/,' type message',10x,'producteur',4x,'nb messages',6x,'nb mini',/,1x,60('-'))
+(  199)  116  format(4x,a14,a4,a6,2(9x,i6),1x,a1)
+(  200)  117  format(' Donnee inconnue - codetype = ',i3,' - indic = ',i3,' - code prod. = ',i3,' - nbval =',i6)
+(  201)  118  format(//,10x,10('*'),' Fin du controle ',36('*'))
+(  202)  8001 format(' Warning : pas d''indicatif pour ce type de donnees - ',i3)
+(  203)  9001 format(' Probleme lors de l''ouverture du fichier ',a15)
+(  204)  9002 format(' Probleme lors de la lecture du fichier ',a15)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 6
+
+(  205)  9003 format(' Probleme lors du decodage du fichier ',a15)
+(  206) 
+(  207) !  - 6 -  Erreurs
+(  208) 
+(  209)  901  write(NULOUT,9001) nomfic
+(  210)  902  write(NULOUT,9002) nomfic
+(  211)  903  write(NULOUT,9003) nomfic
+(  212) 
+(  213) #include "openmp_obs_undef.h"
+(  214) 
+(  215) END PROGRAM controdb
+(  216) 
+(  217) !----------------------------------------------------------------------------
+(  218) SUBROUTINE open_ctr(NULOUT,kdate,kheure,kerr)
+(  219) 
+(  220) USE PARKIND1, ONLY : JPIM, JPRD
+(  221) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(  222) 
+(  223) implicit none
+(  224)   INTEGER(KIND=JPIM), INTENT(IN) :: NULOUT,kdate, kheure
+(  225)   INTEGER(KIND=JPIM), INTENT(INOUT) :: kerr
+(  226)   character*15 nomfic
+(  227)   REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(  228) 
+(  229)   IF (LHOOK) CALL DR_HOOK('OPEN_CTR',0,ZHOOK_HANDLE)
+(  230)   nomfic='CTR_O_MESS'
+(  231)   open(11,FILE=nomfic,FORM='FORMATTED',STATUS='NEW',ERR=901)
+(  232)   write(11,111) mod(kdate,100),mod(kdate/100,100),kdate/10000,kheure
+(  233)   write(11,114)
+(  234)   kerr=1
+(  235)   IF (LHOOK) CALL DR_HOOK('OPEN_CTR',1,ZHOOK_HANDLE)
+(  236)   RETURN
+(  237) 
+(  238) 111  format(//,10x,10('*'),' Debut du controle du nombre d''observations ',10('*'),//, &
+(  239)       &     ' fichier initial d''observation (input screening arpege) ',/, &
+(  240)       &     ' date et heure  : ',2(i2.2,'/'),i4,' a ',i2.2,' h ',/)
+(  241) 114  format(/,18x,'centre',/,' type message',4x,'producteur',4x,'nb messages',6x,'nb mini',/,1x,60('-'))
+(  242) 
+(  243) 901  write(NULOUT,9001) nomfic
+(  244) 9001 format(' Probleme lors de l''ouverture du fichier ',a15)
+(  245) 
+(  246) END SUBROUTINE open_ctr
+(  247) !----------------------------------------------------------------------------
+(  248) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 7
+
+(    1) # 1 "Controdb.F90"
+(    1) # 2 "Controdb.F90"
+(    2) PROGRAM controdb
+(    3) # 4 "Controdb.F90"
+(    4) !=====================================================================
+(    5) !  Objet : controle du nombre d'obs
+(    6) !     a integrer dans batodb par la suite
+(    7) !  Appels : 
+(    8) !
+(    9) !  Auteur : Puech D.    CNRM/GMAP/AAD
+(   10) !---------------------------------------------------------------------
+(   11) ! 01/08/2001 : V01 : re-ecriture pour odb (version assim obsob)
+(   12) !=====================================================================
+(   13) # 15 "Controdb.F90"
+(   15) !---------------------  INITIALISATIONS  -----------------------------
+(   16) # 17 "Controdb.F90"
+(   17) !  - 0 -  Declaration et initialisation des variables
+(   18) # 19 "Controdb.F90"
+(   19) USE PARKIND1, ONLY : JPIM, JPRD
+(   20) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(   21) USE YOMDB
+(   22) implicit none
+(   23) # 24 "Controdb.F90"
+(   24) ! definitions odb
+(   25)   character(len=4) :: nombase = 'ECMA'
+(   26)   character clig*100, cprod*3, ccodmes*3
+(   27)   character*15 cmess(2000),cmess0,nomfic
+(   28)   character*1 cpr(2000,4),cpr0(4)
+(   29)   INTEGER(KIND=JPIM) :: info(32), ligne, k, ierr, indic, iprod
+(   30)   INTEGER(KIND=JPIM) :: ji, lmax, jerr, iterr(0:2000,2), nberr, i0, ipb
+(   31)   INTEGER(KIND=JPIM) :: nbobs, NULOUT, jobs, icdt, idate, iheure
+(   32)   INTEGER(KIND=JPIM) :: nbv0(4), nbval(2000,4), inbobs(2000)
+(   33)   INTEGER(KIND=JPIM) :: iobstype, itsum(2000,3)
+(   34)   INTEGER(KIND=JPIM),PARAMETER :: NSATEM=7, NSATOB=3, NSCATT=9
+(   35)   REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(   36) # 37 "Controdb.F90"
+(   37) # 1 ".D[55]/openmp_obs.h"
+(    1) # 1 ".D[55]/openmp_obs.h"
+(    1) # 1 ".D[55]/yomdb_defs.h"
+(    1) !*** Note: make sure that the variable to be redefined is in UPPERCASE
+(    2) !      and MAKE SURE THAT THE REDEFINITION (o_(it)%...) IS IN lowercase !!
+(    3) !    If you want to know what is what, please look at odb/cma2odb/initmdb.F90
+(    4) # 6 ".D[55]/yomdb_defs.h"
+(    6) !***  Observational array lengths
+(    7) # 22 ".D[55]/yomdb_defs.h"
+(   22) !*** Observational arrays and link arrays
+(   23) # 33 ".D[55]/yomdb_defs.h"
+(   33) !*** auxiliary ROBAUX<n>, up to JPMAX_AUX_CASES
+(   34) !NB: first, the definition of ROBAUX was the following:
+(   35) !but it causes compilation problems on NEC SX8R/SX9 ...
+(   36) # 51 ".D[55]/yomdb_defs.h"
+(   51) !*** Dynamic MDB-pointers to address obs. array columns
+(   52) # 53 ".D[55]/yomdb_defs.h"
+(   53) ! Aeolus_hdr, scalars
+(   54) # 56 ".D[55]/yomdb_defs.h"
+(   56) ! Aeolus_hdr, links
+(   57) !
+(   58) # 61 ".D[55]/yomdb_defs.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 8
+
+(   61) ! Aeolus_auxmet, all scalars
+(   62) # 69 ".D[55]/yomdb_defs.h"
+(   69) !
+(   70) # 76 ".D[55]/yomdb_defs.h"
+(   76) !
+(   77) # 81 ".D[55]/yomdb_defs.h"
+(   81) ! Aeolus_l2c, all scalars
+(   82) # 95 ".D[55]/yomdb_defs.h"
+(   95) ! enkf mdb pointers
+(   96) # 99 ".D[55]/yomdb_defs.h"
+(   99) ! enda mdb pointers
+(  100) # 117 ".D[55]/yomdb_defs.h"
+(  117) ! enda mdb pointers for surface analysis feedback
+(  118) # 205 ".D[55]/yomdb_defs.h"
+(  205) !*AF removed this column #define MDB_IDENT_AT_HDR o_(it)%mdb_ident_at_hdr
+(  206) # 228 ".D[55]/yomdb_defs.h"
+(  228) !*AF new tables
+(  229) # 245 ".D[55]/yomdb_defs.h"
+(  245) !*AF END
+(  246) # 283 ".D[55]/yomdb_defs.h"
+(  283) !-- Due to the faster MAPVARDB, a column name must be mapped only once to a MDB-pointer
+(  284) # 287 ".D[55]/yomdb_defs.h"
+(  287) !define o_(it)%mdbtorb                         o_(it)%mdbtorba
+(  288) !define o_(it)%mdbtorb                          o_(it)%mdbssrb
+(  289) # 352 ".D[55]/yomdb_defs.h"
+(  352) !*** New items added due to direct BUFR2ODB conversion
+(  353) # 357 ".D[55]/yomdb_defs.h"
+(  357) !*** New items added due to Poolmasking
+(  358) # 369 ".D[55]/yomdb_defs.h"
+(  369) !*** New items added due to introduction of 'timeslot_index'-table
+(  370) # 376 ".D[55]/yomdb_defs.h"
+(  376) !*** Commonly needed subwords/members of 'obschar.*@hdr'
+(  377) !    Please make sure that their length does not exceed 31 chars !
+(  378) !#define MDB_OBSCHAR_D_CODETYPE_AT_HDR  o_(it)%mdb_obschar_d_codetype_at_hdr
+(  379) !#define MDB_OBSCHAR_D_INSTYPE_AT_HDR   o_(it)%mdb_obschar_d_instype_at_hdr
+(  380) !#define MDB_OBSCHAR_D_RETRTYPE_AT_HDR  o_(it)%mdb_obschar_d_retrtype_at_hdr
+(  381) !#define MDB_OBSCHAR_D_DATAGROUP_AT_HDR o_(it)%mdb_obschar_d_datagroup_at_hdr
+(  382) !*** OBSCHAR is replaced by 4 new entries
+(  383) # 387 ".D[55]/yomdb_defs.h"
+(  387) !*** Additional @satob entries requested by Niels Bormann  [20/11/2001]
+(  388) # 390 ".D[55]/yomdb_defs.h"
+(  390) !*** Additional @satob entry requested by Iliana Stoyanova Genkova [22/10/2009]
+(  391) # 393 ".D[55]/yomdb_defs.h"
+(  393) !**** Observation error for AMV (u/v) in m/s
+(  394) # 400 ".D[55]/yomdb_defs.h"
+(  400) !*** New @body & @atovs entries proposed by Christina Koepken [26/11/2002]
+(  401) # 403 ".D[55]/yomdb_defs.h"
+(  403) !*** New @body entries pushed in by Milan Dragosavac [25/02/2011]
+(  404) # 407 ".D[55]/yomdb_defs.h"
+(  407) !*** New @desc & @hdr entries pushed in by Sami Saarinen [17/02/2004]
+(  408) # 411 ".D[55]/yomdb_defs.h"
+(  411) !*** New items added for storing thinning keys
+(  412) # 414 ".D[55]/yomdb_defs.h"
+(  414) !*** Table added for ASRs
+(  415) # 420 ".D[55]/yomdb_defs.h"
+(  420) !*** VarBC-related @body entries by Dick Dee [23/10/2007]
+(  421) # 423 ".D[55]/yomdb_defs.h"
+(  423) !*** latlon_rad@desc added to flag whether (lat,lon) are in radians or not [23/1/04 SS]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 9
+
+(  424) # 425 ".D[55]/yomdb_defs.h"
+(  425) !    vector of MDB_OBSCORDIAG_AT_ERRSTAT [16/3/11 AF]
+(  426) # 427 ".D[55]/yomdb_defs.h"
+(  427) !*** SSM/I reorganization (Peter Bauer/Sami Saarinen) [11/3/04]
+(  428) # 451 ".D[55]/yomdb_defs.h"
+(  451) !*** checksum@hdr-word added to get over reproducibility problems for good [18/3/04 SS]
+(  452) # 483 ".D[55]/yomdb_defs.h"
+(  483) !*** checksum@hdr-word added to get over reproducibility problems for good [18/3/04 SS]
+(  484) # 485 ".D[55]/yomdb_defs.h"
+(  485) !*AF For GNSSRO TABLES
+(  486) # 497 ".D[55]/yomdb_defs.h"
+(  497) !*** New item added for radio occultation SBH [27/10/2004]
+(  498) # 499 ".D[55]/yomdb_defs.h"
+(  499) !*** New item added for radio occulation SBH [21/01/2006]
+(  500) # 501 ".D[55]/yomdb_defs.h"
+(  501) !*** New items for radar table
+(  502) # 504 ".D[55]/yomdb_defs.h"
+(  504) !*** New items for limb table
+(  505) # 511 ".D[55]/yomdb_defs.h"
+(  511) !*** New @atovs entries proposed by Thomas Auligne [03/02/2005]
+(  512) !*** Moved to radiance table
+(  513) # 514 ".D[55]/yomdb_defs.h"
+(  514) !*** New @atovs entries proposed by Andrew Collard [29/09/2008]
+(  515) # 551 ".D[55]/yomdb_defs.h"
+(  551) !*** New items for cloud  sink variable from Tony Mc
+(  552) # 563 ".D[55]/yomdb_defs.h"
+(  563) !*** Ensemble Data Assimilation (enda) by Sami Saarinen [26/08/2005]
+(  564) # 565 ".D[55]/yomdb_defs.h"
+(  565) !*** New @body entries proposed by Richard Engelen [07/07/2006]
+(  566) # 567 ".D[55]/yomdb_defs.h"
+(  567) !*** Averaging kernels for resat data by Antje Dethof [20/02/2006]
+(  568) # 572 ".D[55]/yomdb_defs.h"
+(  572) !** Yannick [22/02/2008] part of the update[] tables
+(  573) # 574 ".D[55]/yomdb_defs.h"
+(  574) !*** Changes due to BoM/MetOffice -compatibility (by SS, from their odb_CY32R2.039.tgz around 21-Nov-2007)
+(  575) # 577 ".D[55]/yomdb_defs.h"
+(  577) !*** New entry to errstat table for extended GEMS resat bufr by A. Dethof [05/03/2007]
+(  578) # 579 ".D[55]/yomdb_defs.h"
+(  579) !*** New entry to hdr table for extended GEMS resat bufr by A. Dethof [05/03/2007]
+(  580) # 581 ".D[55]/yomdb_defs.h"
+(  581) !*** New entry to resat table for Sciamachy CH4 correction factor by R. Engelen [11/02/2008]
+(  582) # 583 ".D[55]/yomdb_defs.h"
+(  583) !*** New @atovs_body entries proposed by Fatima Karbou [16/04/2007]
+(  584) # 592 ".D[55]/yomdb_defs.h"
+(  592) !*** Add prior to averaging kernels for resat data by Richard Engelen [22/10/2008]
+(  593) # 595 ".D[55]/yomdb_defs.h"
+(  595) !*** New entry to body table for layer number by R. Dragani [04/02/2009]
+(  596) # 597 ".D[55]/yomdb_defs.h"
+(  597) !*** AF [31/10/2008] new entry in hdr to keep a copy of seqno (subwindows --> Yannick)
+(  598) # 599 ".D[55]/yomdb_defs.h"
+(  599) !*** New @smos entries proposed by J. Munoz Sabater [11/2009]
+(  600) # 603 ".D[55]/yomdb_defs.h"
+(  603) !*** More @smos entries proposed by J. Munoz Sabater [05/2010]
+(  604) # 620 ".D[55]/yomdb_defs.h"
+(  620) !*** AF [07/04/2010] New entries in sat
+(  621) # 628 ".D[55]/yomdb_defs.h"
+(  628) !*** KL [13/04/2018] New entries in sat
+(  629) # 631 ".D[55]/yomdb_defs.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 10
+
+(  631) !
+(  632) !*** AF [07/04/2010]  New entries in allsky
+(  633) # 683 ".D[55]/yomdb_defs.h"
+(  683) !*** New entries for radar rain rate and rain gauges
+(  684) # 689 ".D[55]/yomdb_defs.h"
+(  689) !*** New entries for rain gauges
+(  690) # 692 ".D[55]/yomdb_defs.h"
+(  692) !*AF modsurf table
+(  693) # 706 ".D[55]/yomdb_defs.h"
+(  706) !*AF Window offset
+(  707) # 709 ".D[55]/yomdb_defs.h"
+(  709) !*AF auxiliary table
+(  710) # 712 ".D[55]/yomdb_defs.h"
+(  712) !*AF new entry for MF
+(  713) # 714 ".D[55]/yomdb_defs.h"
+(  714) !*AF new columns in radiance table
+(  715) # 731 ".D[55]/yomdb_defs.h"
+(  731) !*** New @body entries proposed by Tony McNally [29/11/2002] TO BE CLEANED FOR AIRS AND IASI ONLY
+(  732) # 739 ".D[55]/yomdb_defs.h"
+(  739) !*** New entries for table forecast_diagnostic [23/07/2010] - aksed by Gabor Radnoti
+(  740) # 744 ".D[55]/yomdb_defs.h"
+(  744) !*** New entries for conv and conv_body tables
+(  745) # 760 ".D[55]/yomdb_defs.h"
+(  760) !*** New entry for reanalysis [21/06/2011] - asked by Hans Hersbach
+(  761) # 764 ".D[55]/yomdb_defs.h"
+(  764) !*** New entry for reanalysis [23/05/2012] - added by Paul Poli
+(  765) # 768 ".D[55]/yomdb_defs.h"
+(  768) !*** New @radiance entries for aerosol [09/09/2016] - added by Julie Letertre-Danczak
+(  769) # 771 ".D[55]/yomdb_defs.h"
+(  771) !*** New entry for radiosonde drift by Tomas Kral [27/02/2017]
+(  772) # 2 ".D[55]/openmp_obs.h"
+(    2) # 2 ".D[55]/openmp_obs.h"
+(    2) # 1 ".D[55]/itdef.h"
+(    1) !RJ should be inlined or splitted? (placement issue)
+(    2) # 3 ".D[55]/itdef.h"
+(    3) INTEGER(KIND=JPIM) :: it_
+(    4) it_ = OML_MY_THREAD()
+(    5) # 3 ".D[55]/openmp_obs.h"
+(    3) # 38 "Controdb.F90"
+(   38) # 39 "Controdb.F90"
+(   39) !  - 1 - initialisations
+(   40) !-----------------------------------
+(   41)   IF (LHOOK) CALL DR_HOOK('CONTRODB',0,ZHOOK_HANDLE)
+(   42)   NULOUT=6
+(   43)   ierr=0; lmax=0; iterr(:,:)=0; nberr=0
+(   44)   inbobs(:)=0; nbval(:,:)=0; cmess(:)=''; cpr(:,:)='';  itsum(:,:)=0
+(   45) # 46 "Controdb.F90"
+(   46)   nomfic='fic_nbobs'
+(   47)   open(11,FILE=nomfic,FORM='FORMATTED',STATUS='OLD',ERR=901)
+(   48)   do ligne=1,4
+(   49)     read(11,'(a100)',ERR=902,END=902) clig
+(   50)   enddo
+(   51)   do ligne=1,120
+(   52)     read(11,'(a100)',ERR=902,END=902) clig
+(   53)     if (clig(1:1) == '!' ) exit
+(   54)     read(clig,'(i3,1x,a12,2(i3,1x),4a1,2x,4i7)',ERR=903)  &
+(   55)         & icdt,cmess0,indic,iprod,(cpr0(k),k=1,4),(nbv0(k),k=1,4)
+(   56)     cmess(ligne)=cmess0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 11
+
+(   57)     if(indic > 0) write(cmess(ligne),'(a6,1x,i3)') cmess0(1:6),indic
+(   58)     do k=1,4
+(   59)       cpr(ligne,k)=cpr0(k)
+(   60)       nbval(ligne,k)=nbv0(k)
+(   61)     enddo
+(   62)     itsum(ligne,1)=icdt; itsum(ligne,2)=indic; itsum(ligne,3)=iprod
+(   63)     lmax=ligne
+(   64)   enddo
+(   65)   close(11)
+(   66) # 67 "Controdb.F90"
+(   67) !  - 2 -  lecture des donnees
+(   68) !-----------------------------------
+(   69)   call opendb(nombase,'READONLY',info,0)
+(   70)   info(:)=0
+(   71)   info(1)=-1
+(   72)   info(2)=-1 ! nb pools 
+(   73)   call getatdb('@DESC',-1,info,2)
+(   74)   idate=o_(it_)%robhdr(1,o_(it_)%mdb_andate_at_desc)
+(   75)   iheure=o_(it_)%robhdr(1,o_(it_)%mdb_antime_at_desc)/10000
+(   76)   write(NULOUT,111) mod(idate,100),mod(idate/100,100),idate/10000,iheure 
+(   77)   info(1)=-1
+(   78)   call putatdb('@DESC',-1,info,2)
+(   79)   info(:)=0
+(   80)   info(1)=-1
+(   81)   info(2)=-1 ! nb pools 
+(   82)   call getatdb('@HDR',-1,info,2)
+(   83)   nbobs=info(1)
+(   84) # 85 "Controdb.F90"
+(   85) !  - 3 -  decompte des obs
+(   86) !------------------------------------------------------------------
+(   87)   do jobs=1,nbobs    
+(   88)     icdt=int(o_(it_)%robhdr(jobs,o_(it_)%mdb_codetype_at_hdr))
+(   89)     if (icdt == 14) icdt=11
+(   90)     if ( (icdt >= 21).and.(icdt <= 24) ) icdt=21
+(   91)     iprod=0; indic=0
+(   92)     iobstype=int(o_(it_)%robhdr(jobs,o_(it_)%mdbotp))
+(   93)     select case (iobstype)
+(   94)     case (NSATOB)
+(   95)       iprod=int(o_(it_)%robhdr(jobs,o_(it_)%mdb_insttype_at_hdr))
+(   96) !*AF wrong MDB_IDENT_AT_HDR does not exist any more platform is in sat table
+(   97) !*AF only valid with satellite data (should take sat table too...)
+(   98) !*AF not sure why a retrieval is not used intead of getting the full hdr table...
+(   99) !*AF      indic=int(o_(it_)%robhdr(jobs,MDB_IDENT_AT_HDR))
+(  100)     indic=-1
+(  101)     case (NSATEM)
+(  102)       iprod=int(o_(it_)%robhdr(jobs,o_(it_)%mdb_insttype_at_hdr))
+(  103) !*AF      indic=int(o_(it_)%robhdr(jobs,MDB_IDENT_AT_HDR))
+(  104)       indic=-1
+(  105)     case (NSCATT)
+(  106) !*AF      indic=int(o_(it_)%robhdr(jobs,MDB_IDENT_AT_HDR))
+(  107)     indic=-1
+(  108)     end select
+(  109)     ipb=1
+(  110)     do ji=1,lmax
+(  111)       if (itsum(ji,1) == icdt) then 
+(  112)         if ((itsum(ji,2) == indic).or.(itsum(ji,2) == 0)) then
+(  113)           if ((itsum(ji,3) == iprod).or.(itsum(ji,3) == 0)) then
+(  114)             inbobs(ji)=inbobs(ji)+1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 12
+
+(  115)             ipb=0
+(  116)           endif
+(  117)         endif
+(  118)       endif
+(  119)     enddo
+(  120)     if (ipb == 1) then
+(  121)       i0=icdt+indic*1000+iprod*1000000
+(  122)       jerr=0
+(  123) 21    jerr=jerr+1
+(  124)       if ((i0 /= iterr(jerr,1)).and.(jerr <= nberr)) go to 21
+(  125)       iterr(jerr,1)=i0
+(  126)       iterr(jerr,2)=iterr(jerr,2)+1
+(  127)       if(jerr > nberr) nberr=jerr
+(  128)     endif
+(  129)   enddo
+(  130) # 131 "Controdb.F90"
+(  131) ! infos - messages indispensables
+(  132) !----------------------------------
+(  133)   write(NULOUT,112)  
+(  134)   do ji=1,lmax
+(  135)     cmess0=cmess(ji)
+(  136)     if (cpr(ji,iheure/6+1) == 'T' ) then
+(  137)       if (itsum(ji,3) == 0) then
+(  138)         write(NULOUT,113) itsum(ji,1),cmess0
+(  139)       else
+(  140)        write(NULOUT,114) itsum(ji,1),cmess0,itsum(ji,3)
+(  141)       endif
+(  142)     endif
+(  143)   enddo
+(  144)         
+(  145) ! decompte des valeurs
+(  146) !----------------------------
+(  147)   write(NULOUT,115)
+(  148)   do ji=1,lmax
+(  149)     icdt=itsum(ji,1); indic=itsum(ji,2); iprod=itsum(ji,3)
+(  150)     cprod=''; if(iprod /= 0) write(cprod,'(i3)') iprod
+(  151)     ccodmes=''; write(ccodmes,'(i3)') icdt
+(  152)     cmess0=cmess(ji)
+(  153)     write(NULOUT,116) cmess0,ccodmes,cprod,inbobs(ji),nbval(ji,iheure/6+1),cpr(ji,iheure/6+1)
+(  154)     if (cpr(ji,iheure/6+1) == 'T' ) then
+(  155)       if (inbobs(ji) < nbval(ji,iheure/6+1)) then   ! erreur
+(  156)         if (ierr == 0) call open_ctr(NULOUT,idate,iheure,ierr)
+(  157)         write(11,116) cmess0,ccodmes,cprod,inbobs(ji),nbval(ji,iheure/6+1),cpr(ji,iheure/6+1)
+(  158)       endif
+(  159)     endif
+(  160)   enddo
+(  161) # 162 "Controdb.F90"
+(  162) ! valeurs "inconnues"
+(  163) !-------------------------
+(  164)   write(11,*); write(6,*) 
+(  165)   if (nberr > 0) then
+(  166)     do jerr=1,nberr
+(  167)       icdt=mod(iterr(jerr,1),1000); indic=mod(iterr(jerr,1)/1000,1000) ; iprod=iterr(jerr,1)/1000000
+(  168)       write(6,117) icdt,indic,iprod,iterr(jerr,2)
+(  169)       write(11,117) icdt,indic,iprod,iterr(jerr,2)
+(  170)     enddo
+(  171)   endif
+(  172) # 173 "Controdb.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 13
+
+(  173)   write(NULOUT,118)
+(  174)   if (ierr == 1) then
+(  175)     write(11,118)
+(  176)     close(11)
+(  177)   endif
+(  178)   info(1)=-1
+(  179)   call putatdb('@HDR',-1,info,2)
+(  180) # 181 "Controdb.F90"
+(  181) !  - 4 -  Fin de programme
+(  182) !------------------------------------------------------------------
+(  183)   call closedb(.false.)
+(  184)   IF (LHOOK) CALL DR_HOOK('CONTRODB',1,ZHOOK_HANDLE)
+(  185) # 186 "Controdb.F90"
+(  186)   STOP
+(  187) # 188 "Controdb.F90"
+(  188) !------------------ FORMATS et ERREURS -------------------------------
+(  189) # 190 "Controdb.F90"
+(  190) !  - 5 -  Formats
+(  191) # 192 "Controdb.F90"
+(  192)  111  format(//,10x,10('*'),' Debut du controle du nombre d''observations ',10('*'),//, &
+(  193)        &     ' fichier initial d''observation (input screening arpege) ',/, &
+(  194)        &     ' date et heure  : ',2(i2.2,'/'),i4,' a ',i2.2,' h ',/)
+(  195)  112  format(' Liste des types de messages indispensables : ',/,1x,42('-'))
+(  196)  113  format(4x,i3,1x,a15)
+(  197)  114  format(4x,i3,1x,a15,' prod = ',i3)
+(  198)  115  format(/,24x,'centre',/,' type message',10x,'producteur',4x,'nb messages',6x,'nb mini',/,1x,60('-'))
+(  199)  116  format(4x,a14,a4,a6,2(9x,i6),1x,a1)
+(  200)  117  format(' Donnee inconnue - codetype = ',i3,' - indic = ',i3,' - code prod. = ',i3,' - nbval =',i6)
+(  201)  118  format(//,10x,10('*'),' Fin du controle ',36('*'))
+(  202)  8001 format(' Warning : pas d''indicatif pour ce type de donnees - ',i3)
+(  203)  9001 format(' Probleme lors de l''ouverture du fichier ',a15)
+(  204)  9002 format(' Probleme lors de la lecture du fichier ',a15)
+(  205)  9003 format(' Probleme lors du decodage du fichier ',a15)
+(  206) # 207 "Controdb.F90"
+(  207) !  - 6 -  Erreurs
+(  208) # 209 "Controdb.F90"
+(  209)  901  write(NULOUT,9001) nomfic
+(  210)  902  write(NULOUT,9002) nomfic
+(  211)  903  write(NULOUT,9003) nomfic
+(  212) # 213 "Controdb.F90"
+(  213) # 1 ".D[55]/openmp_obs_undef.h"
+(    1) # 1 ".D[55]/openmp_obs_undef.h"
+(    1) # 1 ".D[55]/yomdb_defs_undef.h"
+(    1) # 3 ".D[55]/yomdb_defs_undef.h"
+(    3) !***  Observational array lengths
+(    4) # 19 ".D[55]/yomdb_defs_undef.h"
+(   19) !*** Observational arrays and link arrays
+(   20) # 30 ".D[55]/yomdb_defs_undef.h"
+(   30) !*** auxiliary ROBAUX<n>, up to JPMAX_AUX_CASES
+(   31) !NB: first, the definition of ROBAUX was the following:
+(   32) !but it_ causes compilation problems on NEC SX8R/SX9 ...
+(   33) # 48 ".D[55]/yomdb_defs_undef.h"
+(   48) !*** Dynamic MDB-pointers to address obs. array columns
+(   49) # 50 ".D[55]/yomdb_defs_undef.h"
+(   50) ! Aeolus_hdr, scalars
+(   51) # 53 ".D[55]/yomdb_defs_undef.h"
+(   53) ! Aeolus_hdr, links
+(   54) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 14
+
+(   55) # 58 ".D[55]/yomdb_defs_undef.h"
+(   58) ! Aeolus_auxmet, all scalars
+(   59) # 66 ".D[55]/yomdb_defs_undef.h"
+(   66) !
+(   67) # 73 ".D[55]/yomdb_defs_undef.h"
+(   73) !
+(   74) # 78 ".D[55]/yomdb_defs_undef.h"
+(   78) ! Aeolus_l2c, all scalars
+(   79) # 92 ".D[55]/yomdb_defs_undef.h"
+(   92) ! enkf mdb pointers
+(   93) # 96 ".D[55]/yomdb_defs_undef.h"
+(   96) ! enda mdb pointers
+(   97) # 114 ".D[55]/yomdb_defs_undef.h"
+(  114) ! enda mdb pointers for surface analysis feedback
+(  115) # 202 ".D[55]/yomdb_defs_undef.h"
+(  202) !*AF removed this column #define MDB_IDENT_AT_HDR o_(it_)%mdb_ident_at_hdr
+(  203) # 225 ".D[55]/yomdb_defs_undef.h"
+(  225) !*AF new tables
+(  226) # 242 ".D[55]/yomdb_defs_undef.h"
+(  242) !*AF END
+(  243) # 280 ".D[55]/yomdb_defs_undef.h"
+(  280) !-- Due to the faster MAPVARDB, a column name must be mapped only once to a MDB-pointer
+(  281) # 284 ".D[55]/yomdb_defs_undef.h"
+(  284) !define MDBTORBA                         o_(it_)%mdbtorba
+(  285) !define MDBSSRB                          o_(it_)%mdbssrb
+(  286) # 349 ".D[55]/yomdb_defs_undef.h"
+(  349) !*** New items added due to direct BUFR2ODB conversion
+(  350) # 354 ".D[55]/yomdb_defs_undef.h"
+(  354) !*** New items added due to Poolmasking
+(  355) # 366 ".D[55]/yomdb_defs_undef.h"
+(  366) !*** New items added due to introduction of 'timeslot_index'-table
+(  367) # 373 ".D[55]/yomdb_defs_undef.h"
+(  373) !*** Commonly needed subwords/members of 'obschar.*@hdr'
+(  374) !    Please make sure that their length does not exceed 31 chars !
+(  375) !#define MDB_OBSCHAR_D_CODETYPE_AT_HDR  o_(it_)%mdb_obschar_d_codetype_at_hdr
+(  376) !#define MDB_OBSCHAR_D_INSTYPE_AT_HDR   o_(it_)%mdb_obschar_d_instype_at_hdr
+(  377) !#define MDB_OBSCHAR_D_RETRTYPE_AT_HDR  o_(it_)%mdb_obschar_d_retrtype_at_hdr
+(  378) !#define MDB_OBSCHAR_D_DATAGROUP_AT_HDR o_(it_)%mdb_obschar_d_datagroup_at_hdr
+(  379) !*** OBSCHAR is replaced by 4 new entries
+(  380) # 384 ".D[55]/yomdb_defs_undef.h"
+(  384) !*** Additional @satob entries requested by Niels Bormann  [20/11/2001]
+(  385) # 387 ".D[55]/yomdb_defs_undef.h"
+(  387) !*** Additional @satob entry requested by Iliana Stoyanova Genkova [22/10/2009]
+(  388) # 390 ".D[55]/yomdb_defs_undef.h"
+(  390) !**** Observation error for AMV (u/v) in m/s
+(  391) # 397 ".D[55]/yomdb_defs_undef.h"
+(  397) !*** New @body & @atovs entries proposed by Christina Koepken [26/11/2002]
+(  398) # 400 ".D[55]/yomdb_defs_undef.h"
+(  400) !*** New @body entries pushed in by Milan Dragosavac [25/02/2011]
+(  401) # 404 ".D[55]/yomdb_defs_undef.h"
+(  404) !*** New @desc & @hdr entries pushed in by Sami Saarinen [17/02/2004]
+(  405) # 408 ".D[55]/yomdb_defs_undef.h"
+(  408) !*** New items added for storing thinning keys
+(  409) # 411 ".D[55]/yomdb_defs_undef.h"
+(  411) !*** Table added for ASRs
+(  412) # 417 ".D[55]/yomdb_defs_undef.h"
+(  417) !*** VarBC-related @body entries by Dick Dee [23/10/2007]
+(  418) # 420 ".D[55]/yomdb_defs_undef.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 15
+
+(  420) !*** latlon_rad@desc added to flag whether (lat,lon) are in radians or not [23/1/04 SS]
+(  421) # 422 ".D[55]/yomdb_defs_undef.h"
+(  422) !    vector of o_(it_)%mdb_obscordiag_at_errstat [16/3/11 AF]
+(  423) # 424 ".D[55]/yomdb_defs_undef.h"
+(  424) !*** SSM/I reorganization (Peter Bauer/Sami Saarinen) [11/3/04]
+(  425) # 448 ".D[55]/yomdb_defs_undef.h"
+(  448) !*** checksum@hdr-word added to get over reproducibility problems for good [18/3/04 SS]
+(  449) # 480 ".D[55]/yomdb_defs_undef.h"
+(  480) !*** checksum@hdr-word added to get over reproducibility problems for good [18/3/04 SS]
+(  481) # 482 ".D[55]/yomdb_defs_undef.h"
+(  482) !*AF For GNSSRO TABLES
+(  483) # 494 ".D[55]/yomdb_defs_undef.h"
+(  494) !*** New item added for radio occultation SBH [27/10/2004]
+(  495) # 496 ".D[55]/yomdb_defs_undef.h"
+(  496) !*** New item added for radio occulation SBH [21/01/2006]
+(  497) # 498 ".D[55]/yomdb_defs_undef.h"
+(  498) !*** New items for radar table
+(  499) # 501 ".D[55]/yomdb_defs_undef.h"
+(  501) !*** New items for limb table
+(  502) # 508 ".D[55]/yomdb_defs_undef.h"
+(  508) !*** New @atovs entries proposed by Thomas Auligne [03/02/2005]
+(  509) !*** Moved to radiance table
+(  510) # 511 ".D[55]/yomdb_defs_undef.h"
+(  511) !*** New @atovs entries proposed by Andrew Collard [29/09/2008]
+(  512) # 548 ".D[55]/yomdb_defs_undef.h"
+(  548) !*** New items for cloud  sink variable from Tony Mc
+(  549) # 560 ".D[55]/yomdb_defs_undef.h"
+(  560) !*** Ensemble Data Assimilation (enda) by Sami Saarinen [26/08/2005]
+(  561) # 562 ".D[55]/yomdb_defs_undef.h"
+(  562) !*** New @body entries proposed by Richard Engelen [07/07/2006]
+(  563) # 564 ".D[55]/yomdb_defs_undef.h"
+(  564) !*** Averaging kernels for resat data by Antje Dethof [20/02/2006]
+(  565) # 569 ".D[55]/yomdb_defs_undef.h"
+(  569) !** Yannick [22/02/2008] part of the update[] tables
+(  570) # 571 ".D[55]/yomdb_defs_undef.h"
+(  571) !*** Changes due to BoM/MetOffice -compatibility (by SS, from their odb_CY32R2.039.tgz around 21-Nov-2007)
+(  572) # 574 ".D[55]/yomdb_defs_undef.h"
+(  574) !*** New entry to errstat table for extended GEMS resat bufr by A. Dethof [05/03/2007]
+(  575) # 576 ".D[55]/yomdb_defs_undef.h"
+(  576) !*** New entry to hdr table for extended GEMS resat bufr by A. Dethof [05/03/2007]
+(  577) # 578 ".D[55]/yomdb_defs_undef.h"
+(  578) !*** New entry to resat table for Sciamachy CH4 correction factor by R. Engelen [11/02/2008]
+(  579) # 580 ".D[55]/yomdb_defs_undef.h"
+(  580) !*** New @atovs_body entries proposed by Fatima Karbou [16/04/2007]
+(  581) # 588 ".D[55]/yomdb_defs_undef.h"
+(  588) !*** Add prior to averaging kernels for resat data by Richard Engelen [22/10/2008]
+(  589) # 591 ".D[55]/yomdb_defs_undef.h"
+(  591) !*** New entry to body table for layer number by R. Dragani [04/02/2009]
+(  592) # 593 ".D[55]/yomdb_defs_undef.h"
+(  593) !*** AF [31/10/2008] new entry in hdr to keep a copy of seqno (subwindows --> Yannick)
+(  594) # 595 ".D[55]/yomdb_defs_undef.h"
+(  595) !*** New @smos entries proposed by J. Munoz Sabater [11/2009]
+(  596) # 599 ".D[55]/yomdb_defs_undef.h"
+(  599) !*** More @smos entries proposed by J. Munoz Sabater [05/2010]
+(  600) # 616 ".D[55]/yomdb_defs_undef.h"
+(  616) !*** AF [07/04/2010] New entries in sat
+(  617) # 621 ".D[55]/yomdb_defs_undef.h"
+(  621) !*** KL [13/04/2018] New entries in sat
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 16
+
+(  622) # 623 ".D[55]/yomdb_defs_undef.h"
+(  623) !
+(  624) !*** AF [07/04/2010]  New entries in allsky
+(  625) # 669 ".D[55]/yomdb_defs_undef.h"
+(  669) !*** New entries for radar rain rate and rain gauges
+(  670) # 675 ".D[55]/yomdb_defs_undef.h"
+(  675) !*** New entries for rain gauges
+(  676) # 678 ".D[55]/yomdb_defs_undef.h"
+(  678) !*AF modsurf table
+(  679) # 692 ".D[55]/yomdb_defs_undef.h"
+(  692) !*AF Window offset
+(  693) # 695 ".D[55]/yomdb_defs_undef.h"
+(  695) !*AF auxiliary table
+(  696) # 698 ".D[55]/yomdb_defs_undef.h"
+(  698) !*AF new entry for MF
+(  699) # 700 ".D[55]/yomdb_defs_undef.h"
+(  700) !*AF new columns in radiance table
+(  701) # 717 ".D[55]/yomdb_defs_undef.h"
+(  717) !*** New @body entries proposed by Tony McNally [29/11/2002] TO BE CLEANED FOR AIRS AND IASI ONLY
+(  718) # 725 ".D[55]/yomdb_defs_undef.h"
+(  725) !*** New entries for table forecast_diagnostic [23/07/2010] - aksed by Gabor Radnoti
+(  726) # 730 ".D[55]/yomdb_defs_undef.h"
+(  730) !*** New entries for conv and conv_body tables
+(  731) # 743 ".D[55]/yomdb_defs_undef.h"
+(  743) !*** New entry for re-analysis [21/06/2011] - asked by Hans Hersbach
+(  744) # 746 ".D[55]/yomdb_defs_undef.h"
+(  746) !*** New entries for missing CPP undef (norm checker complains!) [22/01/2019] - Stephane Martinez
+(  747) # 2 ".D[55]/openmp_obs_undef.h"
+(    2) # 2 ".D[55]/openmp_obs_undef.h"
+(    2) # 1 ".D[55]/itdef_undef.h"
+(    1) # 3 ".D[55]/openmp_obs_undef.h"
+(    3) # 214 "Controdb.F90"
+(  214) # 215 "Controdb.F90"
+(  215) END PROGRAM controdb
+(  216) # 217 "Controdb.F90"
+(  217) !----------------------------------------------------------------------------
+(  218) SUBROUTINE open_ctr(NULOUT,kdate,kheure,kerr)
+(  219) # 220 "Controdb.F90"
+(  220) USE PARKIND1, ONLY : JPIM, JPRD
+(  221) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(  222) # 223 "Controdb.F90"
+(  223) implicit none
+(  224)   INTEGER(KIND=JPIM), INTENT(IN) :: NULOUT,kdate, kheure
+(  225)   INTEGER(KIND=JPIM), INTENT(INOUT) :: kerr
+(  226)   character*15 nomfic
+(  227)   REAL(KIND=JPRD) :: ZHOOK_HANDLE
+(  228) # 229 "Controdb.F90"
+(  229)   IF (LHOOK) CALL DR_HOOK('OPEN_CTR',0,ZHOOK_HANDLE)
+(  230)   nomfic='CTR_O_MESS'
+(  231)   open(11,FILE=nomfic,FORM='FORMATTED',STATUS='NEW',ERR=901)
+(  232)   write(11,111) mod(kdate,100),mod(kdate/100,100),kdate/10000,kheure
+(  233)   write(11,114)
+(  234)   kerr=1
+(  235)   IF (LHOOK) CALL DR_HOOK('OPEN_CTR',1,ZHOOK_HANDLE)
+(  236)   RETURN
+(  237) # 238 "Controdb.F90"
+(  238) 111  format(//,10x,10('*'),' Debut du controle du nombre d''observations ',10('*'),//, &
+(  239)       &     ' fichier initial d''observation (input screening arpege) ',/, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:49      page 17
+
+(  240)       &     ' date et heure  : ',2(i2.2,'/'),i4,' a ',i2.2,' h ',/)
+(  241) 114  format(/,18x,'centre',/,' type message',4x,'producteur',4x,'nb messages',6x,'nb mini',/,1x,60('-'))
+(  242) # 243 "Controdb.F90"
+(  243) 901  write(NULOUT,9001) nomfic
+(  244) 9001 format(' Probleme lors de l''ouverture du fichier ',a15)
+(  245) # 246 "Controdb.F90"
+(  246) END SUBROUTINE open_ctr
+(  247) !----------------------------------------------------------------------------

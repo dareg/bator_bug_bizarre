@@ -1,0 +1,353 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: get_opt.F
+
+(    1)       FUNCTION GET_OPT(CLOPT,CLARG,LLMPOFF)
+(    2)       USE MPL_ARG_MOD
+(    3) !
+(    4) !     CRAY function
+(    5) !
+(    6) !     The get_opt utility breaks up options in command lines for easy parsing
+(    7) !     by shell procedures and checks for legal options.
+(    8) !     CLOPT is a string of recognized option letters.
+(    9) !     CLARG is the option-argument.
+(   10) !
+(   11) !     Author : Vijay Saravane *METEO-FRANCE*
+(   12) !
+(   13)       USE PARKIND1, ONLY : JPIM
+(   14)       IMPLICIT NONE
+(   15)       INTEGER(KIND=JPIM) :: GET_OPT
+(   16)       CHARACTER(LEN=*) :: CLOPT,CLARG
+(   17)       CHARACTER(LEN=LEN(CLARG)) :: COPT
+(   18)       CHARACTER(LEN=1) :: COPT1
+(   19)       LOGICAL :: LLMPOFF
+(   20)       INTEGER(KIND=JPIM) :: IARG, NBARGS
+(   21)       DATA IARG /1/
+(   22)       SAVE IARG
+(   23) !
+(   24) !-----------------------------------------------
+(   25) !
+(   26) #ifdef T3D
+(   27)       NBARGS=IPXFARGC()
+(   28) #else
+(   29)       IF (LLMPOFF) THEN
+(   30)         NBARGS=COMMAND_ARGUMENT_COUNT()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 3
+
+(   31)       ELSE
+(   32)         NBARGS=MPL_IARGC()
+(   33)       ENDIF
+(   34) #endif
+(   35) ! si on a lu tous les arguments on sort ...
+(   36)       IF (IARG.GT.NBARGS) THEN
+(   37)          GET_OPT = 0
+(   38)          RETURN
+(   39)       ENDIF
+(   40) ! sinon on prend l'option en cours ...
+(   41) #ifdef T3D
+(   42)       CALL PXFGETARG(IARG,COPT,ILEN,IERR)
+(   43) #else
+(   44)       IF (LLMPOFF) THEN
+(   45)         CALL GETARG(IARG,COPT)
+(   46)       ELSE
+(   47)         CALL MPL_GETARG(IARG,COPT)
+(   48)       ENDIF
+(   49) #endif
+(   50)       COPT1=COPT(2:2)
+(   51) ! si c'est pas une bonne option on sort ...
+(   52)       IF (INDEX(CLOPT,COPT1).EQ.0) THEN
+(   53)          GET_OPT = 0
+(   54)          RETURN
+(   55)       ENDIF
+(   56) ! sinon on prend l'argument de l'option
+(   57) ! cet argument est utilise dans getvarg
+(   58)       IF (LEN_TRIM(COPT).GE.3) THEN  ! l argument est colle a l'option
+(   59)          CLARG=COPT(3:LEN_TRIM(COPT))
+(   60)          IARG=IARG+1
+(   61)       ELSE                           ! l argument est separe par un blanc
+(   62) #ifdef T3D
+(   63)          CALL PXFGETARG(IARG+1,CLARG,ILEN,IERR)
+(   64) #else
+(   65)          IF (LLMPOFF) THEN
+(   66)            CALL GETARG(IARG+1,CLARG)
+(   67)          ELSE
+(   68)            CALL MPL_GETARG(IARG+1,CLARG)
+(   69)          ENDIF
+(   70) #endif
+(   71)          IARG=IARG+2
+(   72)       ENDIF
+(   73) !
+(   74) ! et on retourne la valeur du caractere de l'option
+(   75)       GET_OPT = IACHAR(COPT1)
+(   76) !
+(   77)       RETURN
+(   78)       ENDFUNCTION GET_OPT
+(   79) !
+(   80) !
+(   81) #ifdef SV2
+(   82)       SUBROUTINE GETARG(IARG, CLARG)
+(   83)       USE PARKIND1, ONLY : JPIM
+(   84)       IMPLICIT NONE
+(   85)       INTEGER(KIND=JPIM), INTENT(IN) :: IARG
+(   86)       CHARACTER(LEN=*), INTENT(OUT) :: CLARG
+(   87)       INTEGER(KIND=JPIM) :: ILEN, IERR
+(   88)       CALL PXFGETARG(IARG,CLARG,ILEN,IERR)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 4
+
+(   89)       ENDSUBROUTINE GETARG
+(   90) #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 5
+
+(    1) # 1 "get_opt.F"
+(    1)       FUNCTION GET_OPT(CLOPT,CLARG,LLMPOFF)
+(    2)       USE MPL_ARG_MOD
+(    3) !
+(    4) !     CRAY function
+(    5) !
+(    6) !     The get_opt utility breaks up options in command lines for easy pa
+(    7) !     by shell procedures and checks for legal options.
+(    8) !     CLOPT is a string of recognized option letters.
+(    9) !     CLARG is the option-argument.
+(   10) !
+(   11) !     Author : Vijay Saravane *METEO-FRANCE*
+(   12) !
+(   13)       USE PARKIND1, ONLY : JPIM
+(   14)       IMPLICIT NONE
+(   15)       INTEGER(KIND=JPIM) :: GET_OPT
+(   16)       CHARACTER(LEN=*) :: CLOPT,CLARG
+(   17)       CHARACTER(LEN=LEN(CLARG)) :: COPT
+(   18)       CHARACTER(LEN=1) :: COPT1
+(   19)       LOGICAL :: LLMPOFF
+(   20)       INTEGER(KIND=JPIM) :: IARG, NBARGS
+(   21)       DATA IARG /1/
+(   22)       SAVE IARG
+(   23) !
+(   24) !-----------------------------------------------
+(   25) !
+(   26) # 29 "get_opt.F"
+(   29)       IF (LLMPOFF) THEN
+(   30)         NBARGS=COMMAND_ARGUMENT_COUNT()
+(   31)       ELSE
+(   32)         NBARGS=MPL_IARGC()
+(   33)       ENDIF
+(   34) # 35 "get_opt.F"
+(   35) ! si on a lu tous les arguments on sort ...
+(   36)       IF (IARG.GT.NBARGS) THEN
+(   37)          GET_OPT = 0
+(   38)          RETURN
+(   39)       ENDIF
+(   40) ! sinon on prend l'option en cours ...
+(   41) # 44 "get_opt.F"
+(   44)       IF (LLMPOFF) THEN
+(   45)         CALL GETARG(IARG,COPT)
+(   46)       ELSE
+(   47)         CALL MPL_GETARG(IARG,COPT)
+(   48)       ENDIF
+(   49) # 50 "get_opt.F"
+(   50)       COPT1=COPT(2:2)
+(   51) ! si c'est pas une bonne option on sort ...
+(   52)       IF (INDEX(CLOPT,COPT1).EQ.0) THEN
+(   53)          GET_OPT = 0
+(   54)          RETURN
+(   55)       ENDIF
+(   56) ! sinon on prend l'argument de l'option
+(   57) ! cet argument est utilise dans getvarg
+(   58)       IF (LEN_TRIM(COPT).GE.3) THEN  ! l argument est colle a l'option
+(   59)          CLARG=COPT(3:LEN_TRIM(COPT))
+(   60)          IARG=IARG+1
+(   61)       ELSE                           ! l argument est separe par un blan
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:57:45      page 6
+
+(   62) # 65 "get_opt.F"
+(   65)          IF (LLMPOFF) THEN
+(   66)            CALL GETARG(IARG+1,CLARG)
+(   67)          ELSE
+(   68)            CALL MPL_GETARG(IARG+1,CLARG)
+(   69)          ENDIF
+(   70) # 71 "get_opt.F"
+(   71)          IARG=IARG+2
+(   72)       ENDIF
+(   73) !
+(   74) ! et on retourne la valeur du caractere de l'option
+(   75)       GET_OPT = IACHAR(COPT1)
+(   76) !
+(   77)       RETURN
+(   78)       ENDFUNCTION GET_OPT
+(   79) !
+(   80) !

@@ -1,0 +1,260 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:18      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:18      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_diag_inline_tebn.F90
+
+(    1) !depfile:diag_inline_tebn.F90
+(    2) MODULE MODI_DIAG_INLINE_TEB_n 
+(    3) INTERFACE
+(    4)        SUBROUTINE DIAG_INLINE_TEB_n (DGO, D, SB, T, &
+(    5)                                      OCANOPY, PTA, PTS, PQA, PPA, PPS, PRHOA,                &
+(    6)                                      PZONA, PMERA, PWIND, PHT, PHW,                          &
+(    7)                                      PCD, PCDN, PRI, PCH, PZ0,                               &
+(    8)                                      PTRAD, PEMIS, PDIR_ALB, PSCA_ALB,                       &
+(    9)                                      PLW, PDIR_SW, PSCA_SW,                                  &
+(   10)                                      PSFTH, PSFTQ, PSFZON, PSFMER, PSFCO2,                   &
+(   11)                                      PRN, PH, PLE, PGFLUX                                    )  
+(   12) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   13) USE MODD_CANOPY_n, ONLY : CANOPY_t
+(   14) USE MODD_TEB_n, ONLY : TEB_t
+(   15) TYPE(DIAG_OPTIONS_t), INTENT(INOUT)  :: DGO
+(   16) TYPE(DIAG_t), INTENT(INOUT)          :: D
+(   17) TYPE(CANOPY_t), INTENT(INOUT)        :: SB
+(   18) TYPE(TEB_t), INTENT(INOUT)           :: T
+(   19) LOGICAL,            INTENT(IN)       :: OCANOPY  ! Flag for canopy
+(   20) REAL, DIMENSION(:), INTENT(IN)       :: PTA      ! atmospheric temperature
+(   21) REAL, DIMENSION(:), INTENT(IN)       :: PTS      ! surface temperature
+(   22) REAL, DIMENSION(:), INTENT(IN)       :: PQA      ! atmospheric specific humidity
+(   23) REAL, DIMENSION(:), INTENT(IN)       :: PPA      ! atmospheric level pressure
+(   24) REAL, DIMENSION(:), INTENT(IN)       :: PPS      ! surface pressure
+(   25) REAL, DIMENSION(:), INTENT(IN)       :: PRHOA    ! air density
+(   26) REAL, DIMENSION(:), INTENT(IN)       :: PZONA    ! zonal wind
+(   27) REAL, DIMENSION(:), INTENT(IN)       :: PMERA    ! meridian wind
+(   28) REAL, DIMENSION(:), INTENT(IN)       :: PWIND    ! wind
+(   29) REAL, DIMENSION(:), INTENT(IN)       :: PHT      ! atmospheric level height
+(   30) REAL, DIMENSION(:), INTENT(IN)       :: PHW      ! atmospheric level height for wind
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:18      page 3
+
+(   31) REAL, DIMENSION(:), INTENT(IN)       :: PCD      ! drag coefficient for momentum
+(   32) REAL, DIMENSION(:), INTENT(IN)       :: PCDN     ! neutral drag coefficient
+(   33) REAL, DIMENSION(:), INTENT(IN)       :: PSFZON   ! zonal friction
+(   34) REAL, DIMENSION(:), INTENT(IN)       :: PSFMER   ! meridian friction
+(   35) REAL, DIMENSION(:), INTENT(IN)       :: PSFCO2   ! CO2 flux   (m/s*kg_CO2/kg_air)
+(   36) REAL, DIMENSION(:), INTENT(IN)       :: PSFTH    ! heat flux  (W/m2)
+(   37) REAL, DIMENSION(:), INTENT(IN)       :: PSFTQ    ! water flux (kg/m2/s)
+(   38) REAL, DIMENSION(:), INTENT(IN)       :: PRI      ! Richardson number
+(   39) REAL, DIMENSION(:), INTENT(IN)       :: PCH      ! drag coefficient for heat
+(   40) REAL, DIMENSION(:), INTENT(IN)       :: PZ0      ! roughness length for momentum
+(   41) REAL, DIMENSION(:), INTENT(IN)       :: PRN      ! net radiation
+(   42) REAL, DIMENSION(:), INTENT(IN)       :: PH       ! sensible heat flux
+(   43) REAL, DIMENSION(:), INTENT(IN)       :: PLE      ! latent heat flux
+(   44) REAL, DIMENSION(:), INTENT(IN)       :: PGFLUX   ! storage flux
+(   45) REAL, DIMENSION(:,:),INTENT(IN)      :: PDIR_SW  ! direct  solar radiation (on horizontal surf.)
+(   46) REAL, DIMENSION(:,:),INTENT(IN)      :: PSCA_SW  ! diffuse solar radiation (on horizontal surf.)
+(   47) REAL, DIMENSION(:), INTENT(IN)       :: PLW      ! longwave radiation (on horizontal surf.)
+(   48) REAL, DIMENSION(:), INTENT(IN)       :: PTRAD    ! radiative temperature                 (K)
+(   49) REAL, DIMENSION(:,:),INTENT(IN)      :: PDIR_ALB ! direct albedo for each spectral band  (-)
+(   50) REAL, DIMENSION(:,:),INTENT(IN)      :: PSCA_ALB ! diffuse albedo for each spectral band (-)
+(   51) REAL, DIMENSION(:), INTENT(IN)       :: PEMIS    ! emissivity                            (-)
+(   52) END SUBROUTINE DIAG_INLINE_TEB_n
+(   53) 
+(   54) END INTERFACE
+(   55) END MODULE MODI_DIAG_INLINE_TEB_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:52:18      page 4
+
+(    1) # 1 "modi_diag_inline_tebn.F90"
+(    1) !depfile:diag_inline_tebn.F90
+(    2) MODULE MODI_DIAG_INLINE_TEB_n 
+(    3) INTERFACE
+(    4)        SUBROUTINE DIAG_INLINE_TEB_n (DGO, D, SB, T, &
+(    5)                                      OCANOPY, PTA, PTS, PQA, PPA, PPS, PRHOA,                &
+(    6)                                      PZONA, PMERA, PWIND, PHT, PHW,                          &
+(    7)                                      PCD, PCDN, PRI, PCH, PZ0,                               &
+(    8)                                      PTRAD, PEMIS, PDIR_ALB, PSCA_ALB,                       &
+(    9)                                      PLW, PDIR_SW, PSCA_SW,                                  &
+(   10)                                      PSFTH, PSFTQ, PSFZON, PSFMER, PSFCO2,                   &
+(   11)                                      PRN, PH, PLE, PGFLUX                                    )  
+(   12) USE MODD_DIAG_n, ONLY : DIAG_t, DIAG_OPTIONS_t
+(   13) USE MODD_CANOPY_n, ONLY : CANOPY_t
+(   14) USE MODD_TEB_n, ONLY : TEB_t
+(   15) TYPE(DIAG_OPTIONS_t), INTENT(INOUT)  :: DGO
+(   16) TYPE(DIAG_t), INTENT(INOUT)          :: D
+(   17) TYPE(CANOPY_t), INTENT(INOUT)        :: SB
+(   18) TYPE(TEB_t), INTENT(INOUT)           :: T
+(   19) LOGICAL,            INTENT(IN)       :: OCANOPY  ! Flag for canopy
+(   20) REAL, DIMENSION(:), INTENT(IN)       :: PTA      ! atmospheric temperature
+(   21) REAL, DIMENSION(:), INTENT(IN)       :: PTS      ! surface temperature
+(   22) REAL, DIMENSION(:), INTENT(IN)       :: PQA      ! atmospheric specific humidity
+(   23) REAL, DIMENSION(:), INTENT(IN)       :: PPA      ! atmospheric level pressure
+(   24) REAL, DIMENSION(:), INTENT(IN)       :: PPS      ! surface pressure
+(   25) REAL, DIMENSION(:), INTENT(IN)       :: PRHOA    ! air density
+(   26) REAL, DIMENSION(:), INTENT(IN)       :: PZONA    ! zonal wind
+(   27) REAL, DIMENSION(:), INTENT(IN)       :: PMERA    ! meridian wind
+(   28) REAL, DIMENSION(:), INTENT(IN)       :: PWIND    ! wind
+(   29) REAL, DIMENSION(:), INTENT(IN)       :: PHT      ! atmospheric level height
+(   30) REAL, DIMENSION(:), INTENT(IN)       :: PHW      ! atmospheric level height for wind
+(   31) REAL, DIMENSION(:), INTENT(IN)       :: PCD      ! drag coefficient for momentum
+(   32) REAL, DIMENSION(:), INTENT(IN)       :: PCDN     ! neutral drag coefficient
+(   33) REAL, DIMENSION(:), INTENT(IN)       :: PSFZON   ! zonal friction
+(   34) REAL, DIMENSION(:), INTENT(IN)       :: PSFMER   ! meridian friction
+(   35) REAL, DIMENSION(:), INTENT(IN)       :: PSFCO2   ! CO2 flux   (m/s*kg_CO2/kg_air)
+(   36) REAL, DIMENSION(:), INTENT(IN)       :: PSFTH    ! heat flux  (W/m2)
+(   37) REAL, DIMENSION(:), INTENT(IN)       :: PSFTQ    ! water flux (kg/m2/s)
+(   38) REAL, DIMENSION(:), INTENT(IN)       :: PRI      ! Richardson number
+(   39) REAL, DIMENSION(:), INTENT(IN)       :: PCH      ! drag coefficient for heat
+(   40) REAL, DIMENSION(:), INTENT(IN)       :: PZ0      ! roughness length for momentum
+(   41) REAL, DIMENSION(:), INTENT(IN)       :: PRN      ! net radiation
+(   42) REAL, DIMENSION(:), INTENT(IN)       :: PH       ! sensible heat flux
+(   43) REAL, DIMENSION(:), INTENT(IN)       :: PLE      ! latent heat flux
+(   44) REAL, DIMENSION(:), INTENT(IN)       :: PGFLUX   ! storage flux
+(   45) REAL, DIMENSION(:,:),INTENT(IN)      :: PDIR_SW  ! direct  solar radiation (on horizontal surf.)
+(   46) REAL, DIMENSION(:,:),INTENT(IN)      :: PSCA_SW  ! diffuse solar radiation (on horizontal surf.)
+(   47) REAL, DIMENSION(:), INTENT(IN)       :: PLW      ! longwave radiation (on horizontal surf.)
+(   48) REAL, DIMENSION(:), INTENT(IN)       :: PTRAD    ! radiative temperature                 (K)
+(   49) REAL, DIMENSION(:,:),INTENT(IN)      :: PDIR_ALB ! direct albedo for each spectral band  (-)
+(   50) REAL, DIMENSION(:,:),INTENT(IN)      :: PSCA_ALB ! diffuse albedo for each spectral band (-)
+(   51) REAL, DIMENSION(:), INTENT(IN)       :: PEMIS    ! emissivity                            (-)
+(   52) END SUBROUTINE DIAG_INLINE_TEB_n
+(   53) # 54 "modi_diag_inline_tebn.F90"
+(   54) END INTERFACE
+(   55) END MODULE MODI_DIAG_INLINE_TEB_n 

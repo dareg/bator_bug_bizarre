@@ -1,0 +1,525 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: mode_searchgrp.F90
+
+(    1) !-----------------------------------------------------------------
+(    2) !--------------- special set of characters for RCS information
+(    3) !-----------------------------------------------------------------
+(    4) ! $Source: /home/cvsroot/mesonh/libtools/lib/COMPRESS/src/searchgrp.f90,v $ $Revision: 1.1.4.1 $ $Date: 2008/04/10 10:23:35 
+(    5) !-----------------------------------------------------------------
+(    6) !-----------------------------------------------------------------
+(    7) MODULE MODE_SEARCHGRP
+(    8) IMPLICIT NONE 
+(    9) TYPE SOP_T
+(   10)   INTEGER :: NBGRP
+(   11)   INTEGER,DIMENSION(:),POINTER :: IBEG
+(   12)   INTEGER,DIMENSION(:),POINTER :: IEND
+(   13)   INTEGER,DIMENSION(:),POINTER :: VALMIN
+(   14)   INTEGER,DIMENSION(:),POINTER :: VALMAX
+(   15) END TYPE SOP_T
+(   16) 
+(   17) INTEGER,EXTERNAL :: FMINBITS_IN_WORD
+(   18) 
+(   19) ! Private variables
+(   20) INTEGER,SAVE,                           PRIVATE :: IGRP
+(   21) INTEGER,DIMENSION(:),ALLOCATABLE,TARGET,PRIVATE :: IBEG,IEND,VALMAX,VALMIN
+(   22) INTEGER,PARAMETER,                      PRIVATE :: MAINSEUIL=8
+(   23) INTEGER,SAVE,                           PRIVATE :: IGRPMAX
+(   24) INTEGER,SAVE,                           PRIVATE :: ICOUNT
+(   25) INTEGER,DIMENSION(16),PARAMETER,      PRIVATE :: MINELT=(/4,4,4,4,5,5,6,6,7,8,9,11,13,17,26,51/)
+(   26) 
+(   27) ! Private routines
+(   28) PRIVATE :: RECSEARCH_GRP
+(   29) 
+(   30) CONTAINS 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 3
+
+(   31) SUBROUTINE INI_SOPDATA(SOPDATA)
+(   32) TYPE(SOP_T), INTENT(OUT) :: SOPDATA
+(   33) 
+(   34) SOPDATA%NBGRP = 0
+(   35) NULLIFY(SOPDATA%IBEG)
+(   36) NULLIFY(SOPDATA%IEND)
+(   37) NULLIFY(SOPDATA%VALMIN)
+(   38) NULLIFY(SOPDATA%VALMAX)
+(   39) 
+(   40) END SUBROUTINE INI_SOPDATA
+(   41) 
+(   42) SUBROUTINE RECSEARCH(KTAB,SOPDATA)
+(   43) INTEGER,DIMENSION(:) :: KTAB
+(   44) TYPE(SOP_T), INTENT(OUT) :: SOPDATA
+(   45) 
+(   46) INTEGER :: NELT
+(   47) INTEGER :: GELT,BGELT
+(   48) 
+(   49) IF (ALLOCATED(IBEG)) THEN
+(   50)   DEALLOCATE(IBEG,IEND,VALMAX,VALMIN)
+(   51) END IF
+(   52) 
+(   53) NELT=SIZE(KTAB)
+(   54) ALLOCATE(IBEG(NELT),IEND(NELT),VALMAX(NELT),VALMIN(NELT))
+(   55) ICOUNT = 0
+(   56) IGRP   = 0
+(   57) IGRPMAX = NELT
+(   58) CALL RECSEARCH_GRP(1,NELT,KTAB,MAINSEUIL)
+(   59) GELT = MAXVAL(IEND(1:IGRP)-IBEG(1:IGRP)+1)
+(   60) BGELT = FMINBITS_IN_WORD(GELT)
+(   61) 
+(   62) #ifdef DEBUG
+(   63) PRINT *,'Routine RECSEARCH_GRP appelee',ICOUNT,'fois.'
+(   64) PRINT *,'Nbre de groupes =',IGRP
+(   65) PRINT *,'Nbre maxi d''elements dans groupes',GELT
+(   66) PRINT *,'Nbre de bits pour coder le nombre d''elements:',BGELT
+(   67) #endif
+(   68) 
+(   69) SOPDATA%NBGRP=IGRP
+(   70) SOPDATA%IBEG=>IBEG
+(   71) SOPDATA%IEND=>IEND
+(   72) SOPDATA%VALMIN=>VALMIN
+(   73) SOPDATA%VALMAX=>VALMAX
+(   74) 
+(   75) END SUBROUTINE RECSEARCH
+(   76) 
+(   77) RECURSIVE SUBROUTINE RECSEARCH_GRP(IND1,IND2,ITAB,ISEUIL)
+(   78) INTEGER,             INTENT(IN) :: IND1,IND2,ISEUIL
+(   79) INTEGER,DIMENSION(:),INTENT(IN) :: ITAB
+(   80) 
+(   81) INTEGER :: II
+(   82) INTEGER :: IMAX,IMIN
+(   83) INTEGER :: IVAL
+(   84) INTEGER :: NBITCOD
+(   85) INTEGER :: TMPIDX1,TMPIDX2
+(   86) 
+(   87) ICOUNT=ICOUNT+1
+(   88) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 4
+
+(   89) IF (IGRP == 0) THEN
+(   90)   IMIN = MINVAL(ITAB(IND1:IND2))
+(   91)   IMAX = MAXVAL(ITAB(IND1:IND2))
+(   92)   IGRP = 1
+(   93)   VALMIN(IGRP) = IMIN
+(   94)   VALMAX(IGRP) = IMAX
+(   95)   IBEG(IGRP) = IND1
+(   96)   IEND(IGRP) = IND2
+(   97) ELSE
+(   98)   IMIN = VALMIN(IGRP)
+(   99)   IMAX = VALMAX(IGRP)
+(  100) END IF
+(  101) 
+(  102) IF (IMAX > IMIN) THEN
+(  103) 
+(  104)   IBEG(IGRP) = IND1
+(  105)   IEND(IGRP) = IND1
+(  106)   VALMIN(IGRP) = ITAB(IND1)
+(  107)   VALMAX(IGRP) = ITAB(IND1)
+(  108)   
+(  109)   DO II=IND1,IND2-1
+(  110)     IVAL = ITAB(II+1)
+(  111)     IMAX=MAX(VALMAX(IGRP),IVAL)
+(  112)     IMIN=MIN(VALMIN(IGRP),IVAL)
+(  113)     IF ((IMAX-IMIN)<(2**ISEUIL)) THEN
+(  114)       ! II+1 belong to group IGRP
+(  115)       IEND(IGRP) = II+1
+(  116)       VALMIN(IGRP) = IMIN
+(  117)       VALMAX(IGRP) = IMAX
+(  118)     ELSE
+(  119)       ! Search the created group
+(  120)       NBITCOD=FMINBITS_IN_WORD(VALMAX(IGRP)-VALMIN(IGRP))
+(  121) #ifdef DEBUG
+(  122)       PRINT *,'F:(IGRP,IBEG,IEND,MAX,MIN,nbitcod)=',IGRP,',',IBEG(IGRP),',',IEND(IGRP),',',VALMAX(IGRP),',',VALMIN(IGRP),','
+(  123) #endif      
+(  124)       IF (IEND(IGRP)-IBEG(IGRP)>MINELT(NBITCOD+1)) THEN
+(  125)         IF (NBITCOD > 0) THEN
+(  126)           TMPIDX1=IBEG(IGRP)
+(  127)           TMPIDX2=IEND(IGRP)
+(  128) #ifdef DEBUG
+(  129)           PRINT *,'Appel 1 RECSEARCH_GRP (first,last,seuil):',tmpidx1,tmpidx2,nbitcod/2
+(  130) #endif
+(  131)           CALL RECSEARCH_GRP(TMPIDX1,TMPIDX2,ITAB,NBITCOD/2)
+(  132)         END IF
+(  133)       ELSE
+(  134)         IF (IGRP > 1) THEN
+(  135)           NBITCOD=FMINBITS_IN_WORD(VALMAX(IGRP-1)-VALMIN(IGRP-1))
+(  136)           IMIN=MIN(VALMIN(IGRP-1),VALMIN(IGRP))
+(  137)           IMAX=MAX(VALMAX(IGRP-1),VALMAX(IGRP))
+(  138)           IF (IEND(IGRP-1)-IBEG(IGRP-1)<=MINELT(NBITCOD+1)) THEN
+(  139)             IF ((IMAX-IMIN) < 2**15) THEN 
+(  140)             ! concat IGRP-1 and IGRP
+(  141)               IEND(IGRP-1) = IEND(IGRP)
+(  142)               VALMIN(IGRP-1) = IMIN
+(  143)               VALMAX(IGRP-1) = IMAX
+(  144)               IGRP = IGRP-1
+(  145)             END IF
+(  146)           ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 5
+
+(  147)             IF (FMINBITS_IN_WORD(IMAX-IMIN) <= NBITCOD) THEN
+(  148)               ! concat IGRP-1 and IGRP
+(  149)               IEND(IGRP-1) = IEND(IGRP)
+(  150)               VALMIN(IGRP-1) = IMIN
+(  151)               VALMAX(IGRP-1) = IMAX
+(  152)               IGRP = IGRP-1
+(  153)             END IF
+(  154)           END IF
+(  155)         END IF
+(  156)       END IF
+(  157)       ! New group is created
+(  158)       IGRP = IGRP+1
+(  159)       IF (IGRP>IGRPMAX) THEN
+(  160)         PRINT *,'ERROR max number of group exceeded !'
+(  161)         STOP
+(  162)       END IF
+(  163)       IBEG(IGRP) = II+1
+(  164)       IEND(IGRP) = II+1
+(  165)       VALMIN(IGRP) = IVAL
+(  166)       VALMAX(IGRP) = IVAL
+(  167)     END IF
+(  168)   END DO
+(  169) #ifdef DEBUG
+(  170)   PRINT *,'L:',IGRP,':',VALMAX(IGRP)-VALMIN(IGRP),FMINBITS_IN_WORD(VALMAX(IGRP)-VALMIN(IGRP))
+(  171) #endif
+(  172)   NBITCOD = FMINBITS_IN_WORD(VALMAX(IGRP)-VALMIN(IGRP))
+(  173)   IF (IEND(IGRP)-IBEG(IGRP)>= MINELT(NBITCOD+1)) THEN
+(  174)     IF (NBITCOD > 0) THEN
+(  175)       TMPIDX1=IBEG(IGRP)
+(  176)       TMPIDX2=IEND(IGRP)
+(  177) #ifdef DEBUG
+(  178)       PRINT *,'Appel 2 RECSEARCH_GRP (first,last,seuil):',tmpidx1,tmpidx2,nbitcod/2
+(  179) #endif
+(  180)       CALL RECSEARCH_GRP(TMPIDX1,TMPIDX2,ITAB,NBITCOD/2)
+(  181)     END IF
+(  182)   END IF
+(  183) END IF
+(  184)     
+(  185) END SUBROUTINE RECSEARCH_GRP
+(  186) 
+(  187) END MODULE MODE_SEARCHGRP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 6
+
+(    1) # 1 "mode_searchgrp.F90"
+(    1) !-----------------------------------------------------------------
+(    2) !--------------- special set of characters for RCS information
+(    3) !-----------------------------------------------------------------
+(    4) ! $Source: /home/cvsroot/mesonh/libtools/lib/COMPRESS/src/searchgrp.f90,v $ $Revision: 1.1.4.1 $ $Date: 2008/04/10 10:23:35 $
+(    5) !-----------------------------------------------------------------
+(    6) !-----------------------------------------------------------------
+(    7) MODULE MODE_SEARCHGRP
+(    8) IMPLICIT NONE 
+(    9) TYPE SOP_T
+(   10)   INTEGER :: NBGRP
+(   11)   INTEGER,DIMENSION(:),POINTER :: IBEG
+(   12)   INTEGER,DIMENSION(:),POINTER :: IEND
+(   13)   INTEGER,DIMENSION(:),POINTER :: VALMIN
+(   14)   INTEGER,DIMENSION(:),POINTER :: VALMAX
+(   15) END TYPE SOP_T
+(   16) # 17 "mode_searchgrp.F90"
+(   17) INTEGER,EXTERNAL :: FMINBITS_IN_WORD
+(   18) # 19 "mode_searchgrp.F90"
+(   19) ! Private variables
+(   20) INTEGER,SAVE,                           PRIVATE :: IGRP
+(   21) INTEGER,DIMENSION(:),ALLOCATABLE,TARGET,PRIVATE :: IBEG,IEND,VALMAX,VALMIN
+(   22) INTEGER,PARAMETER,                      PRIVATE :: MAINSEUIL=8
+(   23) INTEGER,SAVE,                           PRIVATE :: IGRPMAX
+(   24) INTEGER,SAVE,                           PRIVATE :: ICOUNT
+(   25) INTEGER,DIMENSION(16),PARAMETER,      PRIVATE :: MINELT=(/4,4,4,4,5,5,6,6,7,8,9,11,13,17,26,51/)
+(   26) # 27 "mode_searchgrp.F90"
+(   27) ! Private routines
+(   28) PRIVATE :: RECSEARCH_GRP
+(   29) # 30 "mode_searchgrp.F90"
+(   30) CONTAINS 
+(   31) SUBROUTINE INI_SOPDATA(SOPDATA)
+(   32) TYPE(SOP_T), INTENT(OUT) :: SOPDATA
+(   33) # 34 "mode_searchgrp.F90"
+(   34) SOPDATA%NBGRP = 0
+(   35) NULLIFY(SOPDATA%IBEG)
+(   36) NULLIFY(SOPDATA%IEND)
+(   37) NULLIFY(SOPDATA%VALMIN)
+(   38) NULLIFY(SOPDATA%VALMAX)
+(   39) # 40 "mode_searchgrp.F90"
+(   40) END SUBROUTINE INI_SOPDATA
+(   41) # 42 "mode_searchgrp.F90"
+(   42) SUBROUTINE RECSEARCH(KTAB,SOPDATA)
+(   43) INTEGER,DIMENSION(:) :: KTAB
+(   44) TYPE(SOP_T), INTENT(OUT) :: SOPDATA
+(   45) # 46 "mode_searchgrp.F90"
+(   46) INTEGER :: NELT
+(   47) INTEGER :: GELT,BGELT
+(   48) # 49 "mode_searchgrp.F90"
+(   49) IF (ALLOCATED(IBEG)) THEN
+(   50)   DEALLOCATE(IBEG,IEND,VALMAX,VALMIN)
+(   51) END IF
+(   52) # 53 "mode_searchgrp.F90"
+(   53) NELT=SIZE(KTAB)
+(   54) ALLOCATE(IBEG(NELT),IEND(NELT),VALMAX(NELT),VALMIN(NELT))
+(   55) ICOUNT = 0
+(   56) IGRP   = 0
+(   57) IGRPMAX = NELT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 7
+
+(   58) CALL RECSEARCH_GRP(1,NELT,KTAB,MAINSEUIL)
+(   59) GELT = MAXVAL(IEND(1:IGRP)-IBEG(1:IGRP)+1)
+(   60) BGELT = FMINBITS_IN_WORD(GELT)
+(   61) # 69 "mode_searchgrp.F90"
+(   69) SOPDATA%NBGRP=IGRP
+(   70) SOPDATA%IBEG=>IBEG
+(   71) SOPDATA%IEND=>IEND
+(   72) SOPDATA%VALMIN=>VALMIN
+(   73) SOPDATA%VALMAX=>VALMAX
+(   74) # 75 "mode_searchgrp.F90"
+(   75) END SUBROUTINE RECSEARCH
+(   76) # 77 "mode_searchgrp.F90"
+(   77) RECURSIVE SUBROUTINE RECSEARCH_GRP(IND1,IND2,ITAB,ISEUIL)
+(   78) INTEGER,             INTENT(IN) :: IND1,IND2,ISEUIL
+(   79) INTEGER,DIMENSION(:),INTENT(IN) :: ITAB
+(   80) # 81 "mode_searchgrp.F90"
+(   81) INTEGER :: II
+(   82) INTEGER :: IMAX,IMIN
+(   83) INTEGER :: IVAL
+(   84) INTEGER :: NBITCOD
+(   85) INTEGER :: TMPIDX1,TMPIDX2
+(   86) # 87 "mode_searchgrp.F90"
+(   87) ICOUNT=ICOUNT+1
+(   88) # 89 "mode_searchgrp.F90"
+(   89) IF (IGRP == 0) THEN
+(   90)   IMIN = MINVAL(ITAB(IND1:IND2))
+(   91)   IMAX = MAXVAL(ITAB(IND1:IND2))
+(   92)   IGRP = 1
+(   93)   VALMIN(IGRP) = IMIN
+(   94)   VALMAX(IGRP) = IMAX
+(   95)   IBEG(IGRP) = IND1
+(   96)   IEND(IGRP) = IND2
+(   97) ELSE
+(   98)   IMIN = VALMIN(IGRP)
+(   99)   IMAX = VALMAX(IGRP)
+(  100) END IF
+(  101) # 102 "mode_searchgrp.F90"
+(  102) IF (IMAX > IMIN) THEN
+(  103) # 104 "mode_searchgrp.F90"
+(  104)   IBEG(IGRP) = IND1
+(  105)   IEND(IGRP) = IND1
+(  106)   VALMIN(IGRP) = ITAB(IND1)
+(  107)   VALMAX(IGRP) = ITAB(IND1)
+(  108)   
+(  109)   DO II=IND1,IND2-1
+(  110)     IVAL = ITAB(II+1)
+(  111)     IMAX=MAX(VALMAX(IGRP),IVAL)
+(  112)     IMIN=MIN(VALMIN(IGRP),IVAL)
+(  113)     IF ((IMAX-IMIN)<(2**ISEUIL)) THEN
+(  114)       ! II+1 belong to group IGRP
+(  115)       IEND(IGRP) = II+1
+(  116)       VALMIN(IGRP) = IMIN
+(  117)       VALMAX(IGRP) = IMAX
+(  118)     ELSE
+(  119)       ! Search the created group
+(  120)       NBITCOD=FMINBITS_IN_WORD(VALMAX(IGRP)-VALMIN(IGRP))
+(  121) # 124 "mode_searchgrp.F90"
+(  124)       IF (IEND(IGRP)-IBEG(IGRP)>MINELT(NBITCOD+1)) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:25      page 8
+
+(  125)         IF (NBITCOD > 0) THEN
+(  126)           TMPIDX1=IBEG(IGRP)
+(  127)           TMPIDX2=IEND(IGRP)
+(  128) # 131 "mode_searchgrp.F90"
+(  131)           CALL RECSEARCH_GRP(TMPIDX1,TMPIDX2,ITAB,NBITCOD/2)
+(  132)         END IF
+(  133)       ELSE
+(  134)         IF (IGRP > 1) THEN
+(  135)           NBITCOD=FMINBITS_IN_WORD(VALMAX(IGRP-1)-VALMIN(IGRP-1))
+(  136)           IMIN=MIN(VALMIN(IGRP-1),VALMIN(IGRP))
+(  137)           IMAX=MAX(VALMAX(IGRP-1),VALMAX(IGRP))
+(  138)           IF (IEND(IGRP-1)-IBEG(IGRP-1)<=MINELT(NBITCOD+1)) THEN
+(  139)             IF ((IMAX-IMIN) < 2**15) THEN 
+(  140)             ! concat IGRP-1 and IGRP
+(  141)               IEND(IGRP-1) = IEND(IGRP)
+(  142)               VALMIN(IGRP-1) = IMIN
+(  143)               VALMAX(IGRP-1) = IMAX
+(  144)               IGRP = IGRP-1
+(  145)             END IF
+(  146)           ELSE
+(  147)             IF (FMINBITS_IN_WORD(IMAX-IMIN) <= NBITCOD) THEN
+(  148)               ! concat IGRP-1 and IGRP
+(  149)               IEND(IGRP-1) = IEND(IGRP)
+(  150)               VALMIN(IGRP-1) = IMIN
+(  151)               VALMAX(IGRP-1) = IMAX
+(  152)               IGRP = IGRP-1
+(  153)             END IF
+(  154)           END IF
+(  155)         END IF
+(  156)       END IF
+(  157)       ! New group is created
+(  158)       IGRP = IGRP+1
+(  159)       IF (IGRP>IGRPMAX) THEN
+(  160)         PRINT *,'ERROR max number of group exceeded !'
+(  161)         STOP
+(  162)       END IF
+(  163)       IBEG(IGRP) = II+1
+(  164)       IEND(IGRP) = II+1
+(  165)       VALMIN(IGRP) = IVAL
+(  166)       VALMAX(IGRP) = IVAL
+(  167)     END IF
+(  168)   END DO
+(  169) # 172 "mode_searchgrp.F90"
+(  172)   NBITCOD = FMINBITS_IN_WORD(VALMAX(IGRP)-VALMIN(IGRP))
+(  173)   IF (IEND(IGRP)-IBEG(IGRP)>= MINELT(NBITCOD+1)) THEN
+(  174)     IF (NBITCOD > 0) THEN
+(  175)       TMPIDX1=IBEG(IGRP)
+(  176)       TMPIDX2=IEND(IGRP)
+(  177) # 180 "mode_searchgrp.F90"
+(  180)       CALL RECSEARCH_GRP(TMPIDX1,TMPIDX2,ITAB,NBITCOD/2)
+(  181)     END IF
+(  182)   END IF
+(  183) END IF
+(  184)     
+(  185) END SUBROUTINE RECSEARCH_GRP
+(  186) # 187 "mode_searchgrp.F90"
+(  187) END MODULE MODE_SEARCHGRP

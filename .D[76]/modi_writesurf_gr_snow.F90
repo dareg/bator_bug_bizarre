@@ -1,0 +1,30 @@
+!depfile:writesurf_gr_snow.F90
+MODULE MODI_WRITESURF_GR_SNOW 
+INTERFACE
+      SUBROUTINE WRITESURF_GR_SNOW (OSNOWDIMNC, HSELECT, HPROGRAM, HSURFTYPE, &
+                                    HPREFIX, KI, KMASK_P, KPATCH, TPSNOW, &
+                                    PWSN_WR, PRHO_WR, PHEA_WR, PAGE_WR, PSG1_WR, &
+                                    PSG2_WR, PHIS_WR, PALB_WR, PIMP_WR)
+USE MODD_TYPE_SNOW
+LOGICAL, INTENT(IN) :: OSNOWDIMNC
+ CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: HSELECT 
+ CHARACTER (LEN=6),  INTENT(IN) :: HPROGRAM   ! program
+ CHARACTER (LEN=*),  INTENT(IN) :: HSURFTYPE  ! generic name used for
+ CHARACTER (LEN=3),  INTENT(IN) :: HPREFIX    ! generic name of prefix for
+INTEGER,            INTENT(IN)    :: KI      ! horizontal size of snow var.
+INTEGER, DIMENSION(:), INTENT(IN) :: KMASK_P
+INTEGER,            INTENT(IN) :: KPATCH    ! number of tiles                                             
+TYPE(SURF_SNOW),    INTENT(IN) :: TPSNOW     ! snow characteristics
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PWSN_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PRHO_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PHEA_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PAGE_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PSG1_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PSG2_WR
+REAL, DIMENSION(:,:,:), INTENT(INOUT) :: PHIS_WR
+REAL, DIMENSION(:,:), INTENT(INOUT) :: PALB_WR
+REAL, DIMENSION(:,:,:,:) ,INTENT(INOUT) :: PIMP_WR
+END SUBROUTINE WRITESURF_GR_SNOW
+
+END INTERFACE
+END MODULE MODI_WRITESURF_GR_SNOW 

@@ -1,0 +1,1603 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: variable_module.F90
+
+(    1) ! Rank and shape definitions for simple templating
+(    2) 
+(    3) MODULE VARIABLE_MODULE
+(    4)   ! Base class definition of VARIABLE types that manages configuration
+(    5)   ! and metadata for individual variables and associates them with the
+(    6)   ! respective FIELDS objects that store the data.
+(    7) 
+(    8) USE PARKIND1, ONLY: JPIM, JPRB
+(    9) USE FIELD_MODULE, ONLY: FIELD_2D, FIELD_3D, FIELD_4D
+(   10) USE YOM_YGFL, ONLY: TYPE_GFL_COMP
+(   11) 
+(   12) IMPLICIT NONE
+(   13) 
+(   14) TYPE, ABSTRACT :: VARIABLE_BASE
+(   15)   ! Description and definition of a scientific variable that stores
+(   16)   ! its associated data in one or more underlying fields, eg. for timestepping.
+(   17) 
+(   18)   ! Generic metadata like names and IDs
+(   19)   CHARACTER(LEN=16)  :: NAME                  ! Primary name used for indexing
+(   20)   CHARACTER(LEN=16)  :: CNAME     = ''        ! ARPEGE field name
+(   21)   INTEGER(KIND=JPIM) :: IGRBCODE  = -999      ! GRIB code
+(   22) 
+(   23)   ! Flags that define the behaviour of the field variable
+(   24)   LOGICAL            :: LACTIVE   = .FALSE.   ! Field in use
+(   25)   LOGICAL            :: LT1       = .FALSE.   ! Field in t+dt GFL
+(   26)   LOGICAL            :: LT9       = .FALSE.   ! Field in t-dt GFL
+(   27)   LOGICAL            :: LPH9      = .FALSE.   ! Field in t-dt physics
+(   28)   LOGICAL            :: LDL       = .FALSE.   ! Field has zontal derivative
+(   29)   LOGICAL            :: LDM       = .FALSE.   ! Field has meridional derivative
+(   30)   LOGICAL            :: LDL9      = .FALSE.   ! Field has zontal derivative at t-dt
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 3
+
+(   31)   LOGICAL            :: LDM9      = .FALSE.   ! Field has meridional derivative at t-dt
+(   32)   LOGICAL            :: LADV      = .FALSE.   ! Field advected or not
+(   33)   LOGICAL            :: LGP       = .FALSE.   
+(   34)   LOGICAL            :: LWATER    = .FALSE.   
+(   35)   LOGICAL            :: LTHERMACT = .FALSE.   
+(   36)   LOGICAL            :: LCDERS    = .FALSE.   
+(   37)   REAL (KIND=JPRB)   :: RCP       = 0._JPRB
+(   38)   REAL (KIND=JPRB)   :: R         = 0._JPRB
+(   39) 
+(   40)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(   41) 
+(   42)   ! TODO: Storage backend for Atlas (guard by #ifdef)
+(   43) 
+(   44) CONTAINS
+(   45)   PROCEDURE(VARIABLE_BASE_FINAL), DEFERRED :: FINAL
+(   46) END TYPE VARIABLE_BASE
+(   47) 
+(   48) ABSTRACT INTERFACE
+(   49)   SUBROUTINE VARIABLE_BASE_FINAL(SELF)
+(   50)     IMPORT :: VARIABLE_BASE
+(   51)     CLASS(VARIABLE_BASE) :: SELF
+(   52)   END SUBROUTINE VARIABLE_BASE_FINAL
+(   53) END INTERFACE
+(   54) 
+(   55) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_2D
+(   56)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(   57)   ! Note that storing things like NLEV would break templating
+(   58) 
+(   59)   ! Array view pointers, to be set up from associated fields
+(   60)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:)  => NULL()  ! Basic field at t
+(   61)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:) => NULL()  ! Basic field at t (alias of P)
+(   62)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:) => NULL()  ! Basic field at t+dt
+(   63)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:) => NULL()  ! Basic field at t-dt
+(   64)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:)=> NULL()  ! Basic field for physics
+(   65)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:) => NULL()  ! Zonal derivative field
+(   66)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:) => NULL()  ! Meridional derivative field
+(   67)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:) => NULL()  ! Zonal derivative field at t-dt
+(   68)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:) => NULL()  ! Meridional derivative field at t-dt
+(   69) 
+(   70)   ! Pointers to associated FIELD objects
+(   71)   TYPE(FIELD_2D), POINTER :: FT0 => NULL()  ! Basic field at t
+(   72)   TYPE(FIELD_2D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+(   73)   TYPE(FIELD_2D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(   74)   TYPE(FIELD_2D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(   75)   TYPE(FIELD_2D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(   76)   TYPE(FIELD_2D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(   77)   TYPE(FIELD_2D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(   78)   TYPE(FIELD_2D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(   79) 
+(   80) CONTAINS
+(   81)   PROCEDURE :: UPDATE_VIEW => VARIABLE_2D_UPDATE_VIEW
+(   82)   PROCEDURE :: CLONE => VARIABLE_2D_CLONE
+(   83)   PROCEDURE :: FINAL => VARIABLE_2D_FINAL
+(   84) END TYPE VARIABLE_2D
+(   85) 
+(   86) 
+(   87) TYPE :: VARIABLE_2D_PTR
+(   88)   TYPE (TYPE_GFL_COMP) :: YCOMP
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 4
+
+(   89)   TYPE (VARIABLE_2D), POINTER :: YV => NULL ()
+(   90) END TYPE 
+(   91) 
+(   92) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_3D
+(   93)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(   94)   ! Note that storing things like NLEV would break templating
+(   95) 
+(   96)   ! Array view pointers, to be set up from associated fields
+(   97)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:,:)  => NULL()  ! Basic field at t
+(   98)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:,:) => NULL()  ! Basic field at t (alias of P)
+(   99)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:,:) => NULL()  ! Basic field at t+dt
+(  100)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:,:) => NULL()  ! Basic field at t-dt
+(  101)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:,:)=> NULL()  ! Basic field for physics
+(  102)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:,:) => NULL()  ! Zonal derivative field
+(  103)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:,:) => NULL()  ! Meridional derivative field
+(  104)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:,:) => NULL()  ! Zonal derivative field at t-dt
+(  105)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:,:) => NULL()  ! Meridional derivative field at t-dt
+(  106) 
+(  107)   ! Pointers to associated FIELD objects
+(  108)   TYPE(FIELD_3D), POINTER :: FT0 => NULL()  ! Basic field at t
+(  109)   TYPE(FIELD_3D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+(  110)   TYPE(FIELD_3D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(  111)   TYPE(FIELD_3D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(  112)   TYPE(FIELD_3D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(  113)   TYPE(FIELD_3D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(  114)   TYPE(FIELD_3D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(  115)   TYPE(FIELD_3D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(  116) 
+(  117) CONTAINS
+(  118)   PROCEDURE :: UPDATE_VIEW => VARIABLE_3D_UPDATE_VIEW
+(  119)   PROCEDURE :: CLONE => VARIABLE_3D_CLONE
+(  120)   PROCEDURE :: FINAL => VARIABLE_3D_FINAL
+(  121) END TYPE VARIABLE_3D
+(  122) 
+(  123) 
+(  124) TYPE :: VARIABLE_3D_PTR
+(  125)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(  126)   TYPE (VARIABLE_3D), POINTER :: YV => NULL ()
+(  127) END TYPE 
+(  128) 
+(  129) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_4D
+(  130)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(  131)   ! Note that storing things like NLEV would break templating
+(  132) 
+(  133)   ! Array view pointers, to be set up from associated fields
+(  134)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:,:,:)  => NULL()  ! Basic field at t
+(  135)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:,:,:) => NULL()  ! Basic field at t (alias of P)
+(  136)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:,:,:) => NULL()  ! Basic field at t+dt
+(  137)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:,:,:) => NULL()  ! Basic field at t-dt
+(  138)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:,:,:)=> NULL()  ! Basic field for physics
+(  139)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:,:,:) => NULL()  ! Zonal derivative field
+(  140)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:,:,:) => NULL()  ! Meridional derivative field
+(  141)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:,:,:) => NULL()  ! Zonal derivative field at t-dt
+(  142)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:,:,:) => NULL()  ! Meridional derivative field at t-dt
+(  143) 
+(  144)   ! Pointers to associated FIELD objects
+(  145)   TYPE(FIELD_4D), POINTER :: FT0 => NULL()  ! Basic field at t
+(  146)   TYPE(FIELD_4D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 5
+
+(  147)   TYPE(FIELD_4D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(  148)   TYPE(FIELD_4D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(  149)   TYPE(FIELD_4D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(  150)   TYPE(FIELD_4D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(  151)   TYPE(FIELD_4D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(  152)   TYPE(FIELD_4D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(  153) 
+(  154) CONTAINS
+(  155)   PROCEDURE :: UPDATE_VIEW => VARIABLE_4D_UPDATE_VIEW
+(  156)   PROCEDURE :: CLONE => VARIABLE_4D_CLONE
+(  157)   PROCEDURE :: FINAL => VARIABLE_4D_FINAL
+(  158) END TYPE VARIABLE_4D
+(  159) 
+(  160) 
+(  161) TYPE :: VARIABLE_4D_PTR
+(  162)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(  163)   TYPE (VARIABLE_4D), POINTER :: YV => NULL ()
+(  164) END TYPE 
+(  165) 
+(  166) 
+(  167) INTERFACE VARIABLE_2D
+(  168)   MODULE PROCEDURE :: VARIABLE_2D_INIT
+(  169)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+(  170) END INTERFACE VARIABLE_2D
+(  171) INTERFACE VARIABLE_3D
+(  172)   MODULE PROCEDURE :: VARIABLE_3D_INIT
+(  173)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+(  174) END INTERFACE VARIABLE_3D
+(  175) INTERFACE VARIABLE_4D
+(  176)   MODULE PROCEDURE :: VARIABLE_4D_INIT
+(  177)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+(  178) END INTERFACE VARIABLE_4D
+(  179) 
+(  180) INTERFACE ARGUMENT_VALUE
+(  181)   ! Helper interface to resolve values of optional arguments with defaults
+(  182)   MODULE PROCEDURE ARGUMENT_VALUE_REAL
+(  183)   MODULE PROCEDURE ARGUMENT_VALUE_INTEGER
+(  184)   MODULE PROCEDURE ARGUMENT_VALUE_STRING
+(  185)   MODULE PROCEDURE ARGUMENT_VALUE_LOGICAL
+(  186) END INTERFACE ARGUMENT_VALUE
+(  187) 
+(  188) CONTAINS
+(  189) 
+(  190)   FUNCTION ARGUMENT_VALUE_REAL(ARG, DEFAULT) RESULT(VAL)
+(  191)     ! Helper function to resolve value for optional argument
+(  192)     REAL(KIND=JPRB), OPTIONAL, INTENT(IN) :: ARG
+(  193)     REAL(KIND=JPRB), INTENT(IN) :: DEFAULT
+(  194)     REAL(KIND=JPRB) :: VAL
+(  195) 
+(  196)     IF (PRESENT(ARG)) THEN
+(  197)       VAL = ARG
+(  198)     ELSE
+(  199)       VAL = DEFAULT
+(  200)     END IF
+(  201)   END FUNCTION ARGUMENT_VALUE_REAL
+(  202) 
+(  203)   FUNCTION ARGUMENT_VALUE_INTEGER(ARG, DEFAULT) RESULT(VAL)
+(  204)     ! Helper function to resolve value for optional argument
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 6
+
+(  205)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: ARG
+(  206)     INTEGER(KIND=JPIM), INTENT(IN) :: DEFAULT
+(  207)     INTEGER(KIND=JPIM) :: VAL
+(  208) 
+(  209)     IF (PRESENT(ARG)) THEN
+(  210)       VAL = ARG
+(  211)     ELSE
+(  212)       VAL = DEFAULT
+(  213)     END IF
+(  214)   END FUNCTION ARGUMENT_VALUE_INTEGER
+(  215) 
+(  216)   FUNCTION ARGUMENT_VALUE_STRING(ARG, DEFAULT) RESULT(VAL)
+(  217)     ! Helper function to resolve value for optional argument
+(  218)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: ARG
+(  219)     CHARACTER(LEN=*), INTENT(IN) :: DEFAULT
+(  220)     CHARACTER(:), ALLOCATABLE :: VAL
+(  221) 
+(  222)     IF (PRESENT(ARG)) THEN
+(  223)       ALLOCATE(VAL, SOURCE=ARG)
+(  224)     ELSE
+(  225)       ALLOCATE(VAL, SOURCE=DEFAULT)
+(  226)     END IF
+(  227)   END FUNCTION ARGUMENT_VALUE_STRING
+(  228) 
+(  229)   FUNCTION ARGUMENT_VALUE_LOGICAL(ARG, DEFAULT) RESULT(VAL)
+(  230)     ! Helper function to resolve value for optional argument
+(  231)     LOGICAL, OPTIONAL, INTENT(IN) :: ARG
+(  232)     LOGICAL, INTENT(IN) :: DEFAULT
+(  233)     LOGICAL :: VAL
+(  234) 
+(  235)     IF (PRESENT(ARG)) THEN
+(  236)       VAL = ARG
+(  237)     ELSE
+(  238)       VAL = DEFAULT
+(  239)     END IF
+(  240)   END FUNCTION ARGUMENT_VALUE_LOGICAL
+(  241) 
+(  242) 
+(  243)   FUNCTION VARIABLE_2D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMA
+(  244)       & LCDERS, RCP, R) RESULT(SELF)
+(  245)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  246)     ! Templated constructor that creates new instances
+(  247)     TYPE(VARIABLE_2D) :: SELF
+(  248)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  249)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  250)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  251)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  252)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  253) 
+(  254)     SELF%NAME = NAME
+(  255)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  256)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  257)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  258)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  259)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  260)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+(  261)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  262)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 7
+
+(  263)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  264)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+(  265)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  266)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  267)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  268)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  269)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  270)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  271)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  272)   END FUNCTION VARIABLE_2D_INIT
+(  273)   FUNCTION VARIABLE_3D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMA
+(  274)       & LCDERS, RCP, R) RESULT(SELF)
+(  275)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  276)     ! Templated constructor that creates new instances
+(  277)     TYPE(VARIABLE_3D) :: SELF
+(  278)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  279)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  280)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  281)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  282)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  283) 
+(  284)     SELF%NAME = NAME
+(  285)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  286)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  287)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  288)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  289)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  290)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+(  291)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  292)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+(  293)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  294)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+(  295)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  296)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  297)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  298)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  299)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  300)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  301)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  302)   END FUNCTION VARIABLE_3D_INIT
+(  303)   FUNCTION VARIABLE_4D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMA
+(  304)       & LCDERS, RCP, R) RESULT(SELF)
+(  305)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  306)     ! Templated constructor that creates new instances
+(  307)     TYPE(VARIABLE_4D) :: SELF
+(  308)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  309)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  310)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  311)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  312)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  313) 
+(  314)     SELF%NAME = NAME
+(  315)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  316)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  317)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  318)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  319)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  320)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 8
+
+(  321)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  322)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+(  323)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  324)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+(  325)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  326)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  327)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  328)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  329)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  330)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  331)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  332)   END FUNCTION VARIABLE_4D_INIT
+(  333) 
+(  334)   FUNCTION VARIABLE_2D_CLONE(SELF) RESULT(NEWOBJ)
+(  335)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  336)     !
+(  337)     ! This is required create per-thread replication of the data view pointers
+(  338)     ! under the fields associated with this VARIABLE.
+(  339)     CLASS(VARIABLE_2D) :: SELF
+(  340)     TYPE(VARIABLE_2D) :: NEWOBJ
+(  341) 
+(  342)     NEWOBJ = SELF
+(  343)     NEWOBJ%NAME = SELF%NAME
+(  344)     NEWOBJ%CNAME = SELF%CNAME
+(  345)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  346)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  347)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  348)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  349)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  350)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  351)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  352)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+(  353)   END FUNCTION VARIABLE_2D_CLONE
+(  354)   FUNCTION VARIABLE_3D_CLONE(SELF) RESULT(NEWOBJ)
+(  355)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  356)     !
+(  357)     ! This is required create per-thread replication of the data view pointers
+(  358)     ! under the fields associated with this VARIABLE.
+(  359)     CLASS(VARIABLE_3D) :: SELF
+(  360)     TYPE(VARIABLE_3D) :: NEWOBJ
+(  361) 
+(  362)     NEWOBJ = SELF
+(  363)     NEWOBJ%NAME = SELF%NAME
+(  364)     NEWOBJ%CNAME = SELF%CNAME
+(  365)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  366)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  367)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  368)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  369)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  370)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  371)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  372)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+(  373)   END FUNCTION VARIABLE_3D_CLONE
+(  374)   FUNCTION VARIABLE_4D_CLONE(SELF) RESULT(NEWOBJ)
+(  375)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  376)     !
+(  377)     ! This is required create per-thread replication of the data view pointers
+(  378)     ! under the fields associated with this VARIABLE.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 9
+
+(  379)     CLASS(VARIABLE_4D) :: SELF
+(  380)     TYPE(VARIABLE_4D) :: NEWOBJ
+(  381) 
+(  382)     NEWOBJ = SELF
+(  383)     NEWOBJ%NAME = SELF%NAME
+(  384)     NEWOBJ%CNAME = SELF%CNAME
+(  385)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  386)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  387)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  388)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  389)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  390)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  391)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  392)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+(  393)   END FUNCTION VARIABLE_4D_CLONE
+(  394) 
+(  395)   SUBROUTINE VARIABLE_2D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  396)     ! Update the internal data view pointers of all associated fields
+(  397)     CLASS(VARIABLE_2D) :: SELF
+(  398)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  399)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1)
+(  400) 
+(  401)     ! Set on-object data view pointers from storage FIELDS
+(  402)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  403)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  404)     ELSE
+(  405)       SELF%T0 => ZDUM
+(  406)     ENDIF
+(  407)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  408)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  409)     ELSE
+(  410)       SELF%T1 => ZDUM
+(  411)     ENDIF
+(  412)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  413)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  414)     ELSE
+(  415)       SELF%T9 => ZDUM
+(  416)     ENDIF
+(  417)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  418)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  419)     ELSE
+(  420)       SELF%PH9 => ZDUM
+(  421)     ENDIF
+(  422)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  423)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  424)     ELSE
+(  425)       SELF%DL => ZDUM
+(  426)     ENDIF
+(  427)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  428)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+(  429)     ELSE
+(  430)       SELF%DM => ZDUM
+(  431)     ENDIF
+(  432)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  433)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  434)     ELSE
+(  435)       SELF%DL9 => ZDUM
+(  436)     ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 10
+
+(  437)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  438)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  439)     ELSE
+(  440)       SELF%DM9 => ZDUM
+(  441)     ENDIF
+(  442)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  443)   END SUBROUTINE VARIABLE_2D_UPDATE_VIEW
+(  444)   SUBROUTINE VARIABLE_3D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  445)     ! Update the internal data view pointers of all associated fields
+(  446)     CLASS(VARIABLE_3D) :: SELF
+(  447)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  448)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1, 1)
+(  449) 
+(  450)     ! Set on-object data view pointers from storage FIELDS
+(  451)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  452)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  453)     ELSE
+(  454)       SELF%T0 => ZDUM
+(  455)     ENDIF
+(  456)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  457)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  458)     ELSE
+(  459)       SELF%T1 => ZDUM
+(  460)     ENDIF
+(  461)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  462)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  463)     ELSE
+(  464)       SELF%T9 => ZDUM
+(  465)     ENDIF
+(  466)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  467)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  468)     ELSE
+(  469)       SELF%PH9 => ZDUM
+(  470)     ENDIF
+(  471)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  472)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  473)     ELSE
+(  474)       SELF%DL => ZDUM
+(  475)     ENDIF
+(  476)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  477)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+(  478)     ELSE
+(  479)       SELF%DM => ZDUM
+(  480)     ENDIF
+(  481)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  482)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  483)     ELSE
+(  484)       SELF%DL9 => ZDUM
+(  485)     ENDIF
+(  486)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  487)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  488)     ELSE
+(  489)       SELF%DM9 => ZDUM
+(  490)     ENDIF
+(  491)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  492)   END SUBROUTINE VARIABLE_3D_UPDATE_VIEW
+(  493)   SUBROUTINE VARIABLE_4D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  494)     ! Update the internal data view pointers of all associated fields
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 11
+
+(  495)     CLASS(VARIABLE_4D) :: SELF
+(  496)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  497)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1, 1, 1)
+(  498) 
+(  499)     ! Set on-object data view pointers from storage FIELDS
+(  500)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  501)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  502)     ELSE
+(  503)       SELF%T0 => ZDUM
+(  504)     ENDIF
+(  505)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  506)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  507)     ELSE
+(  508)       SELF%T1 => ZDUM
+(  509)     ENDIF
+(  510)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  511)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  512)     ELSE
+(  513)       SELF%T9 => ZDUM
+(  514)     ENDIF
+(  515)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  516)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  517)     ELSE
+(  518)       SELF%PH9 => ZDUM
+(  519)     ENDIF
+(  520)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  521)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  522)     ELSE
+(  523)       SELF%DL => ZDUM
+(  524)     ENDIF
+(  525)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  526)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+(  527)     ELSE
+(  528)       SELF%DM => ZDUM
+(  529)     ENDIF
+(  530)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  531)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  532)     ELSE
+(  533)       SELF%DL9 => ZDUM
+(  534)     ENDIF
+(  535)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  536)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  537)     ELSE
+(  538)       SELF%DM9 => ZDUM
+(  539)     ENDIF
+(  540)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  541)   END SUBROUTINE VARIABLE_4D_UPDATE_VIEW
+(  542) 
+(  543)   SUBROUTINE VARIABLE_2D_FINAL(SELF)
+(  544)     ! Templated destructor that cleans up an object instance
+(  545)     CLASS(VARIABLE_2D) :: SELF
+(  546) 
+(  547)     IF (ASSOCIATED(SELF%FT0)) THEN
+(  548)       CALL SELF%FT0%FINAL()
+(  549)       DEALLOCATE(SELF%FT0)
+(  550)     END IF
+(  551)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  552)       CALL SELF%FT1%FINAL()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 12
+
+(  553)       DEALLOCATE(SELF%FT1)
+(  554)     END IF
+(  555)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  556)       CALL SELF%FT9%FINAL()
+(  557)       DEALLOCATE(SELF%FT9)
+(  558)     END IF
+(  559)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  560)       CALL SELF%FPH9%FINAL()
+(  561)       DEALLOCATE(SELF%FPH9)
+(  562)     END IF
+(  563)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  564)       CALL SELF%FDL%FINAL()
+(  565)       DEALLOCATE(SELF%FDL)
+(  566)     END IF
+(  567)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  568)       CALL SELF%FDM%FINAL()
+(  569)       DEALLOCATE(SELF%FDM)
+(  570)     END IF
+(  571)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  572)       CALL SELF%FDL9%FINAL()
+(  573)       DEALLOCATE(SELF%FDL9)
+(  574)     END IF
+(  575)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  576)       CALL SELF%FDM9%FINAL()
+(  577)       DEALLOCATE(SELF%FDM9)
+(  578)     END IF
+(  579)   END SUBROUTINE VARIABLE_2D_FINAL
+(  580)   SUBROUTINE VARIABLE_3D_FINAL(SELF)
+(  581)     ! Templated destructor that cleans up an object instance
+(  582)     CLASS(VARIABLE_3D) :: SELF
+(  583) 
+(  584)     IF (ASSOCIATED(SELF%FT0)) THEN
+(  585)       CALL SELF%FT0%FINAL()
+(  586)       DEALLOCATE(SELF%FT0)
+(  587)     END IF
+(  588)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  589)       CALL SELF%FT1%FINAL()
+(  590)       DEALLOCATE(SELF%FT1)
+(  591)     END IF
+(  592)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  593)       CALL SELF%FT9%FINAL()
+(  594)       DEALLOCATE(SELF%FT9)
+(  595)     END IF
+(  596)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  597)       CALL SELF%FPH9%FINAL()
+(  598)       DEALLOCATE(SELF%FPH9)
+(  599)     END IF
+(  600)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  601)       CALL SELF%FDL%FINAL()
+(  602)       DEALLOCATE(SELF%FDL)
+(  603)     END IF
+(  604)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  605)       CALL SELF%FDM%FINAL()
+(  606)       DEALLOCATE(SELF%FDM)
+(  607)     END IF
+(  608)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  609)       CALL SELF%FDL9%FINAL()
+(  610)       DEALLOCATE(SELF%FDL9)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 13
+
+(  611)     END IF
+(  612)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  613)       CALL SELF%FDM9%FINAL()
+(  614)       DEALLOCATE(SELF%FDM9)
+(  615)     END IF
+(  616)   END SUBROUTINE VARIABLE_3D_FINAL
+(  617)   SUBROUTINE VARIABLE_4D_FINAL(SELF)
+(  618)     ! Templated destructor that cleans up an object instance
+(  619)     CLASS(VARIABLE_4D) :: SELF
+(  620) 
+(  621)     IF (ASSOCIATED(SELF%FT0)) THEN
+(  622)       CALL SELF%FT0%FINAL()
+(  623)       DEALLOCATE(SELF%FT0)
+(  624)     END IF
+(  625)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  626)       CALL SELF%FT1%FINAL()
+(  627)       DEALLOCATE(SELF%FT1)
+(  628)     END IF
+(  629)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  630)       CALL SELF%FT9%FINAL()
+(  631)       DEALLOCATE(SELF%FT9)
+(  632)     END IF
+(  633)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  634)       CALL SELF%FPH9%FINAL()
+(  635)       DEALLOCATE(SELF%FPH9)
+(  636)     END IF
+(  637)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  638)       CALL SELF%FDL%FINAL()
+(  639)       DEALLOCATE(SELF%FDL)
+(  640)     END IF
+(  641)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  642)       CALL SELF%FDM%FINAL()
+(  643)       DEALLOCATE(SELF%FDM)
+(  644)     END IF
+(  645)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  646)       CALL SELF%FDL9%FINAL()
+(  647)       DEALLOCATE(SELF%FDL9)
+(  648)     END IF
+(  649)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  650)       CALL SELF%FDM9%FINAL()
+(  651)       DEALLOCATE(SELF%FDM9)
+(  652)     END IF
+(  653)   END SUBROUTINE VARIABLE_4D_FINAL
+(  654) 
+(  655) END MODULE VARIABLE_MODULE
+(  656) 
+(  657) 
+(  658) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 14
+
+(    1) # 1 "variable_module.F90"
+(    1) ! Rank and shape definitions for simple templating
+(    2) # 3 "variable_module.F90"
+(    3) MODULE VARIABLE_MODULE
+(    4)   ! Base class definition of VARIABLE types that manages configuration
+(    5)   ! and metadata for individual variables and associates them with the
+(    6)   ! respective FIELDS objects that store the data.
+(    7) # 8 "variable_module.F90"
+(    8) USE PARKIND1, ONLY: JPIM, JPRB
+(    9) USE FIELD_MODULE, ONLY: FIELD_2D, FIELD_3D, FIELD_4D
+(   10) USE YOM_YGFL, ONLY: TYPE_GFL_COMP
+(   11) # 12 "variable_module.F90"
+(   12) IMPLICIT NONE
+(   13) # 14 "variable_module.F90"
+(   14) TYPE, ABSTRACT :: VARIABLE_BASE
+(   15)   ! Description and definition of a scientific variable that stores
+(   16)   ! its associated data in one or more underlying fields, eg. for timestepping.
+(   17) # 18 "variable_module.F90"
+(   18)   ! Generic metadata like names and IDs
+(   19)   CHARACTER(LEN=16)  :: NAME                  ! Primary name used for indexing
+(   20)   CHARACTER(LEN=16)  :: CNAME     = ''        ! ARPEGE field name
+(   21)   INTEGER(KIND=JPIM) :: IGRBCODE  = -999      ! GRIB code
+(   22) # 23 "variable_module.F90"
+(   23)   ! Flags that define the behaviour of the field variable
+(   24)   LOGICAL            :: LACTIVE   = .FALSE.   ! Field in use
+(   25)   LOGICAL            :: LT1       = .FALSE.   ! Field in t+dt GFL
+(   26)   LOGICAL            :: LT9       = .FALSE.   ! Field in t-dt GFL
+(   27)   LOGICAL            :: LPH9      = .FALSE.   ! Field in t-dt physics
+(   28)   LOGICAL            :: LDL       = .FALSE.   ! Field has zontal derivative
+(   29)   LOGICAL            :: LDM       = .FALSE.   ! Field has meridional derivative
+(   30)   LOGICAL            :: LDL9      = .FALSE.   ! Field has zontal derivative at t-dt
+(   31)   LOGICAL            :: LDM9      = .FALSE.   ! Field has meridional derivative at t-dt
+(   32)   LOGICAL            :: LADV      = .FALSE.   ! Field advected or not
+(   33)   LOGICAL            :: LGP       = .FALSE.   
+(   34)   LOGICAL            :: LWATER    = .FALSE.   
+(   35)   LOGICAL            :: LTHERMACT = .FALSE.   
+(   36)   LOGICAL            :: LCDERS    = .FALSE.   
+(   37)   REAL (KIND=JPRB)   :: RCP       = 0._JPRB
+(   38)   REAL (KIND=JPRB)   :: R         = 0._JPRB
+(   39) # 40 "variable_module.F90"
+(   40)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(   41) # 42 "variable_module.F90"
+(   42)   ! TODO: Storage backend for Atlas (guard by #ifdef)
+(   43) # 44 "variable_module.F90"
+(   44) CONTAINS
+(   45)   PROCEDURE(VARIABLE_BASE_FINAL), DEFERRED :: FINAL
+(   46) END TYPE VARIABLE_BASE
+(   47) # 48 "variable_module.F90"
+(   48) ABSTRACT INTERFACE
+(   49)   SUBROUTINE VARIABLE_BASE_FINAL(SELF)
+(   50)     IMPORT :: VARIABLE_BASE
+(   51)     CLASS(VARIABLE_BASE) :: SELF
+(   52)   END SUBROUTINE VARIABLE_BASE_FINAL
+(   53) END INTERFACE
+(   54) # 55 "variable_module.F90"
+(   55) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_2D
+(   56)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(   57)   ! Note that storing things like NLEV would break templating
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 15
+
+(   58) # 59 "variable_module.F90"
+(   59)   ! Array view pointers, to be set up from associated fields
+(   60)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:)  => NULL()  ! Basic field at t
+(   61)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:) => NULL()  ! Basic field at t (alias of P)
+(   62)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:) => NULL()  ! Basic field at t+dt
+(   63)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:) => NULL()  ! Basic field at t-dt
+(   64)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:)=> NULL()  ! Basic field for physics
+(   65)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:) => NULL()  ! Zonal derivative field
+(   66)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:) => NULL()  ! Meridional derivative field
+(   67)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:) => NULL()  ! Zonal derivative field at t-dt
+(   68)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:) => NULL()  ! Meridional derivative field at t-dt
+(   69) # 70 "variable_module.F90"
+(   70)   ! Pointers to associated FIELD objects
+(   71)   TYPE(FIELD_2D), POINTER :: FT0 => NULL()  ! Basic field at t
+(   72)   TYPE(FIELD_2D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+(   73)   TYPE(FIELD_2D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(   74)   TYPE(FIELD_2D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(   75)   TYPE(FIELD_2D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(   76)   TYPE(FIELD_2D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(   77)   TYPE(FIELD_2D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(   78)   TYPE(FIELD_2D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(   79) # 80 "variable_module.F90"
+(   80) CONTAINS
+(   81)   PROCEDURE :: UPDATE_VIEW => VARIABLE_2D_UPDATE_VIEW
+(   82)   PROCEDURE :: CLONE => VARIABLE_2D_CLONE
+(   83)   PROCEDURE :: FINAL => VARIABLE_2D_FINAL
+(   84) END TYPE VARIABLE_2D
+(   85) # 87 "variable_module.F90"
+(   87) TYPE :: VARIABLE_2D_PTR
+(   88)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(   89)   TYPE (VARIABLE_2D), POINTER :: YV => NULL ()
+(   90) END TYPE 
+(   91) # 92 "variable_module.F90"
+(   92) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_3D
+(   93)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(   94)   ! Note that storing things like NLEV would break templating
+(   95) # 96 "variable_module.F90"
+(   96)   ! Array view pointers, to be set up from associated fields
+(   97)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:,:)  => NULL()  ! Basic field at t
+(   98)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:,:) => NULL()  ! Basic field at t (alias of P)
+(   99)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:,:) => NULL()  ! Basic field at t+dt
+(  100)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:,:) => NULL()  ! Basic field at t-dt
+(  101)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:,:)=> NULL()  ! Basic field for physics
+(  102)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:,:) => NULL()  ! Zonal derivative field
+(  103)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:,:) => NULL()  ! Meridional derivative field
+(  104)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:,:) => NULL()  ! Zonal derivative field at t-dt
+(  105)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:,:) => NULL()  ! Meridional derivative field at t-dt
+(  106) # 107 "variable_module.F90"
+(  107)   ! Pointers to associated FIELD objects
+(  108)   TYPE(FIELD_3D), POINTER :: FT0 => NULL()  ! Basic field at t
+(  109)   TYPE(FIELD_3D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+(  110)   TYPE(FIELD_3D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(  111)   TYPE(FIELD_3D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(  112)   TYPE(FIELD_3D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(  113)   TYPE(FIELD_3D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(  114)   TYPE(FIELD_3D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(  115)   TYPE(FIELD_3D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(  116) # 117 "variable_module.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 16
+
+(  117) CONTAINS
+(  118)   PROCEDURE :: UPDATE_VIEW => VARIABLE_3D_UPDATE_VIEW
+(  119)   PROCEDURE :: CLONE => VARIABLE_3D_CLONE
+(  120)   PROCEDURE :: FINAL => VARIABLE_3D_FINAL
+(  121) END TYPE VARIABLE_3D
+(  122) # 124 "variable_module.F90"
+(  124) TYPE :: VARIABLE_3D_PTR
+(  125)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(  126)   TYPE (VARIABLE_3D), POINTER :: YV => NULL ()
+(  127) END TYPE 
+(  128) # 129 "variable_module.F90"
+(  129) TYPE, EXTENDS(VARIABLE_BASE) :: VARIABLE_4D
+(  130)   ! TODO: Allocation-specific metadata, like shapes and dimensions
+(  131)   ! Note that storing things like NLEV would break templating
+(  132) # 133 "variable_module.F90"
+(  133)   ! Array view pointers, to be set up from associated fields
+(  134)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: P(:,:,:)  => NULL()  ! Basic field at t
+(  135)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T0(:,:,:) => NULL()  ! Basic field at t (alias of P)
+(  136)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T1(:,:,:) => NULL()  ! Basic field at t+dt
+(  137)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: T9(:,:,:) => NULL()  ! Basic field at t-dt
+(  138)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: PH9(:,:,:)=> NULL()  ! Basic field for physics
+(  139)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL(:,:,:) => NULL()  ! Zonal derivative field
+(  140)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM(:,:,:) => NULL()  ! Meridional derivative field
+(  141)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DL9(:,:,:) => NULL()  ! Zonal derivative field at t-dt
+(  142)   REAL(KIND=JPRB), POINTER, CONTIGUOUS :: DM9(:,:,:) => NULL()  ! Meridional derivative field at t-dt
+(  143) # 144 "variable_module.F90"
+(  144)   ! Pointers to associated FIELD objects
+(  145)   TYPE(FIELD_4D), POINTER :: FT0 => NULL()  ! Basic field at t
+(  146)   TYPE(FIELD_4D), POINTER :: FT1 => NULL()  ! Basic field at t+dt
+(  147)   TYPE(FIELD_4D), POINTER :: FT9 => NULL()  ! Basic field at t-dt
+(  148)   TYPE(FIELD_4D), POINTER :: FPH9 => NULL() ! Basic field for physics
+(  149)   TYPE(FIELD_4D), POINTER :: FDL => NULL()  ! Zonal derivative field
+(  150)   TYPE(FIELD_4D), POINTER :: FDM => NULL()  ! Meridional derivative field
+(  151)   TYPE(FIELD_4D), POINTER :: FDL9 => NULL() ! Zonal derivative field at t-dt
+(  152)   TYPE(FIELD_4D), POINTER :: FDM9 => NULL() ! Meridional derivative field at t-dt
+(  153) # 154 "variable_module.F90"
+(  154) CONTAINS
+(  155)   PROCEDURE :: UPDATE_VIEW => VARIABLE_4D_UPDATE_VIEW
+(  156)   PROCEDURE :: CLONE => VARIABLE_4D_CLONE
+(  157)   PROCEDURE :: FINAL => VARIABLE_4D_FINAL
+(  158) END TYPE VARIABLE_4D
+(  159) # 161 "variable_module.F90"
+(  161) TYPE :: VARIABLE_4D_PTR
+(  162)   TYPE (TYPE_GFL_COMP) :: YCOMP
+(  163)   TYPE (VARIABLE_4D), POINTER :: YV => NULL ()
+(  164) END TYPE 
+(  165) # 167 "variable_module.F90"
+(  167) INTERFACE VARIABLE_2D
+(  168)   MODULE PROCEDURE :: VARIABLE_2D_INIT
+(  169)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+(  170) END INTERFACE VARIABLE_2D
+(  171) INTERFACE VARIABLE_3D
+(  172)   MODULE PROCEDURE :: VARIABLE_3D_INIT
+(  173)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+(  174) END INTERFACE VARIABLE_3D
+(  175) INTERFACE VARIABLE_4D
+(  176)   MODULE PROCEDURE :: VARIABLE_4D_INIT
+(  177)   ! MODULE PROCEDURE :: VARIABLE_FROM_NAMELIST
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 17
+
+(  178) END INTERFACE VARIABLE_4D
+(  179) # 180 "variable_module.F90"
+(  180) INTERFACE ARGUMENT_VALUE
+(  181)   ! Helper interface to resolve values of optional arguments with defaults
+(  182)   MODULE PROCEDURE ARGUMENT_VALUE_REAL
+(  183)   MODULE PROCEDURE ARGUMENT_VALUE_INTEGER
+(  184)   MODULE PROCEDURE ARGUMENT_VALUE_STRING
+(  185)   MODULE PROCEDURE ARGUMENT_VALUE_LOGICAL
+(  186) END INTERFACE ARGUMENT_VALUE
+(  187) # 188 "variable_module.F90"
+(  188) CONTAINS
+(  189) # 190 "variable_module.F90"
+(  190)   FUNCTION ARGUMENT_VALUE_REAL(ARG, DEFAULT) RESULT(VAL)
+(  191)     ! Helper function to resolve value for optional argument
+(  192)     REAL(KIND=JPRB), OPTIONAL, INTENT(IN) :: ARG
+(  193)     REAL(KIND=JPRB), INTENT(IN) :: DEFAULT
+(  194)     REAL(KIND=JPRB) :: VAL
+(  195) # 196 "variable_module.F90"
+(  196)     IF (PRESENT(ARG)) THEN
+(  197)       VAL = ARG
+(  198)     ELSE
+(  199)       VAL = DEFAULT
+(  200)     END IF
+(  201)   END FUNCTION ARGUMENT_VALUE_REAL
+(  202) # 203 "variable_module.F90"
+(  203)   FUNCTION ARGUMENT_VALUE_INTEGER(ARG, DEFAULT) RESULT(VAL)
+(  204)     ! Helper function to resolve value for optional argument
+(  205)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: ARG
+(  206)     INTEGER(KIND=JPIM), INTENT(IN) :: DEFAULT
+(  207)     INTEGER(KIND=JPIM) :: VAL
+(  208) # 209 "variable_module.F90"
+(  209)     IF (PRESENT(ARG)) THEN
+(  210)       VAL = ARG
+(  211)     ELSE
+(  212)       VAL = DEFAULT
+(  213)     END IF
+(  214)   END FUNCTION ARGUMENT_VALUE_INTEGER
+(  215) # 216 "variable_module.F90"
+(  216)   FUNCTION ARGUMENT_VALUE_STRING(ARG, DEFAULT) RESULT(VAL)
+(  217)     ! Helper function to resolve value for optional argument
+(  218)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: ARG
+(  219)     CHARACTER(LEN=*), INTENT(IN) :: DEFAULT
+(  220)     CHARACTER(:), ALLOCATABLE :: VAL
+(  221) # 222 "variable_module.F90"
+(  222)     IF (PRESENT(ARG)) THEN
+(  223)       ALLOCATE(VAL, SOURCE=ARG)
+(  224)     ELSE
+(  225)       ALLOCATE(VAL, SOURCE=DEFAULT)
+(  226)     END IF
+(  227)   END FUNCTION ARGUMENT_VALUE_STRING
+(  228) # 229 "variable_module.F90"
+(  229)   FUNCTION ARGUMENT_VALUE_LOGICAL(ARG, DEFAULT) RESULT(VAL)
+(  230)     ! Helper function to resolve value for optional argument
+(  231)     LOGICAL, OPTIONAL, INTENT(IN) :: ARG
+(  232)     LOGICAL, INTENT(IN) :: DEFAULT
+(  233)     LOGICAL :: VAL
+(  234) # 235 "variable_module.F90"
+(  235)     IF (PRESENT(ARG)) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 18
+
+(  236)       VAL = ARG
+(  237)     ELSE
+(  238)       VAL = DEFAULT
+(  239)     END IF
+(  240)   END FUNCTION ARGUMENT_VALUE_LOGICAL
+(  241) # 243 "variable_module.F90"
+(  243)   FUNCTION VARIABLE_2D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT,&
+(  244)       & LCDERS, RCP, R) RESULT(SELF)
+(  245)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  246)     ! Templated constructor that creates new instances
+(  247)     TYPE(VARIABLE_2D) :: SELF
+(  248)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  249)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  250)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  251)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  252)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  253) # 254 "variable_module.F90"
+(  254)     SELF%NAME = NAME
+(  255)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  256)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  257)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  258)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  259)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  260)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+(  261)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  262)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+(  263)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  264)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+(  265)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  266)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  267)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  268)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  269)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  270)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  271)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  272)   END FUNCTION VARIABLE_2D_INIT
+(  273)   FUNCTION VARIABLE_3D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT,&
+(  274)       & LCDERS, RCP, R) RESULT(SELF)
+(  275)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  276)     ! Templated constructor that creates new instances
+(  277)     TYPE(VARIABLE_3D) :: SELF
+(  278)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  279)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  280)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  281)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  282)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  283) # 284 "variable_module.F90"
+(  284)     SELF%NAME = NAME
+(  285)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  286)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  287)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  288)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  289)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  290)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+(  291)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  292)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+(  293)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  294)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 19
+
+(  295)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  296)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  297)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  298)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  299)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  300)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  301)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  302)   END FUNCTION VARIABLE_3D_INIT
+(  303)   FUNCTION VARIABLE_4D_INIT(NAME, CNAME, IGRBCODE, LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT,&
+(  304)       & LCDERS, RCP, R) RESULT(SELF)
+(  305)     USE, INTRINSIC :: IEEE_ARITHMETIC, ONLY: IEEE_vALUE, IEEE_QUIET_NAN
+(  306)     ! Templated constructor that creates new instances
+(  307)     TYPE(VARIABLE_4D) :: SELF
+(  308)     CHARACTER(LEN=*), INTENT(IN) :: NAME
+(  309)     CHARACTER(LEN=*), OPTIONAL, INTENT(IN) :: CNAME
+(  310)     INTEGER(KIND=JPIM), OPTIONAL, INTENT(IN) :: IGRBCODE
+(  311)     LOGICAL, OPTIONAL, INTENT(IN) :: LACTIVE, LADV, LT1, LT9, LPH9, LDL, LDM, LDL9, LDM9, LGP, LWATER, LTHERMACT, LCDERS
+(  312)     REAL(KIND=JPRB), OPTIONAL, INTENT (IN) :: RCP, R
+(  313) # 314 "variable_module.F90"
+(  314)     SELF%NAME = NAME
+(  315)     SELF%CNAME = ARGUMENT_VALUE(ARG=CNAME, DEFAULT=NAME)
+(  316)     SELF%IGRBCODE = ARGUMENT_VALUE(ARG=IGRBCODE, DEFAULT=-999)
+(  317)     SELF%LACTIVE = ARGUMENT_VALUE(ARG=LACTIVE, DEFAULT=.FALSE.)
+(  318)     SELF%LADV = ARGUMENT_VALUE(ARG=LADV, DEFAULT=.FALSE.)
+(  319)     SELF%LT1 = ARGUMENT_VALUE(ARG=LT1, DEFAULT=.FALSE.)
+(  320)     SELF%LT9 = ARGUMENT_VALUE(ARG=LT9, DEFAULT=.FALSE.)
+(  321)     SELF%LPH9 = ARGUMENT_VALUE(ARG=LPH9, DEFAULT=.FALSE.)
+(  322)     SELF%LDL = ARGUMENT_VALUE(ARG=LDL, DEFAULT=.FALSE.)
+(  323)     SELF%LDM = ARGUMENT_VALUE(ARG=LDM, DEFAULT=.FALSE.)
+(  324)     SELF%LDL9 = ARGUMENT_VALUE(ARG=LDL9, DEFAULT=.FALSE.)
+(  325)     SELF%LDM9 = ARGUMENT_VALUE(ARG=LDM9, DEFAULT=.FALSE.)
+(  326)     SELF%LGP = ARGUMENT_VALUE(ARG=LGP, DEFAULT=.FALSE.)
+(  327)     SELF%LWATER = ARGUMENT_VALUE(ARG=LWATER, DEFAULT=.FALSE.)
+(  328)     SELF%LTHERMACT = ARGUMENT_VALUE(ARG=LTHERMACT, DEFAULT=.FALSE.)
+(  329)     SELF%LCDERS = ARGUMENT_VALUE(ARG=LCDERS, DEFAULT=.FALSE.)
+(  330)     SELF%RCP = ARGUMENT_VALUE(ARG=RCP, DEFAULT=IEEE_VALUE (RCP, IEEE_QUIET_NAN))
+(  331)     SELF%R = ARGUMENT_VALUE(ARG=R, DEFAULT=IEEE_VALUE (R, IEEE_QUIET_NAN))
+(  332)   END FUNCTION VARIABLE_4D_INIT
+(  333) # 334 "variable_module.F90"
+(  334)   FUNCTION VARIABLE_2D_CLONE(SELF) RESULT(NEWOBJ)
+(  335)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  336)     !
+(  337)     ! This is required create per-thread replication of the data view pointers
+(  338)     ! under the fields associated with this VARIABLE.
+(  339)     CLASS(VARIABLE_2D) :: SELF
+(  340)     TYPE(VARIABLE_2D) :: NEWOBJ
+(  341) # 342 "variable_module.F90"
+(  342)     NEWOBJ = SELF
+(  343)     NEWOBJ%NAME = SELF%NAME
+(  344)     NEWOBJ%CNAME = SELF%CNAME
+(  345)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  346)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  347)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  348)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  349)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  350)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  351)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  352)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 20
+
+(  353)   END FUNCTION VARIABLE_2D_CLONE
+(  354)   FUNCTION VARIABLE_3D_CLONE(SELF) RESULT(NEWOBJ)
+(  355)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  356)     !
+(  357)     ! This is required create per-thread replication of the data view pointers
+(  358)     ! under the fields associated with this VARIABLE.
+(  359)     CLASS(VARIABLE_3D) :: SELF
+(  360)     TYPE(VARIABLE_3D) :: NEWOBJ
+(  361) # 362 "variable_module.F90"
+(  362)     NEWOBJ = SELF
+(  363)     NEWOBJ%NAME = SELF%NAME
+(  364)     NEWOBJ%CNAME = SELF%CNAME
+(  365)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  366)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  367)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  368)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  369)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  370)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  371)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  372)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+(  373)   END FUNCTION VARIABLE_3D_CLONE
+(  374)   FUNCTION VARIABLE_4D_CLONE(SELF) RESULT(NEWOBJ)
+(  375)     ! Clone (deep-copy) this VARIABLE object to replicate associated FIELD objects
+(  376)     !
+(  377)     ! This is required create per-thread replication of the data view pointers
+(  378)     ! under the fields associated with this VARIABLE.
+(  379)     CLASS(VARIABLE_4D) :: SELF
+(  380)     TYPE(VARIABLE_4D) :: NEWOBJ
+(  381) # 382 "variable_module.F90"
+(  382)     NEWOBJ = SELF
+(  383)     NEWOBJ%NAME = SELF%NAME
+(  384)     NEWOBJ%CNAME = SELF%CNAME
+(  385)     IF (ASSOCIATED(SELF%FT0))  NEWOBJ%FT0 => SELF%FT0%CLONE()
+(  386)     IF (ASSOCIATED(SELF%FT1))  NEWOBJ%FT1 => SELF%FT1%CLONE()
+(  387)     IF (ASSOCIATED(SELF%FT9))  NEWOBJ%FT9 => SELF%FT9%CLONE()
+(  388)     IF (ASSOCIATED(SELF%FPH9)) NEWOBJ%FPH9=> SELF%FPH9%CLONE()
+(  389)     IF (ASSOCIATED(SELF%FDL))  NEWOBJ%FDL => SELF%FDL%CLONE()
+(  390)     IF (ASSOCIATED(SELF%FDM))  NEWOBJ%FDM => SELF%FDM%CLONE()
+(  391)     IF (ASSOCIATED(SELF%FDL9)) NEWOBJ%FDL9=> SELF%FDL9%CLONE()
+(  392)     IF (ASSOCIATED(SELF%FDM9)) NEWOBJ%FDM9=> SELF%FDM9%CLONE()
+(  393)   END FUNCTION VARIABLE_4D_CLONE
+(  394) # 395 "variable_module.F90"
+(  395)   SUBROUTINE VARIABLE_2D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  396)     ! Update the internal data view pointers of all associated fields
+(  397)     CLASS(VARIABLE_2D) :: SELF
+(  398)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  399)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1)
+(  400) # 401 "variable_module.F90"
+(  401)     ! Set on-object data view pointers from storage FIELDS
+(  402)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  403)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  404)     ELSE
+(  405)       SELF%T0 => ZDUM
+(  406)     ENDIF
+(  407)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  408)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  409)     ELSE
+(  410)       SELF%T1 => ZDUM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 21
+
+(  411)     ENDIF
+(  412)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  413)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  414)     ELSE
+(  415)       SELF%T9 => ZDUM
+(  416)     ENDIF
+(  417)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  418)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  419)     ELSE
+(  420)       SELF%PH9 => ZDUM
+(  421)     ENDIF
+(  422)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  423)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  424)     ELSE
+(  425)       SELF%DL => ZDUM
+(  426)     ENDIF
+(  427)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  428)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+(  429)     ELSE
+(  430)       SELF%DM => ZDUM
+(  431)     ENDIF
+(  432)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  433)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  434)     ELSE
+(  435)       SELF%DL9 => ZDUM
+(  436)     ENDIF
+(  437)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  438)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  439)     ELSE
+(  440)       SELF%DM9 => ZDUM
+(  441)     ENDIF
+(  442)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  443)   END SUBROUTINE VARIABLE_2D_UPDATE_VIEW
+(  444)   SUBROUTINE VARIABLE_3D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  445)     ! Update the internal data view pointers of all associated fields
+(  446)     CLASS(VARIABLE_3D) :: SELF
+(  447)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  448)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1, 1)
+(  449) # 450 "variable_module.F90"
+(  450)     ! Set on-object data view pointers from storage FIELDS
+(  451)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  452)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  453)     ELSE
+(  454)       SELF%T0 => ZDUM
+(  455)     ENDIF
+(  456)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  457)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  458)     ELSE
+(  459)       SELF%T1 => ZDUM
+(  460)     ENDIF
+(  461)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  462)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  463)     ELSE
+(  464)       SELF%T9 => ZDUM
+(  465)     ENDIF
+(  466)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  467)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  468)     ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 22
+
+(  469)       SELF%PH9 => ZDUM
+(  470)     ENDIF
+(  471)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  472)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  473)     ELSE
+(  474)       SELF%DL => ZDUM
+(  475)     ENDIF
+(  476)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  477)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+(  478)     ELSE
+(  479)       SELF%DM => ZDUM
+(  480)     ENDIF
+(  481)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  482)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  483)     ELSE
+(  484)       SELF%DL9 => ZDUM
+(  485)     ENDIF
+(  486)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  487)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  488)     ELSE
+(  489)       SELF%DM9 => ZDUM
+(  490)     ENDIF
+(  491)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  492)   END SUBROUTINE VARIABLE_3D_UPDATE_VIEW
+(  493)   SUBROUTINE VARIABLE_4D_UPDATE_VIEW(SELF, BLOCK_INDEX)
+(  494)     ! Update the internal data view pointers of all associated fields
+(  495)     CLASS(VARIABLE_4D) :: SELF
+(  496)     INTEGER(KIND=JPIM), INTENT(IN) :: BLOCK_INDEX
+(  497)     REAL(KIND=JPRB), TARGET, SAVE :: ZDUM(1, 1, 1)
+(  498) # 499 "variable_module.F90"
+(  499)     ! Set on-object data view pointers from storage FIELDS
+(  500)     IF (ASSOCIATED(SELF%FT0))  THEN
+(  501)       SELF%T0 => SELF%FT0%GET_VIEW(BLOCK_INDEX)
+(  502)     ELSE
+(  503)       SELF%T0 => ZDUM
+(  504)     ENDIF
+(  505)     IF (ASSOCIATED(SELF%FT1))  THEN
+(  506)       SELF%T1 => SELF%FT1%GET_VIEW(BLOCK_INDEX)
+(  507)     ELSE
+(  508)       SELF%T1 => ZDUM
+(  509)     ENDIF
+(  510)     IF (ASSOCIATED(SELF%FT9))  THEN
+(  511)       SELF%T9 => SELF%FT9%GET_VIEW(BLOCK_INDEX)
+(  512)     ELSE
+(  513)       SELF%T9 => ZDUM
+(  514)     ENDIF
+(  515)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  516)       SELF%PH9=> SELF%FPH9%GET_VIEW(BLOCK_INDEX)
+(  517)     ELSE
+(  518)       SELF%PH9 => ZDUM
+(  519)     ENDIF
+(  520)     IF (ASSOCIATED(SELF%FDL))  THEN
+(  521)       SELF%DL => SELF%FDL%GET_VIEW(BLOCK_INDEX)
+(  522)     ELSE
+(  523)       SELF%DL => ZDUM
+(  524)     ENDIF
+(  525)     IF (ASSOCIATED(SELF%FDM))  THEN
+(  526)       SELF%DM => SELF%FDM%GET_VIEW(BLOCK_INDEX)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 23
+
+(  527)     ELSE
+(  528)       SELF%DM => ZDUM
+(  529)     ENDIF
+(  530)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  531)       SELF%DL9=> SELF%FDL9%GET_VIEW(BLOCK_INDEX)
+(  532)     ELSE
+(  533)       SELF%DL9 => ZDUM
+(  534)     ENDIF
+(  535)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  536)       SELF%DM9=> SELF%FDM9%GET_VIEW(BLOCK_INDEX)
+(  537)     ELSE
+(  538)       SELF%DM9 => ZDUM
+(  539)     ENDIF
+(  540)     SELF%P => SELF%T0  ! Alias T0 pointer
+(  541)   END SUBROUTINE VARIABLE_4D_UPDATE_VIEW
+(  542) # 543 "variable_module.F90"
+(  543)   SUBROUTINE VARIABLE_2D_FINAL(SELF)
+(  544)     ! Templated destructor that cleans up an object instance
+(  545)     CLASS(VARIABLE_2D) :: SELF
+(  546) # 547 "variable_module.F90"
+(  547)     IF (ASSOCIATED(SELF%FT0)) THEN
+(  548)       CALL SELF%FT0%FINAL()
+(  549)       DEALLOCATE(SELF%FT0)
+(  550)     END IF
+(  551)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  552)       CALL SELF%FT1%FINAL()
+(  553)       DEALLOCATE(SELF%FT1)
+(  554)     END IF
+(  555)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  556)       CALL SELF%FT9%FINAL()
+(  557)       DEALLOCATE(SELF%FT9)
+(  558)     END IF
+(  559)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  560)       CALL SELF%FPH9%FINAL()
+(  561)       DEALLOCATE(SELF%FPH9)
+(  562)     END IF
+(  563)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  564)       CALL SELF%FDL%FINAL()
+(  565)       DEALLOCATE(SELF%FDL)
+(  566)     END IF
+(  567)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  568)       CALL SELF%FDM%FINAL()
+(  569)       DEALLOCATE(SELF%FDM)
+(  570)     END IF
+(  571)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  572)       CALL SELF%FDL9%FINAL()
+(  573)       DEALLOCATE(SELF%FDL9)
+(  574)     END IF
+(  575)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  576)       CALL SELF%FDM9%FINAL()
+(  577)       DEALLOCATE(SELF%FDM9)
+(  578)     END IF
+(  579)   END SUBROUTINE VARIABLE_2D_FINAL
+(  580)   SUBROUTINE VARIABLE_3D_FINAL(SELF)
+(  581)     ! Templated destructor that cleans up an object instance
+(  582)     CLASS(VARIABLE_3D) :: SELF
+(  583) # 584 "variable_module.F90"
+(  584)     IF (ASSOCIATED(SELF%FT0)) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 24
+
+(  585)       CALL SELF%FT0%FINAL()
+(  586)       DEALLOCATE(SELF%FT0)
+(  587)     END IF
+(  588)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  589)       CALL SELF%FT1%FINAL()
+(  590)       DEALLOCATE(SELF%FT1)
+(  591)     END IF
+(  592)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  593)       CALL SELF%FT9%FINAL()
+(  594)       DEALLOCATE(SELF%FT9)
+(  595)     END IF
+(  596)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  597)       CALL SELF%FPH9%FINAL()
+(  598)       DEALLOCATE(SELF%FPH9)
+(  599)     END IF
+(  600)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  601)       CALL SELF%FDL%FINAL()
+(  602)       DEALLOCATE(SELF%FDL)
+(  603)     END IF
+(  604)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  605)       CALL SELF%FDM%FINAL()
+(  606)       DEALLOCATE(SELF%FDM)
+(  607)     END IF
+(  608)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  609)       CALL SELF%FDL9%FINAL()
+(  610)       DEALLOCATE(SELF%FDL9)
+(  611)     END IF
+(  612)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  613)       CALL SELF%FDM9%FINAL()
+(  614)       DEALLOCATE(SELF%FDM9)
+(  615)     END IF
+(  616)   END SUBROUTINE VARIABLE_3D_FINAL
+(  617)   SUBROUTINE VARIABLE_4D_FINAL(SELF)
+(  618)     ! Templated destructor that cleans up an object instance
+(  619)     CLASS(VARIABLE_4D) :: SELF
+(  620) # 621 "variable_module.F90"
+(  621)     IF (ASSOCIATED(SELF%FT0)) THEN
+(  622)       CALL SELF%FT0%FINAL()
+(  623)       DEALLOCATE(SELF%FT0)
+(  624)     END IF
+(  625)     IF (ASSOCIATED(SELF%FT1)) THEN
+(  626)       CALL SELF%FT1%FINAL()
+(  627)       DEALLOCATE(SELF%FT1)
+(  628)     END IF
+(  629)     IF (ASSOCIATED(SELF%FT9)) THEN
+(  630)       CALL SELF%FT9%FINAL()
+(  631)       DEALLOCATE(SELF%FT9)
+(  632)     END IF
+(  633)     IF (ASSOCIATED(SELF%FPH9)) THEN
+(  634)       CALL SELF%FPH9%FINAL()
+(  635)       DEALLOCATE(SELF%FPH9)
+(  636)     END IF
+(  637)     IF (ASSOCIATED(SELF%FDL)) THEN
+(  638)       CALL SELF%FDL%FINAL()
+(  639)       DEALLOCATE(SELF%FDL)
+(  640)     END IF
+(  641)     IF (ASSOCIATED(SELF%FDM)) THEN
+(  642)       CALL SELF%FDM%FINAL()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:53:45      page 25
+
+(  643)       DEALLOCATE(SELF%FDM)
+(  644)     END IF
+(  645)     IF (ASSOCIATED(SELF%FDL9)) THEN
+(  646)       CALL SELF%FDL9%FINAL()
+(  647)       DEALLOCATE(SELF%FDL9)
+(  648)     END IF
+(  649)     IF (ASSOCIATED(SELF%FDM9)) THEN
+(  650)       CALL SELF%FDM9%FINAL()
+(  651)       DEALLOCATE(SELF%FDM9)
+(  652)     END IF
+(  653)   END SUBROUTINE VARIABLE_4D_FINAL
+(  654) # 655 "variable_module.F90"
+(  655) END MODULE VARIABLE_MODULE

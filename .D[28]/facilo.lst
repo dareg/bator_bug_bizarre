@@ -1,0 +1,874 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: facilo.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACILO_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme de LECTURE d'un CHAMP HORIZONTAL sur un fichier
+(   13) !     ARPEGE, avec re-arrangement des coefficients spectraux, le cas
+(   14) !     echeant.
+(   15) !       ( Champ d'Interet en LEcture )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu; 
+(   23) !                                    rangement modele.
+(   24) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   25) !                                    par des coefficients spectraux.
+(   26) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   27) !                                    indefinies
+(   28) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai,
+(   29) !                                    valeur non definie
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 3
+
+(   31) !
+(   32) TYPE(FA_COM)           FA
+(   33) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   34) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   35) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   36) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   37) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   38) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   39) LOGICAL                LDCOSP                                 ! IN   
+(   40) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   41) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   42) !
+(   43) REAL (KIND=JPDBLR), ALLOCATABLE :: ZCHAMP (:)
+(   44) INTEGER (KIND=JPLIKB) IRANG, IRANGC, INIMES
+(   45) INTEGER (KIND=JPLIKB) ISMAX, IMSMAX
+(   46) INTEGER (KIND=JPLIKB) INGRIB, INBITS, ISTRON, IPUILA
+(   47) INTEGER (KIND=JPLIKB) IREP
+(   48) LOGICAL LLEXIST, LLCOSP, LLREORD
+(   49) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   50) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   51) LOGICAL LLRLFI, LLFATA
+(   52) LOGICAL               :: LLUNDF
+(   53) REAL (KIND=JPDBLR)    :: ZUNDF 
+(   54) TYPE (FAGR1TAB)       :: YLGR1TAB
+(   55) !**
+(   56) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   57) !-----------------------------------------------------------------------
+(   58) !
+(   59) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   60) IF (LHOOK) CALL DR_HOOK('FACILO_MT',0,ZHOOK_HANDLE)
+(   61) 
+(   62) LLUNDF = .FALSE.
+(   63) IF (PRESENT (LDUNDF )) LLUNDF = LDUNDF 
+(   64) ZUNDF  = 0._JPDBLR
+(   65) IF (PRESENT (PUNDF  )) ZUNDF  = PUNDF  
+(   66) 
+(   67) IREP = 0
+(   68) LLRLFI=.FALSE.
+(   69) 
+(   70) CALL FANUMU_MT64 (FA, KNUMER,IRANG)
+(   71) 
+(   72) IF (IRANG .EQ. 0) THEN
+(   73)   IREP = -51
+(   74)   GOTO 1001
+(   75) ENDIF
+(   76) 
+(   77) CALL FANION_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(   78)                 & LLEXIST, LLCOSP, INGRIB, INBITS, ISTRON, IPUILA)
+(   79) 
+(   80) IF (IREP /= 0) GOTO 1001
+(   81) 
+(   82) IF (.NOT. LLEXIST) THEN
+(   83)   IREP = -89
+(   84)   GOTO 1001
+(   85) ENDIF
+(   86) 
+(   87) IF (LLCOSP .NEQV. LDCOSP) THEN
+(   88)   IREP = -92
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 4
+
+(   89)   GOTO 1001
+(   90) ENDIF
+(   91) 
+(   92) IRANGC = FA%FICHIER(IRANG)%NUCADR
+(   93) LLREORD = LLCOSP .AND. (.NOT.(INGRIB==-1 .OR. INGRIB==3 .OR. FALGRA (INGRIB)))
+(   94) 
+(   95) IF (LLREORD) THEN
+(   96)   ISMAX  = FA%CADRE(IRANGC)%NSMAX     
+(   97)   IMSMAX = FA%CADRE(IRANGC)%NMSMAX     
+(   98)   ALLOCATE (ZCHAMP (4 * (IMSMAX+1) * (ISMAX+1))) ! Assez grand
+(   99) 
+(  100)   CALL FACIL1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, ZCHAMP, LDCOSP, &
+(  101)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  102)   IF (IREP /= 0) GOTO 1001
+(  103)   CALL FAREOR_MT64 (FA, IREP, KNUMER, PCHAMP, ZCHAMP, .TRUE.)
+(  104)   IF (IREP /= 0) GOTO 1001
+(  105)   DEALLOCATE (ZCHAMP)
+(  106) ELSE
+(  107)   CALL FACIL1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  108)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  109) ENDIF
+(  110) 
+(  111) 1001 CONTINUE
+(  112) KREP=IREP
+(  113) 
+(  114) LLFATA=LLMOER (KREP,IRANG)
+(  115) 
+(  116) IF (LLFATA) THEN
+(  117)   INIMES=2
+(  118) ELSE
+(  119)   INIMES=IXNVMS(IRANG)
+(  120) ENDIF
+(  121) 
+(  122) IF (PRESENT (LDUNDF  )) LDUNDF   = LLUNDF 
+(  123) IF (PRESENT (PUNDF   )) PUNDF    = ZUNDF  
+(  124) 
+(  125) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  126)   IF (LHOOK) CALL DR_HOOK('FACILO_MT',1,ZHOOK_HANDLE)
+(  127)   RETURN
+(  128) ENDIF
+(  129) 
+(  130) CLNSPR='FACILO'
+(  131) 
+(  132) WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KNUMER='',I3,        &
+(  133) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  134) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  135) &   KREP,KNUMER,TRIM (CDPREF),KNIVAU,TRIM (CDSUFF),LDCOSP
+(  136) 
+(  137) CALL FAIPAR_MT64                                       &
+(  138) &               (FA, KNUMER,INIMES,KREP,LLFATA,CLMESS, &
+(  139) &                CLNSPR, '',LLRLFI)
+(  140) 
+(  141) IF (LHOOK) CALL DR_HOOK('FACILO_MT',1,ZHOOK_HANDLE)
+(  142) 
+(  143) CONTAINS
+(  144) 
+(  145) #include "facom2.llmoer.h"
+(  146) #include "facom2.ixnvms.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 5
+
+(  147) #include "falgra.h"
+(  148) 
+(  149) END SUBROUTINE FACILO_MT64
+(  150) 
+(  151) ! Oct-2012 P. Marguinaud 64b LFI
+(  152) SUBROUTINE FACILO64                                        &
+(  153) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  154) &           LDCOSP, LDUNDF, PUNDF)
+(  155) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  156) &                  FA_COM_DEFAULT_INIT,  &
+(  157) &                  NEW_FA_DEFAULT
+(  158) USE LFI_PRECISION
+(  159) IMPLICIT NONE
+(  160) ! Arguments
+(  161) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  162) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  163) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  164) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  165) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  166) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  167) LOGICAL                LDCOSP                                 ! IN   
+(  168) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  169) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  170) 
+(  171) #include "facilo_mt64.h"
+(  172) 
+(  173) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  174) 
+(  175) CALL FACILO_MT64                                               &
+(  176) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  177) &           LDCOSP, LDUNDF, PUNDF)
+(  178) 
+(  179) END SUBROUTINE FACILO64
+(  180) 
+(  181) SUBROUTINE FACILO                                          &
+(  182) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  183) &           LDCOSP, LDUNDF, PUNDF)
+(  184) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  185) &                  FA_COM_DEFAULT_INIT,  &
+(  186) &                  NEW_FA_DEFAULT
+(  187) USE LFI_PRECISION
+(  188) IMPLICIT NONE
+(  189) ! Arguments
+(  190) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  191) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  192) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  193) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  194) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  195) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  196) LOGICAL                LDCOSP                                 ! IN   
+(  197) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  198) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  199) 
+(  200) #include "facilo_mt.h"
+(  201) 
+(  202) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  203) 
+(  204) CALL FACILO_MT                                                 &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 6
+
+(  205) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  206) &            LDCOSP, LDUNDF, PUNDF)
+(  207) 
+(  208) END SUBROUTINE FACILO
+(  209) 
+(  210) SUBROUTINE FACILO_MT                                           &
+(  211) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  212) &           LDCOSP, LDUNDF, PUNDF)
+(  213) USE FA_MOD, ONLY : FA_COM
+(  214) USE LFI_PRECISION
+(  215) IMPLICIT NONE
+(  216) ! Arguments
+(  217) TYPE (FA_COM)          FA                                     ! INOUT
+(  218) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  219) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  220) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  221) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  222) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  223) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  224) LOGICAL                LDCOSP                                 ! IN   
+(  225) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  226) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  227) 
+(  228) #include "facilo_mt64.h"
+(  229) 
+(  230) ! Local integers
+(  231) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  232) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  233) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  234) ! Convert arguments
+(  235) 
+(  236) INUMER     = INT (    KNUMER, JPLIKB)
+(  237) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  238) 
+(  239) CALL FACILO_MT64                                               &
+(  240) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, &
+(  241) &            LDCOSP, LDUNDF, PUNDF)
+(  242) 
+(  243) KREP       = INT (      IREP, JPLIKM)
+(  244) 
+(  245) END SUBROUTINE FACILO_MT
+(  246) 
+(  247) !INTF KREP            OUT                                                              
+(  248) !INTF KNUMER        IN                                                                 
+(  249) !INTF CDPREF        IN                                                                 
+(  250) !INTF KNIVAU        IN                                                                 
+(  251) !INTF CDSUFF        IN                                                                 
+(  252) !INTF PCHAMP          OUT DIMS=*                                                       
+(  253) !INTF LDCOSP        IN                                                                 
+(  254) !INTF LDUNDF        INOUT                                                              
+(  255) !INTF PUNDF         INOUT                                                              
+(  256) 
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 7
+
+(    1) # 1 "facilo.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACILO_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !      Sous-programme de LECTURE d'un CHAMP HORIZONTAL sur un fichier
+(   13) !     ARPEGE, avec re-arrangement des coefficients spectraux, le cas
+(   14) !     echeant.
+(   15) !       ( Champ d'Interet en LEcture )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !    ( Tableau ) PCHAMP (Sortie) ==> Valeurs REELLES du champ lu; 
+(   23) !                                    rangement modele.
+(   24) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   25) !                                    par des coefficients spectraux.
+(   26) !                LDUNDF (Sortie) ==> Vrai si ce champ a des valeurs 
+(   27) !                                    indefinies
+(   28) !                PUNDF  (Sortie) ==> Dans le cas ou LDUNDF est vrai,
+(   29) !                                    valeur non definie
+(   30) !
+(   31) !
+(   32) TYPE(FA_COM)           FA
+(   33) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   34) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   35) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   36) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   37) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   38) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   39) LOGICAL                LDCOSP                                 ! IN   
+(   40) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   41) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   42) !
+(   43) REAL (KIND=JPDBLR), ALLOCATABLE :: ZCHAMP (:)
+(   44) INTEGER (KIND=JPLIKB) IRANG, IRANGC, INIMES
+(   45) INTEGER (KIND=JPLIKB) ISMAX, IMSMAX
+(   46) INTEGER (KIND=JPLIKB) INGRIB, INBITS, ISTRON, IPUILA
+(   47) INTEGER (KIND=JPLIKB) IREP
+(   48) LOGICAL LLEXIST, LLCOSP, LLREORD
+(   49) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   50) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   51) LOGICAL LLRLFI, LLFATA
+(   52) LOGICAL               :: LLUNDF
+(   53) REAL (KIND=JPDBLR)    :: ZUNDF 
+(   54) TYPE (FAGR1TAB)       :: YLGR1TAB
+(   55) !**
+(   56) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   57) !-----------------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 8
+
+(   58) !
+(   59) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   60) IF (LHOOK) CALL DR_HOOK('FACILO_MT',0,ZHOOK_HANDLE)
+(   61) # 62 "facilo.F90"
+(   62) LLUNDF = .FALSE.
+(   63) IF (PRESENT (LDUNDF )) LLUNDF = LDUNDF 
+(   64) ZUNDF  = 0._JPDBLR
+(   65) IF (PRESENT (PUNDF  )) ZUNDF  = PUNDF  
+(   66) # 67 "facilo.F90"
+(   67) IREP = 0
+(   68) LLRLFI=.FALSE.
+(   69) # 70 "facilo.F90"
+(   70) CALL FANUMU_MT64 (FA, KNUMER,IRANG)
+(   71) # 72 "facilo.F90"
+(   72) IF (IRANG .EQ. 0) THEN
+(   73)   IREP = -51
+(   74)   GOTO 1001
+(   75) ENDIF
+(   76) # 77 "facilo.F90"
+(   77) CALL FANION_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(   78)                 & LLEXIST, LLCOSP, INGRIB, INBITS, ISTRON, IPUILA)
+(   79) # 80 "facilo.F90"
+(   80) IF (IREP /= 0) GOTO 1001
+(   81) # 82 "facilo.F90"
+(   82) IF (.NOT. LLEXIST) THEN
+(   83)   IREP = -89
+(   84)   GOTO 1001
+(   85) ENDIF
+(   86) # 87 "facilo.F90"
+(   87) IF (LLCOSP .NEQV. LDCOSP) THEN
+(   88)   IREP = -92
+(   89)   GOTO 1001
+(   90) ENDIF
+(   91) # 92 "facilo.F90"
+(   92) IRANGC = FA%FICHIER(IRANG)%NUCADR
+(   93) LLREORD = LLCOSP .AND. (.NOT.(INGRIB==-1 .OR. INGRIB==3 .OR. FALGRA (INGRIB)))
+(   94) # 95 "facilo.F90"
+(   95) IF (LLREORD) THEN
+(   96)   ISMAX  = FA%CADRE(IRANGC)%NSMAX     
+(   97)   IMSMAX = FA%CADRE(IRANGC)%NMSMAX     
+(   98)   ALLOCATE (ZCHAMP (4 * (IMSMAX+1) * (ISMAX+1))) ! Assez grand
+(   99) # 100 "facilo.F90"
+(  100)   CALL FACIL1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, ZCHAMP, LDCOSP, &
+(  101)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  102)   IF (IREP /= 0) GOTO 1001
+(  103)   CALL FAREOR_MT64 (FA, IREP, KNUMER, PCHAMP, ZCHAMP, .TRUE.)
+(  104)   IF (IREP /= 0) GOTO 1001
+(  105)   DEALLOCATE (ZCHAMP)
+(  106) ELSE
+(  107)   CALL FACIL1_MT64 (FA, IREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(  108)                   & LLUNDF, ZUNDF, YLGR1TAB)
+(  109) ENDIF
+(  110) # 111 "facilo.F90"
+(  111) 1001 CONTINUE
+(  112) KREP=IREP
+(  113) # 114 "facilo.F90"
+(  114) LLFATA=LLMOER (KREP,IRANG)
+(  115) # 116 "facilo.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 9
+
+(  116) IF (LLFATA) THEN
+(  117)   INIMES=2
+(  118) ELSE
+(  119)   INIMES=IXNVMS(IRANG)
+(  120) ENDIF
+(  121) # 122 "facilo.F90"
+(  122) IF (PRESENT (LDUNDF  )) LDUNDF   = LLUNDF 
+(  123) IF (PRESENT (PUNDF   )) PUNDF    = ZUNDF  
+(  124) # 125 "facilo.F90"
+(  125) IF (.NOT.LLFATA.AND.INIMES.NE.2)  THEN 
+(  126)   IF (LHOOK) CALL DR_HOOK('FACILO_MT',1,ZHOOK_HANDLE)
+(  127)   RETURN
+(  128) ENDIF
+(  129) # 130 "facilo.F90"
+(  130) CLNSPR='FACILO'
+(  131) # 132 "facilo.F90"
+(  132) WRITE (UNIT=CLMESS,FMT='(''KREP='',I5,'', KNUMER='',I3,        &
+(  133) &       '', CDPREF='''''',A,'''''', KNIVAU='',I6,               &
+(  134) &       '', CDSUFF='''''',A,'''''', LDCOSP= '',L1)')            &
+(  135) &   KREP,KNUMER,TRIM (CDPREF),KNIVAU,TRIM (CDSUFF),LDCOSP
+(  136) # 137 "facilo.F90"
+(  137) CALL FAIPAR_MT64                                       &
+(  138) &               (FA, KNUMER,INIMES,KREP,LLFATA,CLMESS, &
+(  139) &                CLNSPR, '',LLRLFI)
+(  140) # 141 "facilo.F90"
+(  141) IF (LHOOK) CALL DR_HOOK('FACILO_MT',1,ZHOOK_HANDLE)
+(  142) # 143 "facilo.F90"
+(  143) CONTAINS
+(  144) # 145 "facilo.F90"
+(  145) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 146 "facilo.F90"
+(  146) # 146 "facilo.F90"
+(  146) # 1 ".D[27]/facom2.ixnvms.h"
+(    1) !*
+(    2) !       Fonction "en ligne" donnant le plus haut niveau de messagerie
+(    3) !       acceptable pour l'unite logique de rang "I3456"
+(    4) !       (utilisation des niveaux de messagerie global et propre au
+(    5) !        fichier; s'il n'y a pas de fichier - I3456=0, d'ou le dimensio-
+(    6) !        nnement de *NIVOMS* a partir de zero, le niveau de filtrage
+(    7) !        global joue seul)
+(    8) !
+(    9) INTEGER (KIND=JPLIKB) FUNCTION IXNVMS (I3456)
+(   10) INTEGER (KIND=JPLIKB) :: I3456
+(   11) IXNVMS =MIN (2_JPLIKB ,2_JPLIKB *FA%NIMSGA,MAX (2_JPLIKB *FA%NIMSGA-2_JPLIKB ,FA%FICHIER(I3456)%NIVOMS))
+(   12) END FUNCTION
+(   13) # 147 "facilo.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 10
+
+(  147) # 147 "facilo.F90"
+(  147) # 1 ".D[27]/falgra.h"
+(    1) LOGICAL FUNCTION FALGRA (KNGRIB)
+(    2) !****
+(    3) !    Cette fonction renvoie une valeur vraie si la methode d'encodage passee en argument fait appel a grib_api
+(    4) !**
+(    5) !    Arguments : KNGRIB (Entree) ==> Methode d'encodage
+(    6) !
+(    7) !
+(    8) INTEGER (KIND=JPLIKB) KNGRIB
+(    9) INTEGER (KIND=JPLIKB) INGRIB_SP, INGRIB_GP
+(   10) LOGICAL LLFALGRA_SP, LLFALGRA_GP
+(   11) # 12 ".D[27]/falgra.h"
+(   12) FALGRA = .FALSE.
+(   13) # 14 ".D[27]/falgra.h"
+(   14) IF (100 <= KNGRIB .AND. KNGRIB <= 200) THEN
+(   15) # 16 ".D[27]/falgra.h"
+(   16)   INGRIB_SP = FALGRA_SP (KNGRIB)
+(   17)   INGRIB_GP = FALGRA_GP (KNGRIB)
+(   18)   
+(   19)   LLFALGRA_SP = &
+(   20)    & (INGRIB_SP - 100 ==  1) .OR. &      ! GRIB2 complex packing (bug)
+(   21)    & (INGRIB_SP - 100 ==  2) .OR. &      ! GRIB0 
+(   22)    & (INGRIB_SP - 100 ==  3)             ! GRIB2 complex packing
+(   23)   
+(   24)   LLFALGRA_GP = &
+(   25)    & ((INGRIB_GP-100) / 20 ==  1) .OR. & ! GRIB2 simple packing
+(   26)    & ((INGRIB_GP-100) / 20 ==  2) .OR. & ! GRIB2 second order packing
+(   27)    & ((INGRIB_GP-100) / 20 ==  3) .OR. & ! GRIB1 simple packing
+(   28)    & ((INGRIB_GP-100) / 20 ==  4) .OR. & ! GRIB1 second order packing
+(   29)    & ((INGRIB_GP-100) / 20 ==  5)        ! GRIB2 complex packing
+(   30)    
+(   31) # 32 ".D[27]/falgra.h"
+(   32)   IF (LLFALGRA_GP .AND. LLFALGRA_SP) THEN
+(   33)     FALGRA = .TRUE.
+(   34)   ELSEIF (LLFALGRA_GP) THEN
+(   35)     FALGRA = INGRIB_SP == 100
+(   36)   ELSEIF (LLFALGRA_SP) THEN
+(   37)     FALGRA = INGRIB_GP == 100
+(   38)   ENDIF
+(   39) # 40 ".D[27]/falgra.h"
+(   40) ENDIF
+(   41) # 42 ".D[27]/falgra.h"
+(   42) END FUNCTION FALGRA
+(   43) # 44 ".D[27]/falgra.h"
+(   44) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_SP (KNGRIB)
+(   45) INTEGER (KIND=JPLIKB) KNGRIB
+(   46) FALGRA_SP = 100+MODULO ((KNGRIB-100),20)
+(   47) END FUNCTION FALGRA_SP
+(   48) # 49 ".D[27]/falgra.h"
+(   49) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_GP (KNGRIB)
+(   50) INTEGER (KIND=JPLIKB) KNGRIB
+(   51) FALGRA_GP = 100+20*((KNGRIB-100)/20)
+(   52) END FUNCTION FALGRA_GP
+(   53) # 54 ".D[27]/falgra.h"
+(   54) INTEGER (KIND=JPLIKB) FUNCTION FALGRA_ED (KNGRIB)
+(   55) INTEGER (KIND=JPLIKB) KNGRIB
+(   56) # 57 ".D[27]/falgra.h"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 11
+
+(   57) SELECT CASE (KNGRIB)
+(   58)   CASE (160, 180)
+(   59)     FALGRA_ED = 1
+(   60)   CASE DEFAULT
+(   61)     FALGRA_ED = 2
+(   62) END SELECT 
+(   63) # 64 ".D[27]/falgra.h"
+(   64) END FUNCTION FALGRA_ED
+(   65) # 148 "facilo.F90"
+(  148) # 149 "facilo.F90"
+(  149) END SUBROUTINE FACILO_MT64
+(  150) # 151 "facilo.F90"
+(  151) ! Oct-2012 P. Marguinaud 64b LFI
+(  152) SUBROUTINE FACILO64                                        &
+(  153) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  154) &           LDCOSP, LDUNDF, PUNDF)
+(  155) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  156) &                  FA_COM_DEFAULT_INIT,  &
+(  157) &                  NEW_FA_DEFAULT
+(  158) USE LFI_PRECISION
+(  159) IMPLICIT NONE
+(  160) ! Arguments
+(  161) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  162) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(  163) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  164) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  165) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  166) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  167) LOGICAL                LDCOSP                                 ! IN   
+(  168) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  169) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  170) # 171 "facilo.F90"
+(  171) # 1 ".D[27]/facilo_mt64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/facilo_mt64.h"
+(    3) SUBROUTINE FACILO_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE LFI_PRECISION
+(    8) IMPLICIT NONE
+(    9) TYPE(FA_COM)           FA
+(   10) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   12) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   15) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   16) LOGICAL                LDCOSP                                 ! IN   
+(   17) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   18) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   19) END SUBROUTINE
+(   20) # 21 ".D[27]/facilo_mt64.h"
+(   21) END INTERFACE
+(   22) # 172 "facilo.F90"
+(  172) # 173 "facilo.F90"
+(  173) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  174) # 175 "facilo.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 12
+
+(  175) CALL FACILO_MT64                                               &
+(  176) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  177) &           LDCOSP, LDUNDF, PUNDF)
+(  178) # 179 "facilo.F90"
+(  179) END SUBROUTINE FACILO64
+(  180) # 181 "facilo.F90"
+(  181) SUBROUTINE FACILO                                          &
+(  182) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  183) &           LDCOSP, LDUNDF, PUNDF)
+(  184) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  185) &                  FA_COM_DEFAULT_INIT,  &
+(  186) &                  NEW_FA_DEFAULT
+(  187) USE LFI_PRECISION
+(  188) IMPLICIT NONE
+(  189) ! Arguments
+(  190) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  191) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  192) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  193) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  194) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  195) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  196) LOGICAL                LDCOSP                                 ! IN   
+(  197) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  198) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  199) # 200 "facilo.F90"
+(  200) # 1 ".D[27]/facilo_mt.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/facilo_mt.h"
+(    3) SUBROUTINE FACILO_MT                                           &
+(    4) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(    5) &           LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE LFI_PRECISION
+(    8) IMPLICIT NONE
+(    9) ! Arguments
+(   10) TYPE (FA_COM)          FA                                     ! INOUT
+(   11) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(   12) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(   13) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   14) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(   15) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   16) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   17) LOGICAL                LDCOSP                                 ! IN   
+(   18) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   19) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   20) END SUBROUTINE
+(   21) # 22 ".D[27]/facilo_mt.h"
+(   22) END INTERFACE
+(   23) # 201 "facilo.F90"
+(  201) # 202 "facilo.F90"
+(  202) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  203) # 204 "facilo.F90"
+(  204) CALL FACILO_MT                                                 &
+(  205) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  206) &            LDCOSP, LDUNDF, PUNDF)
+(  207) # 208 "facilo.F90"
+(  208) END SUBROUTINE FACILO
+(  209) # 210 "facilo.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 13
+
+(  210) SUBROUTINE FACILO_MT                                           &
+(  211) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  212) &           LDCOSP, LDUNDF, PUNDF)
+(  213) USE FA_MOD, ONLY : FA_COM
+(  214) USE LFI_PRECISION
+(  215) IMPLICIT NONE
+(  216) ! Arguments
+(  217) TYPE (FA_COM)          FA                                     ! INOUT
+(  218) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  219) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  220) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  221) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  222) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  223) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(  224) LOGICAL                LDCOSP                                 ! IN   
+(  225) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(  226) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(  227) # 228 "facilo.F90"
+(  228) # 1 ".D[27]/facilo_mt64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/facilo_mt64.h"
+(    3) SUBROUTINE FACILO_MT64                                             &
+(    4) &                     (FA,  KREP, KNUMER, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      PCHAMP, LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA_COM
+(    7) USE LFI_PRECISION
+(    8) IMPLICIT NONE
+(    9) TYPE(FA_COM)           FA
+(   10) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   11) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   12) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   13) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   15) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   16) LOGICAL                LDCOSP                                 ! IN   
+(   17) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   18) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   19) END SUBROUTINE
+(   20) # 21 ".D[27]/facilo_mt64.h"
+(   21) END INTERFACE
+(   22) # 229 "facilo.F90"
+(  229) # 230 "facilo.F90"
+(  230) ! Local integers
+(  231) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  232) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  233) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  234) ! Convert arguments
+(  235) # 236 "facilo.F90"
+(  236) INUMER     = INT (    KNUMER, JPLIKB)
+(  237) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  238) # 239 "facilo.F90"
+(  239) CALL FACILO_MT64                                               &
+(  240) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, &
+(  241) &            LDCOSP, LDUNDF, PUNDF)
+(  242) # 243 "facilo.F90"
+(  243) KREP       = INT (      IREP, JPLIKM)
+(  244) # 245 "facilo.F90"
+(  245) END SUBROUTINE FACILO_MT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:30      page 14
+
+(  246) # 247 "facilo.F90"
+(  247) !INTF KREP            OUT                                                              
+(  248) !INTF KNUMER        IN                                                                 
+(  249) !INTF CDPREF        IN                                                                 
+(  250) !INTF KNIVAU        IN                                                                 
+(  251) !INTF CDSUFF        IN                                                                 
+(  252) !INTF PCHAMP          OUT DIMS=*                                                       
+(  253) !INTF LDCOSP        IN                                                                 
+(  254) !INTF LDUNDF        INOUT                                                              
+(  255) !INTF PUNDF         INOUT                                                              

@@ -1,0 +1,14 @@
+!depfile:put_zs_townn.F90
+MODULE MODI_PUT_ZS_TOWN_n 
+INTERFACE
+      SUBROUTINE PUT_ZS_TOWN_n (TOP, &
+                                HPROGRAM,KI,PZS)
+USE MODD_TEB_OPTION_n, ONLY : TEB_OPTIONS_t
+TYPE(TEB_OPTIONS_t), INTENT(INOUT) :: TOP
+ CHARACTER(LEN=6),    INTENT(IN)  :: HPROGRAM
+INTEGER,             INTENT(IN)  :: KI      ! horizontal dim. of cover
+REAL, DIMENSION(KI), INTENT(IN)  :: PZS     ! orography
+END SUBROUTINE PUT_ZS_TOWN_n
+
+END INTERFACE
+END MODULE MODI_PUT_ZS_TOWN_n 

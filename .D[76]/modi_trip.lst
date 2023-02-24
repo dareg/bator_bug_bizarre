@@ -1,0 +1,285 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:24      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:24      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_trip.F90
+
+(    1) !depfile:trip.F90
+(    2) MODULE MODI_TRIP 
+(    3) INTERFACE
+(    4)       SUBROUTINE TRIP (KLISTING,HGROUNDW,OFLOOD,OPRINT,PTSTEP,            &
+(    5)                          KGRCN,KSEQ,KNEXTX,KNEXTY,KSEQMAX,PAREA,PLEN,     &
+(    6)                          OMASK_GW,OMASK_VEL,OMASK_FLD,                    &
+(    7)                          PTAUG,PFLOOD_LEN,PSLOPEBED,PWIDTH,PN,            &
+(    8)                          PN_FLOOD,PHC_BED,PWFLOOD,PTAB_F,PTAB_H,PTAB_VF,  &
+(    9)                          PDRAIN,PRUNOFF,PSOURCE,PHS,PVEL,                 &
+(   10)                          PGROUND_STO,PSURF_STO,                           &
+(   11)                          PFLOOD_STO,PSOUT,PGOUT,PHFLOOD,                  &
+(   12)                          PFFLOOD,PQFR,PQRF,PVFIN,PVFOUT,                  &
+(   13)                          PHSF,PSIN,KTRIP,KTSEPT,KTSTEP_END,                 &
+(   14)                          PGSTO_ALL,PGSTO2_ALL,PGIN_ALL,PGOUT_ALL,         &
+(   15)                          PHGROUND,PWEFF                                   )
+(   16) INTEGER, INTENT(IN)                  :: KLISTING
+(   17) INTEGER, INTENT(IN)                  :: KTRIP
+(   18) INTEGER, INTENT(IN)                  :: KTSEPT
+(   19) INTEGER, INTENT(IN)                  :: KTSTEP_END
+(   20)  CHARACTER(LEN=3), INTENT(IN)         :: HGROUNDW !Groundwater scheme key
+(   21) LOGICAL, INTENT(IN)                  :: OFLOOD   !Flood scheme key
+(   22) LOGICAL, INTENT(IN)                  :: OPRINT   !Printable budget key 
+(   23) REAL, INTENT(IN)                     :: PTSTEP   !Trip timestep
+(   24) INTEGER, INTENT(IN)                  :: KSEQMAX  !maximum down flow
+(   25) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KGRCN    !Flow direction (1->8)
+(   26) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KSEQ     !River sequence
+(   27) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KNEXTX   !returns x and y point
+(   28) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KNEXTY   !of destination grid
+(   29) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_GW   !Groundwater mask
+(   30) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_VEL  !Variable velocity mask
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:24      page 3
+
+(   31) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_FLD  !Floodplain mask
+(   32) REAL,DIMENSION(:,:), INTENT(IN)      :: PTAUG      ! ground water transfer time  [s]
+(   33) REAL,DIMENSION(:,:), INTENT(IN)      :: PLEN       ! river length       [m] 
+(   34) REAL,DIMENSION(:,:), INTENT(IN)      :: PSLOPEBED  ! river bed slopes             [m/m]
+(   35) REAL,DIMENSION(:,:), INTENT(IN)      :: PWIDTH     ! river widths                 [m]
+(   36) REAL,DIMENSION(:,:), INTENT(IN)      :: PN         ! Manning roughness coeficient [-] (0.03 to 0.065)
+(   37) REAL,DIMENSION(:,:), INTENT(IN)      :: PN_FLOOD   ! Manning coeficient over floodplains   [-] (0.1)
+(   38) REAL,DIMENSION(:,:), INTENT(IN)      :: PHC_BED    ! River bed depth              [m]
+(   39) REAL,DIMENSION(:,:), INTENT(IN)      :: PSOURCE    ! precip-infiltration-evaporation [kg/s]
+(   40) REAL,DIMENSION(:,:), INTENT(IN)      :: PAREA      ! Grid-cell area    [m2]
+(   41) REAL,DIMENSION(:,:), INTENT(IN)      :: PDRAIN     ! Subsurface runoff from ISBA [kg/s]
+(   42) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PRUNOFF    ! Surface runoff from ISBA    [kg/s]
+(   43) REAL,DIMENSION(:,:), INTENT(IN)      :: PHS   ! River height [m]
+(   44) REAL,DIMENSION(:,:), INTENT(IN)      :: PVEL  ! River channel velocity  [m/s]
+(   45) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PHFLOOD    ! Floodplain water depth       [m]
+(   46) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PWFLOOD    ! Floodplain width             [m]
+(   47) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_LEN ! Floodplain length along the river [m]
+(   48) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFFLOOD    ! Fraction of flood [-]
+(   49) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PSURF_STO  ! river channel storage at t    [kg]
+(   50) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PGROUND_STO! groundwater storage at t    [kg]
+(   51) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_STO ! Floodplain water storage at t [kg]
+(   52) REAL,DIMENSION(:,:), INTENT(OUT)     :: PSOUT ! Outflow from the surface river reservoir [kg/s]
+(   53) REAL,DIMENSION(:,:), INTENT(OUT)     :: PSIN  ! Inflow to the surface river reservoir [kg/s]
+(   54) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PGOUT ! ground water outflow        [kg/s]
+(   55) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQFR  ! Flood flow to river
+(   56) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQRF  ! River flow to floodplain
+(   57) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFIN ! River flow to flood velocity [m/s]
+(   58) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFOUT! Flood flow to river velocity [m/s]
+(   59) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHSF  ! River-Floodplain depth comparison [m]
+(   60) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_F  ! Flood fraction array
+(   61) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_H  ! Topo height array
+(   62) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_VF ! Flood volume array
+(   63) REAL,                 INTENT(INOUT)  :: PGSTO_ALL  !Global groundwater storage at t    [kg]
+(   64) REAL,                 INTENT(INOUT)  :: PGSTO2_ALL !Global groundwater storage at t-1  [kg]
+(   65) REAL,                 INTENT(INOUT)  :: PGIN_ALL   !Global gw recharge + lateral input [kg/m2/s]
+(   66) REAL,                 INTENT(INOUT)  :: PGOUT_ALL  !Global gw outflow                  [kg/m2/s]
+(   67) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PHGROUND   ! water table elevation         [m]
+(   68) REAL,DIMENSION(:,:), INTENT(IN)      :: PWEFF      ! Effective porosity            [-]
+(   69) END SUBROUTINE TRIP
+(   70) 
+(   71) END INTERFACE
+(   72) END MODULE MODI_TRIP 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:24      page 4
+
+(    1) # 1 "modi_trip.F90"
+(    1) !depfile:trip.F90
+(    2) MODULE MODI_TRIP 
+(    3) INTERFACE
+(    4)       SUBROUTINE TRIP (KLISTING,HGROUNDW,OFLOOD,OPRINT,PTSTEP,            &
+(    5)                          KGRCN,KSEQ,KNEXTX,KNEXTY,KSEQMAX,PAREA,PLEN,     &
+(    6)                          OMASK_GW,OMASK_VEL,OMASK_FLD,                    &
+(    7)                          PTAUG,PFLOOD_LEN,PSLOPEBED,PWIDTH,PN,            &
+(    8)                          PN_FLOOD,PHC_BED,PWFLOOD,PTAB_F,PTAB_H,PTAB_VF,  &
+(    9)                          PDRAIN,PRUNOFF,PSOURCE,PHS,PVEL,                 &
+(   10)                          PGROUND_STO,PSURF_STO,                           &
+(   11)                          PFLOOD_STO,PSOUT,PGOUT,PHFLOOD,                  &
+(   12)                          PFFLOOD,PQFR,PQRF,PVFIN,PVFOUT,                  &
+(   13)                          PHSF,PSIN,KTRIP,KTSEPT,KTSTEP_END,                 &
+(   14)                          PGSTO_ALL,PGSTO2_ALL,PGIN_ALL,PGOUT_ALL,         &
+(   15)                          PHGROUND,PWEFF                                   )
+(   16) INTEGER, INTENT(IN)                  :: KLISTING
+(   17) INTEGER, INTENT(IN)                  :: KTRIP
+(   18) INTEGER, INTENT(IN)                  :: KTSEPT
+(   19) INTEGER, INTENT(IN)                  :: KTSTEP_END
+(   20)  CHARACTER(LEN=3), INTENT(IN)         :: HGROUNDW !Groundwater scheme key
+(   21) LOGICAL, INTENT(IN)                  :: OFLOOD   !Flood scheme key
+(   22) LOGICAL, INTENT(IN)                  :: OPRINT   !Printable budget key 
+(   23) REAL, INTENT(IN)                     :: PTSTEP   !Trip timestep
+(   24) INTEGER, INTENT(IN)                  :: KSEQMAX  !maximum down flow
+(   25) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KGRCN    !Flow direction (1->8)
+(   26) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KSEQ     !River sequence
+(   27) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KNEXTX   !returns x and y point
+(   28) INTEGER, DIMENSION(:,:),INTENT(IN)   :: KNEXTY   !of destination grid
+(   29) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_GW   !Groundwater mask
+(   30) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_VEL  !Variable velocity mask
+(   31) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_FLD  !Floodplain mask
+(   32) REAL,DIMENSION(:,:), INTENT(IN)      :: PTAUG      ! ground water transfer time  [s]
+(   33) REAL,DIMENSION(:,:), INTENT(IN)      :: PLEN       ! river length       [m] 
+(   34) REAL,DIMENSION(:,:), INTENT(IN)      :: PSLOPEBED  ! river bed slopes             [m/m]
+(   35) REAL,DIMENSION(:,:), INTENT(IN)      :: PWIDTH     ! river widths                 [m]
+(   36) REAL,DIMENSION(:,:), INTENT(IN)      :: PN         ! Manning roughness coeficient [-] (0.03 to 0.065)
+(   37) REAL,DIMENSION(:,:), INTENT(IN)      :: PN_FLOOD   ! Manning coeficient over floodplains   [-] (0.1)
+(   38) REAL,DIMENSION(:,:), INTENT(IN)      :: PHC_BED    ! River bed depth              [m]
+(   39) REAL,DIMENSION(:,:), INTENT(IN)      :: PSOURCE    ! precip-infiltration-evaporation [kg/s]
+(   40) REAL,DIMENSION(:,:), INTENT(IN)      :: PAREA      ! Grid-cell area    [m2]
+(   41) REAL,DIMENSION(:,:), INTENT(IN)      :: PDRAIN     ! Subsurface runoff from ISBA [kg/s]
+(   42) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PRUNOFF    ! Surface runoff from ISBA    [kg/s]
+(   43) REAL,DIMENSION(:,:), INTENT(IN)      :: PHS   ! River height [m]
+(   44) REAL,DIMENSION(:,:), INTENT(IN)      :: PVEL  ! River channel velocity  [m/s]
+(   45) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PHFLOOD    ! Floodplain water depth       [m]
+(   46) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PWFLOOD    ! Floodplain width             [m]
+(   47) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_LEN ! Floodplain length along the river [m]
+(   48) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFFLOOD    ! Fraction of flood [-]
+(   49) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PSURF_STO  ! river channel storage at t    [kg]
+(   50) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PGROUND_STO! groundwater storage at t    [kg]
+(   51) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_STO ! Floodplain water storage at t [kg]
+(   52) REAL,DIMENSION(:,:), INTENT(OUT)     :: PSOUT ! Outflow from the surface river reservoir [kg/s]
+(   53) REAL,DIMENSION(:,:), INTENT(OUT)     :: PSIN  ! Inflow to the surface river reservoir [kg/s]
+(   54) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PGOUT ! ground water outflow        [kg/s]
+(   55) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQFR  ! Flood flow to river
+(   56) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQRF  ! River flow to floodplain
+(   57) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFIN ! River flow to flood velocity [m/s]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:24      page 5
+
+(   58) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFOUT! Flood flow to river velocity [m/s]
+(   59) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHSF  ! River-Floodplain depth comparison [m]
+(   60) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_F  ! Flood fraction array
+(   61) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_H  ! Topo height array
+(   62) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_VF ! Flood volume array
+(   63) REAL,                 INTENT(INOUT)  :: PGSTO_ALL  !Global groundwater storage at t    [kg]
+(   64) REAL,                 INTENT(INOUT)  :: PGSTO2_ALL !Global groundwater storage at t-1  [kg]
+(   65) REAL,                 INTENT(INOUT)  :: PGIN_ALL   !Global gw recharge + lateral input [kg/m2/s]
+(   66) REAL,                 INTENT(INOUT)  :: PGOUT_ALL  !Global gw outflow                  [kg/m2/s]
+(   67) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PHGROUND   ! water table elevation         [m]
+(   68) REAL,DIMENSION(:,:), INTENT(IN)      :: PWEFF      ! Effective porosity            [-]
+(   69) END SUBROUTINE TRIP
+(   70) # 71 "modi_trip.F90"
+(   71) END INTERFACE
+(   72) END MODULE MODI_TRIP 

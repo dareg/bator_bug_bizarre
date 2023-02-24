@@ -1,0 +1,397 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fa_limits.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FA_LIMITS_MT64                               &
+(    4) &                       (FA, KPXPAH,KPXIND,KPXGEO,KPXNIV)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) 
+(   11) ! -----
+(   12) ! Purpose:
+(   13) !   Returns limits necessary for proper dimensioning of FA fields
+(   14) !   (arrays entering subroutine FACIES). It was created because
+(   15) !   of two reasons:
+(   16) !
+(   17) !   1) Subroutine FALIMU does not provide all needed limits.
+(   18) !
+(   19) !   2) Direct use of parameters JPX* from include "facomp.h" would
+(   20) !   be more convenient (no need to define interface arrays as
+(   21) !   allocatable). But since this include contains CPP directives,
+(   22) !   its use in external utilities might give wrong numbers with
+(   23) !   improper compile options. Moreover, include is written
+(   24) !   in fixed form and cannot be inserted into free form source.
+(   25) !
+(   26) ! Created:
+(   27) !   25-Jun-2010, J. Masek
+(   28) !
+(   29) ! Modified:
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 3
+
+(   31) ! -----
+(   32) 
+(   33) TYPE(FA_COM) :: FA
+(   34) INTEGER (KIND=JPLIKB) :: KPXPAH,KPXIND,KPXGEO,KPXNIV
+(   35) 
+(   36) KPXPAH=FA%JPXPAH
+(   37) KPXIND=FA%JPXIND
+(   38) KPXGEO=FA%JPXGEO
+(   39) KPXNIV=FA%JPXNIV
+(   40) 
+(   41) END SUBROUTINE FA_LIMITS_MT64
+(   42) 
+(   43) 
+(   44) 
+(   45) ! Oct-2012 P. Marguinaud 64b LFI
+(   46) SUBROUTINE FA_LIMITS64                     &
+(   47) &           (KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   48) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   49) &                   FA_COM_DEFAULT_INIT,  &
+(   50) &                   NEW_FA_DEFAULT
+(   51) USE LFI_PRECISION
+(   52) IMPLICIT NONE
+(   53) ! Arguments
+(   54) INTEGER (KIND=JPLIKB)  KPXPAH                                 !   OUT
+(   55) INTEGER (KIND=JPLIKB)  KPXIND                                 !   OUT
+(   56) INTEGER (KIND=JPLIKB)  KPXGEO                                 !   OUT
+(   57) INTEGER (KIND=JPLIKB)  KPXNIV                                 !   OUT
+(   58) 
+(   59) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   60) 
+(   61) CALL FA_LIMITS_MT64                            &
+(   62) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   63) 
+(   64) END SUBROUTINE FA_LIMITS64
+(   65) 
+(   66) SUBROUTINE FA_LIMITS                       &
+(   67) &           (KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   68) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   69) &                   FA_COM_DEFAULT_INIT,  &
+(   70) &                   NEW_FA_DEFAULT
+(   71) USE LFI_PRECISION
+(   72) IMPLICIT NONE
+(   73) ! Arguments
+(   74) INTEGER (KIND=JPLIKM)  KPXPAH                                 !   OUT
+(   75) INTEGER (KIND=JPLIKM)  KPXIND                                 !   OUT
+(   76) INTEGER (KIND=JPLIKM)  KPXGEO                                 !   OUT
+(   77) INTEGER (KIND=JPLIKM)  KPXNIV                                 !   OUT
+(   78) 
+(   79) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   80) 
+(   81) CALL FA_LIMITS_MT                              &
+(   82) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   83) 
+(   84) END SUBROUTINE FA_LIMITS
+(   85) 
+(   86) SUBROUTINE FA_LIMITS_MT                        &
+(   87) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   88) USE FA_MOD, ONLY : FA_COM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 4
+
+(   89) USE LFI_PRECISION
+(   90) IMPLICIT NONE
+(   91) ! Arguments
+(   92) TYPE (FA_COM)          FA                                     ! INOUT
+(   93) INTEGER (KIND=JPLIKM)  KPXPAH                                 !   OUT
+(   94) INTEGER (KIND=JPLIKM)  KPXIND                                 !   OUT
+(   95) INTEGER (KIND=JPLIKM)  KPXGEO                                 !   OUT
+(   96) INTEGER (KIND=JPLIKM)  KPXNIV                                 !   OUT
+(   97) ! Local integers
+(   98) INTEGER (KIND=JPLIKB)  IPXPAH                                 !   OUT
+(   99) INTEGER (KIND=JPLIKB)  IPXIND                                 !   OUT
+(  100) INTEGER (KIND=JPLIKB)  IPXGEO                                 !   OUT
+(  101) INTEGER (KIND=JPLIKB)  IPXNIV                                 !   OUT
+(  102) ! Convert arguments
+(  103) 
+(  104) 
+(  105) CALL FA_LIMITS_MT64                            &
+(  106) &           (FA, IPXPAH, IPXIND, IPXGEO, IPXNIV)
+(  107) 
+(  108) KPXPAH     = INT (    IPXPAH, JPLIKM)
+(  109) KPXIND     = INT (    IPXIND, JPLIKM)
+(  110) KPXGEO     = INT (    IPXGEO, JPLIKM)
+(  111) KPXNIV     = INT (    IPXNIV, JPLIKM)
+(  112) 
+(  113) END SUBROUTINE FA_LIMITS_MT
+(  114) 
+(  115) !INTF KPXPAH          OUT 
+(  116) !INTF KPXIND          OUT 
+(  117) !INTF KPXGEO          OUT 
+(  118) !INTF KPXNIV          OUT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 5
+
+(    1) # 1 "fa_limits.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FA_LIMITS_MT64                               &
+(    4) &                       (FA, KPXPAH,KPXIND,KPXGEO,KPXNIV)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) # 11 "fa_limits.F90"
+(   11) ! -----
+(   12) ! Purpose:
+(   13) !   Returns limits necessary for proper dimensioning of FA fields
+(   14) !   (arrays entering subroutine FACIES). It was created because
+(   15) !   of two reasons:
+(   16) !
+(   17) !   1) Subroutine FALIMU does not provide all needed limits.
+(   18) !
+(   19) !   2) Direct use of parameters JPX* from include "facomp.h" would
+(   20) !   be more convenient (no need to define interface arrays as
+(   21) !   allocatable). But since this include contains CPP directives,
+(   22) !   its use in external utilities might give wrong numbers with
+(   23) !   improper compile options. Moreover, include is written
+(   24) !   in fixed form and cannot be inserted into free form source.
+(   25) !
+(   26) ! Created:
+(   27) !   25-Jun-2010, J. Masek
+(   28) !
+(   29) ! Modified:
+(   30) !
+(   31) ! -----
+(   32) # 33 "fa_limits.F90"
+(   33) TYPE(FA_COM) :: FA
+(   34) INTEGER (KIND=JPLIKB) :: KPXPAH,KPXIND,KPXGEO,KPXNIV
+(   35) # 36 "fa_limits.F90"
+(   36) KPXPAH=FA%JPXPAH
+(   37) KPXIND=FA%JPXIND
+(   38) KPXGEO=FA%JPXGEO
+(   39) KPXNIV=FA%JPXNIV
+(   40) # 41 "fa_limits.F90"
+(   41) END SUBROUTINE FA_LIMITS_MT64
+(   42) # 45 "fa_limits.F90"
+(   45) ! Oct-2012 P. Marguinaud 64b LFI
+(   46) SUBROUTINE FA_LIMITS64                     &
+(   47) &           (KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   48) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   49) &                   FA_COM_DEFAULT_INIT,  &
+(   50) &                   NEW_FA_DEFAULT
+(   51) USE LFI_PRECISION
+(   52) IMPLICIT NONE
+(   53) ! Arguments
+(   54) INTEGER (KIND=JPLIKB)  KPXPAH                                 !   OUT
+(   55) INTEGER (KIND=JPLIKB)  KPXIND                                 !   OUT
+(   56) INTEGER (KIND=JPLIKB)  KPXGEO                                 !   OUT
+(   57) INTEGER (KIND=JPLIKB)  KPXNIV                                 !   OUT
+(   58) # 59 "fa_limits.F90"
+(   59) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:54      page 6
+
+(   60) # 61 "fa_limits.F90"
+(   61) CALL FA_LIMITS_MT64                            &
+(   62) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   63) # 64 "fa_limits.F90"
+(   64) END SUBROUTINE FA_LIMITS64
+(   65) # 66 "fa_limits.F90"
+(   66) SUBROUTINE FA_LIMITS                       &
+(   67) &           (KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   68) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   69) &                   FA_COM_DEFAULT_INIT,  &
+(   70) &                   NEW_FA_DEFAULT
+(   71) USE LFI_PRECISION
+(   72) IMPLICIT NONE
+(   73) ! Arguments
+(   74) INTEGER (KIND=JPLIKM)  KPXPAH                                 !   OUT
+(   75) INTEGER (KIND=JPLIKM)  KPXIND                                 !   OUT
+(   76) INTEGER (KIND=JPLIKM)  KPXGEO                                 !   OUT
+(   77) INTEGER (KIND=JPLIKM)  KPXNIV                                 !   OUT
+(   78) # 79 "fa_limits.F90"
+(   79) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(   80) # 81 "fa_limits.F90"
+(   81) CALL FA_LIMITS_MT                              &
+(   82) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   83) # 84 "fa_limits.F90"
+(   84) END SUBROUTINE FA_LIMITS
+(   85) # 86 "fa_limits.F90"
+(   86) SUBROUTINE FA_LIMITS_MT                        &
+(   87) &           (FA, KPXPAH, KPXIND, KPXGEO, KPXNIV)
+(   88) USE FA_MOD, ONLY : FA_COM
+(   89) USE LFI_PRECISION
+(   90) IMPLICIT NONE
+(   91) ! Arguments
+(   92) TYPE (FA_COM)          FA                                     ! INOUT
+(   93) INTEGER (KIND=JPLIKM)  KPXPAH                                 !   OUT
+(   94) INTEGER (KIND=JPLIKM)  KPXIND                                 !   OUT
+(   95) INTEGER (KIND=JPLIKM)  KPXGEO                                 !   OUT
+(   96) INTEGER (KIND=JPLIKM)  KPXNIV                                 !   OUT
+(   97) ! Local integers
+(   98) INTEGER (KIND=JPLIKB)  IPXPAH                                 !   OUT
+(   99) INTEGER (KIND=JPLIKB)  IPXIND                                 !   OUT
+(  100) INTEGER (KIND=JPLIKB)  IPXGEO                                 !   OUT
+(  101) INTEGER (KIND=JPLIKB)  IPXNIV                                 !   OUT
+(  102) ! Convert arguments
+(  103) # 105 "fa_limits.F90"
+(  105) CALL FA_LIMITS_MT64                            &
+(  106) &           (FA, IPXPAH, IPXIND, IPXGEO, IPXNIV)
+(  107) # 108 "fa_limits.F90"
+(  108) KPXPAH     = INT (    IPXPAH, JPLIKM)
+(  109) KPXIND     = INT (    IPXIND, JPLIKM)
+(  110) KPXGEO     = INT (    IPXGEO, JPLIKM)
+(  111) KPXNIV     = INT (    IPXNIV, JPLIKM)
+(  112) # 113 "fa_limits.F90"
+(  113) END SUBROUTINE FA_LIMITS_MT
+(  114) # 115 "fa_limits.F90"
+(  115) !INTF KPXPAH          OUT 
+(  116) !INTF KPXIND          OUT 
+(  117) !INTF KPXGEO          OUT 
+(  118) !INTF KPXNIV          OUT 
+
+
+

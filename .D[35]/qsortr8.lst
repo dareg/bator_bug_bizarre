@@ -1,0 +1,381 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: qsortr8.F
+
+(    1)       SUBROUTINE QSORTR8 (N,ORD,A)
+(    2)       IMPLICIT INTEGER (A-Z)
+(    3) 
+(    4)       REAL(KIND=8) A(N)
+(    5)       DIMENSION ORD(N),POPLST(2,20)
+(    6)       REAL(KIND=8) X,XX,Z,ZZ,Y
+(    7) 
+(    8)       NDEEP=0
+(    9)       U1=N
+(   10)       L1=1
+(   11)       DO 1  I=1,N
+(   12)     1 ORD(I)=I
+(   13)     2 IF (U1.LE.L1) RETURN
+(   14) 
+(   15)     3 L=L1
+(   16)       U=U1
+(   17)     4 P=L
+(   18)       Q=U
+(   19) 
+(   20)       X=A(ORD(P))
+(   21)       Z=A(ORD(Q))
+(   22)       IF (X.LE.Z) GO TO 5
+(   23)       Y=X
+(   24)       X=Z
+(   25)       Z=Y
+(   26)       YP=ORD(P)
+(   27)       ORD(P)=ORD(Q)
+(   28)       ORD(Q)=YP
+(   29)     5 IF (U-L.LE.1) GO TO 15
+(   30)       XX=X
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 3
+
+(   31)       IX=P
+(   32)       ZZ=Z
+(   33)       IZ=Q
+(   34) 
+(   35)     6 P=P+1
+(   36)       IF (P.GE.Q) GO TO 7
+(   37)       X=A(ORD(P))
+(   38)       IF (X.GE.XX) GO TO 8
+(   39)       GO TO 6
+(   40)     7 P=Q-1
+(   41)       GO TO 13
+(   42) 
+(   43)     8 Q=Q-1
+(   44)       IF (Q.LE.P) GO TO 9
+(   45)       Z=A(ORD(Q))
+(   46)       IF (Z.LE.ZZ) GO TO 10
+(   47)       GO TO 8
+(   48)     9 Q=P
+(   49)       P=P-1
+(   50)       Z=X
+(   51)       X=A(ORD(P))
+(   52) 
+(   53)    10 IF (X.LE.Z) GO TO 11
+(   54)       Y=X
+(   55)       X=Z
+(   56)       Z=Y
+(   57)       IP=ORD(P)
+(   58)       ORD(P)=ORD(Q)
+(   59)       ORD(Q)=IP
+(   60)    11 IF (X.LE.XX) GO TO 12
+(   61)       XX=X
+(   62)       IX=P
+(   63)    12 IF (Z.GE.ZZ) GO TO 6
+(   64)       ZZ=Z
+(   65)       IZ=Q
+(   66)       GO TO 6
+(   67) 
+(   68)    13 CONTINUE
+(   69)       IF (.NOT.(P.NE.IX.AND.X.NE.XX)) GO TO 14
+(   70)       IP=ORD(P)
+(   71)       ORD(P)=ORD(IX)
+(   72)       ORD(IX)=IP
+(   73)    14 CONTINUE
+(   74)       IF (.NOT.(Q.NE.IZ.AND.Z.NE.ZZ)) GO TO 15
+(   75)       IQ=ORD(Q)
+(   76)       ORD(Q)=ORD(IZ)
+(   77)       ORD(IZ)=IQ
+(   78)    15 CONTINUE
+(   79)       IF (U-Q.LE.P-L) GO TO 16
+(   80)       L1=L
+(   81)       U1=P-1
+(   82)       L=Q+1
+(   83)       GO TO 17
+(   84)    16 U1=U
+(   85)       L1=Q+1
+(   86)       U=P-1
+(   87)    17 CONTINUE
+(   88)       IF (U1.LE.L1) GO TO 18
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 4
+
+(   89) 
+(   90)       NDEEP=NDEEP+1
+(   91)       POPLST(1,NDEEP)=U
+(   92)       POPLST(2,NDEEP)=L
+(   93)       GO TO 3
+(   94)    18 IF (U.GT.L) GO TO 4
+(   95) 
+(   96)       IF (NDEEP.EQ.0) GO TO 2
+(   97)       U=POPLST(1,NDEEP)
+(   98)       L=POPLST(2,NDEEP)
+(   99)       NDEEP=NDEEP-1
+(  100)       GO TO 18
+(  101) 
+(  102)       END SUBROUTINE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 5
+
+(    1) # 1 "qsortr8.F"
+(    1)       SUBROUTINE QSORTR8 (N,ORD,A)
+(    2)       IMPLICIT INTEGER (A-Z)
+(    3) # 4 "qsortr8.F"
+(    4)       REAL(KIND=8) A(N)
+(    5)       DIMENSION ORD(N),POPLST(2,20)
+(    6)       REAL(KIND=8) X,XX,Z,ZZ,Y
+(    7) # 8 "qsortr8.F"
+(    8)       NDEEP=0
+(    9)       U1=N
+(   10)       L1=1
+(   11)       DO 1  I=1,N
+(   12)     1 ORD(I)=I
+(   13)     2 IF (U1.LE.L1) RETURN
+(   14) # 15 "qsortr8.F"
+(   15)     3 L=L1
+(   16)       U=U1
+(   17)     4 P=L
+(   18)       Q=U
+(   19) # 20 "qsortr8.F"
+(   20)       X=A(ORD(P))
+(   21)       Z=A(ORD(Q))
+(   22)       IF (X.LE.Z) GO TO 5
+(   23)       Y=X
+(   24)       X=Z
+(   25)       Z=Y
+(   26)       YP=ORD(P)
+(   27)       ORD(P)=ORD(Q)
+(   28)       ORD(Q)=YP
+(   29)     5 IF (U-L.LE.1) GO TO 15
+(   30)       XX=X
+(   31)       IX=P
+(   32)       ZZ=Z
+(   33)       IZ=Q
+(   34) # 35 "qsortr8.F"
+(   35)     6 P=P+1
+(   36)       IF (P.GE.Q) GO TO 7
+(   37)       X=A(ORD(P))
+(   38)       IF (X.GE.XX) GO TO 8
+(   39)       GO TO 6
+(   40)     7 P=Q-1
+(   41)       GO TO 13
+(   42) # 43 "qsortr8.F"
+(   43)     8 Q=Q-1
+(   44)       IF (Q.LE.P) GO TO 9
+(   45)       Z=A(ORD(Q))
+(   46)       IF (Z.LE.ZZ) GO TO 10
+(   47)       GO TO 8
+(   48)     9 Q=P
+(   49)       P=P-1
+(   50)       Z=X
+(   51)       X=A(ORD(P))
+(   52) # 53 "qsortr8.F"
+(   53)    10 IF (X.LE.Z) GO TO 11
+(   54)       Y=X
+(   55)       X=Z
+(   56)       Z=Y
+(   57)       IP=ORD(P)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:37      page 6
+
+(   58)       ORD(P)=ORD(Q)
+(   59)       ORD(Q)=IP
+(   60)    11 IF (X.LE.XX) GO TO 12
+(   61)       XX=X
+(   62)       IX=P
+(   63)    12 IF (Z.GE.ZZ) GO TO 6
+(   64)       ZZ=Z
+(   65)       IZ=Q
+(   66)       GO TO 6
+(   67) # 68 "qsortr8.F"
+(   68)    13 CONTINUE
+(   69)       IF (.NOT.(P.NE.IX.AND.X.NE.XX)) GO TO 14
+(   70)       IP=ORD(P)
+(   71)       ORD(P)=ORD(IX)
+(   72)       ORD(IX)=IP
+(   73)    14 CONTINUE
+(   74)       IF (.NOT.(Q.NE.IZ.AND.Z.NE.ZZ)) GO TO 15
+(   75)       IQ=ORD(Q)
+(   76)       ORD(Q)=ORD(IZ)
+(   77)       ORD(IZ)=IQ
+(   78)    15 CONTINUE
+(   79)       IF (U-Q.LE.P-L) GO TO 16
+(   80)       L1=L
+(   81)       U1=P-1
+(   82)       L=Q+1
+(   83)       GO TO 17
+(   84)    16 U1=U
+(   85)       L1=Q+1
+(   86)       U=P-1
+(   87)    17 CONTINUE
+(   88)       IF (U1.LE.L1) GO TO 18
+(   89) # 90 "qsortr8.F"
+(   90)       NDEEP=NDEEP+1
+(   91)       POPLST(1,NDEEP)=U
+(   92)       POPLST(2,NDEEP)=L
+(   93)       GO TO 3
+(   94)    18 IF (U.GT.L) GO TO 4
+(   95) # 96 "qsortr8.F"
+(   96)       IF (NDEEP.EQ.0) GO TO 2
+(   97)       U=POPLST(1,NDEEP)
+(   98)       L=POPLST(2,NDEEP)
+(   99)       NDEEP=NDEEP-1
+(  100)       GO TO 18
+(  101) # 102 "qsortr8.F"
+(  102)       END SUBROUTINE

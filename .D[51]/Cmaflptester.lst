@@ -1,0 +1,294 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:14      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:14      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Cmaflptester.F90
+
+(    1)       program cmaflptester
+(    2)       implicit none
+(    3)       integer, parameter :: def_maxreplen = 262144
+(    4)       real(8), allocatable :: d(:)
+(    5)       integer io, rc, totcnt, maxreplen
+(    6)       integer i, j, lastj, lastrc
+(    7)       integer inan, iinf, irange
+(    8)       integer numargs, iargc
+(    9)       logical invalid, all_ok
+(   10)       character(len=255) cmafile
+(   11)       character(len=20) cmaxreplen
+(   12)       character(len=3) star
+(   13)       
+(   14)       numargs = iargc()
+(   15) 
+(   16)       if (numargs < 1 .or. numargs > 2) then
+(   17)          write(0,*)'Usage: cmaflptester cmafile [maxreplen]'
+(   18)          call exit(1)
+(   19)       endif
+(   20) 
+(   21)       if (numargs >= 1) then
+(   22)          call getarg(1, cmafile)
+(   23)       endif
+(   24) 
+(   25)       if (numargs >= 2) then
+(   26)          call getarg(2, cmaxreplen)
+(   27)          read(cmaxreplen,*) maxreplen
+(   28)          if (maxreplen <= 0) maxreplen = def_maxreplen
+(   29)       else
+(   30)          maxreplen = def_maxreplen
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:14      page 3
+
+(   31)       endif
+(   32) 
+(   33)       call codb_putenv("CMAFLP_CHECK=1") ! Check upon read/unpacking
+(   34) 
+(   35)       allocate(d(maxreplen))
+(   36) 
+(   37)       write(0,*)'Opening CMA-file="'// &
+(   38)      &     trim(cmafile)//'" ...'
+(   39) 
+(   40)       call cma_open(io, trim(cmafile), 'r', rc)
+(   41)       if (rc < 0) then
+(   42)          write(0,*)'CMA_OPEN failed for CMA-file="'// &
+(   43)      &        trim(cmafile)//'" : rc=',rc
+(   44)          call exit(2)
+(   45)       endif
+(   46) 
+(   47)       lastj = -1
+(   48)       lastrc = 0
+(   49) 
+(   50)       all_ok = .TRUE.
+(   51) 
+(   52)       totcnt = 0
+(   53)       j = 0
+(   54)       LOOP: do
+(   55)          j = j + 1
+(   56)          call cma_get_report(io, d, maxreplen, rc)
+(   57)          if (rc < 0) then
+(   58)             if (rc == -7) then
+(   59)                write(0,*) 'FLP problems at CMA-chunk#',j
+(   60)                all_ok = .FALSE.
+(   61)             endif
+(   62)             exit LOOP
+(   63)          endif
+(   64) 
+(   65)          totcnt = totcnt + rc
+(   66) 
+(   67)          lastj = j
+(   68)          lastrc = rc
+(   69)       enddo LOOP
+(   70) 
+(   71)       write(0,'(3i12)') lastj,lastrc,totcnt
+(   72) 
+(   73)       if (all_ok) &
+(   74)      &     write(0,*)'All IEEE-floating point numbers were OK.'
+(   75) 
+(   76)  99   continue
+(   77)       deallocate(d)
+(   78) 
+(   79)       call cma_close(io, rc)
+(   80) 
+(   81)       end program cmaflptester
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:14      page 4
+
+(    1) # 1 "Cmaflptester.F90"
+(    1)       program cmaflptester
+(    2)       implicit none
+(    3)       integer, parameter :: def_maxreplen = 262144
+(    4)       real(8), allocatable :: d(:)
+(    5)       integer io, rc, totcnt, maxreplen
+(    6)       integer i, j, lastj, lastrc
+(    7)       integer inan, iinf, irange
+(    8)       integer numargs, iargc
+(    9)       logical invalid, all_ok
+(   10)       character(len=255) cmafile
+(   11)       character(len=20) cmaxreplen
+(   12)       character(len=3) star
+(   13)       
+(   14)       numargs = iargc()
+(   15) # 16 "Cmaflptester.F90"
+(   16)       if (numargs < 1 .or. numargs > 2) then
+(   17)          write(0,*)'Usage: cmaflptester cmafile [maxreplen]'
+(   18)          call exit(1)
+(   19)       endif
+(   20) # 21 "Cmaflptester.F90"
+(   21)       if (numargs >= 1) then
+(   22)          call getarg(1, cmafile)
+(   23)       endif
+(   24) # 25 "Cmaflptester.F90"
+(   25)       if (numargs >= 2) then
+(   26)          call getarg(2, cmaxreplen)
+(   27)          read(cmaxreplen,*) maxreplen
+(   28)          if (maxreplen <= 0) maxreplen = def_maxreplen
+(   29)       else
+(   30)          maxreplen = def_maxreplen
+(   31)       endif
+(   32) # 33 "Cmaflptester.F90"
+(   33)       call codb_putenv("CMAFLP_CHECK=1") ! Check upon read/unpacking
+(   34) # 35 "Cmaflptester.F90"
+(   35)       allocate(d(maxreplen))
+(   36) # 37 "Cmaflptester.F90"
+(   37)       write(0,*)'Opening CMA-file="'// &
+(   38)      &     trim(cmafile)//'" ...'
+(   39) # 40 "Cmaflptester.F90"
+(   40)       call cma_open(io, trim(cmafile), 'r', rc)
+(   41)       if (rc < 0) then
+(   42)          write(0,*)'CMA_OPEN failed for CMA-file="'// &
+(   43)      &        trim(cmafile)//'" : rc=',rc
+(   44)          call exit(2)
+(   45)       endif
+(   46) # 47 "Cmaflptester.F90"
+(   47)       lastj = -1
+(   48)       lastrc = 0
+(   49) # 50 "Cmaflptester.F90"
+(   50)       all_ok = .TRUE.
+(   51) # 52 "Cmaflptester.F90"
+(   52)       totcnt = 0
+(   53)       j = 0
+(   54)       LOOP: do
+(   55)          j = j + 1
+(   56)          call cma_get_report(io, d, maxreplen, rc)
+(   57)          if (rc < 0) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:14      page 5
+
+(   58)             if (rc == -7) then
+(   59)                write(0,*) 'FLP problems at CMA-chunk#',j
+(   60)                all_ok = .FALSE.
+(   61)             endif
+(   62)             exit LOOP
+(   63)          endif
+(   64) # 65 "Cmaflptester.F90"
+(   65)          totcnt = totcnt + rc
+(   66) # 67 "Cmaflptester.F90"
+(   67)          lastj = j
+(   68)          lastrc = rc
+(   69)       enddo LOOP
+(   70) # 71 "Cmaflptester.F90"
+(   71)       write(0,'(3i12)') lastj,lastrc,totcnt
+(   72) # 73 "Cmaflptester.F90"
+(   73)       if (all_ok) &
+(   74)      &     write(0,*)'All IEEE-floating point numbers were OK.'
+(   75) # 76 "Cmaflptester.F90"
+(   76)  99   continue
+(   77)       deallocate(d)
+(   78) # 79 "Cmaflptester.F90"
+(   79)       call cma_close(io, rc)
+(   80) # 81 "Cmaflptester.F90"
+(   81)       end program cmaflptester

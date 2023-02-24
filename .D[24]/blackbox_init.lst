@@ -1,0 +1,433 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: blackbox_init.F90
+
+(    1)       SUBROUTINE blackbox_init(KOUT, CDATA_NAME, KDATA, &
+(    2)      &                         KMDI, &
+(    3)      &                         KANDATE, KANTIME, &
+(    4)      &                         KCOMPDATE, KCOMPTIME, &
+(    5)      &                         KFEEDBACK_SIZE, KRETCODE)
+(    6) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(    7) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(    8) implicit none
+(    9) INTEGER(KIND=JPIM), INTENT(IN)       :: KOUT, KDATA, KMDI
+(   10) CHARACTER*(*), INTENT(IN) :: CDATA_NAME(KDATA)
+(   11) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KANDATE, KANTIME
+(   12) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KCOMPDATE, KCOMPTIME
+(   13) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KFEEDBACK_SIZE, KRETCODE
+(   14) ! === END OF INTERFACE BLOCK ===
+(   15) 
+(   16) !--   NAME_INDEX-definition
+(   17) #include "yomblackbox.h"
+(   18) 
+(   19) CHARACTER*80 CL
+(   20) INTEGER(KIND=JPIM) J, JJ, IS_CHAR, IS_SPECIAL
+(   21) CHARACTER*5 CL_IS_CHAR, CL_IS_SPECIAL
+(   22) REAL(KIND=JPRB) :: zhook_handle
+(   23) 
+(   24) IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 0, ZHOOK_HANDLE)
+(   25) 
+(   26) !--   Perform dynamic linking
+(   27)       KRETCODE = 0
+(   28)       CALL dynamic_linking(KRETCODE)
+(   29)       if (KRETCODE /= 0) then
+(   30)          write(KOUT,*) 'BLACKBOX_INIT: Dynamic linking failed'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 3
+
+(   31)          IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 1, ZHOOK_HANDLE)
+(   32)          return
+(   33)       endif
+(   34) 
+(   35) !--   Provide the universal missing data indicator, typically the 2147483647 (2^31-1)
+(   36)       write(KOUT,*) &
+(   37)      &'BLACKBOX_INIT: Missing Data Indicator (absolute) to be used = ', &
+(   38)      &abs(KMDI)
+(   39)       CALL fput_mdi(abs(KMDI))       ! C-routine in "dynamic_symbols.c"
+(   40) 
+(   41) !--   Get the analysis date and time for which the BLACKLIST was compiled
+(   42)       CALL fget_date_and_time( &
+(   43)      &     KANDATE, KANTIME, &
+(   44)      &     KCOMPDATE, KCOMPTIME &
+(   45)      &     )                    ! C-routine in "dynamic_symbols.c"
+(   46)       write(KOUT,'(1x,a,i12.8,i12.6)') &
+(   47)      &'BLACKBOX_INIT:    Analysis date & time of the BLACKLIST: ', &
+(   48)      &KANDATE, KANTIME
+(   49)       write(KOUT,'(1x,a,i12.8,i12.6)') &
+(   50)      &'BLACKBOX_INIT: Compilation date & time of the BLACKLIST: ', &
+(   51)      &KCOMPDATE, KCOMPTIME
+(   52) 
+(   53)       CALL fget_symbol_table_len(NAME_INDEX_LEN)      ! C-routine in "dynamic_symbols.c"
+(   54)       write(KOUT,*) &
+(   55)      &'BLACKBOX_INIT: Number of predefined symbols=', &
+(   56)      & NAME_INDEX_LEN
+(   57) 
+(   58)       write(KOUT,*)
+(   59)       write(KOUT,*) 'BLACKBOX_INIT: List of predefined symbols:'
+(   60)       write(KOUT,1004) &
+(   61)      &     ' ','Symbol name', 'C-index', 'String ?', 'Special ?', &
+(   62)      &     ' ','===========', '=======', '========', '========='
+(   63) 
+(   64)       do j=0,NAME_INDEX_LEN-1
+(   65)          call fget_symbol(j, CL, is_char, is_special) ! C-routine in "dynamic_symbols.c"
+(   66)          CL_is_char = 'No'
+(   67)          if (is_char == 1) CL_is_char = 'Yes'
+(   68)          CL_is_special = 'No'
+(   69)          if (is_special == 1) CL_is_special = 'Yes'
+(   70)          write(KOUT,1002) &
+(   71)      &        trim(adjustl(CL)), j, CL_is_char, CL_is_special
+(   72)  1002    format(1x,12x,2x,a30,2x,i12,2x,a10,2x,a10)
+(   73)       enddo
+(   74) 
+(   75)       allocate(NAME_INDEX(0:NAME_INDEX_LEN-1))
+(   76)       NAME_INDEX(:) = 2147483647
+(   77) 
+(   78)       write(KOUT,*)
+(   79)       write(KOUT,*) &
+(   80)      &'BLACKBOX_INIT: Number of user supplied symbols=', &
+(   81)      & KDATA
+(   82) 
+(   83)       write(KOUT,*)
+(   84)       write(KOUT,*) 'BLACKBOX_INIT: List of user supplied symbols:'
+(   85)       write(KOUT,1004) &
+(   86)      &'User index', 'User symbol', 'C-index', 'String ?', 'Special ?', &
+(   87)      &'==========', '===========', '=======', '========', '========='
+(   88)  1004 format((1x,a12,2x,a30,2x,a12,2x,a10,2x,a10))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 4
+
+(   89) 
+(   90)       KRETCODE = 0
+(   91)       do j=1,KDATA
+(   92)          CL = trim(adjustl(CDATA_NAME(j)))            ! C-routine in "dynamic_symbols.c"
+(   93)          if (len_trim(CL) <= 0) cycle ! Skip blank strings
+(   94)          CALL fget_symbol_info(trim(CL)//char(0), &
+(   95)      &                         jj, is_char, is_special)
+(   96)          if (jj >= 0 .and. jj < NAME_INDEX_LEN) then
+(   97)             NAME_INDEX(jj) = j-1 ! Minus one because of C-indexing in ZDATA[]
+(   98)          else
+(   99)             KRETCODE = KRETCODE + 1
+(  100)          endif
+(  101)          CL_is_char = 'No'
+(  102)          if (is_char == 1) CL_is_char = 'Yes'
+(  103)          if (is_char == 2) CL_is_char = 'ERROR'
+(  104)          CL_is_special = 'No'
+(  105)          if (is_special == 1) CL_is_special = 'Yes'
+(  106)          if (is_special == 2) CL_is_special = 'ERROR'
+(  107)          write(KOUT,1001) j, trim(CL), jj, CL_is_char, CL_is_special
+(  108)  1001    format(1x,i12,2x,a30,2x,i12,2x,a10,2x,a10)
+(  109)       enddo
+(  110) 
+(  111)       write(KOUT,'(/,1x,a,/,(10x,a))') &
+(  112)      &'BLACKBOX_INIT: CONTENTS OF THE BLACKLIST FEEDBACK-vector',' ', &
+(  113)      &'vvv----- Locations in the FEEDBACK-vector', &
+(  114)      &'  0=Blacklist code LINE NUMBER where the blacklisting occurred'
+(  115) 
+(  116)       do j=1,KDATA
+(  117)          CL = trim(adjustl(CDATA_NAME(j)))            ! C-routine in "dynamic_symbols.c"
+(  118)          if (len_trim(CL) > 0) then
+(  119)            write(KOUT,'(10x,i3,"=",a," causes blacklisting")') j,CL
+(  120)          endif
+(  121)       enddo
+(  122)       write(KOUT,*)
+(  123) 
+(  124)       KFEEDBACK_SIZE = min(KDATA,NAME_INDEX_LEN)
+(  125) 
+(  126)       if (KRETCODE > 0) then
+(  127)          write(KOUT,*)'BLACKBOX_INIT: ',KRETCODE,' errors were found'
+(  128)       endif
+(  129) 
+(  130) IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 1, ZHOOK_HANDLE)
+(  131) END SUBROUTINE blackbox_init
+(  132) 
+(  133) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 5
+
+(    1) # 1 "blackbox_init.F90"
+(    1)       SUBROUTINE blackbox_init(KOUT, CDATA_NAME, KDATA, &
+(    2)      &                         KMDI, &
+(    3)      &                         KANDATE, KANTIME, &
+(    4)      &                         KCOMPDATE, KCOMPTIME, &
+(    5)      &                         KFEEDBACK_SIZE, KRETCODE)
+(    6) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(    7) USE YOMHOOK, ONLY : DR_HOOK, LHOOK
+(    8) implicit none
+(    9) INTEGER(KIND=JPIM), INTENT(IN)       :: KOUT, KDATA, KMDI
+(   10) CHARACTER*(*), INTENT(IN) :: CDATA_NAME(KDATA)
+(   11) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KANDATE, KANTIME
+(   12) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KCOMPDATE, KCOMPTIME
+(   13) INTEGER(KIND=JPIM),  INTENT(OUT)     :: KFEEDBACK_SIZE, KRETCODE
+(   14) ! === END OF INTERFACE BLOCK ===
+(   15) # 16 "blackbox_init.F90"
+(   16) !--   NAME_INDEX-definition
+(   17) # 17 "blackbox_init.F90"
+(   17) # 1 ".D[57]/yomblackbox.h"
+(    1) !
+(    2) !**   Cray PVP note: The following variables are set to COMMON
+(    3) !                    instead of TASK COMMON, therefore if used
+(    4) !                    from a macrotasked program, the COMMON-variables
+(    5) !                    *MUST BE* initialized BEFORE branching off
+(    6) !                    to the parallel processing.
+(    7) !                    
+(    8) !
+(    9)       INTEGER(KIND=JPIM), POINTER :: NAME_INDEX(:)
+(   10)       INTEGER(KIND=JPIM) NAME_INDEX_LEN
+(   11) # 12 ".D[57]/yomblackbox.h"
+(   12)       COMMON /YOMBLACKBOX_LEN / NAME_INDEX_LEN
+(   13)       COMMON /YOMBLACKBOX_DATA/ NAME_INDEX
+(   14) # 18 "blackbox_init.F90"
+(   18) # 19 "blackbox_init.F90"
+(   19) CHARACTER*80 CL
+(   20) INTEGER(KIND=JPIM) J, JJ, IS_CHAR, IS_SPECIAL
+(   21) CHARACTER*5 CL_IS_CHAR, CL_IS_SPECIAL
+(   22) REAL(KIND=JPRB) :: zhook_handle
+(   23) # 24 "blackbox_init.F90"
+(   24) IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 0, ZHOOK_HANDLE)
+(   25) # 26 "blackbox_init.F90"
+(   26) !--   Perform dynamic linking
+(   27)       KRETCODE = 0
+(   28)       CALL dynamic_linking(KRETCODE)
+(   29)       if (KRETCODE /= 0) then
+(   30)          write(KOUT,*) 'BLACKBOX_INIT: Dynamic linking failed'
+(   31)          IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 1, ZHOOK_HANDLE)
+(   32)          return
+(   33)       endif
+(   34) # 35 "blackbox_init.F90"
+(   35) !--   Provide the universal missing data indicator, typically the 2147483647 (2^31-1)
+(   36)       write(KOUT,*) &
+(   37)      &'BLACKBOX_INIT: Missing Data Indicator (absolute) to be used = ', &
+(   38)      &abs(KMDI)
+(   39)       CALL fput_mdi(abs(KMDI))       ! C-routine in "dynamic_symbols.c"
+(   40) # 41 "blackbox_init.F90"
+(   41) !--   Get the analysis date and time for which the BLACKLIST was compiled
+(   42)       CALL fget_date_and_time( &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 6
+
+(   43)      &     KANDATE, KANTIME, &
+(   44)      &     KCOMPDATE, KCOMPTIME &
+(   45)      &     )                    ! C-routine in "dynamic_symbols.c"
+(   46)       write(KOUT,'(1x,a,i12.8,i12.6)') &
+(   47)      &'BLACKBOX_INIT:    Analysis date & time of the BLACKLIST: ', &
+(   48)      &KANDATE, KANTIME
+(   49)       write(KOUT,'(1x,a,i12.8,i12.6)') &
+(   50)      &'BLACKBOX_INIT: Compilation date & time of the BLACKLIST: ', &
+(   51)      &KCOMPDATE, KCOMPTIME
+(   52) # 53 "blackbox_init.F90"
+(   53)       CALL fget_symbol_table_len(NAME_INDEX_LEN)      ! C-routine in "dynamic_symbols.c"
+(   54)       write(KOUT,*) &
+(   55)      &'BLACKBOX_INIT: Number of predefined symbols=', &
+(   56)      & NAME_INDEX_LEN
+(   57) # 58 "blackbox_init.F90"
+(   58)       write(KOUT,*)
+(   59)       write(KOUT,*) 'BLACKBOX_INIT: List of predefined symbols:'
+(   60)       write(KOUT,1004) &
+(   61)      &     ' ','Symbol name', 'C-index', 'String ?', 'Special ?', &
+(   62)      &     ' ','===========', '=======', '========', '========='
+(   63) # 64 "blackbox_init.F90"
+(   64)       do j=0,NAME_INDEX_LEN-1
+(   65)          call fget_symbol(j, CL, is_char, is_special) ! C-routine in "dynamic_symbols.c"
+(   66)          CL_is_char = 'No'
+(   67)          if (is_char == 1) CL_is_char = 'Yes'
+(   68)          CL_is_special = 'No'
+(   69)          if (is_special == 1) CL_is_special = 'Yes'
+(   70)          write(KOUT,1002) &
+(   71)      &        trim(adjustl(CL)), j, CL_is_char, CL_is_special
+(   72)  1002    format(1x,12x,2x,a30,2x,i12,2x,a10,2x,a10)
+(   73)       enddo
+(   74) # 75 "blackbox_init.F90"
+(   75)       allocate(NAME_INDEX(0:NAME_INDEX_LEN-1))
+(   76)       NAME_INDEX(:) = 2147483647
+(   77) # 78 "blackbox_init.F90"
+(   78)       write(KOUT,*)
+(   79)       write(KOUT,*) &
+(   80)      &'BLACKBOX_INIT: Number of user supplied symbols=', &
+(   81)      & KDATA
+(   82) # 83 "blackbox_init.F90"
+(   83)       write(KOUT,*)
+(   84)       write(KOUT,*) 'BLACKBOX_INIT: List of user supplied symbols:'
+(   85)       write(KOUT,1004) &
+(   86)      &'User index', 'User symbol', 'C-index', 'String ?', 'Special ?', &
+(   87)      &'==========', '===========', '=======', '========', '========='
+(   88)  1004 format((1x,a12,2x,a30,2x,a12,2x,a10,2x,a10))
+(   89) # 90 "blackbox_init.F90"
+(   90)       KRETCODE = 0
+(   91)       do j=1,KDATA
+(   92)          CL = trim(adjustl(CDATA_NAME(j)))            ! C-routine in "dynamic_symbols.c"
+(   93)          if (len_trim(CL) <= 0) cycle ! Skip blank strings
+(   94)          CALL fget_symbol_info(trim(CL)//char(0), &
+(   95)      &                         jj, is_char, is_special)
+(   96)          if (jj >= 0 .and. jj < NAME_INDEX_LEN) then
+(   97)             NAME_INDEX(jj) = j-1 ! Minus one because of C-indexing in ZDATA[]
+(   98)          else
+(   99)             KRETCODE = KRETCODE + 1
+(  100)          endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:57      page 7
+
+(  101)          CL_is_char = 'No'
+(  102)          if (is_char == 1) CL_is_char = 'Yes'
+(  103)          if (is_char == 2) CL_is_char = 'ERROR'
+(  104)          CL_is_special = 'No'
+(  105)          if (is_special == 1) CL_is_special = 'Yes'
+(  106)          if (is_special == 2) CL_is_special = 'ERROR'
+(  107)          write(KOUT,1001) j, trim(CL), jj, CL_is_char, CL_is_special
+(  108)  1001    format(1x,i12,2x,a30,2x,i12,2x,a10,2x,a10)
+(  109)       enddo
+(  110) # 111 "blackbox_init.F90"
+(  111)       write(KOUT,'(/,1x,a,/,(10x,a))') &
+(  112)      &'BLACKBOX_INIT: CONTENTS OF THE BLACKLIST FEEDBACK-vector',' ', &
+(  113)      &'vvv----- Locations in the FEEDBACK-vector', &
+(  114)      &'  0=Blacklist code LINE NUMBER where the blacklisting occurred'
+(  115) # 116 "blackbox_init.F90"
+(  116)       do j=1,KDATA
+(  117)          CL = trim(adjustl(CDATA_NAME(j)))            ! C-routine in "dynamic_symbols.c"
+(  118)          if (len_trim(CL) > 0) then
+(  119)            write(KOUT,'(10x,i3,"=",a," causes blacklisting")') j,CL
+(  120)          endif
+(  121)       enddo
+(  122)       write(KOUT,*)
+(  123) # 124 "blackbox_init.F90"
+(  124)       KFEEDBACK_SIZE = min(KDATA,NAME_INDEX_LEN)
+(  125) # 126 "blackbox_init.F90"
+(  126)       if (KRETCODE > 0) then
+(  127)          write(KOUT,*)'BLACKBOX_INIT: ',KRETCODE,' errors were found'
+(  128)       endif
+(  129) # 130 "blackbox_init.F90"
+(  130) IF (LHOOK) CALL DR_HOOK('BLACKBOX_INIT', 1, ZHOOK_HANDLE)
+(  131) END SUBROUTINE blackbox_init

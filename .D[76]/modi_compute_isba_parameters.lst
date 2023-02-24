@@ -1,0 +1,286 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:11      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:11      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_compute_isba_parameters.F90
+
+(    1) !depfile:compute_isba_parameters.F90
+(    2) MODULE MODI_COMPUTE_ISBA_PARAMETERS 
+(    3) INTERFACE
+(    4) SUBROUTINE COMPUTE_ISBA_PARAMETERS (DTCO, OREAD_BUDGETC, UG, U, &
+(    5)                                     IO, DTI, SB, S, IG, K, NK, NIG, NP, NPE,   &
+(    6)                                     NAG, NISS, ISS, NCHI, CHI, ID, GB, NGB,    &
+(    7)                                     NDST, SLT, SV, HPROGRAM,HINIT,OLAND_USE,   &
+(    8)                                     KI,KSV,KSW,HSV,PCO2,PRHOA,                 &
+(    9)                                     PZENITH,PSW_BANDS,PDIR_ALB,PSCA_ALB,       &
+(   10)                                     PEMIS,PTSRAD,PTSURF, HTEST             )  
+(   11) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(   12) USE MODD_ISBA_n, ONLY : ISBA_S_t, ISBA_P_t, ISBA_PE_t, ISBA_K_t, ISBA_NK_t, &
+(   13)                         ISBA_NP_t, ISBA_NPE_t
+(   14) USE MODD_DATA_ISBA_n, ONLY : DATA_ISBA_t
+(   15) USE MODD_SFX_GRID_n, ONLY : GRID_t, GRID_NP_t
+(   16) USE MODD_AGRI_n, ONLY : AGRI_t, AGRI_NP_t
+(   17) USE MODD_SSO_n, ONLY : SSO_t, SSO_NP_t
+(   18) USE MODD_CH_ISBA_n, ONLY : CH_ISBA_t, CH_ISBA_NP_t
+(   19) USE MODD_CANOPY_n, ONLY : CANOPY_t
+(   20) USE MODD_GR_BIOG_n, ONLY : GR_BIOG_t, GR_BIOG_NP_t
+(   21) USE MODD_SURFEX_n, ONLY : ISBA_DIAG_t
+(   22) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   23) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   24) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   25) USE MODD_DST_n, ONLY : DST_NP_t, DST_t
+(   26) USE MODD_SLT_n, ONLY : SLT_t
+(   27) USE MODD_SV_n, ONLY : SV_t
+(   28) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   29) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   30) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:11      page 3
+
+(   31) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   32) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   33) TYPE(DATA_ISBA_t), INTENT(INOUT) :: DTI
+(   34) TYPE(CANOPY_t), INTENT(INOUT) :: SB
+(   35) TYPE(ISBA_S_t), INTENT(INOUT) :: S
+(   36) TYPE(GRID_t), INTENT(INOUT) :: IG
+(   37) TYPE(ISBA_K_t), INTENT(INOUT) :: K
+(   38) TYPE(ISBA_NK_t), INTENT(INOUT) :: NK
+(   39) TYPE(GRID_NP_t), INTENT(INOUT) :: NIG
+(   40) TYPE(ISBA_NP_t), INTENT(INOUT) :: NP
+(   41) TYPE(ISBA_NPE_t), INTENT(INOUT) :: NPE
+(   42) TYPE(AGRI_NP_t), INTENT(INOUT) :: NAG
+(   43) TYPE(SSO_NP_t), INTENT(INOUT) :: NISS
+(   44) TYPE(SSO_t), INTENT(INOUT) :: ISS
+(   45) TYPE(CH_ISBA_NP_t), INTENT(INOUT) :: NCHI
+(   46) TYPE(CH_ISBA_t), INTENT(INOUT) :: CHI
+(   47) TYPE(ISBA_DIAG_t), INTENT(INOUT) :: ID
+(   48) TYPE(GR_BIOG_t), INTENT(INOUT) :: GB
+(   49) TYPE(GR_BIOG_NP_t), INTENT(INOUT) :: NGB
+(   50) TYPE(DST_NP_t), INTENT(INOUT) :: NDST
+(   51) TYPE(SLT_t), INTENT(INOUT) :: SLT
+(   52) TYPE(SV_t), INTENT(INOUT) :: SV
+(   53)  CHARACTER(LEN=6),                INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   54)  CHARACTER(LEN=3),                INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   55) LOGICAL,                          INTENT(IN)  :: OLAND_USE !
+(   56) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+(   57) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+(   58) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   59)  CHARACTER(LEN=6), DIMENSION(KSV),INTENT(IN)  :: HSV       ! name of all scalar variables
+(   60) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   61) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   62) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   63) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   64) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   65) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   66) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   67) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   68) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   69)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   70) END SUBROUTINE COMPUTE_ISBA_PARAMETERS
+(   71) 
+(   72) END INTERFACE
+(   73) END MODULE MODI_COMPUTE_ISBA_PARAMETERS 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:11      page 4
+
+(    1) # 1 "modi_compute_isba_parameters.F90"
+(    1) !depfile:compute_isba_parameters.F90
+(    2) MODULE MODI_COMPUTE_ISBA_PARAMETERS 
+(    3) INTERFACE
+(    4) SUBROUTINE COMPUTE_ISBA_PARAMETERS (DTCO, OREAD_BUDGETC, UG, U, &
+(    5)                                     IO, DTI, SB, S, IG, K, NK, NIG, NP, NPE,   &
+(    6)                                     NAG, NISS, ISS, NCHI, CHI, ID, GB, NGB,    &
+(    7)                                     NDST, SLT, SV, HPROGRAM,HINIT,OLAND_USE,   &
+(    8)                                     KI,KSV,KSW,HSV,PCO2,PRHOA,                 &
+(    9)                                     PZENITH,PSW_BANDS,PDIR_ALB,PSCA_ALB,       &
+(   10)                                     PEMIS,PTSRAD,PTSURF, HTEST             )  
+(   11) USE MODD_ISBA_OPTIONS_n, ONLY : ISBA_OPTIONS_t
+(   12) USE MODD_ISBA_n, ONLY : ISBA_S_t, ISBA_P_t, ISBA_PE_t, ISBA_K_t, ISBA_NK_t, &
+(   13)                         ISBA_NP_t, ISBA_NPE_t
+(   14) USE MODD_DATA_ISBA_n, ONLY : DATA_ISBA_t
+(   15) USE MODD_SFX_GRID_n, ONLY : GRID_t, GRID_NP_t
+(   16) USE MODD_AGRI_n, ONLY : AGRI_t, AGRI_NP_t
+(   17) USE MODD_SSO_n, ONLY : SSO_t, SSO_NP_t
+(   18) USE MODD_CH_ISBA_n, ONLY : CH_ISBA_t, CH_ISBA_NP_t
+(   19) USE MODD_CANOPY_n, ONLY : CANOPY_t
+(   20) USE MODD_GR_BIOG_n, ONLY : GR_BIOG_t, GR_BIOG_NP_t
+(   21) USE MODD_SURFEX_n, ONLY : ISBA_DIAG_t
+(   22) USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+(   23) USE MODD_SURF_ATM_GRID_n, ONLY : SURF_ATM_GRID_t
+(   24) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   25) USE MODD_DST_n, ONLY : DST_NP_t, DST_t
+(   26) USE MODD_SLT_n, ONLY : SLT_t
+(   27) USE MODD_SV_n, ONLY : SV_t
+(   28) TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+(   29) LOGICAL, INTENT(IN) :: OREAD_BUDGETC
+(   30) TYPE(SURF_ATM_GRID_t), INTENT(INOUT) :: UG
+(   31) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   32) TYPE(ISBA_OPTIONS_t), INTENT(INOUT) :: IO
+(   33) TYPE(DATA_ISBA_t), INTENT(INOUT) :: DTI
+(   34) TYPE(CANOPY_t), INTENT(INOUT) :: SB
+(   35) TYPE(ISBA_S_t), INTENT(INOUT) :: S
+(   36) TYPE(GRID_t), INTENT(INOUT) :: IG
+(   37) TYPE(ISBA_K_t), INTENT(INOUT) :: K
+(   38) TYPE(ISBA_NK_t), INTENT(INOUT) :: NK
+(   39) TYPE(GRID_NP_t), INTENT(INOUT) :: NIG
+(   40) TYPE(ISBA_NP_t), INTENT(INOUT) :: NP
+(   41) TYPE(ISBA_NPE_t), INTENT(INOUT) :: NPE
+(   42) TYPE(AGRI_NP_t), INTENT(INOUT) :: NAG
+(   43) TYPE(SSO_NP_t), INTENT(INOUT) :: NISS
+(   44) TYPE(SSO_t), INTENT(INOUT) :: ISS
+(   45) TYPE(CH_ISBA_NP_t), INTENT(INOUT) :: NCHI
+(   46) TYPE(CH_ISBA_t), INTENT(INOUT) :: CHI
+(   47) TYPE(ISBA_DIAG_t), INTENT(INOUT) :: ID
+(   48) TYPE(GR_BIOG_t), INTENT(INOUT) :: GB
+(   49) TYPE(GR_BIOG_NP_t), INTENT(INOUT) :: NGB
+(   50) TYPE(DST_NP_t), INTENT(INOUT) :: NDST
+(   51) TYPE(SLT_t), INTENT(INOUT) :: SLT
+(   52) TYPE(SV_t), INTENT(INOUT) :: SV
+(   53)  CHARACTER(LEN=6),                INTENT(IN)  :: HPROGRAM  ! program calling surf. schemes
+(   54)  CHARACTER(LEN=3),                INTENT(IN)  :: HINIT     ! choice of fields to initialize
+(   55) LOGICAL,                          INTENT(IN)  :: OLAND_USE !
+(   56) INTEGER,                          INTENT(IN)  :: KI        ! number of points
+(   57) INTEGER,                          INTENT(IN)  :: KSV       ! number of scalars
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:11      page 5
+
+(   58) INTEGER,                          INTENT(IN)  :: KSW       ! number of short-wave spectral bands
+(   59)  CHARACTER(LEN=6), DIMENSION(KSV),INTENT(IN)  :: HSV       ! name of all scalar variables
+(   60) REAL,             DIMENSION(KI),  INTENT(IN)  :: PCO2      ! CO2 concentration (kg/m3)
+(   61) REAL,             DIMENSION(KI),  INTENT(IN)  :: PRHOA     ! air density
+(   62) REAL,             DIMENSION(KI),  INTENT(IN)  :: PZENITH   ! solar zenithal angle
+(   63) REAL,             DIMENSION(KSW), INTENT(IN)  :: PSW_BANDS ! middle wavelength of each band
+(   64) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PDIR_ALB  ! direct albedo for each band
+(   65) REAL,             DIMENSION(KI,KSW),INTENT(OUT) :: PSCA_ALB  ! diffuse albedo for each band
+(   66) REAL,             DIMENSION(KI),  INTENT(OUT) :: PEMIS     ! emissivity
+(   67) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSRAD    ! radiative temperature
+(   68) REAL,             DIMENSION(KI),  INTENT(OUT) :: PTSURF    ! surface effective temperature         (K)
+(   69)  CHARACTER(LEN=2),                 INTENT(IN)  :: HTEST       ! must be equal to 'OK'
+(   70) END SUBROUTINE COMPUTE_ISBA_PARAMETERS
+(   71) # 72 "modi_compute_isba_parameters.F90"
+(   72) END INTERFACE
+(   73) END MODULE MODI_COMPUTE_ISBA_PARAMETERS 

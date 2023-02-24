@@ -1,0 +1,16 @@
+!depfile:sso_beljaars04.F90
+MODULE MODI_SSO_BELJAARS04 
+INTERFACE
+SUBROUTINE SSO_BELJAARS04 (USS, SB, KI, PSSO_STDEV, PFORC_U, PDFORC_UDU)
+USE MODD_CANOPY_n, ONLY : CANOPY_t
+USE MODD_SSO_n, ONLY : SSO_t
+TYPE(SSO_t), INTENT(INOUT) :: USS
+TYPE(CANOPY_t), INTENT(INOUT) :: SB
+INTEGER,                  INTENT(IN)    :: KI        ! number of points
+REAL, DIMENSION(KI),      INTENT(IN)    :: PSSO_STDEV! Subgrid scale orography standard dev. (m)
+REAL, DIMENSION(KI,SB%NLVL), INTENT(INOUT)   :: PFORC_U   ! tendency of wind due to canopy drag   (m/s2)
+REAL, DIMENSION(KI,SB%NLVL), INTENT(INOUT)   :: PDFORC_UDU! formal derivative of the tendency of
+END SUBROUTINE SSO_BELJAARS04
+
+END INTERFACE
+END MODULE MODI_SSO_BELJAARS04 

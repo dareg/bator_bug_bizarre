@@ -1,0 +1,503 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: sat.F90
+
+(    1) ! Saturation vapor pressure and mixing ratio. 
+(    2) ! Based on Flatau et.al, (JAM, 1992:1507) - valid for T > -80C
+(    3) ! sat. vapor over ice below -80C - used Murphy and Koop (2005)
+(    4) ! For water below -80C simply assumed esw/esi = 2.
+(    5) ! des/dT below -80C computed as a finite difference of es
+(    6) 
+(    7) !************* LICENSE START *****************
+(    8) !
+(    9) ! Copyright 2015 Marat Khairoutdinov 
+(   10) ! School of Marine & Atmospheric Sciences
+(   11) ! Stony Brook University
+(   12) ! This software is distributed under the terms of
+(   13) ! the Apache License version 2.0.
+(   14) !
+(   15) !************** LICENSE END ******************
+(   16) 
+(   17) real(RR) function esatw_crm(t)
+(   18) use real_size
+(   19) implicit none
+(   20) real(RR) t ! temperature (K)
+(   21) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   22) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   23)         6.105851, 0.4440316, 0.1430341e-1, &
+(   24)         0.2641412e-3, 0.2995057e-5, 0.2031998e-7, &
+(   25)         0.6936113e-10, 0.2564861e-13,-0.3704404e-15/
+(   26) !       6.11239921, 0.443987641, 0.142986287e-1, &
+(   27) !       0.264847430e-3, 0.302950461e-5, 0.206739458e-7, &
+(   28) !       0.640689451e-10, -0.952447341e-13,-0.976195544e-15/
+(   29) real(8) dt,zz
+(   30) real(8), parameter :: zeps=log(1000._8 * epsilon(dt))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 3
+
+(   31)  dt = real(t,8)-273.16
+(   32) if(dt.gt.-80.) then
+(   33)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(   34) else
+(   35)  zz = 9.550426 - 5723.265/t + 3.53068*Log(t) - 0.00728332*t
+(   36)  zz = 2.*0.01*exp(max(zz,zeps))
+(   37) end if
+(   38) esatw_crm = real(zz,RR)
+(   39) end
+(   40)         
+(   41)         
+(   42)         
+(   43) real(RR) function qsatw_crm(t,p)
+(   44) use real_size
+(   45) implicit none
+(   46) real(RR) t ! temperature (K)
+(   47) real(RR) p ! pressure    (mb)
+(   48) real(RR) esat_crm,esatw_crm
+(   49) esat_crm = esatw_crm(t)
+(   50) qsatw_crm = 0.622_RR * esat_crm/max(esat_crm,p-esat_crm)
+(   51) end
+(   52)         
+(   53)         
+(   54) real(RR) function dtesatw_crm(t)
+(   55) use real_size
+(   56) implicit none
+(   57) real(RR) t ! temperature (K)
+(   58) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   59) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   60)           0.443956472, 0.285976452e-1, 0.794747212e-3, &
+(   61)           0.121167162e-4, 0.103167413e-6, 0.385208005e-9, &
+(   62)          -0.604119582e-12, -0.792933209e-14, -0.599634321e-17/
+(   63) real(RR) esatw_crm
+(   64) real(RR) dt,zz
+(   65) dt = real(t,8)-273.16
+(   66) if(dt.gt.-80.) then
+(   67)  zz = a0 + dt* (a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(   68)  dtesatw_crm = real(zz,RR)
+(   69) else
+(   70)  dtesatw_crm = esatw_crm(t+1._RR)-esatw_crm(t)
+(   71) end if
+(   72) 
+(   73) end
+(   74)         
+(   75)         
+(   76) real(RR) function dtqsatw_crm(t,p)
+(   77) use real_size
+(   78) implicit none
+(   79) real(RR) t  ! temperature (K)
+(   80) real(RR) p  ! pressure    (mb)
+(   81) real(RR) dtesatw_crm
+(   82) dtqsatw_crm = 0.622_RR*dtesatw_crm(t)/p
+(   83) end
+(   84)    
+(   85)    
+(   86) real(RR) function esati_crm(t)
+(   87) use real_size
+(   88) implicit none
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 4
+
+(   89) real(RR) t  ! temperature (K)
+(   90) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   91) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   92)         6.11147274, 0.503160820, 0.188439774e-1, &
+(   93)         0.420895665e-3, 0.615021634e-5,0.602588177e-7, &
+(   94)         0.385852041e-9, 0.146898966e-11, 0.252751365e-14/
+(   95) real(8) dt, zz
+(   96) real(8), parameter :: zeps=log(1000._8 * epsilon(dt))
+(   97) 
+(   98) dt = REAL(t,8)-273.16
+(   99) if(dt.gt.-80.) then
+(  100)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(  101) else
+(  102)  zz= 9.550426 - 5723.265/t + 3.53068*log(t) - 0.00728332*t
+(  103)  zz= 0.01 * exp( max(zz,zeps))
+(  104) end if
+(  105) esati_crm = real(zz,RR)
+(  106) end
+(  107)         
+(  108)         
+(  109)         
+(  110) real(RR) function qsati_crm(t,p)
+(  111) use real_size
+(  112) implicit none
+(  113) real(RR) t  ! temperature (K)
+(  114) real(RR) p  ! pressure    (mb)
+(  115) real(RR) esat_crm,esati_crm
+(  116) esat_crm=esati_crm(t)
+(  117) qsati_crm=0.622_RR * esat_crm/max(esat_crm,p-esat_crm)
+(  118) end
+(  119)         
+(  120)         
+(  121) real(RR) function dtesati_crm(t)
+(  122) use real_size
+(  123) implicit none
+(  124) real(RR) t  ! temperature (K)
+(  125) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(  126) data a0,a1,a2,a3,a4,a5,a6,a7,a8 / &
+(  127)         0.503223089, 0.377174432e-1,0.126710138e-2, &
+(  128)     0.249065913e-4, 0.312668753e-6, 0.255653718e-8, &
+(  129)     0.132073448e-10, 0.390204672e-13, 0.497275778e-16/
+(  130) real(RR) esati_crm
+(  131) real(8) dt, zz
+(  132) dt = real(t,8)-273.16
+(  133) if(dt.gt.-80.) then
+(  134)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(  135)  dtesati_crm = real(zz,RR)
+(  136) else
+(  137)  dtesati_crm = esati_crm(t+1._RR)-esati_crm(t)
+(  138) end if
+(  139) end
+(  140)         
+(  141)         
+(  142) real(RR) function dtqsati_crm(t,p)
+(  143) use real_size
+(  144) implicit none
+(  145) real(RR) t  ! temperature (K)
+(  146) real(RR) p  ! pressure    (mb)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 5
+
+(  147) real(RR) dtesati_crm
+(  148) dtqsati_crm=0.622_RR*dtesati_crm(t)/p
+(  149) end
+(  150)       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 6
+
+(    1) # 1 "sat.F90"
+(    1) ! Saturation vapor pressure and mixing ratio. 
+(    2) ! Based on Flatau et.al, (JAM, 1992:1507) - valid for T > -80C
+(    3) ! sat. vapor over ice below -80C - used Murphy and Koop (2005)
+(    4) ! For water below -80C simply assumed esw/esi = 2.
+(    5) ! des/dT below -80C computed as a finite difference of es
+(    6) # 7 "sat.F90"
+(    7) !************* LICENSE START *****************
+(    8) !
+(    9) ! Copyright 2015 Marat Khairoutdinov 
+(   10) ! School of Marine & Atmospheric Sciences
+(   11) ! Stony Brook University
+(   12) ! This software is distributed under the terms of
+(   13) ! the Apache License version 2.0.
+(   14) !
+(   15) !************** LICENSE END ******************
+(   16) # 17 "sat.F90"
+(   17) real(RR) function esatw_crm(t)
+(   18) use real_size
+(   19) implicit none
+(   20) real(RR) t ! temperature (K)
+(   21) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   22) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   23)         6.105851, 0.4440316, 0.1430341e-1, &
+(   24)         0.2641412e-3, 0.2995057e-5, 0.2031998e-7, &
+(   25)         0.6936113e-10, 0.2564861e-13,-0.3704404e-15/
+(   26) !       6.11239921, 0.443987641, 0.142986287e-1, &
+(   27) !       0.264847430e-3, 0.302950461e-5, 0.206739458e-7, &
+(   28) !       0.640689451e-10, -0.952447341e-13,-0.976195544e-15/
+(   29) real(8) dt,zz
+(   30) real(8), parameter :: zeps=log(1000._8 * epsilon(dt))
+(   31)  dt = real(t,8)-273.16
+(   32) if(dt.gt.-80.) then
+(   33)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(   34) else
+(   35)  zz = 9.550426 - 5723.265/t + 3.53068*Log(t) - 0.00728332*t
+(   36)  zz = 2.*0.01*exp(max(zz,zeps))
+(   37) end if
+(   38) esatw_crm = real(zz,RR)
+(   39) end
+(   40)         
+(   41)         
+(   42)         
+(   43) real(RR) function qsatw_crm(t,p)
+(   44) use real_size
+(   45) implicit none
+(   46) real(RR) t ! temperature (K)
+(   47) real(RR) p ! pressure    (mb)
+(   48) real(RR) esat_crm,esatw_crm
+(   49) esat_crm = esatw_crm(t)
+(   50) qsatw_crm = 0.622_RR * esat_crm/max(esat_crm,p-esat_crm)
+(   51) end
+(   52)         
+(   53)         
+(   54) real(RR) function dtesatw_crm(t)
+(   55) use real_size
+(   56) implicit none
+(   57) real(RR) t ! temperature (K)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 7
+
+(   58) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   59) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   60)           0.443956472, 0.285976452e-1, 0.794747212e-3, &
+(   61)           0.121167162e-4, 0.103167413e-6, 0.385208005e-9, &
+(   62)          -0.604119582e-12, -0.792933209e-14, -0.599634321e-17/
+(   63) real(RR) esatw_crm
+(   64) real(RR) dt,zz
+(   65) dt = real(t,8)-273.16
+(   66) if(dt.gt.-80.) then
+(   67)  zz = a0 + dt* (a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(   68)  dtesatw_crm = real(zz,RR)
+(   69) else
+(   70)  dtesatw_crm = esatw_crm(t+1._RR)-esatw_crm(t)
+(   71) end if
+(   72) # 73 "sat.F90"
+(   73) end
+(   74)         
+(   75)         
+(   76) real(RR) function dtqsatw_crm(t,p)
+(   77) use real_size
+(   78) implicit none
+(   79) real(RR) t  ! temperature (K)
+(   80) real(RR) p  ! pressure    (mb)
+(   81) real(RR) dtesatw_crm
+(   82) dtqsatw_crm = 0.622_RR*dtesatw_crm(t)/p
+(   83) end
+(   84)    
+(   85)    
+(   86) real(RR) function esati_crm(t)
+(   87) use real_size
+(   88) implicit none
+(   89) real(RR) t  ! temperature (K)
+(   90) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(   91) data a0,a1,a2,a3,a4,a5,a6,a7,a8 /&
+(   92)         6.11147274, 0.503160820, 0.188439774e-1, &
+(   93)         0.420895665e-3, 0.615021634e-5,0.602588177e-7, &
+(   94)         0.385852041e-9, 0.146898966e-11, 0.252751365e-14/
+(   95) real(8) dt, zz
+(   96) real(8), parameter :: zeps=log(1000._8 * epsilon(dt))
+(   97) # 98 "sat.F90"
+(   98) dt = REAL(t,8)-273.16
+(   99) if(dt.gt.-80.) then
+(  100)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(  101) else
+(  102)  zz= 9.550426 - 5723.265/t + 3.53068*log(t) - 0.00728332*t
+(  103)  zz= 0.01 * exp( max(zz,zeps))
+(  104) end if
+(  105) esati_crm = real(zz,RR)
+(  106) end
+(  107)         
+(  108)         
+(  109)         
+(  110) real(RR) function qsati_crm(t,p)
+(  111) use real_size
+(  112) implicit none
+(  113) real(RR) t  ! temperature (K)
+(  114) real(RR) p  ! pressure    (mb)
+(  115) real(RR) esat_crm,esati_crm
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:33:45      page 8
+
+(  116) esat_crm=esati_crm(t)
+(  117) qsati_crm=0.622_RR * esat_crm/max(esat_crm,p-esat_crm)
+(  118) end
+(  119)         
+(  120)         
+(  121) real(RR) function dtesati_crm(t)
+(  122) use real_size
+(  123) implicit none
+(  124) real(RR) t  ! temperature (K)
+(  125) real(8) a0,a1,a2,a3,a4,a5,a6,a7,a8 
+(  126) data a0,a1,a2,a3,a4,a5,a6,a7,a8 / &
+(  127)         0.503223089, 0.377174432e-1,0.126710138e-2, &
+(  128)     0.249065913e-4, 0.312668753e-6, 0.255653718e-8, &
+(  129)     0.132073448e-10, 0.390204672e-13, 0.497275778e-16/
+(  130) real(RR) esati_crm
+(  131) real(8) dt, zz
+(  132) dt = real(t,8)-273.16
+(  133) if(dt.gt.-80.) then
+(  134)  zz = a0 + dt*(a1+dt*(a2+dt*(a3+dt*(a4+dt*(a5+dt*(a6+dt*(a7+a8*dt))))))) 
+(  135)  dtesati_crm = real(zz,RR)
+(  136) else
+(  137)  dtesati_crm = esati_crm(t+1._RR)-esati_crm(t)
+(  138) end if
+(  139) end
+(  140)         
+(  141)         
+(  142) real(RR) function dtqsati_crm(t,p)
+(  143) use real_size
+(  144) implicit none
+(  145) real(RR) t  ! temperature (K)
+(  146) real(RR) p  ! pressure    (mb)
+(  147) real(RR) dtesati_crm
+(  148) dtqsati_crm=0.622_RR*dtesati_crm(t)/p
+(  149) end
+(  150)       

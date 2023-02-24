@@ -1,0 +1,417 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: sufftp.F90
+
+(    1) SUBROUTINE SUFFTP(KDLON,KFFTP0,LDODD)
+(    2) 
+(    3) !**** *SUFFTP*  - Initialize possible numbers for FFT's
+(    4) 
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !           Initialize possible numbers for FFT's
+(    8) 
+(    9) !**   Interface.
+(   10) !     ----------
+(   11) !        *CALL* *SUFFTP(KDLON,KFFTP0)
+(   12) 
+(   13) !        Explicit arguments :
+(   14) !        --------------------
+(   15) !        LDODD : .TRUE. if odd numbers are allowed
+(   16) !        KFFTP0(KDLON) 0 ---> possible for FFT
+(   17) !                      1 ---> impossible for FFT
+(   18) 
+(   19) !        Implicit arguments :
+(   20) !        --------------------
+(   21) 
+(   22) !     Method.
+(   23) !     -------
+(   24) !        See documentation
+(   25) 
+(   26) !     Externals.    none.
+(   27) !     ----------
+(   28) 
+(   29) !     Reference.
+(   30) !     ----------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 3
+
+(   31) !        ARPEGE documentation
+(   32) 
+(   33) !     Author.
+(   34) !     -------
+(   35) !        Philippe Courtier  *DMN*
+(   36) 
+(   37) !     Modifications.
+(   38) !     --------------
+(   39) !        Creation of cycle 4
+(   40) !        R. El Khatib 15-May-2013 Option to allow or not odd numbers
+(   41) !     ------------------------------------------------------------------
+(   42) 
+(   43) 
+(   44) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   45) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   46) 
+(   47) IMPLICIT NONE
+(   48) 
+(   49) INTEGER(KIND=JPIM), INTENT(IN) :: KDLON
+(   50) INTEGER(KIND=JPIM), INTENT(OUT) :: KFFTP0(KDLON)
+(   51) LOGICAL, INTENT(IN) :: LDODD
+(   52) 
+(   53) INTEGER(KIND=JPIM) :: I2MAX, I3MAX, I5MAX, IMIN, IN, J, J2, J3, J5
+(   54) 
+(   55) 
+(   56) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   57) 
+(   58) !     ------------------------------------------------------------------
+(   59) 
+(   60) IF (LHOOK) CALL DR_HOOK('REDUCED_GRID',0,ZHOOK_HANDLE)
+(   61) 
+(   62) !*       1.    Initialize up to IMIN-1
+(   63) !              --------------------
+(   64) 
+(   65) IMIN=16
+(   66) IF(KDLON <= IMIN-1)THEN
+(   67)   CALL ABOR1(' ERROR IN SUFFTP0 ')
+(   68) ENDIF
+(   69) 
+(   70) DO J=1,IMIN-1
+(   71)   KFFTP0(J)=1
+(   72) ENDDO
+(   73) 
+(   74) !     ------------------------------------------------------------------
+(   75) 
+(   76) !*       2.    Initialize from 16.
+(   77) !              -------------------
+(   78) 
+(   79) I2MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(2._JPRB))+1
+(   80) I3MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(3._JPRB))+1
+(   81) I5MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(5._JPRB))+1
+(   82) 
+(   83) DO J=IMIN,KDLON
+(   84) 
+(   85)   IF (.NOT.LDODD) THEN
+(   86)     IF(MOD(J,2) /= 0)THEN
+(   87)       KFFTP0(J)=1
+(   88)       GOTO 202
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 4
+
+(   89)     ENDIF
+(   90)   ENDIF
+(   91) 
+(   92)   IN=J
+(   93)   DO J2=1,I2MAX
+(   94)     IF(MOD(IN,2) == 0)THEN
+(   95)       IN=IN/2
+(   96)     ENDIF
+(   97)   ENDDO
+(   98) 
+(   99)   DO J3=1,I3MAX
+(  100)     IF(MOD(IN,3) == 0)THEN
+(  101)       IN=IN/3
+(  102)     ENDIF
+(  103)   ENDDO
+(  104) 
+(  105)   DO J5=1,I5MAX
+(  106)     IF(MOD(IN,5) == 0)THEN
+(  107)       IN=IN/5
+(  108)     ENDIF
+(  109)   ENDDO
+(  110) 
+(  111)   IF(IN /= 1)THEN
+(  112)     KFFTP0(J)=1
+(  113)   ELSE
+(  114)     KFFTP0(J)=0
+(  115)   ENDIF
+(  116)   202 CONTINUE
+(  117) ENDDO
+(  118) 
+(  119) ! Memo :
+(  120) ! this is old stuff and is not used anymore, unfortunately some resolutions like T799 have been created like this !!
+(  121) !  The possibility of 625 or 1250 points in the T426, TL639 grids
+(  122) !   should be eliminated due to the radiation code (memo from Lars)      
+(  123) !IF(KDLON >= 640) THEN
+(  124) !  KFFTP0(625)=1
+(  125) !  IF(KDLON >= 1250) THEN
+(  126) !    KFFTP0(1250)=1
+(  127) !  ENDIF
+(  128) !ENDIF
+(  129) 
+(  130) IF (LHOOK) CALL DR_HOOK('REDUCED_GRID',1,ZHOOK_HANDLE)
+(  131) 
+(  132) END SUBROUTINE SUFFTP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 5
+
+(    1) # 1 "sufftp.F90"
+(    1) SUBROUTINE SUFFTP(KDLON,KFFTP0,LDODD)
+(    2) # 3 "sufftp.F90"
+(    3) !**** *SUFFTP*  - Initialize possible numbers for FFT's
+(    4) # 5 "sufftp.F90"
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !           Initialize possible numbers for FFT's
+(    8) # 9 "sufftp.F90"
+(    9) !**   Interface.
+(   10) !     ----------
+(   11) !        *CALL* *SUFFTP(KDLON,KFFTP0)
+(   12) # 13 "sufftp.F90"
+(   13) !        Explicit arguments :
+(   14) !        --------------------
+(   15) !        LDODD : .TRUE. if odd numbers are allowed
+(   16) !        KFFTP0(KDLON) 0 ---> possible for FFT
+(   17) !                      1 ---> impossible for FFT
+(   18) # 19 "sufftp.F90"
+(   19) !        Implicit arguments :
+(   20) !        --------------------
+(   21) # 22 "sufftp.F90"
+(   22) !     Method.
+(   23) !     -------
+(   24) !        See documentation
+(   25) # 26 "sufftp.F90"
+(   26) !     Externals.    none.
+(   27) !     ----------
+(   28) # 29 "sufftp.F90"
+(   29) !     Reference.
+(   30) !     ----------
+(   31) !        ARPEGE documentation
+(   32) # 33 "sufftp.F90"
+(   33) !     Author.
+(   34) !     -------
+(   35) !        Philippe Courtier  *DMN*
+(   36) # 37 "sufftp.F90"
+(   37) !     Modifications.
+(   38) !     --------------
+(   39) !        Creation of cycle 4
+(   40) !        R. El Khatib 15-May-2013 Option to allow or not odd numbers
+(   41) !     ------------------------------------------------------------------
+(   42) # 44 "sufftp.F90"
+(   44) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   45) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   46) # 47 "sufftp.F90"
+(   47) IMPLICIT NONE
+(   48) # 49 "sufftp.F90"
+(   49) INTEGER(KIND=JPIM), INTENT(IN) :: KDLON
+(   50) INTEGER(KIND=JPIM), INTENT(OUT) :: KFFTP0(KDLON)
+(   51) LOGICAL, INTENT(IN) :: LDODD
+(   52) # 53 "sufftp.F90"
+(   53) INTEGER(KIND=JPIM) :: I2MAX, I3MAX, I5MAX, IMIN, IN, J, J2, J3, J5
+(   54) # 56 "sufftp.F90"
+(   56) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   57) # 58 "sufftp.F90"
+(   58) !     ------------------------------------------------------------------
+(   59) # 60 "sufftp.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 6
+
+(   60) IF (LHOOK) CALL DR_HOOK('REDUCED_GRID',0,ZHOOK_HANDLE)
+(   61) # 62 "sufftp.F90"
+(   62) !*       1.    Initialize up to IMIN-1
+(   63) !              --------------------
+(   64) # 65 "sufftp.F90"
+(   65) IMIN=16
+(   66) IF(KDLON <= IMIN-1)THEN
+(   67)   CALL ABOR1(' ERROR IN SUFFTP0 ')
+(   68) ENDIF
+(   69) # 70 "sufftp.F90"
+(   70) DO J=1,IMIN-1
+(   71)   KFFTP0(J)=1
+(   72) ENDDO
+(   73) # 74 "sufftp.F90"
+(   74) !     ------------------------------------------------------------------
+(   75) # 76 "sufftp.F90"
+(   76) !*       2.    Initialize from 16.
+(   77) !              -------------------
+(   78) # 79 "sufftp.F90"
+(   79) I2MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(2._JPRB))+1
+(   80) I3MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(3._JPRB))+1
+(   81) I5MAX=INT(LOG(REAL(KDLON,JPRB))/LOG(5._JPRB))+1
+(   82) # 83 "sufftp.F90"
+(   83) DO J=IMIN,KDLON
+(   84) # 85 "sufftp.F90"
+(   85)   IF (.NOT.LDODD) THEN
+(   86)     IF(MOD(J,2) /= 0)THEN
+(   87)       KFFTP0(J)=1
+(   88)       GOTO 202
+(   89)     ENDIF
+(   90)   ENDIF
+(   91) # 92 "sufftp.F90"
+(   92)   IN=J
+(   93)   DO J2=1,I2MAX
+(   94)     IF(MOD(IN,2) == 0)THEN
+(   95)       IN=IN/2
+(   96)     ENDIF
+(   97)   ENDDO
+(   98) # 99 "sufftp.F90"
+(   99)   DO J3=1,I3MAX
+(  100)     IF(MOD(IN,3) == 0)THEN
+(  101)       IN=IN/3
+(  102)     ENDIF
+(  103)   ENDDO
+(  104) # 105 "sufftp.F90"
+(  105)   DO J5=1,I5MAX
+(  106)     IF(MOD(IN,5) == 0)THEN
+(  107)       IN=IN/5
+(  108)     ENDIF
+(  109)   ENDDO
+(  110) # 111 "sufftp.F90"
+(  111)   IF(IN /= 1)THEN
+(  112)     KFFTP0(J)=1
+(  113)   ELSE
+(  114)     KFFTP0(J)=0
+(  115)   ENDIF
+(  116)   202 CONTINUE
+(  117) ENDDO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:03      page 7
+
+(  118) # 119 "sufftp.F90"
+(  119) ! Memo :
+(  120) ! this is old stuff and is not used anymore, unfortunately some resolutions like T799 have been created like this !!
+(  121) !  The possibility of 625 or 1250 points in the T426, TL639 grids
+(  122) !   should be eliminated due to the radiation code (memo from Lars)      
+(  123) !IF(KDLON >= 640) THEN
+(  124) !  KFFTP0(625)=1
+(  125) !  IF(KDLON >= 1250) THEN
+(  126) !    KFFTP0(1250)=1
+(  127) !  ENDIF
+(  128) !ENDIF
+(  129) # 130 "sufftp.F90"
+(  130) IF (LHOOK) CALL DR_HOOK('REDUCED_GRID',1,ZHOOK_HANDLE)
+(  131) # 132 "sufftp.F90"
+(  132) END SUBROUTINE SUFFTP

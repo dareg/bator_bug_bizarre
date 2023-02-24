@@ -1,0 +1,1346 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: faisc2.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAISC2_MT64                   &
+(    4) &                     (FA,  KREP, KRANGC )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Ce sous-programme initialise des tableaux "reference" de
+(   12) !      l'en-tete GRIB, section 2: les differents types de grille
+(   13) !      sont abordes (routine appelee une seule fois pour un cadre donne)
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KRANGC (Entree) ==> Rang dans la table des cadres;
+(   17) !*
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANGC
+(   23) !
+(   24) REAL (KIND=JPDBLR) :: ZPI, ZRAMDE, ZLATPRE,     &
+(   25) &                      ZLATDER, ZLONPRE, ZLONDER
+(   26) REAL (KIND=JPDBLR), PARAMETER :: ONE = 1.0_JPDBLR
+(   27) !
+(   28) INTEGER (KIND=JPLIKB) INLAT, INIVAU, INUMER, INIMES
+(   29) !
+(   30) LOGICAL LLMLAM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 3
+
+(   31) !
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) 
+(   35) !**
+(   36) !     0.  -  INITIALISATIONS PREALABLES
+(   37) !-----------------------------------------------------------------------
+(   38) !
+(   39) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   40) IF (LHOOK) CALL DR_HOOK('FAISC2_MT',0,ZHOOK_HANDLE)
+(   41) KREP=0
+(   42) IF (KRANGC.LE.0.OR.KRANGC.GT.FA%JPNXCA) THEN
+(   43)   KREP=-66
+(   44)   GOTO 1001
+(   45) ENDIF
+(   46) INLAT  = FA%CADRE(KRANGC)%NLATIT
+(   47) INIVAU = FA%CADRE(KRANGC)%NNIVER
+(   48) LLMLAM = FA%CADRE(KRANGC)%LIMLAM
+(   49) ZPI = 2._JPDBLR*ASIN(1._JPDBLR)
+(   50) ! Conversion des radians en 1/1000 de degre
+(   51) ZRAMDE = 180000._JPDBLR/ZPI
+(   52) !
+(   53) IF (LLMLAM) GOTO 300
+(   54) !**
+(   55) !     1.  -  KSEC2 POUR LA REPRESENTATION SPECTRALE ARPEGE
+(   56) !-----------------------------------------------------------------------
+(   57) !
+(   58) ! Type de representation de donnees
+(   59) !
+(   60) ! FA%SSLAPO=sinus latitude du pole d'interet
+(   61) ! (si=1, pole=pole N et pas de rotation)
+(   62) ! FA%SCODIL=coeff de dilation (si =1, pas de dilatation)
+(   63) IF ((1._JPDBLR-FA%CADRE(KRANGC)%SSLAPO).LE.1.E-10_JPDBLR) THEN
+(   64)   FA%CADRE(KRANGC)%NSEC2SP(1)=70
+(   65)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(   66)     FA%CADRE(KRANGC)%NSEC2SP(1)=50
+(   67)   ENDIF
+(   68) ELSE
+(   69)   FA%CADRE(KRANGC)%NSEC2SP(1)=80
+(   70)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(   71)     FA%CADRE(KRANGC)%NSEC2SP(1)=60
+(   72)   ENDIF
+(   73) ENDIF
+(   74) ! Troncature (3 fois la meme si triangulaire)
+(   75) FA%CADRE(KRANGC)%NSEC2SP(2) =FA%CADRE(KRANGC)%MTRONC
+(   76) FA%CADRE(KRANGC)%NSEC2SP(3) =FA%CADRE(KRANGC)%MTRONC
+(   77) FA%CADRE(KRANGC)%NSEC2SP(4) =FA%CADRE(KRANGC)%MTRONC
+(   78) ! Type de representation
+(   79) FA%CADRE(KRANGC)%NSEC2SP(5) =1
+(   80) ! Mode de representation (2->complex packing)
+(   81) FA%CADRE(KRANGC)%NSEC2SP(6) =2
+(   82) ! Reserves
+(   83) FA%CADRE(KRANGC)%NSEC2SP(7:11)=0
+(   84) ! Nb de parametres pour la coord verticale
+(   85) ! On prend ici le cas de la coordonnee hybride
+(   86) ! mais le cas de la coord pression sera aisement
+(   87) ! pris en compte + tard (KSEC2(12)=0).
+(   88) FA%CADRE(KRANGC)%NSEC2SP(12)=2*(INIVAU+1)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 4
+
+(   89) ! Latitude du pole sud de rotation
+(   90) FA%CADRE(KRANGC)%NSEC2SP(13)=0
+(   91) ! Longitude du pole sud de rotation
+(   92) FA%CADRE(KRANGC)%NSEC2SP(14)=0
+(   93) ! Lat et lon du pole d'etirement
+(   94) IF (FA%CADRE(KRANGC)%NTYPTR.GE.2) THEN
+(   95)   FA%CADRE(KRANGC)%NSEC2SP(15)=INT (ZRAMDE*ASIN(FA%CADRE(KRANGC)%SSLAPO),  &
+(   96) &                             JPLIKB)
+(   97)   FA%CADRE(KRANGC)%NSEC2SP(16)=INT (ZRAMDE*                       &
+(   98) &    (SIGN(ONE,FA%CADRE(KRANGC)%SSLOPO)*ACOS(FA%CADRE(KRANGC)%SCLOPO)), &
+(   99) &    JPLIKB)
+(  100) ELSE
+(  101)   FA%CADRE(KRANGC)%NSEC2SP(15)=0
+(  102)   FA%CADRE(KRANGC)%NSEC2SP(16)=0
+(  103) ENDIF
+(  104) ! Reserves
+(  105) FA%CADRE(KRANGC)%NSEC2SP(17:22)=0
+(  106) !**
+(  107) !     2.  -  KSEC2 POUR LA GRILLE DE GAUSS (ARPEGE)
+(  108) !-----------------------------------------------------------------------
+(  109) !
+(  110) ! Type de representation de donnees
+(  111) !
+(  112) ! FA%SSLAPO=sinus latitude du pole d'interet
+(  113) ! (si=1, pole=pole N et pas de rotation)
+(  114) ! FA%SCODIL=coeff de dilation (si =1, pas de dilatation)
+(  115) IF ((1._JPDBLR-FA%CADRE(KRANGC)%SSLAPO).LE.1.E-10_JPDBLR) THEN
+(  116)   FA%CADRE(KRANGC)%NSEC2GG(1)=24
+(  117)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(  118)     FA%CADRE(KRANGC)%NSEC2GG(1)=4
+(  119)   ENDIF
+(  120) ELSE
+(  121)   FA%CADRE(KRANGC)%NSEC2GG(1)=34
+(  122)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(  123)     FA%CADRE(KRANGC)%NSEC2GG(1)=14
+(  124)   ENDIF
+(  125) ENDIF
+(  126) ! Nb de pts sur un parallele
+(  127) FA%CADRE(KRANGC)%NSEC2GG(2)=FA%CADRE(KRANGC)%NXLOPA
+(  128) ! Nb de pts sur une longitude
+(  129) FA%CADRE(KRANGC)%NSEC2GG(3)=INLAT
+(  130) ZLATPRE=ASIN(MAX(-1._JPDBLR,MIN(1._JPDBLR,FA%CADRE(KRANGC)%SINLAT(1))))
+(  131) ! Latitude (1/1000 degre) du premier pt de grille
+(  132) FA%CADRE(KRANGC)%NSEC2GG(4)=INT (ZRAMDE*ZLATPRE, JPLIKB)
+(  133) ! Longitude (1/1000 degre) du premier pt de grille
+(  134) FA%CADRE(KRANGC)%NSEC2GG(5)=0
+(  135) ! Flag pour la resolution (0->on ne donne pas l'increment)
+(  136) FA%CADRE(KRANGC)%NSEC2GG(6)=0
+(  137) ! Latitude (1/1000 degre) du dernier pt de grille
+(  138) FA%CADRE(KRANGC)%NSEC2GG(7)=-FA%CADRE(KRANGC)%NSEC2GG(4)
+(  139) ! Longitude (1/1000 degre) du dernier pt de grille.
+(  140) ! (FA%NLOPAR(1,KRANGC)=nb de longitudes sur le 1er parallele)
+(  141) FA%CADRE(KRANGC)%NSEC2GG(8)=-360000/FA%CADRE(KRANGC)%NLOPAR(1)
+(  142) ! Increment zonal (1/1000 degre)
+(  143) ! Pas de sens ici.
+(  144) FA%CADRE(KRANGC)%NSEC2GG(9)=0
+(  145) ! Nb de paralleles entre le pole et l'equateur
+(  146) FA%CADRE(KRANGC)%NSEC2GG(10)=(INLAT+1)/2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 5
+
+(  147) ! Flag pour le mode de balayage
+(  148) FA%CADRE(KRANGC)%NSEC2GG(11)=0
+(  149) ! Nombre de parametres pour la coord. verticale
+(  150) FA%CADRE(KRANGC)%NSEC2GG(12)=0
+(  151) ! Latitude du pole sud de rotation
+(  152) FA%CADRE(KRANGC)%NSEC2GG(13)=0
+(  153) ! Longitude du pole sud de rotation
+(  154) FA%CADRE(KRANGC)%NSEC2GG(14)=0
+(  155) ! Latitude et longitude du pole d'etirement
+(  156) IF (FA%CADRE(KRANGC)%NTYPTR.GE.2) THEN
+(  157)   FA%CADRE(KRANGC)%NSEC2GG(15)=INT (ZRAMDE*ASIN(FA%CADRE(KRANGC)%SSLAPO),  &
+(  158) &                             JPLIKB)
+(  159)   FA%CADRE(KRANGC)%NSEC2GG(16)=INT (ZRAMDE*                        &
+(  160) &     (SIGN(ONE,FA%CADRE(KRANGC)%SSLOPO)*ACOS(FA%CADRE(KRANGC)%SCLOPO)), &
+(  161) &     JPLIKB)
+(  162) ELSE
+(  163)   FA%CADRE(KRANGC)%NSEC2GG(15)=0
+(  164)   FA%CADRE(KRANGC)%NSEC2GG(16)=0
+(  165) ENDIF
+(  166) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  167) IF (FA%CADRE(KRANGC)%NLOPAR(1)==FA%CADRE(KRANGC)%NLOPAR((1+INLAT)/2)) THEN
+(  168)   FA%CADRE(KRANGC)%NSEC2GG(17)=0
+(  169) ELSE
+(  170)   FA%CADRE(KRANGC)%NSEC2GG(17)=1
+(  171) ENDIF
+(  172) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  173) FA%CADRE(KRANGC)%NSEC2GG(18)=0
+(  174) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  175) FA%CADRE(KRANGC)%NSEC2GG(19)=0
+(  176) ! Reserves
+(  177) FA%CADRE(KRANGC)%NSEC2GG(20:22)=0
+(  178) ! Pour les grilles reduites, nb de points sur chaque parallele
+(  179) FA%CADRE(KRANGC)%NSEC2GG(23:22+(1+INLAT)/2)=            &
+(  180) &                 FA%CADRE(KRANGC)%NLOPAR(1:(1+INLAT)/2)
+(  181) FA%CADRE(KRANGC)%NSEC2GG(23-MOD(INLAT,2_JPLIKB )+(1+INLAT)/2:22+INLAT)=  &
+(  182) &                               FA%CADRE(KRANGC)%NLOPAR((1+INLAT)/2:1:-1)
+(  183) GOTO 600
+(  184) !**
+(  185) !     3.  -  KSEC2 POUR LA GRILLE LAT-LON (CAS FULL-POS, ARPEGE OU ALADIN)
+(  186) !-------------------------------------------------------------------------
+(  187) !
+(  188) 300 CONTINUE
+(  189) ! TEST POUR NEW EGGX
+(  190) IF (FA%CADRE(KRANGC)%SINLAT(1) .GE. 0) THEN
+(  191) ! OLD EGGX
+(  192) ZLATPRE=FA%CADRE(KRANGC)%SINLAT(7)
+(  193) ZLONPRE=FA%CADRE(KRANGC)%SINLAT(4)
+(  194) ZLATDER=FA%CADRE(KRANGC)%SINLAT(5)
+(  195) ZLONDER=FA%CADRE(KRANGC)%SINLAT(6)
+(  196) ! Type de representation de donnees
+(  197) ELSE
+(  198) ! NEW EGGX
+(  199) ZLATPRE=FA%CADRE(KRANGC)%SINLAT(16)
+(  200) ZLONPRE=FA%CADRE(KRANGC)%SINLAT(13)
+(  201) ZLATDER=FA%CADRE(KRANGC)%SINLAT(14)
+(  202) ZLONDER=FA%CADRE(KRANGC)%SINLAT(15)
+(  203) ENDIF
+(  204) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 6
+
+(  205) ! Type de representation de donnees
+(  206) FA%CADRE(KRANGC)%NSEC2LL(1)=0
+(  207) ! Nb de pts sur un parallele
+(  208) FA%CADRE(KRANGC)%NSEC2LL(2)=FA%CADRE(KRANGC)%NXLOPA
+(  209) ! Nb de pts sur une longitude
+(  210) FA%CADRE(KRANGC)%NSEC2LL(3)=INLAT
+(  211) ! Latitude (1/1000 degre) du premier pt de grille
+(  212) FA%CADRE(KRANGC)%NSEC2LL(4)=NINT(ZRAMDE*ZLATPRE,KIND=JPLIKB)
+(  213) ! Longitude (1/1000 degre) du premier pt de grille
+(  214) FA%CADRE(KRANGC)%NSEC2LL(5)=NINT(ZRAMDE*ZLONPRE,KIND=JPLIKB)
+(  215) !
+(  216) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LL(5))
+(  217) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  218) FA%CADRE(KRANGC)%NSEC2LL(6)=128
+(  219) ! Latitude (1/1000 degre) du dernier pt de grille
+(  220) FA%CADRE(KRANGC)%NSEC2LL(7)=NINT(ZRAMDE*ZLATDER,KIND=JPLIKB)
+(  221) ! Longitude (1/1000 degre) du dernier pt de grille
+(  222) FA%CADRE(KRANGC)%NSEC2LL(8)=NINT(ZRAMDE*ZLONDER,KIND=JPLIKB)
+(  223) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LL(8))
+(  224) ! Increment zonal (1/1000 degre)
+(  225) IF (ZLONPRE.GT.ZLONDER) THEN
+(  226)   FA%CADRE(KRANGC)%NSEC2LL(9)=                         &
+(  227) &    NINT((ZLONDER+2._JPDBLR*ZPI-ZLONPRE)*ZRAMDE &
+(  228) &         /(FA%CADRE(KRANGC)%NXLOPA-1),                &
+(  229) &         KIND=JPLIKB)
+(  230) ELSE
+(  231)   FA%CADRE(KRANGC)%NSEC2LL(9)=                                      &
+(  232) &        NINT((ZLONDER-ZLONPRE)*ZRAMDE/(FA%CADRE(KRANGC)%NXLOPA-1), &
+(  233) &             KIND=JPLIKB)
+(  234) ENDIF
+(  235) ! Increment meridien (1/1000 degre)
+(  236) FA%CADRE(KRANGC)%NSEC2LL(10)=                             &
+(  237) &          NINT((ZLATPRE-ZLATDER)*ZRAMDE/(INLAT-1), &
+(  238) &               KIND=JPLIKB)
+(  239) ! Flag pour le mode de balayage: W->E et S->N = 64; W->E et N->S = 0
+(  240) ! Full-Pos produit des champs lat-lon ranges S->N pour ARP et ALD.
+(  241) ! Or la BDAP attend un rangt N->S pour les grilles lat-lon.
+(  242) ! FA renverse donc les champs issus de Full-Pos avant codage GRIBEX.
+(  243) ! 
+(  244) FA%CADRE(KRANGC)%NSEC2LL(11)=0
+(  245) ! Nombre de parametres pour la coord. verticale
+(  246) FA%CADRE(KRANGC)%NSEC2LL(12)=0
+(  247) ! Latitude du pole sud de rotation
+(  248) FA%CADRE(KRANGC)%NSEC2LL(13)=0
+(  249) ! Longitude du pole sud de rotation
+(  250) FA%CADRE(KRANGC)%NSEC2LL(14)=0
+(  251) ! Latitude et longitude du pole d'etirement
+(  252) FA%CADRE(KRANGC)%NSEC2LL(15)=0
+(  253) FA%CADRE(KRANGC)%NSEC2LL(16)=0
+(  254) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  255) FA%CADRE(KRANGC)%NSEC2LL(17)=0
+(  256) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  257) FA%CADRE(KRANGC)%NSEC2LL(18)=0
+(  258) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  259) FA%CADRE(KRANGC)%NSEC2LL(19)=0
+(  260) ! Reserves
+(  261) FA%CADRE(KRANGC)%NSEC2LL(20:22)=0
+(  262) !**
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 7
+
+(  263) !     4.  -  KSEC2 POUR LA GRILLE LAT-LON QUASI-REGULIERE ALADIN
+(  264) !            (en fait, tenue de camouflage pour les coeff spectraux
+(  265) !             que l'on va ranger en balayant le 1/4 de l'ellipse
+(  266) !             verticalement: axe X=axe n (nb d'onde meridien) et
+(  267) !             axe Y=axe m (nb d'onde zonal) afin de suivre le rangt
+(  268) !             dans le modele. Seuls les coeff spectraux qui seront
+(  269) !             compactes sont stockes sur la grille lat-lon, soit
+(  270) !             tous sauf ceux des axes et ceux inclus dans le carre
+(  271) !             delimite par la ss-tronc de non-compactage).
+(  272) !-----------------------------------------------------------------------
+(  273) !
+(  274) ! Type de representation de donnees
+(  275) FA%CADRE(KRANGC)%NSEC2AL(1)=0
+(  276) ! Nb de pts sur un parallele: valeur manquante
+(  277) FA%CADRE(KRANGC)%NSEC2AL(2)=2**16 -1
+(  278) ! Nb de pts sur une longitude: nombre d'onde zonal max -1
+(  279) ! associe au nombre d'onde meridien 1 (les CSP sur les axes sont
+(  280) ! extraits des champs de CSP puisque non compactes)
+(  281) FA%CADRE(KRANGC)%NSEC2AL(3)=(FA%CADRE(KRANGC)%NOZPAR(6)-        &
+(  282) &                      FA%CADRE(KRANGC)%NOZPAR(5)+1)/4 -1
+(  283) ! Latitude (1/1000 degre) du premier pt de grille: valeur bidon
+(  284) FA%CADRE(KRANGC)%NSEC2AL(4)=0
+(  285) ! Longitude (1/1000 degre) du premier pt de grille: valeur bidon
+(  286) FA%CADRE(KRANGC)%NSEC2AL(5)=0
+(  287) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  288) FA%CADRE(KRANGC)%NSEC2AL(6)=0
+(  289) ! Latitude (1/1000 degre) du dernier pt de grille: valeur bidon
+(  290) FA%CADRE(KRANGC)%NSEC2AL(7)=40000
+(  291) ! Longitude (1/1000 degre) du dernier pt de grille: valeur bidon
+(  292) FA%CADRE(KRANGC)%NSEC2AL(8)=40000
+(  293) ! Increment zonal (1/1000 degre)
+(  294) FA%CADRE(KRANGC)%NSEC2AL(9)=2**16 -1
+(  295) ! Increment meridien (1/1000 degre): deduit des valeurs bidon
+(  296) FA%CADRE(KRANGC)%NSEC2AL(10)=(FA%CADRE(KRANGC)%NSEC2AL(7)-FA%CADRE(KRANGC)%NSEC2AL(4))/ &
+(  297) &                   (FA%CADRE(KRANGC)%NSEC2AL(3)-1)
+(  298) ! Flag pour le mode de balayage
+(  299) FA%CADRE(KRANGC)%NSEC2AL(11)=0
+(  300) ! Nombre de parametres pour la coord. verticale
+(  301) FA%CADRE(KRANGC)%NSEC2AL(12)=0
+(  302) ! Latitude du pole sud de rotation
+(  303) FA%CADRE(KRANGC)%NSEC2AL(13)=0
+(  304) ! Longitude du pole sud de rotation
+(  305) FA%CADRE(KRANGC)%NSEC2AL(14)=0
+(  306) ! Latitude et longitude du pole d'etirement
+(  307) FA%CADRE(KRANGC)%NSEC2AL(15)=0
+(  308) FA%CADRE(KRANGC)%NSEC2AL(16)=0
+(  309) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  310) FA%CADRE(KRANGC)%NSEC2AL(17)=1
+(  311) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  312) FA%CADRE(KRANGC)%NSEC2AL(18)=0
+(  313) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  314) FA%CADRE(KRANGC)%NSEC2AL(19)=0
+(  315) ! Reserves
+(  316) FA%CADRE(KRANGC)%NSEC2AL(20:22)=0
+(  317) ! Les valeurs (22+1:22+FA%MTRONC(KRANGC)-1) representant les nb de pts
+(  318) ! le long de chaque parallele (ici, le nb de coeff spectraux
+(  319) ! pour un meme n (et -n), excepte le triangle et les axes non
+(  320) ! compactes) dependent de la ss-troncature qui depend du fichier
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 8
+
+(  321) ! et ne seront donc pas stockes dans le tableau FA%NSEC2AL qui
+(  322) ! depend du cadre. Le tableau FA%NSC2ALF(FA%JPXTRO-1,FA%JPNXFA) les
+(  323) ! contiendra.
+(  324) !
+(  325) !**
+(  326) !     5.  -  KSEC2 POUR LA GRILLE LAMBERT CONFORME (CAS GENERAL ALADIN)
+(  327) !-------------------------------------------------------------------------
+(  328) !
+(  329) ! Type de representation de donnees
+(  330) FA%CADRE(KRANGC)%NSEC2LA(1)=3
+(  331) ! Nb de pts sur un parallele
+(  332) FA%CADRE(KRANGC)%NSEC2LA(2)=FA%CADRE(KRANGC)%NXLOPA
+(  333) ! Nb de pts sur une longitude
+(  334) FA%CADRE(KRANGC)%NSEC2LA(3)=INLAT
+(  335) !
+(  336) ! Les parametres communs sont regroupes
+(  337) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  338) FA%CADRE(KRANGC)%NSEC2LA(6)=128
+(  339) ! Reserve
+(  340) FA%CADRE(KRANGC)%NSEC2LA(8)=0
+(  341) ! Flag pour le mode de balayage: W->E et S->N = 64; W->E et N->S = 0
+(  342) FA%CADRE(KRANGC)%NSEC2LA(11)=64
+(  343) ! Nombre de parametres pour la coord. verticale
+(  344) FA%CADRE(KRANGC)%NSEC2LA(12)=0
+(  345) ! Latitude (1/1000 degre) du premier pt de grille
+(  346) FA%CADRE(KRANGC)%NSEC2LA(4)=NINT(ZRAMDE*ZLATPRE,KIND=JPLIKB)
+(  347) ! Longitude (1/1000 degre) du premier pt de grille
+(  348) FA%CADRE(KRANGC)%NSEC2LA(5)=NINT(ZRAMDE*ZLONPRE,KIND=JPLIKB)
+(  349) !
+(  350) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(5))
+(  351) !
+(  352) ! TEST POUR OLD/NEW EGGX
+(  353) IF (FA%CADRE(KRANGC)%SINLAT(1) .GE. 0) THEN
+(  354) ! Old EGGX
+(  355) ! Orientation de la grille
+(  356) FA%CADRE(KRANGC)%NSEC2LA(7)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(8), &
+(  357) &                          KIND=JPLIKB)
+(  358) !
+(  359) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(7))
+(  360) ! Dimension de la maille dans la direction X
+(  361) FA%CADRE(KRANGC)%NSEC2LA(9)=NINT(FA%CADRE(KRANGC)%SINLAT(15),KIND=JPLIKB)
+(  362) ! Dimension de la maille dans la direction Y
+(  363) FA%CADRE(KRANGC)%NSEC2LA(10)=NINT(FA%CADRE(KRANGC)%SINLAT(16),KIND=JPLIKB)
+(  364) ! Flag pour le centre de projection
+(  365) ! (0: le pole Nord est sur le plan de projection
+(  366) !  et 1 seul centre de projection est utilise;
+(  367) !  128: idem sauf que c'est le pole Sud)
+(  368) IF (FA%CADRE(KRANGC)%SINLAT(9).GE.0) THEN
+(  369)   FA%CADRE(KRANGC)%NSEC2LA(13)=0
+(  370) ELSE
+(  371)   FA%CADRE(KRANGC)%NSEC2LA(13)=128
+(  372) ENDIF
+(  373) ! Premiere latitude depuis le pole ou le cone coupe la sphere
+(  374) FA%CADRE(KRANGC)%NSEC2LA(14)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(9), &
+(  375) &                           KIND=JPLIKB)
+(  376) ! Deuxieme latitude depuis le pole ou le cone coupe la sphere
+(  377) ! Dans Aladin, le plan de projection est rarement secant (cela
+(  378) ! releve plus d'un domaine mal defini que d'un choix) et cette
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 9
+
+(  379) ! possibilite va disparaitre bientot. Comme le calcul de cette
+(  380) ! seconde latitude n'est pas aise (pb de convergence), on va
+(  381) ! declarer la grille tangente! mais avec un WARNING...
+(  382) FA%CADRE(KRANGC)%NSEC2LA(15)=FA%CADRE(KRANGC)%NSEC2LA(14)
+(  383) IF (ABS(FA%CADRE(KRANGC)%SINLAT(10)-SIN(FA%CADRE(KRANGC)%SINLAT(9))) &
+(  384) &    .GT.1.E-10_JPDBLR .AND. FA%LFAMOP) THEN
+(  385)   WRITE (UNIT=FA%NULOUT,FMT=*)                                   &
+(  386) &          ' FAISC2: WARNING !! La grille Lambert coupe en fait', &
+(  387) &          ' la sphere, mais sera consideree comme tangente'
+(  388) ENDIF
+(  389) ELSE
+(  390) ! NEW EGGX
+(  391) ! Orientation de la grille
+(  392) FA%CADRE(KRANGC)%NSEC2LA(7)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(3), &
+(  393) &                          KIND=JPLIKB)
+(  394) !
+(  395) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(7))
+(  396) ! Dimension de la maille dans la direction X
+(  397) FA%CADRE(KRANGC)%NSEC2LA(9)=NINT(FA%CADRE(KRANGC)%SINLAT(7),KIND=JPLIKB)
+(  398) ! Dimension de la maille dans la direction Y
+(  399) FA%CADRE(KRANGC)%NSEC2LA(10)=NINT(FA%CADRE(KRANGC)%SINLAT(8),KIND=JPLIKB)
+(  400) ! Flag pour le centre de projection
+(  401) ! (0: le pole Nord est sur le plan de projection
+(  402) !  et 1 seul centre de projection est utilise;
+(  403) !  128: idem sauf que c'est le pole Sud)
+(  404) IF (FA%CADRE(KRANGC)%SINLAT(4).GE.0) THEN
+(  405)   FA%CADRE(KRANGC)%NSEC2LA(13)=0
+(  406) ELSE
+(  407)   FA%CADRE(KRANGC)%NSEC2LA(13)=128
+(  408) ENDIF
+(  409) ! Premiere latitude depuis le pole ou le cone coupe la sphere
+(  410) FA%CADRE(KRANGC)%NSEC2LA(14)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(4), &
+(  411) &                           KIND=JPLIKB)
+(  412) ! NEW EGGX toujours tangent
+(  413) FA%CADRE(KRANGC)%NSEC2LA(15)=FA%CADRE(KRANGC)%NSEC2LA(14)
+(  414) ENDIF
+(  415) 
+(  416) ! Reserve
+(  417) FA%CADRE(KRANGC)%NSEC2LA(16)=0
+(  418) ! Flag:      0 -> grille reguliere
+(  419) FA%CADRE(KRANGC)%NSEC2LA(17)=0
+(  420) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  421) FA%CADRE(KRANGC)%NSEC2LA(18)=0
+(  422) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  423) FA%CADRE(KRANGC)%NSEC2LA(19)=8
+(  424) ! Latitude du pole sud
+(  425) FA%CADRE(KRANGC)%NSEC2LA(20)=0
+(  426) ! Longitude du pole sud
+(  427) FA%CADRE(KRANGC)%NSEC2LA(21)=0
+(  428) ! Reserve
+(  429) FA%CADRE(KRANGC)%NSEC2LA(22)=0
+(  430) !**
+(  431) !     6.  -  PARTIE REELLE DE LA SECTION 2 DE GRIBEX
+(  432) !-----------------------------------------------------------------------
+(  433) !
+(  434) 600 CONTINUE
+(  435) ! Angle de rotation
+(  436) FA%CADRE(KRANGC)%XSEC2(1)=0._JPDBLR
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 10
+
+(  437) ! Coefficient d'etirement
+(  438) FA%CADRE(KRANGC)%XSEC2(2)=FA%CADRE(KRANGC)%SCODIL
+(  439) ! Reserve
+(  440) FA%CADRE(KRANGC)%XSEC2(3:10)=0._JPDBLR
+(  441) ! Parametres pour la coordonnee verticale
+(  442) FA%CADRE(KRANGC)%XSEC2(11:11+INIVAU)=FA%CADRE(KRANGC)%SFOHYB(1,0:INIVAU)* &
+(  443) &                           FA%CADRE(KRANGC)%SPREFE
+(  444) FA%CADRE(KRANGC)%XSEC2(12+INIVAU:12+2*INIVAU)= &
+(  445) &     FA%CADRE(KRANGC)%SFOHYB(2,0:INIVAU)
+(  446) !**
+(  447) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  448) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  449) !-----------------------------------------------------------------------
+(  450) !
+(  451) 1001 CONTINUE
+(  452) !
+(  453) IF (FA%LFAMOP.OR.KREP.NE.0) THEN
+(  454)   INIMES=2
+(  455)   CLNSPR='FAISC2'
+(  456)   INUMER=JPNIIL
+(  457) !
+(  458)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANGC='',I4)') &
+(  459) &     KREP, KRANGC
+(  460)   CALL FAIPAR_MT64                                      &
+(  461) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  462) &                  CLNSPR,CLNSPR,.FALSE.)
+(  463) ENDIF
+(  464) 
+(  465) !
+(  466) IF (LHOOK) CALL DR_HOOK('FAISC2_MT',1,ZHOOK_HANDLE)
+(  467) 
+(  468) CONTAINS
+(  469) 
+(  470) SUBROUTINE LON360000 (KLON)
+(  471) 
+(  472) INTEGER (KIND=JPLIKB) :: KLON
+(  473) 
+(  474) KLON = MODULO (KLON, 360000_JPLIKB)
+(  475) 
+(  476) END SUBROUTINE LON360000
+(  477) 
+(  478) END SUBROUTINE FAISC2_MT64
+(  479) 
+(  480) 
+(  481) 
+(  482) ! Oct-2012 P. Marguinaud 64b LFI
+(  483) SUBROUTINE FAISC264           &
+(  484) &           (KREP, KRANGC)
+(  485) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  486) &                   FA_COM_DEFAULT_INIT,  &
+(  487) &                   NEW_FA_DEFAULT
+(  488) USE LFI_PRECISION
+(  489) IMPLICIT NONE
+(  490) ! Arguments
+(  491) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  492) INTEGER (KIND=JPLIKB)  KRANGC                                 ! IN   
+(  493) 
+(  494) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 11
+
+(  495) 
+(  496) CALL FAISC2_MT64             &
+(  497) &           (FA, KREP, KRANGC)
+(  498) 
+(  499) END SUBROUTINE FAISC264
+(  500) 
+(  501) SUBROUTINE FAISC2             &
+(  502) &           (KREP, KRANGC)
+(  503) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  504) &                   FA_COM_DEFAULT_INIT,  &
+(  505) &                   NEW_FA_DEFAULT
+(  506) USE LFI_PRECISION
+(  507) IMPLICIT NONE
+(  508) ! Arguments
+(  509) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  510) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  511) 
+(  512) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  513) 
+(  514) CALL FAISC2_MT               &
+(  515) &           (FA, KREP, KRANGC)
+(  516) 
+(  517) END SUBROUTINE FAISC2
+(  518) 
+(  519) SUBROUTINE FAISC2_MT             &
+(  520) &           (FA, KREP, KRANGC)
+(  521) USE FA_MOD, ONLY : FA_COM
+(  522) USE LFI_PRECISION
+(  523) IMPLICIT NONE
+(  524) ! Arguments
+(  525) TYPE (FA_COM)          FA                                     ! INOUT
+(  526) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  527) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  528) ! Local integers
+(  529) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  530) INTEGER (KIND=JPLIKB)  IRANGC                                 ! IN   
+(  531) ! Convert arguments
+(  532) 
+(  533) IRANGC     = INT (    KRANGC, JPLIKB)
+(  534) 
+(  535) CALL FAISC2_MT64             &
+(  536) &           (FA, IREP, IRANGC)
+(  537) 
+(  538) KREP       = INT (      IREP, JPLIKM)
+(  539) 
+(  540) END SUBROUTINE FAISC2_MT
+(  541) 
+(  542) !INTF KREP            OUT 
+(  543) !INTF KRANGC        IN    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 12
+
+(    1) # 1 "faisc2.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FAISC2_MT64                   &
+(    4) &                     (FA,  KREP, KRANGC )
+(    5) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Ce sous-programme initialise des tableaux "reference" de
+(   12) !      l'en-tete GRIB, section 2: les differents types de grille
+(   13) !      sont abordes (routine appelee une seule fois pour un cadre donne)
+(   14) !**
+(   15) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   16) !                KRANGC (Entree) ==> Rang dans la table des cadres;
+(   17) !*
+(   18) !
+(   19) !
+(   20) !
+(   21) TYPE(FA_COM) :: FA
+(   22) INTEGER (KIND=JPLIKB) KREP, KRANGC
+(   23) !
+(   24) REAL (KIND=JPDBLR) :: ZPI, ZRAMDE, ZLATPRE,     &
+(   25) &                      ZLATDER, ZLONPRE, ZLONDER
+(   26) REAL (KIND=JPDBLR), PARAMETER :: ONE = 1.0_JPDBLR
+(   27) !
+(   28) INTEGER (KIND=JPLIKB) INLAT, INIVAU, INUMER, INIMES
+(   29) !
+(   30) LOGICAL LLMLAM
+(   31) !
+(   32) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   33) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   34) # 35 "faisc2.F90"
+(   35) !**
+(   36) !     0.  -  INITIALISATIONS PREALABLES
+(   37) !-----------------------------------------------------------------------
+(   38) !
+(   39) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   40) IF (LHOOK) CALL DR_HOOK('FAISC2_MT',0,ZHOOK_HANDLE)
+(   41) KREP=0
+(   42) IF (KRANGC.LE.0.OR.KRANGC.GT.FA%JPNXCA) THEN
+(   43)   KREP=-66
+(   44)   GOTO 1001
+(   45) ENDIF
+(   46) INLAT  = FA%CADRE(KRANGC)%NLATIT
+(   47) INIVAU = FA%CADRE(KRANGC)%NNIVER
+(   48) LLMLAM = FA%CADRE(KRANGC)%LIMLAM
+(   49) ZPI = 2._JPDBLR*ASIN(1._JPDBLR)
+(   50) ! Conversion des radians en 1/1000 de degre
+(   51) ZRAMDE = 180000._JPDBLR/ZPI
+(   52) !
+(   53) IF (LLMLAM) GOTO 300
+(   54) !**
+(   55) !     1.  -  KSEC2 POUR LA REPRESENTATION SPECTRALE ARPEGE
+(   56) !-----------------------------------------------------------------------
+(   57) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 13
+
+(   58) ! Type de representation de donnees
+(   59) !
+(   60) ! FA%SSLAPO=sinus latitude du pole d'interet
+(   61) ! (si=1, pole=pole N et pas de rotation)
+(   62) ! FA%SCODIL=coeff de dilation (si =1, pas de dilatation)
+(   63) IF ((1._JPDBLR-FA%CADRE(KRANGC)%SSLAPO).LE.1.E-10_JPDBLR) THEN
+(   64)   FA%CADRE(KRANGC)%NSEC2SP(1)=70
+(   65)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(   66)     FA%CADRE(KRANGC)%NSEC2SP(1)=50
+(   67)   ENDIF
+(   68) ELSE
+(   69)   FA%CADRE(KRANGC)%NSEC2SP(1)=80
+(   70)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(   71)     FA%CADRE(KRANGC)%NSEC2SP(1)=60
+(   72)   ENDIF
+(   73) ENDIF
+(   74) ! Troncature (3 fois la meme si triangulaire)
+(   75) FA%CADRE(KRANGC)%NSEC2SP(2) =FA%CADRE(KRANGC)%MTRONC
+(   76) FA%CADRE(KRANGC)%NSEC2SP(3) =FA%CADRE(KRANGC)%MTRONC
+(   77) FA%CADRE(KRANGC)%NSEC2SP(4) =FA%CADRE(KRANGC)%MTRONC
+(   78) ! Type de representation
+(   79) FA%CADRE(KRANGC)%NSEC2SP(5) =1
+(   80) ! Mode de representation (2->complex packing)
+(   81) FA%CADRE(KRANGC)%NSEC2SP(6) =2
+(   82) ! Reserves
+(   83) FA%CADRE(KRANGC)%NSEC2SP(7:11)=0
+(   84) ! Nb de parametres pour la coord verticale
+(   85) ! On prend ici le cas de la coordonnee hybride
+(   86) ! mais le cas de la coord pression sera aisement
+(   87) ! pris en compte + tard (KSEC2(12)=0).
+(   88) FA%CADRE(KRANGC)%NSEC2SP(12)=2*(INIVAU+1)
+(   89) ! Latitude du pole sud de rotation
+(   90) FA%CADRE(KRANGC)%NSEC2SP(13)=0
+(   91) ! Longitude du pole sud de rotation
+(   92) FA%CADRE(KRANGC)%NSEC2SP(14)=0
+(   93) ! Lat et lon du pole d'etirement
+(   94) IF (FA%CADRE(KRANGC)%NTYPTR.GE.2) THEN
+(   95)   FA%CADRE(KRANGC)%NSEC2SP(15)=INT (ZRAMDE*ASIN(FA%CADRE(KRANGC)%SSLAPO),  &
+(   96) &                             JPLIKB)
+(   97)   FA%CADRE(KRANGC)%NSEC2SP(16)=INT (ZRAMDE*                       &
+(   98) &    (SIGN(ONE,FA%CADRE(KRANGC)%SSLOPO)*ACOS(FA%CADRE(KRANGC)%SCLOPO)), &
+(   99) &    JPLIKB)
+(  100) ELSE
+(  101)   FA%CADRE(KRANGC)%NSEC2SP(15)=0
+(  102)   FA%CADRE(KRANGC)%NSEC2SP(16)=0
+(  103) ENDIF
+(  104) ! Reserves
+(  105) FA%CADRE(KRANGC)%NSEC2SP(17:22)=0
+(  106) !**
+(  107) !     2.  -  KSEC2 POUR LA GRILLE DE GAUSS (ARPEGE)
+(  108) !-----------------------------------------------------------------------
+(  109) !
+(  110) ! Type de representation de donnees
+(  111) !
+(  112) ! FA%SSLAPO=sinus latitude du pole d'interet
+(  113) ! (si=1, pole=pole N et pas de rotation)
+(  114) ! FA%SCODIL=coeff de dilation (si =1, pas de dilatation)
+(  115) IF ((1._JPDBLR-FA%CADRE(KRANGC)%SSLAPO).LE.1.E-10_JPDBLR) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 14
+
+(  116)   FA%CADRE(KRANGC)%NSEC2GG(1)=24
+(  117)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(  118)     FA%CADRE(KRANGC)%NSEC2GG(1)=4
+(  119)   ENDIF
+(  120) ELSE
+(  121)   FA%CADRE(KRANGC)%NSEC2GG(1)=34
+(  122)   IF (ABS(FA%CADRE(KRANGC)%SCODIL-1._JPDBLR).LE.1.E-10_JPDBLR) THEN
+(  123)     FA%CADRE(KRANGC)%NSEC2GG(1)=14
+(  124)   ENDIF
+(  125) ENDIF
+(  126) ! Nb de pts sur un parallele
+(  127) FA%CADRE(KRANGC)%NSEC2GG(2)=FA%CADRE(KRANGC)%NXLOPA
+(  128) ! Nb de pts sur une longitude
+(  129) FA%CADRE(KRANGC)%NSEC2GG(3)=INLAT
+(  130) ZLATPRE=ASIN(MAX(-1._JPDBLR,MIN(1._JPDBLR,FA%CADRE(KRANGC)%SINLAT(1))))
+(  131) ! Latitude (1/1000 degre) du premier pt de grille
+(  132) FA%CADRE(KRANGC)%NSEC2GG(4)=INT (ZRAMDE*ZLATPRE, JPLIKB)
+(  133) ! Longitude (1/1000 degre) du premier pt de grille
+(  134) FA%CADRE(KRANGC)%NSEC2GG(5)=0
+(  135) ! Flag pour la resolution (0->on ne donne pas l'increment)
+(  136) FA%CADRE(KRANGC)%NSEC2GG(6)=0
+(  137) ! Latitude (1/1000 degre) du dernier pt de grille
+(  138) FA%CADRE(KRANGC)%NSEC2GG(7)=-FA%CADRE(KRANGC)%NSEC2GG(4)
+(  139) ! Longitude (1/1000 degre) du dernier pt de grille.
+(  140) ! (FA%NLOPAR(1,KRANGC)=nb de longitudes sur le 1er parallele)
+(  141) FA%CADRE(KRANGC)%NSEC2GG(8)=-360000/FA%CADRE(KRANGC)%NLOPAR(1)
+(  142) ! Increment zonal (1/1000 degre)
+(  143) ! Pas de sens ici.
+(  144) FA%CADRE(KRANGC)%NSEC2GG(9)=0
+(  145) ! Nb de paralleles entre le pole et l'equateur
+(  146) FA%CADRE(KRANGC)%NSEC2GG(10)=(INLAT+1)/2
+(  147) ! Flag pour le mode de balayage
+(  148) FA%CADRE(KRANGC)%NSEC2GG(11)=0
+(  149) ! Nombre de parametres pour la coord. verticale
+(  150) FA%CADRE(KRANGC)%NSEC2GG(12)=0
+(  151) ! Latitude du pole sud de rotation
+(  152) FA%CADRE(KRANGC)%NSEC2GG(13)=0
+(  153) ! Longitude du pole sud de rotation
+(  154) FA%CADRE(KRANGC)%NSEC2GG(14)=0
+(  155) ! Latitude et longitude du pole d'etirement
+(  156) IF (FA%CADRE(KRANGC)%NTYPTR.GE.2) THEN
+(  157)   FA%CADRE(KRANGC)%NSEC2GG(15)=INT (ZRAMDE*ASIN(FA%CADRE(KRANGC)%SSLAPO),  &
+(  158) &                             JPLIKB)
+(  159)   FA%CADRE(KRANGC)%NSEC2GG(16)=INT (ZRAMDE*                        &
+(  160) &     (SIGN(ONE,FA%CADRE(KRANGC)%SSLOPO)*ACOS(FA%CADRE(KRANGC)%SCLOPO)), &
+(  161) &     JPLIKB)
+(  162) ELSE
+(  163)   FA%CADRE(KRANGC)%NSEC2GG(15)=0
+(  164)   FA%CADRE(KRANGC)%NSEC2GG(16)=0
+(  165) ENDIF
+(  166) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  167) IF (FA%CADRE(KRANGC)%NLOPAR(1)==FA%CADRE(KRANGC)%NLOPAR((1+INLAT)/2)) THEN
+(  168)   FA%CADRE(KRANGC)%NSEC2GG(17)=0
+(  169) ELSE
+(  170)   FA%CADRE(KRANGC)%NSEC2GG(17)=1
+(  171) ENDIF
+(  172) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  173) FA%CADRE(KRANGC)%NSEC2GG(18)=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 15
+
+(  174) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  175) FA%CADRE(KRANGC)%NSEC2GG(19)=0
+(  176) ! Reserves
+(  177) FA%CADRE(KRANGC)%NSEC2GG(20:22)=0
+(  178) ! Pour les grilles reduites, nb de points sur chaque parallele
+(  179) FA%CADRE(KRANGC)%NSEC2GG(23:22+(1+INLAT)/2)=            &
+(  180) &                 FA%CADRE(KRANGC)%NLOPAR(1:(1+INLAT)/2)
+(  181) FA%CADRE(KRANGC)%NSEC2GG(23-MOD(INLAT,2_JPLIKB )+(1+INLAT)/2:22+INLAT)=  &
+(  182) &                               FA%CADRE(KRANGC)%NLOPAR((1+INLAT)/2:1:-1)
+(  183) GOTO 600
+(  184) !**
+(  185) !     3.  -  KSEC2 POUR LA GRILLE LAT-LON (CAS FULL-POS, ARPEGE OU ALADIN)
+(  186) !-------------------------------------------------------------------------
+(  187) !
+(  188) 300 CONTINUE
+(  189) ! TEST POUR NEW EGGX
+(  190) IF (FA%CADRE(KRANGC)%SINLAT(1) .GE. 0) THEN
+(  191) ! OLD EGGX
+(  192) ZLATPRE=FA%CADRE(KRANGC)%SINLAT(7)
+(  193) ZLONPRE=FA%CADRE(KRANGC)%SINLAT(4)
+(  194) ZLATDER=FA%CADRE(KRANGC)%SINLAT(5)
+(  195) ZLONDER=FA%CADRE(KRANGC)%SINLAT(6)
+(  196) ! Type de representation de donnees
+(  197) ELSE
+(  198) ! NEW EGGX
+(  199) ZLATPRE=FA%CADRE(KRANGC)%SINLAT(16)
+(  200) ZLONPRE=FA%CADRE(KRANGC)%SINLAT(13)
+(  201) ZLATDER=FA%CADRE(KRANGC)%SINLAT(14)
+(  202) ZLONDER=FA%CADRE(KRANGC)%SINLAT(15)
+(  203) ENDIF
+(  204) !
+(  205) ! Type de representation de donnees
+(  206) FA%CADRE(KRANGC)%NSEC2LL(1)=0
+(  207) ! Nb de pts sur un parallele
+(  208) FA%CADRE(KRANGC)%NSEC2LL(2)=FA%CADRE(KRANGC)%NXLOPA
+(  209) ! Nb de pts sur une longitude
+(  210) FA%CADRE(KRANGC)%NSEC2LL(3)=INLAT
+(  211) ! Latitude (1/1000 degre) du premier pt de grille
+(  212) FA%CADRE(KRANGC)%NSEC2LL(4)=NINT(ZRAMDE*ZLATPRE,KIND=JPLIKB)
+(  213) ! Longitude (1/1000 degre) du premier pt de grille
+(  214) FA%CADRE(KRANGC)%NSEC2LL(5)=NINT(ZRAMDE*ZLONPRE,KIND=JPLIKB)
+(  215) !
+(  216) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LL(5))
+(  217) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  218) FA%CADRE(KRANGC)%NSEC2LL(6)=128
+(  219) ! Latitude (1/1000 degre) du dernier pt de grille
+(  220) FA%CADRE(KRANGC)%NSEC2LL(7)=NINT(ZRAMDE*ZLATDER,KIND=JPLIKB)
+(  221) ! Longitude (1/1000 degre) du dernier pt de grille
+(  222) FA%CADRE(KRANGC)%NSEC2LL(8)=NINT(ZRAMDE*ZLONDER,KIND=JPLIKB)
+(  223) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LL(8))
+(  224) ! Increment zonal (1/1000 degre)
+(  225) IF (ZLONPRE.GT.ZLONDER) THEN
+(  226)   FA%CADRE(KRANGC)%NSEC2LL(9)=                         &
+(  227) &    NINT((ZLONDER+2._JPDBLR*ZPI-ZLONPRE)*ZRAMDE &
+(  228) &         /(FA%CADRE(KRANGC)%NXLOPA-1),                &
+(  229) &         KIND=JPLIKB)
+(  230) ELSE
+(  231)   FA%CADRE(KRANGC)%NSEC2LL(9)=                                      &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 16
+
+(  232) &        NINT((ZLONDER-ZLONPRE)*ZRAMDE/(FA%CADRE(KRANGC)%NXLOPA-1), &
+(  233) &             KIND=JPLIKB)
+(  234) ENDIF
+(  235) ! Increment meridien (1/1000 degre)
+(  236) FA%CADRE(KRANGC)%NSEC2LL(10)=                             &
+(  237) &          NINT((ZLATPRE-ZLATDER)*ZRAMDE/(INLAT-1), &
+(  238) &               KIND=JPLIKB)
+(  239) ! Flag pour le mode de balayage: W->E et S->N = 64; W->E et N->S = 0
+(  240) ! Full-Pos produit des champs lat-lon ranges S->N pour ARP et ALD.
+(  241) ! Or la BDAP attend un rangt N->S pour les grilles lat-lon.
+(  242) ! FA renverse donc les champs issus de Full-Pos avant codage GRIBEX.
+(  243) ! 
+(  244) FA%CADRE(KRANGC)%NSEC2LL(11)=0
+(  245) ! Nombre de parametres pour la coord. verticale
+(  246) FA%CADRE(KRANGC)%NSEC2LL(12)=0
+(  247) ! Latitude du pole sud de rotation
+(  248) FA%CADRE(KRANGC)%NSEC2LL(13)=0
+(  249) ! Longitude du pole sud de rotation
+(  250) FA%CADRE(KRANGC)%NSEC2LL(14)=0
+(  251) ! Latitude et longitude du pole d'etirement
+(  252) FA%CADRE(KRANGC)%NSEC2LL(15)=0
+(  253) FA%CADRE(KRANGC)%NSEC2LL(16)=0
+(  254) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  255) FA%CADRE(KRANGC)%NSEC2LL(17)=0
+(  256) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  257) FA%CADRE(KRANGC)%NSEC2LL(18)=0
+(  258) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  259) FA%CADRE(KRANGC)%NSEC2LL(19)=0
+(  260) ! Reserves
+(  261) FA%CADRE(KRANGC)%NSEC2LL(20:22)=0
+(  262) !**
+(  263) !     4.  -  KSEC2 POUR LA GRILLE LAT-LON QUASI-REGULIERE ALADIN
+(  264) !            (en fait, tenue de camouflage pour les coeff spectraux
+(  265) !             que l'on va ranger en balayant le 1/4 de l'ellipse
+(  266) !             verticalement: axe X=axe n (nb d'onde meridien) et
+(  267) !             axe Y=axe m (nb d'onde zonal) afin de suivre le rangt
+(  268) !             dans le modele. Seuls les coeff spectraux qui seront
+(  269) !             compactes sont stockes sur la grille lat-lon, soit
+(  270) !             tous sauf ceux des axes et ceux inclus dans le carre
+(  271) !             delimite par la ss-tronc de non-compactage).
+(  272) !-----------------------------------------------------------------------
+(  273) !
+(  274) ! Type de representation de donnees
+(  275) FA%CADRE(KRANGC)%NSEC2AL(1)=0
+(  276) ! Nb de pts sur un parallele: valeur manquante
+(  277) FA%CADRE(KRANGC)%NSEC2AL(2)=2**16 -1
+(  278) ! Nb de pts sur une longitude: nombre d'onde zonal max -1
+(  279) ! associe au nombre d'onde meridien 1 (les CSP sur les axes sont
+(  280) ! extraits des champs de CSP puisque non compactes)
+(  281) FA%CADRE(KRANGC)%NSEC2AL(3)=(FA%CADRE(KRANGC)%NOZPAR(6)-        &
+(  282) &                      FA%CADRE(KRANGC)%NOZPAR(5)+1)/4 -1
+(  283) ! Latitude (1/1000 degre) du premier pt de grille: valeur bidon
+(  284) FA%CADRE(KRANGC)%NSEC2AL(4)=0
+(  285) ! Longitude (1/1000 degre) du premier pt de grille: valeur bidon
+(  286) FA%CADRE(KRANGC)%NSEC2AL(5)=0
+(  287) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  288) FA%CADRE(KRANGC)%NSEC2AL(6)=0
+(  289) ! Latitude (1/1000 degre) du dernier pt de grille: valeur bidon
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 17
+
+(  290) FA%CADRE(KRANGC)%NSEC2AL(7)=40000
+(  291) ! Longitude (1/1000 degre) du dernier pt de grille: valeur bidon
+(  292) FA%CADRE(KRANGC)%NSEC2AL(8)=40000
+(  293) ! Increment zonal (1/1000 degre)
+(  294) FA%CADRE(KRANGC)%NSEC2AL(9)=2**16 -1
+(  295) ! Increment meridien (1/1000 degre): deduit des valeurs bidon
+(  296) FA%CADRE(KRANGC)%NSEC2AL(10)=(FA%CADRE(KRANGC)%NSEC2AL(7)-FA%CADRE(KRANGC)%NSEC2AL(4))/ &
+(  297) &                   (FA%CADRE(KRANGC)%NSEC2AL(3)-1)
+(  298) ! Flag pour le mode de balayage
+(  299) FA%CADRE(KRANGC)%NSEC2AL(11)=0
+(  300) ! Nombre de parametres pour la coord. verticale
+(  301) FA%CADRE(KRANGC)%NSEC2AL(12)=0
+(  302) ! Latitude du pole sud de rotation
+(  303) FA%CADRE(KRANGC)%NSEC2AL(13)=0
+(  304) ! Longitude du pole sud de rotation
+(  305) FA%CADRE(KRANGC)%NSEC2AL(14)=0
+(  306) ! Latitude et longitude du pole d'etirement
+(  307) FA%CADRE(KRANGC)%NSEC2AL(15)=0
+(  308) FA%CADRE(KRANGC)%NSEC2AL(16)=0
+(  309) ! Flag:      0 -> grille reguliere,  1 -> grille reduite
+(  310) FA%CADRE(KRANGC)%NSEC2AL(17)=1
+(  311) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  312) FA%CADRE(KRANGC)%NSEC2AL(18)=0
+(  313) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  314) FA%CADRE(KRANGC)%NSEC2AL(19)=0
+(  315) ! Reserves
+(  316) FA%CADRE(KRANGC)%NSEC2AL(20:22)=0
+(  317) ! Les valeurs (22+1:22+FA%MTRONC(KRANGC)-1) representant les nb de pts
+(  318) ! le long de chaque parallele (ici, le nb de coeff spectraux
+(  319) ! pour un meme n (et -n), excepte le triangle et les axes non
+(  320) ! compactes) dependent de la ss-troncature qui depend du fichier
+(  321) ! et ne seront donc pas stockes dans le tableau FA%NSEC2AL qui
+(  322) ! depend du cadre. Le tableau FA%NSC2ALF(FA%JPXTRO-1,FA%JPNXFA) les
+(  323) ! contiendra.
+(  324) !
+(  325) !**
+(  326) !     5.  -  KSEC2 POUR LA GRILLE LAMBERT CONFORME (CAS GENERAL ALADIN)
+(  327) !-------------------------------------------------------------------------
+(  328) !
+(  329) ! Type de representation de donnees
+(  330) FA%CADRE(KRANGC)%NSEC2LA(1)=3
+(  331) ! Nb de pts sur un parallele
+(  332) FA%CADRE(KRANGC)%NSEC2LA(2)=FA%CADRE(KRANGC)%NXLOPA
+(  333) ! Nb de pts sur une longitude
+(  334) FA%CADRE(KRANGC)%NSEC2LA(3)=INLAT
+(  335) !
+(  336) ! Les parametres communs sont regroupes
+(  337) ! Flag pour la resolution (128->on donne l'increment: grille reguliere)
+(  338) FA%CADRE(KRANGC)%NSEC2LA(6)=128
+(  339) ! Reserve
+(  340) FA%CADRE(KRANGC)%NSEC2LA(8)=0
+(  341) ! Flag pour le mode de balayage: W->E et S->N = 64; W->E et N->S = 0
+(  342) FA%CADRE(KRANGC)%NSEC2LA(11)=64
+(  343) ! Nombre de parametres pour la coord. verticale
+(  344) FA%CADRE(KRANGC)%NSEC2LA(12)=0
+(  345) ! Latitude (1/1000 degre) du premier pt de grille
+(  346) FA%CADRE(KRANGC)%NSEC2LA(4)=NINT(ZRAMDE*ZLATPRE,KIND=JPLIKB)
+(  347) ! Longitude (1/1000 degre) du premier pt de grille
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 18
+
+(  348) FA%CADRE(KRANGC)%NSEC2LA(5)=NINT(ZRAMDE*ZLONPRE,KIND=JPLIKB)
+(  349) !
+(  350) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(5))
+(  351) !
+(  352) ! TEST POUR OLD/NEW EGGX
+(  353) IF (FA%CADRE(KRANGC)%SINLAT(1) .GE. 0) THEN
+(  354) ! Old EGGX
+(  355) ! Orientation de la grille
+(  356) FA%CADRE(KRANGC)%NSEC2LA(7)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(8), &
+(  357) &                          KIND=JPLIKB)
+(  358) !
+(  359) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(7))
+(  360) ! Dimension de la maille dans la direction X
+(  361) FA%CADRE(KRANGC)%NSEC2LA(9)=NINT(FA%CADRE(KRANGC)%SINLAT(15),KIND=JPLIKB)
+(  362) ! Dimension de la maille dans la direction Y
+(  363) FA%CADRE(KRANGC)%NSEC2LA(10)=NINT(FA%CADRE(KRANGC)%SINLAT(16),KIND=JPLIKB)
+(  364) ! Flag pour le centre de projection
+(  365) ! (0: le pole Nord est sur le plan de projection
+(  366) !  et 1 seul centre de projection est utilise;
+(  367) !  128: idem sauf que c'est le pole Sud)
+(  368) IF (FA%CADRE(KRANGC)%SINLAT(9).GE.0) THEN
+(  369)   FA%CADRE(KRANGC)%NSEC2LA(13)=0
+(  370) ELSE
+(  371)   FA%CADRE(KRANGC)%NSEC2LA(13)=128
+(  372) ENDIF
+(  373) ! Premiere latitude depuis le pole ou le cone coupe la sphere
+(  374) FA%CADRE(KRANGC)%NSEC2LA(14)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(9), &
+(  375) &                           KIND=JPLIKB)
+(  376) ! Deuxieme latitude depuis le pole ou le cone coupe la sphere
+(  377) ! Dans Aladin, le plan de projection est rarement secant (cela
+(  378) ! releve plus d'un domaine mal defini que d'un choix) et cette
+(  379) ! possibilite va disparaitre bientot. Comme le calcul de cette
+(  380) ! seconde latitude n'est pas aise (pb de convergence), on va
+(  381) ! declarer la grille tangente! mais avec un WARNING...
+(  382) FA%CADRE(KRANGC)%NSEC2LA(15)=FA%CADRE(KRANGC)%NSEC2LA(14)
+(  383) IF (ABS(FA%CADRE(KRANGC)%SINLAT(10)-SIN(FA%CADRE(KRANGC)%SINLAT(9))) &
+(  384) &    .GT.1.E-10_JPDBLR .AND. FA%LFAMOP) THEN
+(  385)   WRITE (UNIT=FA%NULOUT,FMT=*)                                   &
+(  386) &          ' FAISC2: WARNING !! La grille Lambert coupe en fait', &
+(  387) &          ' la sphere, mais sera consideree comme tangente'
+(  388) ENDIF
+(  389) ELSE
+(  390) ! NEW EGGX
+(  391) ! Orientation de la grille
+(  392) FA%CADRE(KRANGC)%NSEC2LA(7)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(3), &
+(  393) &                          KIND=JPLIKB)
+(  394) !
+(  395) CALL LON360000 (FA%CADRE(KRANGC)%NSEC2LA(7))
+(  396) ! Dimension de la maille dans la direction X
+(  397) FA%CADRE(KRANGC)%NSEC2LA(9)=NINT(FA%CADRE(KRANGC)%SINLAT(7),KIND=JPLIKB)
+(  398) ! Dimension de la maille dans la direction Y
+(  399) FA%CADRE(KRANGC)%NSEC2LA(10)=NINT(FA%CADRE(KRANGC)%SINLAT(8),KIND=JPLIKB)
+(  400) ! Flag pour le centre de projection
+(  401) ! (0: le pole Nord est sur le plan de projection
+(  402) !  et 1 seul centre de projection est utilise;
+(  403) !  128: idem sauf que c'est le pole Sud)
+(  404) IF (FA%CADRE(KRANGC)%SINLAT(4).GE.0) THEN
+(  405)   FA%CADRE(KRANGC)%NSEC2LA(13)=0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 19
+
+(  406) ELSE
+(  407)   FA%CADRE(KRANGC)%NSEC2LA(13)=128
+(  408) ENDIF
+(  409) ! Premiere latitude depuis le pole ou le cone coupe la sphere
+(  410) FA%CADRE(KRANGC)%NSEC2LA(14)=NINT(ZRAMDE*FA%CADRE(KRANGC)%SINLAT(4), &
+(  411) &                           KIND=JPLIKB)
+(  412) ! NEW EGGX toujours tangent
+(  413) FA%CADRE(KRANGC)%NSEC2LA(15)=FA%CADRE(KRANGC)%NSEC2LA(14)
+(  414) ENDIF
+(  415) # 416 "faisc2.F90"
+(  416) ! Reserve
+(  417) FA%CADRE(KRANGC)%NSEC2LA(16)=0
+(  418) ! Flag:      0 -> grille reguliere
+(  419) FA%CADRE(KRANGC)%NSEC2LA(17)=0
+(  420) ! Flag:      0 -> Terre ronde     , 64 -> Terre ellipsoide
+(  421) FA%CADRE(KRANGC)%NSEC2LA(18)=0
+(  422) ! Flag sur les composantes des vecteurs (0->geographique, 8->grille)
+(  423) FA%CADRE(KRANGC)%NSEC2LA(19)=8
+(  424) ! Latitude du pole sud
+(  425) FA%CADRE(KRANGC)%NSEC2LA(20)=0
+(  426) ! Longitude du pole sud
+(  427) FA%CADRE(KRANGC)%NSEC2LA(21)=0
+(  428) ! Reserve
+(  429) FA%CADRE(KRANGC)%NSEC2LA(22)=0
+(  430) !**
+(  431) !     6.  -  PARTIE REELLE DE LA SECTION 2 DE GRIBEX
+(  432) !-----------------------------------------------------------------------
+(  433) !
+(  434) 600 CONTINUE
+(  435) ! Angle de rotation
+(  436) FA%CADRE(KRANGC)%XSEC2(1)=0._JPDBLR
+(  437) ! Coefficient d'etirement
+(  438) FA%CADRE(KRANGC)%XSEC2(2)=FA%CADRE(KRANGC)%SCODIL
+(  439) ! Reserve
+(  440) FA%CADRE(KRANGC)%XSEC2(3:10)=0._JPDBLR
+(  441) ! Parametres pour la coordonnee verticale
+(  442) FA%CADRE(KRANGC)%XSEC2(11:11+INIVAU)=FA%CADRE(KRANGC)%SFOHYB(1,0:INIVAU)* &
+(  443) &                           FA%CADRE(KRANGC)%SPREFE
+(  444) FA%CADRE(KRANGC)%XSEC2(12+INIVAU:12+2*INIVAU)= &
+(  445) &     FA%CADRE(KRANGC)%SFOHYB(2,0:INIVAU)
+(  446) !**
+(  447) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  448) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  449) !-----------------------------------------------------------------------
+(  450) !
+(  451) 1001 CONTINUE
+(  452) !
+(  453) IF (FA%LFAMOP.OR.KREP.NE.0) THEN
+(  454)   INIMES=2
+(  455)   CLNSPR='FAISC2'
+(  456)   INUMER=JPNIIL
+(  457) !
+(  458)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANGC='',I4)') &
+(  459) &     KREP, KRANGC
+(  460)   CALL FAIPAR_MT64                                      &
+(  461) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  462) &                  CLNSPR,CLNSPR,.FALSE.)
+(  463) ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 20
+
+(  464) # 465 "faisc2.F90"
+(  465) !
+(  466) IF (LHOOK) CALL DR_HOOK('FAISC2_MT',1,ZHOOK_HANDLE)
+(  467) # 468 "faisc2.F90"
+(  468) CONTAINS
+(  469) # 470 "faisc2.F90"
+(  470) SUBROUTINE LON360000 (KLON)
+(  471) # 472 "faisc2.F90"
+(  472) INTEGER (KIND=JPLIKB) :: KLON
+(  473) # 474 "faisc2.F90"
+(  474) KLON = MODULO (KLON, 360000_JPLIKB)
+(  475) # 476 "faisc2.F90"
+(  476) END SUBROUTINE LON360000
+(  477) # 478 "faisc2.F90"
+(  478) END SUBROUTINE FAISC2_MT64
+(  479) # 482 "faisc2.F90"
+(  482) ! Oct-2012 P. Marguinaud 64b LFI
+(  483) SUBROUTINE FAISC264           &
+(  484) &           (KREP, KRANGC)
+(  485) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  486) &                   FA_COM_DEFAULT_INIT,  &
+(  487) &                   NEW_FA_DEFAULT
+(  488) USE LFI_PRECISION
+(  489) IMPLICIT NONE
+(  490) ! Arguments
+(  491) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  492) INTEGER (KIND=JPLIKB)  KRANGC                                 ! IN   
+(  493) # 494 "faisc2.F90"
+(  494) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  495) # 496 "faisc2.F90"
+(  496) CALL FAISC2_MT64             &
+(  497) &           (FA, KREP, KRANGC)
+(  498) # 499 "faisc2.F90"
+(  499) END SUBROUTINE FAISC264
+(  500) # 501 "faisc2.F90"
+(  501) SUBROUTINE FAISC2             &
+(  502) &           (KREP, KRANGC)
+(  503) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  504) &                   FA_COM_DEFAULT_INIT,  &
+(  505) &                   NEW_FA_DEFAULT
+(  506) USE LFI_PRECISION
+(  507) IMPLICIT NONE
+(  508) ! Arguments
+(  509) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  510) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  511) # 512 "faisc2.F90"
+(  512) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  513) # 514 "faisc2.F90"
+(  514) CALL FAISC2_MT               &
+(  515) &           (FA, KREP, KRANGC)
+(  516) # 517 "faisc2.F90"
+(  517) END SUBROUTINE FAISC2
+(  518) # 519 "faisc2.F90"
+(  519) SUBROUTINE FAISC2_MT             &
+(  520) &           (FA, KREP, KRANGC)
+(  521) USE FA_MOD, ONLY : FA_COM
+(  522) USE LFI_PRECISION
+(  523) IMPLICIT NONE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:55:05      page 21
+
+(  524) ! Arguments
+(  525) TYPE (FA_COM)          FA                                     ! INOUT
+(  526) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  527) INTEGER (KIND=JPLIKM)  KRANGC                                 ! IN   
+(  528) ! Local integers
+(  529) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  530) INTEGER (KIND=JPLIKB)  IRANGC                                 ! IN   
+(  531) ! Convert arguments
+(  532) # 533 "faisc2.F90"
+(  533) IRANGC     = INT (    KRANGC, JPLIKB)
+(  534) # 535 "faisc2.F90"
+(  535) CALL FAISC2_MT64             &
+(  536) &           (FA, IREP, IRANGC)
+(  537) # 538 "faisc2.F90"
+(  538) KREP       = INT (      IREP, JPLIKM)
+(  539) # 540 "faisc2.F90"
+(  540) END SUBROUTINE FAISC2_MT
+(  541) # 542 "faisc2.F90"
+(  542) !INTF KREP            OUT 
+(  543) !INTF KRANGC        IN    

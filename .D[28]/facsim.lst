@@ -1,0 +1,1482 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: facsim.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACSIM_MT64                                    &
+(    4) &                     (FA,  KREP, KRANG, PCHAME, PCHAMS,  &
+(    5) &                      KPULAS, KSTRON)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   13) !     traitement des champs en coefficients spectraux, preparatoire
+(   14) !     au codage GRIB.
+(   15) !              ( Coefficients Spectraux, Integration Methodique ! )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   19) !    ( Tableau ) PCHAME (Entree) ==> Champ en coef. spectraux en entree;
+(   20) !    ( Tableau ) PCHAMS (Sortie) ==> Champ en sortie, partie a coder;
+(   21) !                KPULAS (Sortie) ==> Puissance de laplacien utilisee.
+(   22) !                KSTRON (Entree) ==> Niveau de sous-troncature non
+(   23) !                                    compactee.
+(   24) !*
+(   25) !       En mode multi-taches, il doit y avoir verrouillage du fichier
+(   26) !     concerne avant l'appel au sous-programme.
+(   27) !
+(   28) !     Modifications
+(   29) !     -------------
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 3
+
+(   31) !  Juillet 1998, J. Clochard, SCEM/TTI/DAO:
+(   32) !
+(   33) !    -Reinitialisation de tableaux utilises pour le calcul iteratif
+(   34) !     au changement de sens de balayage.
+(   35) !    -Plus de "IF" pour le calcul d'extrema dans le cas ALADIN.
+(   36) !    -Diagnostic plus precis en mode "mise au point".
+(   37) !
+(   38) !  Octobre 1998, J. Clochard, SCEM/TTI/DAO:
+(   39) !
+(   40) !    -Ajout de l'argument d'appel KSTRON pour compatibilite avec
+(   41) !     evaluation dynamique (eventuelle) de la sous-troncature en
+(   42) !     fonction de la troncature et du nombre de bits par valeur
+(   43) !     compactee.
+(   44) !
+(   45) !  Avril   2004, D. Paradis,  DSI/DEV:
+(   46) !
+(   47) !    -Initialisations des tableaux XLAPxDx et FLAP1Dx faites
+(   48) !     en debut de routine par appel a FAIXLA et FAIFLA.
+(   49) !
+(   50) !  April  2009, F. Vana and NEC:
+(   51) !
+(   52) !    - OpenMP directives
+(   53) !
+(   54) !  March 2010: J. Masek - fix of precomputed optimal Laplacian power
+(   55) !              F. Vana  - simplification of IFC_SMAX,IFC_SMIN for
+(   56) !                              better performance
+(   57) !
+(   58) !
+(   59) TYPE(FA_COM) :: FA
+(   60) INTEGER (KIND=JPLIKB) KREP, KRANG, KPULAS, KSTRON
+(   61) !
+(   62) REAL (KIND=JPDBLR) PCHAME (*), PCHAMS (*)
+(   63) !
+(   64) INTEGER (KIND=JPLIKB) IDIMNC, IRANGC, ITRONC, IPUFLA
+(   65) INTEGER (KIND=JPLIKB) JN, J
+(   66) INTEGER (KIND=JPLIKB) IMLIM, IOFF, IM, IMOD, INDLAP
+(   67) INTEGER (KIND=JPLIKB) INDZ, ILONG, IDECAL, IMINI
+(   68) INTEGER (KIND=JPLIKB) IMAXI, ILCHAM, INBITS, IMTRONC
+(   69) INTEGER (KIND=JPLIKB) IMODPL, JIND
+(   70) INTEGER (KIND=JPLIKB) IMEILL, JSENS, INDICE, IPUISS
+(   71) INTEGER (KIND=JPLIKB) IPOSEX, JMODPL
+(   72) INTEGER (KIND=JPLIKB) IPLUS, IMOINS, IPUISX, IPUIS2
+(   73) INTEGER (KIND=JPLIKB) IRAPOR, IPUISR, INIMES
+(   74) INTEGER (KIND=JPLIKB) INUMER, IDEB, IFIN, IXLOPA
+(   75) INTEGER (KIND=JPLIKB) IPULAS (0:1)
+(   76) !
+(   77) REAL (KIND=JPDBLR) ZMIN, ZMAX, ZERRXI, ZERRXF, ZBIGVA
+(   78) REAL (KIND=JPDBLR) ZMINI (FA%JPXTRO,0:2),ZMAXI (FA%JPXTRO,0:2)
+(   79) REAL (KIND=JPDBLR) Z(4*FA%JPXTRO*FA%JPXTRO,2)
+(   80) REAL (KIND=JPDBLR) ZECART (2,0:1)
+(   81) !
+(   82) LOGICAL LLARPE,LLMLAM
+(   83) !
+(   84) INTEGER (KIND=JPLIKB), EXTERNAL :: ISMIN_164 , ISMAX_164 
+(   85) !
+(   86) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   87) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   88) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 4
+
+(   89) LOGICAL                  LLFATA
+(   90) 
+(   91) !**
+(   92) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, INITIALISATIONS.
+(   93) !-----------------------------------------------------------------------
+(   94) !
+(   95) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   96) IF (LHOOK) CALL DR_HOOK('FACSIM_MT',0,ZHOOK_HANDLE)
+(   97) CLACTI=''
+(   98) IDIMNC=0
+(   99) ZBIGVA=HUGE(ZBIGVA)
+(  100) !
+(  101) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(  102)   KREP=-66
+(  103)   GOTO 1001
+(  104) ENDIF
+(  105) !
+(  106) ! Si ce n'est pas encore fait, initialisation des tableaux XLAP... et FA%FLAP1D.
+(  107) !
+(  108) IF (FA%LIXLAP) THEN
+(  109)   CALL FAIXLA_MT64           &
+(  110) &                 (FA)
+(  111)   FA%LIXLAP = .FALSE.
+(  112) ENDIF
+(  113) IF (FA%FICHIER(KRANG)%LIFLAP) THEN
+(  114)   CALL FAIFLA_MT64           &
+(  115) &                (FA, KRANG)
+(  116)   FA%FICHIER(KRANG)%LIFLAP = .FALSE.
+(  117) ENDIF
+(  118) !
+(  119) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(  120) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  121) IXLOPA=FA%CADRE(IRANGC)%NXLOPA
+(  122) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  123) !
+(  124) IF (LLMLAM) IMTRONC=FA%CADRE(IRANGC)%NOZPAR(2)
+(  125) IF (ITRONC.LE.KSTRON) THEN
+(  126)   KREP=-88
+(  127)   GOTO 1001
+(  128) ELSEIF (LLMLAM.AND.IMTRONC.LE.KSTRON) THEN
+(  129)   KREP=-88
+(  130)   GOTO 1001
+(  131) ELSEIF (LLMLAM.AND.(IMTRONC.GT.3*ITRONC.OR. &
+(  132) &    ITRONC.GT.3*IMTRONC)) THEN
+(  133) ! Il s'agit d'un garde-fou, modifiable (ne pas oublier FARCIS et FAPULA)
+(  134)   KREP=-114
+(  135)   GOTO 1001
+(  136) ELSE       
+(  137)   KREP=0
+(  138) ENDIF
+(  139) !
+(  140) IPUFLA=FA%FICHIER(KRANG)%NPUFLA
+(  141) IMODPL=FA%FICHIER(KRANG)%NMFDPL
+(  142) !
+(  143) IF (LLMLAM) THEN
+(  144)    ILCHAM=FA%CADRE(IRANGC)%NSFLAM
+(  145)    IDIMNC=4*(1+ITRONC+IMTRONC+(KSTRON*(KSTRON-1))/2)
+(  146) !DP      IDIMNC=FA%NOZPAR(5,IRANGC)+4*KSTRON-1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 5
+
+(  147) ELSE
+(  148)    ILCHAM=(1+ITRONC)**2
+(  149)    IDIMNC=(1+KSTRON)**2
+(  150) ENDIF
+(  151) !**
+(  152) !     2.  -  DETERMINATION DE LA "MEILLEURE" PUISSANCE DE LAPLACIEN
+(  153) !            POUR LA PARTIE DU CHAMP QUI SERA COMPACTEE EN "GRIB".
+(  154) !-----------------------------------------------------------------------
+(  155) !
+(  156) IF (IMODPL.EQ.0) THEN
+(  157) !
+(  158) !           On elimine le cas ou aucune modulation de la puissance
+(  159) !         de laplacien n'est possible.
+(  160) !
+(  161)   KPULAS=IPUFLA
+(  162)   GOTO 300
+(  163) ENDIF
+(  164) !*
+(  165) !     2.1 -  AMORCAGE DU PROCESSUS ITERATIF: CALCUL DES EXTREMA DU CHAMP
+(  166) !            MULTIPLIE PAR LA PUISSANCE DE LAPLACIEN NOMINALE DU FICHIER
+(  167) !            ( le traitement est decoupe nombre d'onde "n" par "n" )
+(  168) !-----------------------------------------------------------------------
+(  169) !
+(  170) !       Calcul des extrema du champ d'entree (partie a compacter),
+(  171) !     pour chaque nombre d'onde "n".
+(  172) !
+(  173) IF (LLMLAM) THEN
+(  174)   ZMIN=ZBIGVA
+(  175)   ZMAX=-ZBIGVA
+(  176) !$OMP PARALLEL DO IF(FA%LOPENMP)                                &
+(  177) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ) &
+(  178) !$OMP&REDUCTION(MAX:ZMAX) REDUCTION(MIN:ZMIN)
+(  179)   DO JN=1,ITRONC
+(  180)    IMLIM=KSTRON-JN
+(  181)    IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  182) &          FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  183)    IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  184)   DO JIND=IDEB,IFIN
+(  185)     IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  186)     IM=IOFF/4
+(  187)     IMOD=MOD(IOFF,4_JPLIKB )
+(  188) !
+(  189)     INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  190)     INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+INDLAP
+(  191)     Z(INDZ,1)=PCHAME(JIND)*FA%FICHIER(KRANG)%FLAP1DA(INDLAP)
+(  192)     ZMAX=MAX (ZMAX,Z(INDZ,1))
+(  193)     ZMIN=MIN (ZMIN,Z(INDZ,1))
+(  194) !
+(  195)   ENDDO
+(  196)   ENDDO
+(  197) !$OMP END PARALLEL DO
+(  198) ELSE
+(  199)   DO JN=KSTRON+1,ITRONC
+(  200)   ILONG=2*JN+1
+(  201)   IDECAL=JN**2
+(  202)   IMAXI=ISMAX_164  (ILONG, PCHAME(IDECAL+1))
+(  203)   ZMAXI(JN,0)=PCHAME(IDECAL+IMAXI)
+(  204)   IMINI=ISMIN_164  (ILONG, PCHAME(IDECAL+1))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 6
+
+(  205)   ZMINI(JN,0)=PCHAME(IDECAL+IMINI)
+(  206)   ENDDO
+(  207) !
+(  208) !
+(  209) !
+(  210)   DO JN=KSTRON+1,ITRONC
+(  211)   ZMAXI(JN,1)=ZMAXI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  212)   ZMINI(JN,1)=ZMINI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  213)   ENDDO
+(  214) !
+(  215) !
+(  216)   IMAXI=KSTRON+ISMAX_164  &
+(  217) &                (ITRONC-KSTRON,ZMAXI(KSTRON+1,1))
+(  218)   IMINI=KSTRON+ISMIN_164  &
+(  219) &                (ITRONC-KSTRON,ZMINI(KSTRON+1,1))
+(  220)   ZMIN=ZMINI(IMINI,1)
+(  221)   ZMAX=ZMAXI(IMAXI,1)
+(  222) ENDIF
+(  223) !
+(  224) INBITS=FA%FICHIER(KRANG)%NBFCSP
+(  225) LLARPE=FA%FICHIER(KRANG)%NFGRIB.EQ.2
+(  226) !
+(  227) IF (ZMAX.LE.ZMIN) THEN
+(  228) !
+(  229) !           On elimine le cas trivial du champ constant,
+(  230) !         eventuellement apres transformation...
+(  231) !
+(  232)   KPULAS=IPUFLA
+(  233)   GOTO 300
+(  234) ENDIF
+(  235) !
+(  236) !        Calcul de l'erreur de compactage initiale.
+(  237) !
+(  238) CALL FAXION_MT64                                                              &
+(  239) &               (FA, PCHAME,IPUFLA,IDIMNC,ILCHAM,ZMIN,                        &
+(  240) &                ZMAX,INBITS,LLARPE,ZERRXI,LLMLAM,FA%CADRE(IRANGC)%NOZPAR(1), &
+(  241) &                KSTRON,ITRONC,IXLOPA)
+(  242) IMEILL=0
+(  243) ZECART(2,IMEILL)=ZERRXI
+(  244) !*
+(  245) !     2.3 -  BOUCLE SUR LES DEGRES DE MODULATION POSSIBLES,
+(  246) !            PAR INCREMENTS DE PUISSANCE VALANT +1 (ESSAYE EN PREMIER)
+(  247) !            PUIS (-1).
+(  248) !-----------------------------------------------------------------------
+(  249) !
+(  250) DO 239 JSENS=1,-1,-2
+(  251) INDICE=(1-JSENS)/2
+(  252) IPUISS=IPUFLA
+(  253) ZECART(1,INDICE)=ZERRXI
+(  254) IPOSEX=2
+(  255) !
+(  256) IF (JSENS.EQ.-1) THEN
+(  257) !
+(  258) !       Compte-tenu du caractere "incremental" du calcul des extrema
+(  259) !       pour des puissances successives, on doit reinitialiser lors du
+(  260) !       changement de sens de balayage ZMAXI et ZMINI pour le cas ARPEGE
+(  261) !       et Z pour le cas ALADIN.
+(  262) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 7
+
+(  263)   IF (LLMLAM) THEN
+(  264) !
+(  265)     ZMIN=ZBIGVA
+(  266)     ZMAX=-ZBIGVA
+(  267) !$OMP PARALLEL DO IF(FA%LOPENMP)                                 &
+(  268) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ)
+(  269)     DO JN=1,ITRONC
+(  270)     IMLIM=KSTRON-JN
+(  271)     IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  272) &           FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  273)     IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  274)     DO JIND=IDEB,IFIN
+(  275)     IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  276)     IM=IOFF/4
+(  277)     IMOD=MOD(IOFF,4_JPLIKB )
+(  278) !
+(  279)        INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  280)        INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+INDLAP
+(  281)        Z(INDZ,1)=PCHAME(JIND)*FA%FICHIER(KRANG)%FLAP1DA(INDLAP)
+(  282) !
+(  283)     ENDDO
+(  284)     ENDDO
+(  285) !$OMP END PARALLEL DO
+(  286) !
+(  287)   ELSE
+(  288) !
+(  289)     DO JN=KSTRON+1,ITRONC
+(  290)     ZMAXI(JN,1)=ZMAXI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  291)     ZMINI(JN,1)=ZMINI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  292)     ENDDO
+(  293) !
+(  294)   ENDIF
+(  295) !
+(  296) ENDIF
+(  297) !
+(  298) DO JMODPL=1,IMODPL
+(  299) IPUISS=IPUISS+JSENS
+(  300) !
+(  301) IF (LLMLAM) THEN
+(  302)   ZMIN=ZBIGVA
+(  303)   ZMAX=-ZBIGVA
+(  304) !$OMP PARALLEL DO IF(FA%LOPENMP)                                 &
+(  305) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ)  &
+(  306) !$OMP&REDUCTION(MAX:ZMAX) REDUCTION(MIN:ZMIN)
+(  307)   DO JN=1,ITRONC
+(  308)   IMLIM=KSTRON-JN
+(  309)   IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  310) &         FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  311)   IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  312) !ocl novrec
+(  313)   DO JIND=IDEB,IFIN
+(  314)   IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  315)   IM=IOFF/4
+(  316)   IMOD=MOD(IOFF,4_JPLIKB )
+(  317) !
+(  318)      INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  319)      INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+((JN-1)*FA%JPXTRO)+IM
+(  320)      Z(INDZ,IPOSEX)=Z(INDZ,3-IPOSEX)* &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 8
+
+(  321) &     FA%XLAP1DA(INDLAP,INDICE)
+(  322)      ZMAX=MAX (ZMAX,Z(INDZ,IPOSEX))
+(  323)      ZMIN=MIN (ZMIN,Z(INDZ,IPOSEX))
+(  324) !
+(  325)   ENDDO
+(  326)   ENDDO
+(  327) !$OMP END PARALLEL DO
+(  328) ELSE 
+(  329)   DO JN=KSTRON+1,ITRONC
+(  330)   ZMAXI(JN,IPOSEX)=ZMAXI(JN,3-IPOSEX)*FA%XLAP1D(JN,INDICE)
+(  331)   ZMINI(JN,IPOSEX)=ZMINI(JN,3-IPOSEX)*FA%XLAP1D(JN,INDICE)
+(  332)   ENDDO
+(  333) !
+(  334)   IMAXI=KSTRON+ISMAX_164  &
+(  335) &               (ITRONC-KSTRON,ZMAXI(KSTRON+1,IPOSEX))
+(  336)   IMINI=KSTRON+ISMIN_164  &
+(  337) &               (ITRONC-KSTRON,ZMINI(KSTRON+1,IPOSEX))
+(  338)   ZMIN=ZMINI(IMINI,IPOSEX)
+(  339)   ZMAX=ZMAXI(IMAXI,IPOSEX)
+(  340) ENDIF
+(  341) !
+(  342) IF (ZMAX.LE.ZMIN) THEN
+(  343) !
+(  344) !           On elimine le cas du champ constant...
+(  345) !
+(  346)   KPULAS=IPUISS
+(  347)   GOTO 240
+(  348) ENDIF
+(  349) !
+(  350) !        Calcul de la nouvelle erreur de compactage.
+(  351) !
+(  352) CALL FAXION_MT64                                                      &
+(  353) &               (FA, PCHAME,IPUISS,IDIMNC,ILCHAM,ZMIN,ZMAX,INBITS,    &
+(  354) &                LLARPE,ZECART(IPOSEX,INDICE),LLMLAM,                 &
+(  355) &                FA%CADRE(IRANGC)%NOZPAR(1),KSTRON,ITRONC,IXLOPA)
+(  356) !
+(  357) IF (ZECART(IPOSEX,INDICE).GE.ZECART(3-IPOSEX,INDICE)) THEN
+(  358) !
+(  359) !        Ecart pas meilleur que celui calcule precedemment, on s'arrete.
+(  360) !
+(  361)   IPULAS(INDICE)=IPUISS-JSENS
+(  362)   GOTO 239
+(  363) ENDIF
+(  364) !
+(  365) IPOSEX=3-IPOSEX
+(  366) ENDDO
+(  367) !
+(  368) !        On a epuise les degres de modulation possibles... on plafonne.
+(  369) !                    (pour un sens de balayage)
+(  370) !
+(  371) IPULAS(INDICE)=IPUISS
+(  372) 239 CONTINUE
+(  373) !
+(  374) !        Choix du meilleur resultat obtenu dans les 2 sens de balayage.
+(  375) !
+(  376) IPLUS=1+MOD (IPULAS(0)-IPUFLA,2_JPLIKB )
+(  377) IMOINS=1+MOD (IPUFLA-IPULAS(1),2_JPLIKB )
+(  378) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 9
+
+(  379) IF (ZECART(IPLUS,0).LE.ZECART(IMOINS,1)) THEN
+(  380)   IMEILL=0
+(  381) ELSE
+(  382)   IMEILL=1
+(  383) ENDIF
+(  384) !
+(  385) KPULAS=IPULAS(IMEILL)
+(  386) !
+(  387) 240 CONTINUE
+(  388) !*
+(  389) !     2.4 -  DIAGNOSTICS EVENTUELS, EN MODE MISE AU POINT SEULEMENT.
+(  390) !-----------------------------------------------------------------------
+(  391) !
+(  392) IF (FA%LFAMOP) THEN
+(  393)   ZERRXF=MIN (ZECART(1,IMEILL),ZECART(2,IMEILL))
+(  394)   WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(  395) &         'FACSIM - Erreur Initiale (P=',IPUFLA,') ',ZERRXI, &
+(  396) &         ', Finale (P=',KPULAS,') ', ZERRXF
+(  397) ENDIF
+(  398) !**
+(  399) !     3.  -  TRANSFORMATION DE LA PARTIE A COMPACTER DU CHAMP.
+(  400) !-----------------------------------------------------------------------
+(  401) !
+(  402) 300 CONTINUE
+(  403) !
+(  404) !        On fait des multiplications plutot que des divisions,
+(  405) !     et on essaie d'eviter l'exponentiation.
+(  406) !
+(  407) IF (KPULAS.EQ.0) THEN
+(  408) !
+(  409)   IF (LLMLAM) THEN
+(  410) !$OMP PARALLEL DO PRIVATE(JN,JIND) IF(FA%LOPENMP)
+(  411)     DO JN=0,ITRONC
+(  412)     DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3),FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  413)     PCHAMS(JIND)=PCHAME(JIND)
+(  414)     ENDDO
+(  415)     ENDDO
+(  416) !$OMP END PARALLEL DO
+(  417)   ELSE
+(  418)     DO J=IDIMNC+1,ILCHAM
+(  419)     PCHAMS(J)=PCHAME(J)
+(  420)     ENDDO
+(  421)   ENDIF
+(  422) !
+(  423) ELSE
+(  424)   IPUISX=ABS (KPULAS)
+(  425) !
+(  426)   IF (KPULAS.GT.0) THEN
+(  427)     INDICE=0
+(  428)   ELSE
+(  429)     INDICE=1
+(  430)   ENDIF
+(  431) !
+(  432)   IF (IPUISX.LE.FA%JPUILA) THEN
+(  433) !
+(  434)     IF (LLMLAM) THEN
+(  435) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  436)       DO JN=1,ITRONC
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 10
+
+(  437)       DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  438) &                   FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  439)       IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  440)       IM=IOFF/4
+(  441)       INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  442)       PCHAMS(JIND)=PCHAME(JIND)*FA%XLAP2DA(INDLAP,IPUISX,INDICE)
+(  443)       ENDDO
+(  444)       ENDDO
+(  445) !$OMP END PARALLEL DO
+(  446)     ELSE
+(  447)       DO J=IDIMNC+1,ILCHAM
+(  448)       PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUISX,INDICE)
+(  449)       ENDDO
+(  450)     ENDIF
+(  451) !
+(  452)   ELSEIF (IPUISX.LE.2*FA%JPUILA) THEN
+(  453)     IPUIS2=IPUISX/2
+(  454) !
+(  455)     IF (IPUISX.EQ.2*IPUIS2) THEN
+(  456) !
+(  457)       IF (LLMLAM) THEN
+(  458) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  459)         DO JN=1,ITRONC
+(  460)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  461) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  462)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  463)         IM=IOFF/4
+(  464)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  465)         PCHAMS(JIND)=PCHAME(JIND)*                       &
+(  466) &                     FA%XLAP2DA(INDLAP,IPUIS2,INDICE)**2
+(  467)         ENDDO
+(  468)         ENDDO
+(  469) !$OMP END PARALLEL DO
+(  470)       ELSE
+(  471)         DO J=IDIMNC+1,ILCHAM
+(  472)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUIS2,INDICE)**2
+(  473)         ENDDO
+(  474)       ENDIF
+(  475) !
+(  476)     ELSE
+(  477) !
+(  478)       IF (LLMLAM) THEN
+(  479) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  480)         DO JN=1,ITRONC
+(  481)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  482) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)     
+(  483)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  484)         IM=IOFF/4
+(  485)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  486)         PCHAMS(JIND)=PCHAME(JIND)*                          &
+(  487) &                FA%XLAP2DA(INDLAP,FA%JPUILA,INDICE)         &
+(  488) &                *FA%XLAP2DA(INDLAP,IPUISX-FA%JPUILA,INDICE)
+(  489)         ENDDO
+(  490)         ENDDO
+(  491) !$OMP END PARALLEL DO
+(  492) 
+(  493)       ELSE
+(  494)         DO J=IDIMNC+1,ILCHAM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 11
+
+(  495)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,FA%JPUILA,INDICE) &
+(  496) &                *FA%XLAP2D(J,IPUISX-FA%JPUILA,INDICE)
+(  497)         ENDDO
+(  498)       ENDIF
+(  499)     ENDIF
+(  500) !
+(  501)   ELSE
+(  502)     IRAPOR=1+(IPUISX-1)/FA%JPUILA
+(  503)     IPUISR=IPUISX/IRAPOR
+(  504) !
+(  505)     IF (IPUISX.EQ.IRAPOR*IPUISR) THEN
+(  506) ! 
+(  507)       IF (LLMLAM) THEN
+(  508) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  509)         DO JN=1,ITRONC
+(  510)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  511) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  512)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  513)         IM=IOFF/4
+(  514)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  515)         PCHAMS(JIND)=PCHAME(JIND)*                   &
+(  516) &            FA%XLAP2DA(INDLAP,IPUISR,INDICE)**IRAPOR
+(  517)         ENDDO
+(  518)         ENDDO
+(  519) !$OMP END PARALLEL DO
+(  520)       ELSE
+(  521)         DO J=IDIMNC+1,ILCHAM
+(  522)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUISR,INDICE)**IRAPOR
+(  523)         ENDDO
+(  524)       ENDIF
+(  525) ! 
+(  526)     ELSE
+(  527) !
+(  528)       IF (LLMLAM) THEN
+(  529) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  530)         DO JN=1,ITRONC
+(  531)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  532) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  533)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  534)         IM=IOFF/4
+(  535)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  536)         PCHAMS(JIND)=PCHAME(JIND)*                              &
+(  537) &          FA%XLAP2DA(INDLAP,FA%JPUILA,INDICE)**(IRAPOR-1)*      &
+(  538) &          FA%XLAP2DA(INDLAP,IPUISX-FA%JPUILA*(IRAPOR-1),INDICE)
+(  539)         ENDDO
+(  540)         ENDDO
+(  541) !$OMP END PARALLEL DO
+(  542)       ELSE
+(  543)         DO J=IDIMNC+1,ILCHAM
+(  544)         PCHAMS(J)=PCHAME(J)*                                     &
+(  545) &                  FA%XLAP2D(J,FA%JPUILA,INDICE)**(IRAPOR-1)      &
+(  546) &                *FA%XLAP2D(J,IPUISX-FA%JPUILA*(IRAPOR-1),INDICE)
+(  547)         ENDDO
+(  548)       ENDIF
+(  549) !
+(  550)     ENDIF
+(  551) !
+(  552)   ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 12
+
+(  553) !
+(  554) ENDIF
+(  555) !**
+(  556) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(  557) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  558) !-----------------------------------------------------------------------
+(  559) !
+(  560) 1001 CONTINUE
+(  561) 
+(  562) LLFATA=LLMOER (KREP,KRANG)
+(  563) !
+(  564) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  565)   INIMES=2
+(  566)   CLNSPR='FACSIM'
+(  567)   INUMER=JPNIIL
+(  568)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANG='',I4,       &
+(  569) &         '', PCHAME(1)='',G12.5,'', PCHAMS('',I3,'')='',G12.5, &
+(  570) &         '', KPULAS='',I3)')                                   &
+(  571) &     KREP,KRANG,PCHAME(1),IDIMNC+1,PCHAMS(IDIMNC+1),KPULAS
+(  572)   CALL FAIPAR_MT64                                      &
+(  573) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  574) &               CLNSPR,CLACTI,.FALSE.)
+(  575) ENDIF
+(  576) !
+(  577) IF (LHOOK) CALL DR_HOOK('FACSIM_MT',1,ZHOOK_HANDLE)
+(  578) 
+(  579) CONTAINS
+(  580) 
+(  581) #include "facom2.llmoer.h"
+(  582) 
+(  583) END SUBROUTINE
+(  584) 
+(  585) 
+(  586) !INTF KREP            OUT                               
+(  587) !INTF KRANG         IN                                  
+(  588) !INTF PCHAME        IN    DIMS=*                        
+(  589) !INTF PCHAMS          OUT DIMS=*                        
+(  590) !INTF KPULAS          OUT                               
+(  591) !INTF KSTRON        IN                                  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 13
+
+(    1) # 1 "facsim.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACSIM_MT64                                    &
+(    4) &                     (FA,  KREP, KRANG, PCHAME, PCHAMS,  &
+(    5) &                      KPULAS, KSTRON)
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   13) !     traitement des champs en coefficients spectraux, preparatoire
+(   14) !     au codage GRIB.
+(   15) !              ( Coefficients Spectraux, Integration Methodique ! )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   19) !    ( Tableau ) PCHAME (Entree) ==> Champ en coef. spectraux en entree;
+(   20) !    ( Tableau ) PCHAMS (Sortie) ==> Champ en sortie, partie a coder;
+(   21) !                KPULAS (Sortie) ==> Puissance de laplacien utilisee.
+(   22) !                KSTRON (Entree) ==> Niveau de sous-troncature non
+(   23) !                                    compactee.
+(   24) !*
+(   25) !       En mode multi-taches, il doit y avoir verrouillage du fichier
+(   26) !     concerne avant l'appel au sous-programme.
+(   27) !
+(   28) !     Modifications
+(   29) !     -------------
+(   30) !
+(   31) !  Juillet 1998, J. Clochard, SCEM/TTI/DAO:
+(   32) !
+(   33) !    -Reinitialisation de tableaux utilises pour le calcul iteratif
+(   34) !     au changement de sens de balayage.
+(   35) !    -Plus de "IF" pour le calcul d'extrema dans le cas ALADIN.
+(   36) !    -Diagnostic plus precis en mode "mise au point".
+(   37) !
+(   38) !  Octobre 1998, J. Clochard, SCEM/TTI/DAO:
+(   39) !
+(   40) !    -Ajout de l'argument d'appel KSTRON pour compatibilite avec
+(   41) !     evaluation dynamique (eventuelle) de la sous-troncature en
+(   42) !     fonction de la troncature et du nombre de bits par valeur
+(   43) !     compactee.
+(   44) !
+(   45) !  Avril   2004, D. Paradis,  DSI/DEV:
+(   46) !
+(   47) !    -Initialisations des tableaux XLAPxDx et FLAP1Dx faites
+(   48) !     en debut de routine par appel a FAIXLA et FAIFLA.
+(   49) !
+(   50) !  April  2009, F. Vana and NEC:
+(   51) !
+(   52) !    - OpenMP directives
+(   53) !
+(   54) !  March 2010: J. Masek - fix of precomputed optimal Laplacian power
+(   55) !              F. Vana  - simplification of IFC_SMAX,IFC_SMIN for
+(   56) !                              better performance
+(   57) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 14
+
+(   58) !
+(   59) TYPE(FA_COM) :: FA
+(   60) INTEGER (KIND=JPLIKB) KREP, KRANG, KPULAS, KSTRON
+(   61) !
+(   62) REAL (KIND=JPDBLR) PCHAME (*), PCHAMS (*)
+(   63) !
+(   64) INTEGER (KIND=JPLIKB) IDIMNC, IRANGC, ITRONC, IPUFLA
+(   65) INTEGER (KIND=JPLIKB) JN, J
+(   66) INTEGER (KIND=JPLIKB) IMLIM, IOFF, IM, IMOD, INDLAP
+(   67) INTEGER (KIND=JPLIKB) INDZ, ILONG, IDECAL, IMINI
+(   68) INTEGER (KIND=JPLIKB) IMAXI, ILCHAM, INBITS, IMTRONC
+(   69) INTEGER (KIND=JPLIKB) IMODPL, JIND
+(   70) INTEGER (KIND=JPLIKB) IMEILL, JSENS, INDICE, IPUISS
+(   71) INTEGER (KIND=JPLIKB) IPOSEX, JMODPL
+(   72) INTEGER (KIND=JPLIKB) IPLUS, IMOINS, IPUISX, IPUIS2
+(   73) INTEGER (KIND=JPLIKB) IRAPOR, IPUISR, INIMES
+(   74) INTEGER (KIND=JPLIKB) INUMER, IDEB, IFIN, IXLOPA
+(   75) INTEGER (KIND=JPLIKB) IPULAS (0:1)
+(   76) !
+(   77) REAL (KIND=JPDBLR) ZMIN, ZMAX, ZERRXI, ZERRXF, ZBIGVA
+(   78) REAL (KIND=JPDBLR) ZMINI (FA%JPXTRO,0:2),ZMAXI (FA%JPXTRO,0:2)
+(   79) REAL (KIND=JPDBLR) Z(4*FA%JPXTRO*FA%JPXTRO,2)
+(   80) REAL (KIND=JPDBLR) ZECART (2,0:1)
+(   81) !
+(   82) LOGICAL LLARPE,LLMLAM
+(   83) !
+(   84) INTEGER (KIND=JPLIKB), EXTERNAL :: ISMIN_164 , ISMAX_164 
+(   85) !
+(   86) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   87) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   88) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   89) LOGICAL                  LLFATA
+(   90) # 91 "facsim.F90"
+(   91) !**
+(   92) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, INITIALISATIONS.
+(   93) !-----------------------------------------------------------------------
+(   94) !
+(   95) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   96) IF (LHOOK) CALL DR_HOOK('FACSIM_MT',0,ZHOOK_HANDLE)
+(   97) CLACTI=''
+(   98) IDIMNC=0
+(   99) ZBIGVA=HUGE(ZBIGVA)
+(  100) !
+(  101) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(  102)   KREP=-66
+(  103)   GOTO 1001
+(  104) ENDIF
+(  105) !
+(  106) ! Si ce n'est pas encore fait, initialisation des tableaux XLAP... et FA%FLAP1D.
+(  107) !
+(  108) IF (FA%LIXLAP) THEN
+(  109)   CALL FAIXLA_MT64           &
+(  110) &                 (FA)
+(  111)   FA%LIXLAP = .FALSE.
+(  112) ENDIF
+(  113) IF (FA%FICHIER(KRANG)%LIFLAP) THEN
+(  114)   CALL FAIFLA_MT64           &
+(  115) &                (FA, KRANG)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 15
+
+(  116)   FA%FICHIER(KRANG)%LIFLAP = .FALSE.
+(  117) ENDIF
+(  118) !
+(  119) IRANGC=FA%FICHIER(KRANG)%NUCADR
+(  120) ITRONC=FA%CADRE(IRANGC)%MTRONC
+(  121) IXLOPA=FA%CADRE(IRANGC)%NXLOPA
+(  122) LLMLAM=FA%CADRE(IRANGC)%LIMLAM
+(  123) !
+(  124) IF (LLMLAM) IMTRONC=FA%CADRE(IRANGC)%NOZPAR(2)
+(  125) IF (ITRONC.LE.KSTRON) THEN
+(  126)   KREP=-88
+(  127)   GOTO 1001
+(  128) ELSEIF (LLMLAM.AND.IMTRONC.LE.KSTRON) THEN
+(  129)   KREP=-88
+(  130)   GOTO 1001
+(  131) ELSEIF (LLMLAM.AND.(IMTRONC.GT.3*ITRONC.OR. &
+(  132) &    ITRONC.GT.3*IMTRONC)) THEN
+(  133) ! Il s'agit d'un garde-fou, modifiable (ne pas oublier FARCIS et FAPULA)
+(  134)   KREP=-114
+(  135)   GOTO 1001
+(  136) ELSE       
+(  137)   KREP=0
+(  138) ENDIF
+(  139) !
+(  140) IPUFLA=FA%FICHIER(KRANG)%NPUFLA
+(  141) IMODPL=FA%FICHIER(KRANG)%NMFDPL
+(  142) !
+(  143) IF (LLMLAM) THEN
+(  144)    ILCHAM=FA%CADRE(IRANGC)%NSFLAM
+(  145)    IDIMNC=4*(1+ITRONC+IMTRONC+(KSTRON*(KSTRON-1))/2)
+(  146) !DP      IDIMNC=FA%NOZPAR(5,IRANGC)+4*KSTRON-1
+(  147) ELSE
+(  148)    ILCHAM=(1+ITRONC)**2
+(  149)    IDIMNC=(1+KSTRON)**2
+(  150) ENDIF
+(  151) !**
+(  152) !     2.  -  DETERMINATION DE LA "MEILLEURE" PUISSANCE DE LAPLACIEN
+(  153) !            POUR LA PARTIE DU CHAMP QUI SERA COMPACTEE EN "GRIB".
+(  154) !-----------------------------------------------------------------------
+(  155) !
+(  156) IF (IMODPL.EQ.0) THEN
+(  157) !
+(  158) !           On elimine le cas ou aucune modulation de la puissance
+(  159) !         de laplacien n'est possible.
+(  160) !
+(  161)   KPULAS=IPUFLA
+(  162)   GOTO 300
+(  163) ENDIF
+(  164) !*
+(  165) !     2.1 -  AMORCAGE DU PROCESSUS ITERATIF: CALCUL DES EXTREMA DU CHAMP
+(  166) !            MULTIPLIE PAR LA PUISSANCE DE LAPLACIEN NOMINALE DU FICHIER
+(  167) !            ( le traitement est decoupe nombre d'onde "n" par "n" )
+(  168) !-----------------------------------------------------------------------
+(  169) !
+(  170) !       Calcul des extrema du champ d'entree (partie a compacter),
+(  171) !     pour chaque nombre d'onde "n".
+(  172) !
+(  173) IF (LLMLAM) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 16
+
+(  174)   ZMIN=ZBIGVA
+(  175)   ZMAX=-ZBIGVA
+(  176) !$OMP PARALLEL DO IF(FA%LOPENMP)                                &
+(  177) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ) &
+(  178) !$OMP&REDUCTION(MAX:ZMAX) REDUCTION(MIN:ZMIN)
+(  179)   DO JN=1,ITRONC
+(  180)    IMLIM=KSTRON-JN
+(  181)    IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  182) &          FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  183)    IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  184)   DO JIND=IDEB,IFIN
+(  185)     IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  186)     IM=IOFF/4
+(  187)     IMOD=MOD(IOFF,4_JPLIKB )
+(  188) !
+(  189)     INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  190)     INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+INDLAP
+(  191)     Z(INDZ,1)=PCHAME(JIND)*FA%FICHIER(KRANG)%FLAP1DA(INDLAP)
+(  192)     ZMAX=MAX (ZMAX,Z(INDZ,1))
+(  193)     ZMIN=MIN (ZMIN,Z(INDZ,1))
+(  194) !
+(  195)   ENDDO
+(  196)   ENDDO
+(  197) !$OMP END PARALLEL DO
+(  198) ELSE
+(  199)   DO JN=KSTRON+1,ITRONC
+(  200)   ILONG=2*JN+1
+(  201)   IDECAL=JN**2
+(  202)   IMAXI=ISMAX_164  (ILONG, PCHAME(IDECAL+1))
+(  203)   ZMAXI(JN,0)=PCHAME(IDECAL+IMAXI)
+(  204)   IMINI=ISMIN_164  (ILONG, PCHAME(IDECAL+1))
+(  205)   ZMINI(JN,0)=PCHAME(IDECAL+IMINI)
+(  206)   ENDDO
+(  207) !
+(  208) !
+(  209) !
+(  210)   DO JN=KSTRON+1,ITRONC
+(  211)   ZMAXI(JN,1)=ZMAXI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  212)   ZMINI(JN,1)=ZMINI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  213)   ENDDO
+(  214) !
+(  215) !
+(  216)   IMAXI=KSTRON+ISMAX_164  &
+(  217) &                (ITRONC-KSTRON,ZMAXI(KSTRON+1,1))
+(  218)   IMINI=KSTRON+ISMIN_164  &
+(  219) &                (ITRONC-KSTRON,ZMINI(KSTRON+1,1))
+(  220)   ZMIN=ZMINI(IMINI,1)
+(  221)   ZMAX=ZMAXI(IMAXI,1)
+(  222) ENDIF
+(  223) !
+(  224) INBITS=FA%FICHIER(KRANG)%NBFCSP
+(  225) LLARPE=FA%FICHIER(KRANG)%NFGRIB.EQ.2
+(  226) !
+(  227) IF (ZMAX.LE.ZMIN) THEN
+(  228) !
+(  229) !           On elimine le cas trivial du champ constant,
+(  230) !         eventuellement apres transformation...
+(  231) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 17
+
+(  232)   KPULAS=IPUFLA
+(  233)   GOTO 300
+(  234) ENDIF
+(  235) !
+(  236) !        Calcul de l'erreur de compactage initiale.
+(  237) !
+(  238) CALL FAXION_MT64                                                              &
+(  239) &               (FA, PCHAME,IPUFLA,IDIMNC,ILCHAM,ZMIN,                        &
+(  240) &                ZMAX,INBITS,LLARPE,ZERRXI,LLMLAM,FA%CADRE(IRANGC)%NOZPAR(1), &
+(  241) &                KSTRON,ITRONC,IXLOPA)
+(  242) IMEILL=0
+(  243) ZECART(2,IMEILL)=ZERRXI
+(  244) !*
+(  245) !     2.3 -  BOUCLE SUR LES DEGRES DE MODULATION POSSIBLES,
+(  246) !            PAR INCREMENTS DE PUISSANCE VALANT +1 (ESSAYE EN PREMIER)
+(  247) !            PUIS (-1).
+(  248) !-----------------------------------------------------------------------
+(  249) !
+(  250) DO 239 JSENS=1,-1,-2
+(  251) INDICE=(1-JSENS)/2
+(  252) IPUISS=IPUFLA
+(  253) ZECART(1,INDICE)=ZERRXI
+(  254) IPOSEX=2
+(  255) !
+(  256) IF (JSENS.EQ.-1) THEN
+(  257) !
+(  258) !       Compte-tenu du caractere "incremental" du calcul des extrema
+(  259) !       pour des puissances successives, on doit reinitialiser lors du
+(  260) !       changement de sens de balayage ZMAXI et ZMINI pour le cas ARPEGE
+(  261) !       et Z pour le cas ALADIN.
+(  262) !
+(  263)   IF (LLMLAM) THEN
+(  264) !
+(  265)     ZMIN=ZBIGVA
+(  266)     ZMAX=-ZBIGVA
+(  267) !$OMP PARALLEL DO IF(FA%LOPENMP)                                 &
+(  268) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ)
+(  269)     DO JN=1,ITRONC
+(  270)     IMLIM=KSTRON-JN
+(  271)     IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  272) &           FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  273)     IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  274)     DO JIND=IDEB,IFIN
+(  275)     IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  276)     IM=IOFF/4
+(  277)     IMOD=MOD(IOFF,4_JPLIKB )
+(  278) !
+(  279)        INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  280)        INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+INDLAP
+(  281)        Z(INDZ,1)=PCHAME(JIND)*FA%FICHIER(KRANG)%FLAP1DA(INDLAP)
+(  282) !
+(  283)     ENDDO
+(  284)     ENDDO
+(  285) !$OMP END PARALLEL DO
+(  286) !
+(  287)   ELSE
+(  288) !
+(  289)     DO JN=KSTRON+1,ITRONC
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 18
+
+(  290)     ZMAXI(JN,1)=ZMAXI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  291)     ZMINI(JN,1)=ZMINI(JN,0)*FA%FICHIER(KRANG)%FLAP1D(JN)
+(  292)     ENDDO
+(  293) !
+(  294)   ENDIF
+(  295) !
+(  296) ENDIF
+(  297) !
+(  298) DO JMODPL=1,IMODPL
+(  299) IPUISS=IPUISS+JSENS
+(  300) !
+(  301) IF (LLMLAM) THEN
+(  302)   ZMIN=ZBIGVA
+(  303)   ZMAX=-ZBIGVA
+(  304) !$OMP PARALLEL DO IF(FA%LOPENMP)                                 &
+(  305) !$OMP&PRIVATE(JN,IMLIM,IDEB,IFIN,JIND,IOFF,IM,IMOD,INDLAP,INDZ)  &
+(  306) !$OMP&REDUCTION(MAX:ZMAX) REDUCTION(MIN:ZMIN)
+(  307)   DO JN=1,ITRONC
+(  308)   IMLIM=KSTRON-JN
+(  309)   IDEB=MAX(FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4*(1+IMLIM), &
+(  310) &         FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4)
+(  311)   IFIN=FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  312) !ocl novrec
+(  313)   DO JIND=IDEB,IFIN
+(  314)   IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  315)   IM=IOFF/4
+(  316)   IMOD=MOD(IOFF,4_JPLIKB )
+(  317) !
+(  318)      INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  319)      INDZ=IMOD*FA%JPXTRO*FA%JPXTRO+((JN-1)*FA%JPXTRO)+IM
+(  320)      Z(INDZ,IPOSEX)=Z(INDZ,3-IPOSEX)* &
+(  321) &     FA%XLAP1DA(INDLAP,INDICE)
+(  322)      ZMAX=MAX (ZMAX,Z(INDZ,IPOSEX))
+(  323)      ZMIN=MIN (ZMIN,Z(INDZ,IPOSEX))
+(  324) !
+(  325)   ENDDO
+(  326)   ENDDO
+(  327) !$OMP END PARALLEL DO
+(  328) ELSE 
+(  329)   DO JN=KSTRON+1,ITRONC
+(  330)   ZMAXI(JN,IPOSEX)=ZMAXI(JN,3-IPOSEX)*FA%XLAP1D(JN,INDICE)
+(  331)   ZMINI(JN,IPOSEX)=ZMINI(JN,3-IPOSEX)*FA%XLAP1D(JN,INDICE)
+(  332)   ENDDO
+(  333) !
+(  334)   IMAXI=KSTRON+ISMAX_164  &
+(  335) &               (ITRONC-KSTRON,ZMAXI(KSTRON+1,IPOSEX))
+(  336)   IMINI=KSTRON+ISMIN_164  &
+(  337) &               (ITRONC-KSTRON,ZMINI(KSTRON+1,IPOSEX))
+(  338)   ZMIN=ZMINI(IMINI,IPOSEX)
+(  339)   ZMAX=ZMAXI(IMAXI,IPOSEX)
+(  340) ENDIF
+(  341) !
+(  342) IF (ZMAX.LE.ZMIN) THEN
+(  343) !
+(  344) !           On elimine le cas du champ constant...
+(  345) !
+(  346)   KPULAS=IPUISS
+(  347)   GOTO 240
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 19
+
+(  348) ENDIF
+(  349) !
+(  350) !        Calcul de la nouvelle erreur de compactage.
+(  351) !
+(  352) CALL FAXION_MT64                                                      &
+(  353) &               (FA, PCHAME,IPUISS,IDIMNC,ILCHAM,ZMIN,ZMAX,INBITS,    &
+(  354) &                LLARPE,ZECART(IPOSEX,INDICE),LLMLAM,                 &
+(  355) &                FA%CADRE(IRANGC)%NOZPAR(1),KSTRON,ITRONC,IXLOPA)
+(  356) !
+(  357) IF (ZECART(IPOSEX,INDICE).GE.ZECART(3-IPOSEX,INDICE)) THEN
+(  358) !
+(  359) !        Ecart pas meilleur que celui calcule precedemment, on s'arrete.
+(  360) !
+(  361)   IPULAS(INDICE)=IPUISS-JSENS
+(  362)   GOTO 239
+(  363) ENDIF
+(  364) !
+(  365) IPOSEX=3-IPOSEX
+(  366) ENDDO
+(  367) !
+(  368) !        On a epuise les degres de modulation possibles... on plafonne.
+(  369) !                    (pour un sens de balayage)
+(  370) !
+(  371) IPULAS(INDICE)=IPUISS
+(  372) 239 CONTINUE
+(  373) !
+(  374) !        Choix du meilleur resultat obtenu dans les 2 sens de balayage.
+(  375) !
+(  376) IPLUS=1+MOD (IPULAS(0)-IPUFLA,2_JPLIKB )
+(  377) IMOINS=1+MOD (IPUFLA-IPULAS(1),2_JPLIKB )
+(  378) !
+(  379) IF (ZECART(IPLUS,0).LE.ZECART(IMOINS,1)) THEN
+(  380)   IMEILL=0
+(  381) ELSE
+(  382)   IMEILL=1
+(  383) ENDIF
+(  384) !
+(  385) KPULAS=IPULAS(IMEILL)
+(  386) !
+(  387) 240 CONTINUE
+(  388) !*
+(  389) !     2.4 -  DIAGNOSTICS EVENTUELS, EN MODE MISE AU POINT SEULEMENT.
+(  390) !-----------------------------------------------------------------------
+(  391) !
+(  392) IF (FA%LFAMOP) THEN
+(  393)   ZERRXF=MIN (ZECART(1,IMEILL),ZECART(2,IMEILL))
+(  394)   WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(  395) &         'FACSIM - Erreur Initiale (P=',IPUFLA,') ',ZERRXI, &
+(  396) &         ', Finale (P=',KPULAS,') ', ZERRXF
+(  397) ENDIF
+(  398) !**
+(  399) !     3.  -  TRANSFORMATION DE LA PARTIE A COMPACTER DU CHAMP.
+(  400) !-----------------------------------------------------------------------
+(  401) !
+(  402) 300 CONTINUE
+(  403) !
+(  404) !        On fait des multiplications plutot que des divisions,
+(  405) !     et on essaie d'eviter l'exponentiation.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 20
+
+(  406) !
+(  407) IF (KPULAS.EQ.0) THEN
+(  408) !
+(  409)   IF (LLMLAM) THEN
+(  410) !$OMP PARALLEL DO PRIVATE(JN,JIND) IF(FA%LOPENMP)
+(  411)     DO JN=0,ITRONC
+(  412)     DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3),FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  413)     PCHAMS(JIND)=PCHAME(JIND)
+(  414)     ENDDO
+(  415)     ENDDO
+(  416) !$OMP END PARALLEL DO
+(  417)   ELSE
+(  418)     DO J=IDIMNC+1,ILCHAM
+(  419)     PCHAMS(J)=PCHAME(J)
+(  420)     ENDDO
+(  421)   ENDIF
+(  422) !
+(  423) ELSE
+(  424)   IPUISX=ABS (KPULAS)
+(  425) !
+(  426)   IF (KPULAS.GT.0) THEN
+(  427)     INDICE=0
+(  428)   ELSE
+(  429)     INDICE=1
+(  430)   ENDIF
+(  431) !
+(  432)   IF (IPUISX.LE.FA%JPUILA) THEN
+(  433) !
+(  434)     IF (LLMLAM) THEN
+(  435) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  436)       DO JN=1,ITRONC
+(  437)       DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  438) &                   FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  439)       IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  440)       IM=IOFF/4
+(  441)       INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  442)       PCHAMS(JIND)=PCHAME(JIND)*FA%XLAP2DA(INDLAP,IPUISX,INDICE)
+(  443)       ENDDO
+(  444)       ENDDO
+(  445) !$OMP END PARALLEL DO
+(  446)     ELSE
+(  447)       DO J=IDIMNC+1,ILCHAM
+(  448)       PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUISX,INDICE)
+(  449)       ENDDO
+(  450)     ENDIF
+(  451) !
+(  452)   ELSEIF (IPUISX.LE.2*FA%JPUILA) THEN
+(  453)     IPUIS2=IPUISX/2
+(  454) !
+(  455)     IF (IPUISX.EQ.2*IPUIS2) THEN
+(  456) !
+(  457)       IF (LLMLAM) THEN
+(  458) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  459)         DO JN=1,ITRONC
+(  460)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  461) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  462)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  463)         IM=IOFF/4
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 21
+
+(  464)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  465)         PCHAMS(JIND)=PCHAME(JIND)*                       &
+(  466) &                     FA%XLAP2DA(INDLAP,IPUIS2,INDICE)**2
+(  467)         ENDDO
+(  468)         ENDDO
+(  469) !$OMP END PARALLEL DO
+(  470)       ELSE
+(  471)         DO J=IDIMNC+1,ILCHAM
+(  472)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUIS2,INDICE)**2
+(  473)         ENDDO
+(  474)       ENDIF
+(  475) !
+(  476)     ELSE
+(  477) !
+(  478)       IF (LLMLAM) THEN
+(  479) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  480)         DO JN=1,ITRONC
+(  481)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  482) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)     
+(  483)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  484)         IM=IOFF/4
+(  485)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  486)         PCHAMS(JIND)=PCHAME(JIND)*                          &
+(  487) &                FA%XLAP2DA(INDLAP,FA%JPUILA,INDICE)         &
+(  488) &                *FA%XLAP2DA(INDLAP,IPUISX-FA%JPUILA,INDICE)
+(  489)         ENDDO
+(  490)         ENDDO
+(  491) !$OMP END PARALLEL DO
+(  492) # 493 "facsim.F90"
+(  493)       ELSE
+(  494)         DO J=IDIMNC+1,ILCHAM
+(  495)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,FA%JPUILA,INDICE) &
+(  496) &                *FA%XLAP2D(J,IPUISX-FA%JPUILA,INDICE)
+(  497)         ENDDO
+(  498)       ENDIF
+(  499)     ENDIF
+(  500) !
+(  501)   ELSE
+(  502)     IRAPOR=1+(IPUISX-1)/FA%JPUILA
+(  503)     IPUISR=IPUISX/IRAPOR
+(  504) !
+(  505)     IF (IPUISX.EQ.IRAPOR*IPUISR) THEN
+(  506) ! 
+(  507)       IF (LLMLAM) THEN
+(  508) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  509)         DO JN=1,ITRONC
+(  510)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  511) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  512)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  513)         IM=IOFF/4
+(  514)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  515)         PCHAMS(JIND)=PCHAME(JIND)*                   &
+(  516) &            FA%XLAP2DA(INDLAP,IPUISR,INDICE)**IRAPOR
+(  517)         ENDDO
+(  518)         ENDDO
+(  519) !$OMP END PARALLEL DO
+(  520)       ELSE
+(  521)         DO J=IDIMNC+1,ILCHAM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 22
+
+(  522)         PCHAMS(J)=PCHAME(J)*FA%XLAP2D(J,IPUISR,INDICE)**IRAPOR
+(  523)         ENDDO
+(  524)       ENDIF
+(  525) ! 
+(  526)     ELSE
+(  527) !
+(  528)       IF (LLMLAM) THEN
+(  529) !$OMP PARALLEL DO PRIVATE(JN,JIND,IOFF,IM,INDLAP) IF(FA%LOPENMP)
+(  530)         DO JN=1,ITRONC
+(  531)         DO JIND=FA%CADRE(IRANGC)%NOZPAR(2*JN+3)+4, &
+(  532) &                     FA%CADRE(IRANGC)%NOZPAR(2*JN+4)
+(  533)         IOFF=JIND-FA%CADRE(IRANGC)%NOZPAR(2*JN+3)
+(  534)         IM=IOFF/4
+(  535)         INDLAP=((JN-1)*FA%JPXTRO)+IM
+(  536)         PCHAMS(JIND)=PCHAME(JIND)*                              &
+(  537) &          FA%XLAP2DA(INDLAP,FA%JPUILA,INDICE)**(IRAPOR-1)*      &
+(  538) &          FA%XLAP2DA(INDLAP,IPUISX-FA%JPUILA*(IRAPOR-1),INDICE)
+(  539)         ENDDO
+(  540)         ENDDO
+(  541) !$OMP END PARALLEL DO
+(  542)       ELSE
+(  543)         DO J=IDIMNC+1,ILCHAM
+(  544)         PCHAMS(J)=PCHAME(J)*                                     &
+(  545) &                  FA%XLAP2D(J,FA%JPUILA,INDICE)**(IRAPOR-1)      &
+(  546) &                *FA%XLAP2D(J,IPUISX-FA%JPUILA*(IRAPOR-1),INDICE)
+(  547)         ENDDO
+(  548)       ENDIF
+(  549) !
+(  550)     ENDIF
+(  551) !
+(  552)   ENDIF
+(  553) !
+(  554) ENDIF
+(  555) !**
+(  556) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(  557) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  558) !-----------------------------------------------------------------------
+(  559) !
+(  560) 1001 CONTINUE
+(  561) # 562 "facsim.F90"
+(  562) LLFATA=LLMOER (KREP,KRANG)
+(  563) !
+(  564) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  565)   INIMES=2
+(  566)   CLNSPR='FACSIM'
+(  567)   INUMER=JPNIIL
+(  568)   WRITE (UNIT=CLMESS,FMT='(''KREP='',I4,'', KRANG='',I4,       &
+(  569) &         '', PCHAME(1)='',G12.5,'', PCHAMS('',I3,'')='',G12.5, &
+(  570) &         '', KPULAS='',I3)')                                   &
+(  571) &     KREP,KRANG,PCHAME(1),IDIMNC+1,PCHAMS(IDIMNC+1),KPULAS
+(  572)   CALL FAIPAR_MT64                                      &
+(  573) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  574) &               CLNSPR,CLACTI,.FALSE.)
+(  575) ENDIF
+(  576) !
+(  577) IF (LHOOK) CALL DR_HOOK('FACSIM_MT',1,ZHOOK_HANDLE)
+(  578) # 579 "facsim.F90"
+(  579) CONTAINS
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:32      page 23
+
+(  580) # 581 "facsim.F90"
+(  581) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 582 "facsim.F90"
+(  582) # 583 "facsim.F90"
+(  583) END SUBROUTINE
+(  584) # 586 "facsim.F90"
+(  586) !INTF KREP            OUT                               
+(  587) !INTF KRANG         IN                                  
+(  588) !INTF PCHAME        IN    DIMS=*                        
+(  589) !INTF PCHAMS          OUT DIMS=*                        
+(  590) !INTF KPULAS          OUT                               
+(  591) !INTF KSTRON        IN                                  

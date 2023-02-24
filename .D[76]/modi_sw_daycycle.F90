@@ -1,0 +1,11 @@
+!depfile:sw_daycycle.F90
+MODULE MODI_SW_DAYCYCLE
+INTERFACE
+SUBROUTINE SW_DAYCYCLE(KI, PZENITH, PTOT_SW)
+INTEGER,             INTENT(IN)  :: KI        ! number of points
+REAL, DIMENSION(KI), INTENT(IN)  :: PZENITH     ! Zenith angle (rad)
+REAL, DIMENSION(KI), INTENT(OUT) :: PTOT_SW     ! Extraterrestrial solar radiation (W m-2)
+END SUBROUTINE SW_DAYCYCLE
+
+END INTERFACE
+END MODULE MODI_SW_DAYCYCLE

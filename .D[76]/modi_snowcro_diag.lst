@@ -1,0 +1,273 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:11      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:11      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_snowcro_diag.F90
+
+(    1) !depfile:snowcro_diag.F90
+(    2) MODULE MODI_SNOWCRO_DIAG
+(    3) INTERFACE
+(    4) SUBROUTINE SNOWCRO_DIAG(HSNOWMETAMO, &
+(    5)                         PSNOWDZ, PSNOWSWE, PSNOWRHO, PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE, &
+(    6)                         PSNOWHIST, PSNOWTEMP, PSNOWLIQ, PDIRCOSZW, PSNOWIMP, PSNOWDEND, PSNOWSPHER, &
+(    7)                         PSNOWSIZE, PSNOWSSA, PSNOWTYPEMEPRA, PSNOWRAM, PSNOWSHEAR, &
+(    8)                         PACC_RAT, PNAT_RAT, &
+(    9)                         PSNOWDEPTH_1DAYS, PSNOWDEPTH_3DAYS, PSNOWDEPTH_5DAYS, PSNOWDEPTH_7DAYS,&
+(   10)                         PSNOWSWE_1DAYS, PSNOWSWE_3DAYS, PSNOWSWE_5DAYS,PSNOWSWE_7DAYS,&
+(   11)                         PSNOWRAM_SONDE, PSNOW_WETTHICKNESS, PSNOW_REFTHICKNESS,PSNOWIMP_CONC,&
+(   12)                         PDEP_HIG, PDEP_MOD, PDEP_SUP, PDEP_TOT, PDEP_HUM,&
+(   13)                         PACC_LEV, PNAT_LEV, PPRO_SUP_TYP, PPRO_INF_TYP, PAVA_TYP)
+(   14) CHARACTER(3)        , INTENT(IN)    :: HSNOWMETAMO         ! metamorphism option
+(   15) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWDZ             ! slope-perpendicular thickness (m) (projection in reproj_diag_is
+(   16) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWSWE            ! mass (kg/m2)
+(   17) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWRHO            ! density (kg/m3)
+(   18) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWGRAN1          ! grain morphology variable 1 (-)
+(   19) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWGRAN2          ! grain morphology variable 2 (-)
+(   20) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWAGE            ! age since snowfall (day)
+(   21) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWHIST           ! historical parameter (-) in {0-5}
+(   22) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWTEMP           ! temperature (K)
+(   23) REAL, DIMENSION(:,:), INTENT(INOUT) :: PSNOWLIQ            ! vertical liquid water content (m)
+(   24) REAL, DIMENSION(:),   INTENT(IN)    :: PDIRCOSZW           ! cosine of slope angle (-)
+(   25) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWDEND           ! dendricity (-)
+(   26) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSPHER          ! sphericity (-)
+(   27) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSIZE           ! grain size (m)
+(   28) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSSA            ! specific surface area (m2/kg)
+(   29) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWTYPEMEPRA      ! snow type (-)
+(   30) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWRAM            ! ram penetration strength (kgf = 9.81 N)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:11      page 3
+
+(   31) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSHEAR          ! shear strength (kgf/dm2 = 0.981 kPa)
+(   32) REAL, DIMENSION(:,:), INTENT(OUT)   :: PACC_RAT            ! accidental ratio shear strength/stress
+(   33) REAL, DIMENSION(:,:), INTENT(OUT)   :: PNAT_RAT            ! natural ratio shear strength/stress
+(   34) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_1DAYS    ! slope-perpendicular thickness of snow with age <= 1 day  (m) (p
+(   35) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_3DAYS    ! slope-perpendicular thickness of snow with age <= 3 days (m) (p
+(   36) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_5DAYS    ! slope-perpendicular thickness of snow with age <= 5 days (m) (p
+(   37) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_7DAYS    ! slope-perpendicular thickness of snow with age <= 7 days (m) (p
+(   38) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_1DAYS      ! swe with age <= 1 day  (kg m-2)
+(   39) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_3DAYS      ! swe with age <= 3 days (kg m-2)
+(   40) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_5DAYS      ! swe with age <= 5 days (kg m-2)
+(   41) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_7DAYS      ! swe with age <= 7 days (kg m-2)
+(   42) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWRAM_SONDE      ! ramsonde top penetration slope-perpendicular thickness (m) (pro
+(   43) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_WETTHICKNESS  ! top continous wet snow slope-perpendicular thickness (m) (proje
+(   44) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_REFTHICKNESS  ! top continous refrozen snow slope-perpendicular thickness (m) (
+(   45) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEP_HIG            ! vertical depth of high instability (m)
+(   46) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEP_MOD            ! vertical depth of moderate instability (m)
+(   47) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_SUP            ! vertical depth of superior profile bottom (m)
+(   48) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_TOT            ! total vertical snow depth (m)
+(   49) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_HUM            ! vertical thickness of the uppest continuous block of humid snow
+(   50) REAL, DIMENSION(:),   INTENT(OUT)   :: PACC_LEV            ! accidental risk level (0-4)
+(   51) REAL, DIMENSION(:),   INTENT(INOUT) :: PNAT_LEV            ! natural risk level (0-6)
+(   52) REAL, DIMENSION(:),   INTENT(INOUT) :: PPRO_SUP_TYP        ! type of superior profile (0, 4, 5, 6)
+(   53) REAL, DIMENSION(:),   INTENT(OUT)   :: PPRO_INF_TYP        ! type of inferior profile (0, 1, 6)
+(   54) REAL, DIMENSION(:),   INTENT(INOUT) :: PAVA_TYP            ! type of avalanche (0-6)
+(   55) REAL, DIMENSION(:,:,:), INTENT(OUT) :: PSNOWIMP_CONC
+(   56) REAL, DIMENSION(:,:,:), INTENT(IN) :: PSNOWIMP
+(   57) END SUBROUTINE SNOWCRO_DIAG
+(   58) 
+(   59) END INTERFACE
+(   60) END MODULE MODI_SNOWCRO_DIAG
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:11      page 4
+
+(    1) # 1 "modi_snowcro_diag.F90"
+(    1) !depfile:snowcro_diag.F90
+(    2) MODULE MODI_SNOWCRO_DIAG
+(    3) INTERFACE
+(    4) SUBROUTINE SNOWCRO_DIAG(HSNOWMETAMO, &
+(    5)                         PSNOWDZ, PSNOWSWE, PSNOWRHO, PSNOWGRAN1, PSNOWGRAN2, PSNOWAGE, &
+(    6)                         PSNOWHIST, PSNOWTEMP, PSNOWLIQ, PDIRCOSZW, PSNOWIMP, PSNOWDEND, PSNOWSPHER, &
+(    7)                         PSNOWSIZE, PSNOWSSA, PSNOWTYPEMEPRA, PSNOWRAM, PSNOWSHEAR, &
+(    8)                         PACC_RAT, PNAT_RAT, &
+(    9)                         PSNOWDEPTH_1DAYS, PSNOWDEPTH_3DAYS, PSNOWDEPTH_5DAYS, PSNOWDEPTH_7DAYS,&
+(   10)                         PSNOWSWE_1DAYS, PSNOWSWE_3DAYS, PSNOWSWE_5DAYS,PSNOWSWE_7DAYS,&
+(   11)                         PSNOWRAM_SONDE, PSNOW_WETTHICKNESS, PSNOW_REFTHICKNESS,PSNOWIMP_CONC,&
+(   12)                         PDEP_HIG, PDEP_MOD, PDEP_SUP, PDEP_TOT, PDEP_HUM,&
+(   13)                         PACC_LEV, PNAT_LEV, PPRO_SUP_TYP, PPRO_INF_TYP, PAVA_TYP)
+(   14) CHARACTER(3)        , INTENT(IN)    :: HSNOWMETAMO         ! metamorphism option
+(   15) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWDZ             ! slope-perpendicular thickness (m) (projection in reproj_diag_isban)
+(   16) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWSWE            ! mass (kg/m2)
+(   17) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWRHO            ! density (kg/m3)
+(   18) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWGRAN1          ! grain morphology variable 1 (-)
+(   19) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWGRAN2          ! grain morphology variable 2 (-)
+(   20) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWAGE            ! age since snowfall (day)
+(   21) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWHIST           ! historical parameter (-) in {0-5}
+(   22) REAL, DIMENSION(:,:), INTENT(IN)    :: PSNOWTEMP           ! temperature (K)
+(   23) REAL, DIMENSION(:,:), INTENT(INOUT) :: PSNOWLIQ            ! vertical liquid water content (m)
+(   24) REAL, DIMENSION(:),   INTENT(IN)    :: PDIRCOSZW           ! cosine of slope angle (-)
+(   25) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWDEND           ! dendricity (-)
+(   26) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSPHER          ! sphericity (-)
+(   27) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSIZE           ! grain size (m)
+(   28) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSSA            ! specific surface area (m2/kg)
+(   29) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWTYPEMEPRA      ! snow type (-)
+(   30) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWRAM            ! ram penetration strength (kgf = 9.81 N)
+(   31) REAL, DIMENSION(:,:), INTENT(OUT)   :: PSNOWSHEAR          ! shear strength (kgf/dm2 = 0.981 kPa)
+(   32) REAL, DIMENSION(:,:), INTENT(OUT)   :: PACC_RAT            ! accidental ratio shear strength/stress
+(   33) REAL, DIMENSION(:,:), INTENT(OUT)   :: PNAT_RAT            ! natural ratio shear strength/stress
+(   34) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_1DAYS    ! slope-perpendicular thickness of snow with age <= 1 day  (m) (projection in reproj_diag_isban)
+(   35) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_3DAYS    ! slope-perpendicular thickness of snow with age <= 3 days (m) (projection in reproj_diag_isban)
+(   36) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_5DAYS    ! slope-perpendicular thickness of snow with age <= 5 days (m) (projection in reproj_diag_isban)
+(   37) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWDEPTH_7DAYS    ! slope-perpendicular thickness of snow with age <= 7 days (m) (projection in reproj_diag_isban)
+(   38) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_1DAYS      ! swe with age <= 1 day  (kg m-2)
+(   39) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_3DAYS      ! swe with age <= 3 days (kg m-2)
+(   40) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_5DAYS      ! swe with age <= 5 days (kg m-2)
+(   41) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWSWE_7DAYS      ! swe with age <= 7 days (kg m-2)
+(   42) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOWRAM_SONDE      ! ramsonde top penetration slope-perpendicular thickness (m) (projection in reproj_diag_isban)
+(   43) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_WETTHICKNESS  ! top continous wet snow slope-perpendicular thickness (m) (projection in reproj_diag_isban)
+(   44) REAL, DIMENSION(:),   INTENT(OUT)   :: PSNOW_REFTHICKNESS  ! top continous refrozen snow slope-perpendicular thickness (m) (projection in reproj_diag_isban)
+(   45) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEP_HIG            ! vertical depth of high instability (m)
+(   46) REAL, DIMENSION(:),   INTENT(OUT)   :: PDEP_MOD            ! vertical depth of moderate instability (m)
+(   47) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_SUP            ! vertical depth of superior profile bottom (m)
+(   48) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_TOT            ! total vertical snow depth (m)
+(   49) REAL, DIMENSION(:),   INTENT(INOUT) :: PDEP_HUM            ! vertical thickness of the uppest continuous block of humid snow in the sup profile
+(   50) REAL, DIMENSION(:),   INTENT(OUT)   :: PACC_LEV            ! accidental risk level (0-4)
+(   51) REAL, DIMENSION(:),   INTENT(INOUT) :: PNAT_LEV            ! natural risk level (0-6)
+(   52) REAL, DIMENSION(:),   INTENT(INOUT) :: PPRO_SUP_TYP        ! type of superior profile (0, 4, 5, 6)
+(   53) REAL, DIMENSION(:),   INTENT(OUT)   :: PPRO_INF_TYP        ! type of inferior profile (0, 1, 6)
+(   54) REAL, DIMENSION(:),   INTENT(INOUT) :: PAVA_TYP            ! type of avalanche (0-6)
+(   55) REAL, DIMENSION(:,:,:), INTENT(OUT) :: PSNOWIMP_CONC
+(   56) REAL, DIMENSION(:,:,:), INTENT(IN) :: PSNOWIMP
+(   57) END SUBROUTINE SNOWCRO_DIAG
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:11      page 5
+
+(   58) # 59 "modi_snowcro_diag.F90"
+(   59) END INTERFACE
+(   60) END MODULE MODI_SNOWCRO_DIAG

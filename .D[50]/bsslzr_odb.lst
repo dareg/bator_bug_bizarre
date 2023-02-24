@@ -1,0 +1,372 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: bsslzr_odb.F90
+
+(    1) SUBROUTINE BSSLZR_ODB(PBES,KNUM)
+(    2) 
+(    3) !**** *BSSLZR_ODB* - ROUTINE TO RETURN ZEROS OF THE J0 *BESSEL FUNCTION.
+(    4) 
+(    5) !     PURPOSE.
+(    6) !     --------
+(    7) 
+(    8) !          *BSSLZR_ODB* RETURNS *KNUM* ZEROS, OR IF *KNUM>50,* *KNUM*
+(    9) !     APPROXIMATE ZEROS OF THE *BESSEL FUNCTION J0.
+(   10) 
+(   11) !**   INTERFACE.
+(   12) !     ----------
+(   13) 
+(   14) !          *CALL* *BSSLZR_ODB(PBES,KNUM)*
+(   15) 
+(   16) !               *PBES*   - ARRAY, DIMENSIONED *KNUM,* TO RECEIVE THE
+(   17) !                          VALUES.
+(   18) !               *KNUM*   - NUMBER OF ZEROS REQUESTED.
+(   19) 
+(   20) !     METHOD.
+(   21) !     -------
+(   22) 
+(   23) !          THE FIRST 50 VALUES ARE OBTAINED FROM A LOOK UP TABLE. ANY
+(   24) !     ADDITIONAL VALUES REQUESTED ARE INTERPOLATED.
+(   25) 
+(   26) !     EXTERNALS.
+(   27) !     ----------
+(   28) 
+(   29) !          NONE.
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 3
+
+(   31) !     REFERENCE.
+(   32) !     ----------
+(   33) 
+(   34) 
+(   35) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(   36) 
+(   37) IMPLICIT NONE
+(   38) 
+(   39) 
+(   40) INTEGER(KIND=JPIM), intent(in) :: KNUM
+(   41) REAL(KIND=JPRD), intent(out)   :: PBES(KNUM)
+(   42) ! === END OF INTERFACE BLOCK ===
+(   43) 
+(   44) !     LOCAL INTEGER SCALARS
+(   45) INTEGER(KIND=JPIM) :: INUM, J
+(   46) 
+(   47) DIMENSION ZBES(50)
+(   48) 
+(   49) !     LOCAL REAL SCALARS
+(   50) REAL(KIND=JPRD) :: ZAPI, ZBES, ZPI
+(   51) 
+(   52) DATA ZBES        / 2.4048255577_JPRD,   5.5200781103_JPRD,&
+(   53)     &8.6537279129_JPRD,  11.7915344391_JPRD,  14.9309177086_JPRD,  18.0710639679_JPRD,&
+(   54)    &21.2116366299_JPRD,  24.3524715308_JPRD,  27.4934791320_JPRD,  30.6346064684_JPRD,&
+(   55)    &33.7758202136_JPRD,  36.9170983537_JPRD,  40.0584257646_JPRD,  43.1997917132_JPRD,&
+(   56)    &46.3411883717_JPRD,  49.4826098974_JPRD,  52.6240518411_JPRD,  55.7655107550_JPRD,&
+(   57)    &58.9069839261_JPRD,  62.0484691902_JPRD,  65.1899648002_JPRD,  68.3314693299_JPRD,&
+(   58)    &71.4729816036_JPRD,  74.6145006437_JPRD,  77.7560256304_JPRD,  80.8975558711_JPRD,&
+(   59)    &84.0390907769_JPRD,  87.1806298436_JPRD,  90.3221726372_JPRD,  93.4637187819_JPRD,&
+(   60)    &96.6052679510_JPRD,  99.7468198587_JPRD, 102.8883742542_JPRD, 106.0299309165_JPRD,&
+(   61)   &109.1714896498_JPRD, 112.3130502805_JPRD, 115.4546126537_JPRD, 118.5961766309_JPRD,&
+(   62)   &121.7377420880_JPRD, 124.8793089132_JPRD, 128.0208770059_JPRD, 131.1624462752_JPRD,&
+(   63)   &134.3040166383_JPRD, 137.4455880203_JPRD, 140.5871603528_JPRD, 143.7287335737_JPRD,&
+(   64)   &146.8703076258_JPRD, 150.0118824570_JPRD, 153.1534580192_JPRD, 156.2950342685_JPRD/
+(   65) 
+(   66) 
+(   67) !     ------------------------------------------------------------------
+(   68) 
+(   69) !*         1.     EXTRACT VALUES FROM LOOK UP TABLE.
+(   70) 
+(   71) 
+(   72) 100 CONTINUE
+(   73) ZAPI=2.0_JPRD*ASIN(1.0_JPRD)
+(   74) INUM=MIN(KNUM,50)
+(   75) 
+(   76) DO 110 J=1,INUM
+(   77)   PBES(J)=ZBES(J)
+(   78) 110 CONTINUE
+(   79) 
+(   80) !     ------------------------------------------------------------------
+(   81) 
+(   82) !*         2.     INTERPOLATE REMAINING VALUES.
+(   83) !                 ----------- --------- -------
+(   84) 
+(   85) 200 CONTINUE
+(   86) 
+(   87) IF (KNUM > 50) THEN
+(   88)   ZPI=ZAPI
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 4
+
+(   89)   DO 210 J=51,KNUM
+(   90)     PBES(J)=PBES(J-1)+ZPI
+(   91)   210 CONTINUE
+(   92) ENDIF
+(   93) 
+(   94) !     ------------------------------------------------------------------
+(   95) 
+(   96) RETURN
+(   97) END SUBROUTINE BSSLZR_ODB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 5
+
+(    1) # 1 "bsslzr_odb.F90"
+(    1) SUBROUTINE BSSLZR_ODB(PBES,KNUM)
+(    2) # 3 "bsslzr_odb.F90"
+(    3) !**** *BSSLZR_ODB* - ROUTINE TO RETURN ZEROS OF THE J0 *BESSEL FUNCTION.
+(    4) # 5 "bsslzr_odb.F90"
+(    5) !     PURPOSE.
+(    6) !     --------
+(    7) # 8 "bsslzr_odb.F90"
+(    8) !          *BSSLZR_ODB* RETURNS *KNUM* ZEROS, OR IF *KNUM>50,* *KNUM*
+(    9) !     APPROXIMATE ZEROS OF THE *BESSEL FUNCTION J0.
+(   10) # 11 "bsslzr_odb.F90"
+(   11) !**   INTERFACE.
+(   12) !     ----------
+(   13) # 14 "bsslzr_odb.F90"
+(   14) !          *CALL* *BSSLZR_ODB(PBES,KNUM)*
+(   15) # 16 "bsslzr_odb.F90"
+(   16) !               *PBES*   - ARRAY, DIMENSIONED *KNUM,* TO RECEIVE THE
+(   17) !                          VALUES.
+(   18) !               *KNUM*   - NUMBER OF ZEROS REQUESTED.
+(   19) # 20 "bsslzr_odb.F90"
+(   20) !     METHOD.
+(   21) !     -------
+(   22) # 23 "bsslzr_odb.F90"
+(   23) !          THE FIRST 50 VALUES ARE OBTAINED FROM A LOOK UP TABLE. ANY
+(   24) !     ADDITIONAL VALUES REQUESTED ARE INTERPOLATED.
+(   25) # 26 "bsslzr_odb.F90"
+(   26) !     EXTERNALS.
+(   27) !     ----------
+(   28) # 29 "bsslzr_odb.F90"
+(   29) !          NONE.
+(   30) # 31 "bsslzr_odb.F90"
+(   31) !     REFERENCE.
+(   32) !     ----------
+(   33) # 35 "bsslzr_odb.F90"
+(   35) USE PARKIND1  ,ONLY : JPIM     ,JPRD
+(   36) # 37 "bsslzr_odb.F90"
+(   37) IMPLICIT NONE
+(   38) # 40 "bsslzr_odb.F90"
+(   40) INTEGER(KIND=JPIM), intent(in) :: KNUM
+(   41) REAL(KIND=JPRD), intent(out)   :: PBES(KNUM)
+(   42) ! === END OF INTERFACE BLOCK ===
+(   43) # 44 "bsslzr_odb.F90"
+(   44) !     LOCAL INTEGER SCALARS
+(   45) INTEGER(KIND=JPIM) :: INUM, J
+(   46) # 47 "bsslzr_odb.F90"
+(   47) DIMENSION ZBES(50)
+(   48) # 49 "bsslzr_odb.F90"
+(   49) !     LOCAL REAL SCALARS
+(   50) REAL(KIND=JPRD) :: ZAPI, ZBES, ZPI
+(   51) # 52 "bsslzr_odb.F90"
+(   52) DATA ZBES        / 2.4048255577_JPRD,   5.5200781103_JPRD,&
+(   53)     &8.6537279129_JPRD,  11.7915344391_JPRD,  14.9309177086_JPRD,  18.0710639679_JPRD,&
+(   54)    &21.2116366299_JPRD,  24.3524715308_JPRD,  27.4934791320_JPRD,  30.6346064684_JPRD,&
+(   55)    &33.7758202136_JPRD,  36.9170983537_JPRD,  40.0584257646_JPRD,  43.1997917132_JPRD,&
+(   56)    &46.3411883717_JPRD,  49.4826098974_JPRD,  52.6240518411_JPRD,  55.7655107550_JPRD,&
+(   57)    &58.9069839261_JPRD,  62.0484691902_JPRD,  65.1899648002_JPRD,  68.3314693299_JPRD,&
+(   58)    &71.4729816036_JPRD,  74.6145006437_JPRD,  77.7560256304_JPRD,  80.8975558711_JPRD,&
+(   59)    &84.0390907769_JPRD,  87.1806298436_JPRD,  90.3221726372_JPRD,  93.4637187819_JPRD,&
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:01      page 6
+
+(   60)    &96.6052679510_JPRD,  99.7468198587_JPRD, 102.8883742542_JPRD, 106.0299309165_JPRD,&
+(   61)   &109.1714896498_JPRD, 112.3130502805_JPRD, 115.4546126537_JPRD, 118.5961766309_JPRD,&
+(   62)   &121.7377420880_JPRD, 124.8793089132_JPRD, 128.0208770059_JPRD, 131.1624462752_JPRD,&
+(   63)   &134.3040166383_JPRD, 137.4455880203_JPRD, 140.5871603528_JPRD, 143.7287335737_JPRD,&
+(   64)   &146.8703076258_JPRD, 150.0118824570_JPRD, 153.1534580192_JPRD, 156.2950342685_JPRD/
+(   65) # 67 "bsslzr_odb.F90"
+(   67) !     ------------------------------------------------------------------
+(   68) # 69 "bsslzr_odb.F90"
+(   69) !*         1.     EXTRACT VALUES FROM LOOK UP TABLE.
+(   70) # 72 "bsslzr_odb.F90"
+(   72) 100 CONTINUE
+(   73) ZAPI=2.0_JPRD*ASIN(1.0_JPRD)
+(   74) INUM=MIN(KNUM,50)
+(   75) # 76 "bsslzr_odb.F90"
+(   76) DO 110 J=1,INUM
+(   77)   PBES(J)=ZBES(J)
+(   78) 110 CONTINUE
+(   79) # 80 "bsslzr_odb.F90"
+(   80) !     ------------------------------------------------------------------
+(   81) # 82 "bsslzr_odb.F90"
+(   82) !*         2.     INTERPOLATE REMAINING VALUES.
+(   83) !                 ----------- --------- -------
+(   84) # 85 "bsslzr_odb.F90"
+(   85) 200 CONTINUE
+(   86) # 87 "bsslzr_odb.F90"
+(   87) IF (KNUM > 50) THEN
+(   88)   ZPI=ZAPI
+(   89)   DO 210 J=51,KNUM
+(   90)     PBES(J)=PBES(J-1)+ZPI
+(   91)   210 CONTINUE
+(   92) ENDIF
+(   93) # 94 "bsslzr_odb.F90"
+(   94) !     ------------------------------------------------------------------
+(   95) # 96 "bsslzr_odb.F90"
+(   96) RETURN
+(   97) END SUBROUTINE BSSLZR_ODB

@@ -1,0 +1,2566 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: FA4py.F90
+
+(    1) SUBROUTINE WFAITOU(KRETURNCODE, CDFILE, CDSTATE, KNUMER, CDNOMC)
+(    2) ! ** PURPOSE
+(    3) !    Open a FA FILE
+(    4) !
+(    5) ! ** DUMMY ARGUMENTS
+(    6) !    KRETURNCODE: error code
+(    7) !    CDFILE: path to file to open
+(    8) !    CDSTATE: state of file ('NEW', 'OLD')
+(    9) !    KNUMER: logical unit number associated to file
+(   10) !    CDNOMC: name of "cadre"
+(   11) !
+(   12) ! ** AUTHOR
+(   13) !    9 April 2014, S. Riette
+(   14) !
+(   15) ! ** MODIFICATIONS
+(   16) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(   17) !
+(   18) ! I. Dummy arguments declaration
+(   19) USE LFI_PRECISION
+(   20) IMPLICIT NONE
+(   21) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   22) CHARACTER(LEN=*), INTENT(IN) :: CDFILE
+(   23) CHARACTER(LEN=*), INTENT(IN) :: CDSTATE
+(   24) INTEGER(KIND=8), INTENT(OUT) :: KNUMER
+(   25) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(   26) !
+(   27) ! II. Local variables declaration
+(   28) INTEGER(KIND=JPLIKB), PARAMETER :: JPMAXLOGICALUNITNUMBER=5000
+(   29) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   30) INTEGER(KIND=JPLIKB) :: INUMER
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 3
+
+(   31) INTEGER(KIND=JPLIKB) :: ILEVEL
+(   32) INTEGER(KIND=JPLIKB) :: IRECORDNUMBER
+(   33) !
+(   34) ! III. File opening
+(   35) !
+(   36) ! III.a Search for an available logical unit
+(   37) !       (unit=0 since 14/12/2015, P.Marguinaud)
+(   38) IRETURNCODE=0_JPLIKB
+(   39) INUMER=0_JPLIKB
+(   40) !
+(   41) #ifdef __GFORTRAN__
+(   42) ! III.b (Re)-init of libgfortran to enable big_endian file reading
+(   43) !**** *** ** * only gfortran will work with this * ** *** ****
+(   44) CALL INIT_GFORTRAN_BIG_ENDIAN()
+(   45) #endif
+(   46) !
+(   47) ! III.c FA file opening
+(   48) ILEVEL=2_JPLIKB
+(   49) CALL FANERG64(ILEVEL) !Global level of fatal error
+(   50) CALL FAITOU64(IRETURNCODE, INUMER, .TRUE., CDFILE, CDSTATE, .FALSE.,& 
+(   51)               &.FALSE., 0_JPLIKB, 1_JPLIKB, IRECORDNUMBER, CDNOMC)
+(   52) IF(IRETURNCODE/=0)THEN
+(   53)   IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(   54)     ! not a LFI error, treated beyond
+(   55)     CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAITOU','',.FALSE.)
+(   56)   ENDIF
+(   57)   IF(IRETURNCODE==-60)THEN
+(   58)     ! Certainly a LFI file opened as a FA file
+(   59)     ! We must close it to be able to open it again as a LFI file
+(   60)     CALL LFIFER64(IRETURNCODE, INUMER, 'KEEP')
+(   61)     IRETURNCODE=-60
+(   62)   ENDIF
+(   63) ENDIF
+(   64) KRETURNCODE=INT(IRETURNCODE,8)
+(   65) KNUMER=INT(INUMER, 8)
+(   66) !
+(   67) #ifdef __GFORTRAN__
+(   68) ! III.d (Re)-init of libgfortran to enable native endianess file reading
+(   69) !**** *** ** * only gfortran will work with this * ** *** ****
+(   70) CALL INIT_GFORTRAN_NATIVE_ENDIAN()
+(   71) #endif
+(   72) !
+(   73) END SUBROUTINE WFAITOU
+(   74) 
+(   75) !______________________________________________________________________
+(   76) 
+(   77) SUBROUTINE WFADIES(KRETURNCODE, KNUMER, KDATEF)
+(   78) ! ** PURPOSE
+(   79) !    Wrapper to FADIES
+(   80) !
+(   81) ! ** DUMMY ARGUMENTS
+(   82) !    KRETURNCODE: error code
+(   83) !    KNUMER: logical unit number associated to file
+(   84) !    KDATEF: array of date elements
+(   85) !
+(   86) ! ** AUTHOR
+(   87) !    9 April 2014, S. Riette
+(   88) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 4
+
+(   89) ! ** MODIFICATIONS
+(   90) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(   91) !
+(   92) ! I. Dummy arguments declaration
+(   93) USE LFI_PRECISION
+(   94) IMPLICIT NONE
+(   95) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   96) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(   97) INTEGER(KIND=8), DIMENSION(11), INTENT(OUT) :: KDATEF
+(   98) !
+(   99) ! II. Local variables declaration
+(  100) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  101) INTEGER(KIND=JPLIKB) :: INUMER
+(  102) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  103) INTEGER(KIND=JPLIKB) :: JI
+(  104) !
+(  105) ! III. FADIES call
+(  106) INUMER=INT(KNUMER, JPLIKB)
+(  107) CALL FADIES64(IRETURNCODE, INUMER, IDATEF)
+(  108) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  109)   ! not a LFI error, treated beyond
+(  110)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FADIES','',.FALSE.)
+(  111) ENDIF
+(  112) KRETURNCODE=INT(IRETURNCODE,8)
+(  113) DO JI=1, SIZE(KDATEF)
+(  114)   KDATEF(JI)=INT(IDATEF(JI), 8)
+(  115) ENDDO
+(  116) !
+(  117) END SUBROUTINE WFADIES
+(  118) 
+(  119) !______________________________________________________________________
+(  120) 
+(  121) SUBROUTINE WFADIEX(KRETURNCODE, KNUMER, KDATEF)
+(  122) ! ** PURPOSE
+(  123) !    Wrapper to FADIEX
+(  124) !
+(  125) ! ** DUMMY ARGUMENTS
+(  126) !    KRETURNCODE: error code
+(  127) !    KNUMER: logical unit number associated to file
+(  128) !    KDATEF: array of date elements
+(  129) !
+(  130) ! ** AUTHOR
+(  131) !    23 Sept 2014, S. Riette
+(  132) !
+(  133) ! ** MODIFICATIONS
+(  134) !
+(  135) ! I. Dummy arguments declaration
+(  136) USE LFI_PRECISION
+(  137) IMPLICIT NONE
+(  138) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  139) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  140) INTEGER(KIND=8), DIMENSION(22), INTENT(OUT) :: KDATEF
+(  141) !
+(  142) ! II. Local variables declaration
+(  143) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  144) INTEGER(KIND=JPLIKB) :: INUMER
+(  145) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  146) INTEGER(KIND=JPLIKB) :: JI
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 5
+
+(  147) !
+(  148) ! III. FADIEX call
+(  149) INUMER=INT(KNUMER, JPLIKB)
+(  150) CALL FADIEX64(IRETURNCODE, INUMER, IDATEF)
+(  151) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  152)   ! not a LFI error, treated beyond
+(  153)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FADIEX','',.FALSE.)
+(  154) ENDIF
+(  155) KRETURNCODE=INT(IRETURNCODE,8)
+(  156) DO JI=1, SIZE(KDATEF)
+(  157)   KDATEF(JI)=INT(IDATEF(JI), 8)
+(  158) ENDDO
+(  159) !
+(  160) END SUBROUTINE WFADIEX
+(  161) 
+(  162) !______________________________________________________________________
+(  163) 
+(  164) SUBROUTINE WFAVEUR (KRETURNCODE, KNUMER, KNGRIB, KNBPDG, KNBCSP, KSTRON, &
+(  165)                    &KPUILA, KDMOPL)
+(  166) ! ** BUT
+(  167) !    Wrapper to FAVEUR
+(  168) !
+(  169) ! ** DUMMY ARGUMENTS
+(  170) !    KRETURNCODE: error code
+(  171) !    KNUMER: logical unit number associated to file
+(  172) !    KNGRIB: Grib encoding level (-1,0,1,2,3);
+(  173) !    KNBPDG: Number of bits by grid point value
+(  174) !    KNBCSP: Number of bits by real/imaginary part of spectral coefficient
+(  175) !    KSTRON: Unpacked under truncature
+(  176) !    KPUILA: laplacian power
+(  177) !    KDMOPL: KPUILA level of modulation
+(  178) !
+(  179) ! ** AUTHOR
+(  180) !    9 April 2014, S. Riette
+(  181) !
+(  182) ! ** MODIFICATIONS
+(  183) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  184) !
+(  185) ! I. Dummy arguments declaration
+(  186) USE LFI_PRECISION
+(  187) IMPLICIT NONE
+(  188) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  189) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  190) INTEGER(KIND=8), INTENT(OUT) :: KNGRIB
+(  191) INTEGER(KIND=8), INTENT(OUT) :: KNBPDG
+(  192) INTEGER(KIND=8), INTENT(OUT) :: KNBCSP
+(  193) INTEGER(KIND=8), INTENT(OUT) :: KSTRON
+(  194) INTEGER(KIND=8), INTENT(OUT) :: KPUILA
+(  195) INTEGER(KIND=8), INTENT(OUT) :: KDMOPL
+(  196) !
+(  197) ! II. Local variables declaration
+(  198) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  199) INTEGER(KIND=JPLIKB) :: INUMER
+(  200) INTEGER(KIND=JPLIKB) :: INGRIB, INBPDG, INBCSP, ISTRON, IPUILA, IDMOPL
+(  201) !
+(  202) ! III. FAVEUR call
+(  203) !
+(  204) INUMER=INT(KNUMER, JPLIKB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 6
+
+(  205) CALL FAVEUR64(IRETURNCODE, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  206)            &IPUILA, IDMOPL)
+(  207) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  208)   ! not a LFI error, treated beyond
+(  209)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAVEUR','',.FALSE.)
+(  210) ENDIF
+(  211) KRETURNCODE=INT(IRETURNCODE,8)
+(  212) KNGRIB=INT(INGRIB, 8)
+(  213) KNBPDG=INT(INBPDG, 8)
+(  214) KNBCSP=INT(INBCSP, 8)
+(  215) KSTRON=INT(ISTRON, 8)
+(  216) KPUILA=INT(IPUILA, 8)
+(  217) KDMOPL=INT(IDMOPL, 8)
+(  218) !
+(  219) END SUBROUTINE WFAVEUR
+(  220) 
+(  221) !______________________________________________________________________
+(  222) 
+(  223) SUBROUTINE WFAGOTE (KRETURNCODE, KNUMER, KNGRIB, KNBPDG, KNBCSP, KSTRON, &
+(  224)                    &KPUILA, KDMOPL)
+(  225) ! ** BUT
+(  226) !    Wrapper to FAGOTE
+(  227) !
+(  228) ! ** DUMMY ARGUMENTS
+(  229) !    KRETURNCODE: error code
+(  230) !    KNUMER: logical unit number associated to file
+(  231) !    KNGRIB: Grib encoding level (-1,0,1,2,3);
+(  232) !    KNBPDG: Number of bits by grid point value
+(  233) !    KNBCSP: Number of bits by real/imaginary part of spectral coefficient
+(  234) !    KSTRON: Unpacked under truncature
+(  235) !    KPUILA: laplacian power
+(  236) !    KDMOPL: KPUILA level of modulation
+(  237) !
+(  238) ! ** AUTHOR
+(  239) !    9 April 2014, S. Riette
+(  240) !
+(  241) ! ** MODIFICATIONS
+(  242) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  243) !
+(  244) ! I. Dummy arguments declaration
+(  245) USE LFI_PRECISION
+(  246) IMPLICIT NONE
+(  247) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  248) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  249) INTEGER(KIND=8), INTENT(IN) :: KNGRIB
+(  250) INTEGER(KIND=8), INTENT(IN) :: KNBPDG
+(  251) INTEGER(KIND=8), INTENT(IN) :: KNBCSP
+(  252) INTEGER(KIND=8), INTENT(IN) :: KSTRON
+(  253) INTEGER(KIND=8), INTENT(IN) :: KPUILA
+(  254) INTEGER(KIND=8), INTENT(IN) :: KDMOPL
+(  255) 
+(  256) !
+(  257) ! II. Local variables declaration
+(  258) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  259) INTEGER(KIND=JPLIKB) :: INUMER
+(  260) INTEGER(KIND=JPLIKB) :: INGRIB
+(  261) INTEGER(KIND=JPLIKB) :: INBPDG
+(  262) INTEGER(KIND=JPLIKB) :: INBCSP
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 7
+
+(  263) INTEGER(KIND=JPLIKB) :: ISTRON
+(  264) INTEGER(KIND=JPLIKB) :: IPUILA
+(  265) INTEGER(KIND=JPLIKB) :: IDMOPL
+(  266) !
+(  267) ! III. FAGOTE call
+(  268) INUMER=INT(KNUMER, JPLIKB)
+(  269) INGRIB=INT(KNGRIB, JPLIKB)
+(  270) INBPDG=INT(KNBPDG, JPLIKB)
+(  271) INBCSP=INT(KNBCSP, JPLIKB)
+(  272) ISTRON=INT(KSTRON, JPLIKB)
+(  273) IPUILA=INT(KPUILA, JPLIKB)
+(  274) IDMOPL=INT(KDMOPL, JPLIKB)
+(  275) CALL FAGOTE64(IRETURNCODE, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  276)            &IPUILA, IDMOPL)
+(  277) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  278)   ! not a LFI error, treated beyond
+(  279)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAGOTE','',.FALSE.)
+(  280) ENDIF
+(  281) KRETURNCODE=INT(IRETURNCODE,8)
+(  282) !
+(  283) END SUBROUTINE WFAGOTE
+(  284) 
+(  285) !______________________________________________________________________
+(  286) 
+(  287) SUBROUTINE WFACIES(KXPAH, KXIND, KXGEO, KXNIV,&
+(  288)                   &CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  289)                   &PCODIL, KTRONC, KNLATI, KNXLON, KNLOPA, &
+(  290)                   &KNOZPA, PSINLA, KNIVER, PREFER, PAHYBR, &
+(  291)                   &PBHYBR, LDGARD)
+(  292) ! ** BUT
+(  293) !    Wrapper to FACIES
+(  294) !
+(  295) ! ** DUMMY ARGUMENTS
+(  296) !    KXPAH, KXIND, KXGEO, KXNIV: maximal dimensions
+(  297) !    CDNOMC: name of "cadre"
+(  298) !    KTYPTR: Type of horizontal transformation
+(  299) !    PSLAPO: Sinus of latitude of pole of interest
+(  300) !    PCLOPO: Cosinus of longitude of pole of interest
+(  301) !    PSLOPO: Sinus of longitude of pole of interest
+(  302) !    PCODIL: Dilatation coefficient
+(  303) !    KTRONC: Troncature
+(  304) !    KNLATI: Nomber of latitudes (from pole to pole)
+(  305) !    KNXLON: Maximum number of longitudes by parallel
+(  306) !    KNLOPA: Number of longitudes by parallel (from north pole toward equator only)
+(  307) !    KNOZPA: Maximum zonal wave number by parallel (from north pole toward equator only)
+(  308) !    PSINLA: Sinus of latitudes of north hemisphere (from north pole toward equator only)
+(  309) !    KNIVER: Number of vertical levels
+(  310) !    PREFER: Reference pressure (multiplying factor of the first function of hybrid coordinate)
+(  311) !    PAHYBR: Values of "A" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  312) !    PBHYBR: Values of "B" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  313) !    LDGARD: True if "cadre" must be kept even after the last file attached is closed
+(  314) !
+(  315) ! ** AUTHOR
+(  316) !    9 April 2014, S. Riette
+(  317) !
+(  318) ! ** MODIFICATIONS
+(  319) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  320) !    26 sept 2014, S. Riette: use of true logical instead of integer
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 8
+
+(  321) !
+(  322) ! I. Dummy arguments declaration
+(  323) USE LFI_PRECISION
+(  324) IMPLICIT NONE
+(  325) INTEGER(KIND=8), INTENT(IN) :: KXPAH, KXIND, KXGEO, KXNIV
+(  326) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(  327) INTEGER(KIND=8), INTENT(OUT) :: KTYPTR
+(  328) REAL(KIND=8), INTENT(OUT) :: PSLAPO, PCLOPO, PSLOPO
+(  329) REAL(KIND=8), INTENT(OUT) :: PCODIL
+(  330) INTEGER(KIND=8), INTENT(OUT) :: KTRONC, KNLATI, KNXLON
+(  331) INTEGER(KIND=8), DIMENSION(KXPAH), INTENT(OUT) :: KNLOPA
+(  332) INTEGER(KIND=8), DIMENSION(KXIND), INTENT(OUT) :: KNOZPA
+(  333) REAL(KIND=8), DIMENSION(KXGEO), INTENT(OUT) :: PSINLA
+(  334) INTEGER(KIND=8), INTENT(OUT) :: KNIVER
+(  335) REAL(KIND=8), INTENT(OUT) :: PREFER
+(  336) REAL(KIND=8), DIMENSION(0:KXNIV), INTENT(OUT) :: PAHYBR, PBHYBR
+(  337) LOGICAL, INTENT(OUT) :: LDGARD
+(  338) !
+(  339) ! II. Local variables declaration
+(  340) INTEGER(KIND=JPLIKB) :: ITYPTR, ITRONC, INLATI, INXLON, INIVER
+(  341) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNLOPA)) :: INLOPA
+(  342) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNOZPA)) :: INOZPA
+(  343) INTEGER(KIND=JPLIKB) :: JI
+(  344) !
+(  345) ! III. FACIES call
+(  346) CALL FACIES64(CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  347)              &PCODIL, ITRONC, INLATI, INXLON, INLOPA, &
+(  348)              &INOZPA, PSINLA, INIVER, PREFER, PAHYBR, &
+(  349)              &PBHYBR, LDGARD)
+(  350) KTYPTR=INT(ITYPTR, 8)
+(  351) KTRONC=INT(ITRONC, 8)
+(  352) KNLATI=INT(INLATI, 8)
+(  353) KNXLON=INT(INXLON, 8)
+(  354) KNIVER=INT(INIVER, 8)
+(  355) DO JI=1, SIZE(KNLOPA)
+(  356)   KNLOPA(JI)=INT(INLOPA(JI), 8)
+(  357) ENDDO
+(  358) DO JI=1, SIZE(KNLOPA)
+(  359)   KNOZPA(JI)=INT(INOZPA(JI), 8)
+(  360) ENDDO
+(  361) !
+(  362) END SUBROUTINE WFACIES
+(  363) 
+(  364) !______________________________________________________________________
+(  365) 
+(  366) SUBROUTINE WFACADE(CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  367)                   &PCODIL, KTRONC, KNLATI, KNXLON, KSNLOPA, KNLOPA, &
+(  368)                   &KSNOZPA, KNOZPA, KSSINLA, PSINLA, KNIVER, PREFER, PAHYBR, &
+(  369)                   &PBHYBR, LDGARD)
+(  370) ! ** BUT
+(  371) !    Wrapper to FACADE
+(  372) !
+(  373) ! ** DUMMY ARGUMENTS
+(  374) !    CDNOMC: name of "cadre"
+(  375) !    KTYPTR: Type of horizontal transformation
+(  376) !    PSLAPO: Sinus of latitude of pole of interest
+(  377) !    PCLOPO: Cosinus of longitude of pole of interest
+(  378) !    PSLOPO: Sinus of longitude of pole of interest
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 9
+
+(  379) !    PCODIL: Dilatation coefficient
+(  380) !    KTRONC: Troncature
+(  381) !    KNLATI: Nomber of latitudes (from pole to pole)
+(  382) !    KNXLON: Maximum number of longitudes by parallel
+(  383) !    KSNLOPA: Size of KNLOPA
+(  384) !    KNLOPA: Number of longitudes by parallel (from north pole toward equator only)
+(  385) !    KSNOZPA: Size of KNOZPA
+(  386) !    KNOZPA: Maximum zonal wave number by parallel (from north pole toward equator only)
+(  387) !    KSSINLA: Size of PSINLA
+(  388) !    PSINLA: Sinus of latitudes of north hemisphere (from north pole toward equator only)
+(  389) !    KNIVER: Number of vertical levels
+(  390) !    PREFER: Reference pressure (multiplying factor of the first function of hybrid coordinate)
+(  391) !    PAHYBR: Values of "A" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  392) !    PBHYBR: Values of "B" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  393) !    LDGARD: True if "cadre" must be kept even after the last file attached is closed
+(  394) !
+(  395) ! ** AUTHOR
+(  396) !    9 April 2014, S. Riette
+(  397) !
+(  398) ! ** MODIFICATIONS
+(  399) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  400) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  401) !                             suppression of assumed-shape array
+(  402) !
+(  403) ! I. Dummy arguments declaration
+(  404) USE LFI_PRECISION
+(  405) IMPLICIT NONE
+(  406) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(  407) INTEGER(KIND=8), INTENT(IN) :: KTYPTR
+(  408) REAL(KIND=8), INTENT(IN) :: PSLAPO, PCLOPO, PSLOPO
+(  409) REAL(KIND=8), INTENT(IN) :: PCODIL
+(  410) INTEGER(KIND=8), INTENT(IN) :: KTRONC, KNLATI, KNXLON
+(  411) INTEGER(KIND=8), INTENT(IN) :: KSNLOPA
+(  412) INTEGER(KIND=8), DIMENSION(KSNLOPA), INTENT(IN) :: KNLOPA
+(  413) INTEGER(KIND=8), INTENT(IN) :: KSNOZPA
+(  414) INTEGER(KIND=8), DIMENSION(KSNOZPA), INTENT(IN) :: KNOZPA
+(  415) INTEGER(KIND=8), INTENT(IN) :: KSSINLA
+(  416) REAL(KIND=8), DIMENSION(KSSINLA), INTENT(IN) :: PSINLA
+(  417) INTEGER(KIND=8), INTENT(IN) :: KNIVER
+(  418) REAL(KIND=8), INTENT(IN) :: PREFER
+(  419) REAL(KIND=8), DIMENSION(KNIVER+1), INTENT(IN) :: PAHYBR, PBHYBR
+(  420) LOGICAL, INTENT(IN) :: LDGARD
+(  421) !
+(  422) ! II. Local variables declaration
+(  423) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNLOPA)) :: INLOPA
+(  424) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNOZPA)) :: INOZPA
+(  425) INTEGER(KIND=JPLIKB) :: ITYPTR, ITRONC, INLATI, INXLON, INIVER
+(  426) INTEGER(KIND=JPLIKB) :: JI
+(  427) !
+(  428) ! III. FACADE call
+(  429) DO JI=1, SIZE(INLOPA)
+(  430)   INLOPA(JI)=INT(KNLOPA(JI), JPLIKB)
+(  431) ENDDO
+(  432) DO JI=1, SIZE(INOZPA)
+(  433)   INOZPA(JI)=INT(KNOZPA(JI), JPLIKB)
+(  434) ENDDO
+(  435) ITYPTR=INT(KTYPTR, JPLIKB)
+(  436) ITRONC=INT(KTRONC, JPLIKB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 10
+
+(  437) INLATI=INT(KNLATI, JPLIKB)
+(  438) INXLON=INT(KNXLON, JPLIKB)
+(  439) INIVER=INT(KNIVER, JPLIKB)
+(  440) CALL FACADE64(CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  441)              &PCODIL, ITRONC, INLATI, INXLON, INLOPA, &
+(  442)              &INOZPA, PSINLA, INIVER, PREFER, PAHYBR, &
+(  443)              &PBHYBR, LDGARD)
+(  444) !
+(  445) END SUBROUTINE WFACADE
+(  446) 
+(  447) !______________________________________________________________________
+(  448) 
+(  449) SUBROUTINE WFALSIF(KRETURNCODE, KNUMER, CDIDEN)
+(  450) ! ** PURPOSE
+(  451) !    Wrapper to FALSIF
+(  452) !
+(  453) ! ** DUMMY ARGUMENTS
+(  454) !    KRETURNCODE: error code
+(  455) !    KNUMER: logical unit number associated to file
+(  456) !    CDIDEN: identifier of file
+(  457) !
+(  458) ! ** AUTHOR
+(  459) !    9 April 2014, S. Riette
+(  460) !
+(  461) ! ** MODIFICATIONS
+(  462) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  463) !
+(  464) ! I. Dummy arguments declaration
+(  465) USE LFI_PRECISION
+(  466) IMPLICIT NONE
+(  467) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  468) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  469) CHARACTER(LEN=80), INTENT(OUT) :: CDIDEN
+(  470) !
+(  471) ! II. Local variables declaration
+(  472) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  473) INTEGER(KIND=JPLIKB) :: INUMER
+(  474) !
+(  475) ! III. FALSIF call
+(  476) INUMER=INT(KNUMER, JPLIKB)
+(  477) CALL FALSIF64(IRETURNCODE, INUMER, CDIDEN)
+(  478) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  479)   ! not a LFI error, treated beyond
+(  480)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FALSIF','',.FALSE.)
+(  481) ENDIF
+(  482) KRETURNCODE=INT(IRETURNCODE,8)
+(  483) !
+(  484) END SUBROUTINE WFALSIF
+(  485) 
+(  486) !______________________________________________________________________
+(  487) 
+(  488) SUBROUTINE WFAUTIF(KRETURNCODE, KNUMER, CDIDEN)
+(  489) ! ** PURPOSE
+(  490) !    Wrapper to FAUTIF
+(  491) !
+(  492) ! ** DUMMY ARGUMENTS
+(  493) !    KRETURNCODE: error code
+(  494) !    KNUMER: logical unit number associated to file
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 11
+
+(  495) !    CDIDEN: identifier of file
+(  496) !
+(  497) ! ** AUTHOR
+(  498) !    9 April 2014, S. Riette
+(  499) !
+(  500) ! ** MODIFICATIONS
+(  501) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  502) !
+(  503) ! I. Dummy arguments declaration
+(  504) USE LFI_PRECISION
+(  505) IMPLICIT NONE
+(  506) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  507) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  508) CHARACTER(LEN=80), INTENT(IN) :: CDIDEN
+(  509) !
+(  510) ! II. Local variables declaration
+(  511) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  512) INTEGER(KIND=JPLIKB) :: INUMER
+(  513) !
+(  514) ! III. FAUTIF call
+(  515) INUMER=INT(KNUMER, JPLIKB)
+(  516) CALL FAUTIF64(IRETURNCODE, INUMER, CDIDEN)
+(  517) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  518)   ! not a LFI error, treated beyond
+(  519)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAUTIF','',.FALSE.)
+(  520) ENDIF
+(  521) KRETURNCODE=INT(IRETURNCODE,8)
+(  522) !
+(  523) END SUBROUTINE WFAUTIF
+(  524) 
+(  525) 
+(  526) !______________________________________________________________________
+(  527) 
+(  528) SUBROUTINE WFANION(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, LDEXIS, &
+(  529)                   &LDCOSP, KNGRIB, KNBITS, KSTRON, KPUILA)
+(  530) ! ** PURPOSE
+(  531) !    Wrapper to FANION
+(  532) !
+(  533) ! ** DUMMY ARGUMENTS
+(  534) !    KRETURNCODE: error code
+(  535) !    KNUMER: logical unit number associated to file
+(  536) !    CDPREF: potential prefix of record name
+(  537) !    KNIVAU: potential vertical level
+(  538) !    CDSUFF: potential suffix of record name
+(  539) !    LDEXIS: true if record exists
+(  540) !    LDCOSP: true if field is spectral
+(  541) !    KNGRIB: level of GRIB encoding
+(  542) !    KNBITS: numbers of encoding bits
+(  543) !    KSTRON: potential under-trocature
+(  544) !    KPUILA: potential laplacian power
+(  545) !
+(  546) ! ** AUTHOR
+(  547) !    9 April 2014, S. Riette
+(  548) !
+(  549) ! ** MODIFICATIONS
+(  550) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  551) !
+(  552) ! I. Dummy arguments declaration
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 12
+
+(  553) USE LFI_PRECISION
+(  554) IMPLICIT NONE
+(  555) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  556) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  557) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  558) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  559) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  560) LOGICAL, INTENT(OUT) :: LDEXIS, LDCOSP
+(  561) INTEGER(KIND=8), INTENT(OUT) :: KNGRIB, KNBITS, KSTRON, KPUILA
+(  562) !
+(  563) ! II. Local variables declaration
+(  564) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  565) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  566) INTEGER(KIND=JPLIKB) :: INGRIB, INBITS, ISTRON, IPUILA
+(  567) !
+(  568) ! III. FALSIF call
+(  569) INUMER=INT(KNUMER, JPLIKB)
+(  570) INIVAU=INT(KNIVAU, JPLIKB)
+(  571) CALL FANION64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, LDEXIS, &
+(  572)              &LDCOSP, INGRIB, INBITS, ISTRON, IPUILA)
+(  573) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  574)   ! not a LFI error, treated beyond
+(  575)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANION','',.FALSE.)
+(  576) ENDIF
+(  577) KRETURNCODE=INT(IRETURNCODE,8)
+(  578) KNGRIB=INT(INGRIB, 8)
+(  579) KNBITS=INT(INBITS, 8)
+(  580) KSTRON=INT(ISTRON, 8)
+(  581) KPUILA=INT(IPUILA, 8)
+(  582) !
+(  583) END SUBROUTINE WFANION
+(  584) 
+(  585) !______________________________________________________________________
+(  586) 
+(  587) SUBROUTINE WFAIRME(KRETURNCODE, KNUMER, CDSTTU)
+(  588) ! ** PURPOSE
+(  589) !    Wrapper to FAIRME
+(  590) !
+(  591) ! ** DUMMY ARGUMENTS
+(  592) !    KRETURNCODE: error code
+(  593) !    KNUMER: logical unit number associated to file
+(  594) !    CDSTTU: status ('KEEP', 'DELETE', 'DEFAUT')
+(  595) !
+(  596) ! ** AUTHOR
+(  597) !    9 April 2014, S. Riette
+(  598) !
+(  599) ! ** MODIFICATIONS
+(  600) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  601) !
+(  602) ! I. Dummy arguments declaration
+(  603) USE LFI_PRECISION
+(  604) IMPLICIT NONE
+(  605) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  606) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  607) CHARACTER(LEN=7), INTENT(IN) :: CDSTTU
+(  608) !
+(  609) ! II. Local variables declaration
+(  610) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 13
+
+(  611) INTEGER(KIND=JPLIKB) :: INUMER
+(  612) !
+(  613) ! III. File closing
+(  614) INUMER=INT(KNUMER, JPLIKB)
+(  615) CALL FAIRME64(IRETURNCODE, INUMER, CDSTTU)
+(  616) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  617)   ! not a LFI error, treated beyond
+(  618)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIRME','',.FALSE.)
+(  619) ENDIF
+(  620) KRETURNCODE=INT(IRETURNCODE,8)
+(  621) END SUBROUTINE WFAIRME
+(  622) 
+(  623) !______________________________________________________________________
+(  624) 
+(  625) SUBROUTINE WFACILE(KRETURNCODE,KSIZE, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP) 
+(  626) ! ** PURPOSE
+(  627) !    Wrapper to FACILE
+(  628) !
+(  629) ! ** DUMMY ARGUMENTS
+(  630) !    KRETURNCODE: error code
+(  631) !    KSIZE: size of array to read
+(  632) !    KNUMER: logical unit number associated to file
+(  633) !    CDPREF: potential prefix of record name
+(  634) !    KNIVAU: potential vertical level
+(  635) !    CDSUFF: potential suffix of record name
+(  636) !    PCHAMP: float values read
+(  637) !    LDCOSP: true if spectral
+(  638) !
+(  639) ! ** AUTHOR
+(  640) !    9 April 2014, S. Riette
+(  641) !
+(  642) ! ** MODIFICATIONS
+(  643) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  644) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  645) !    31 Jan 2019 R. El Khatib : fix for single precision compilation
+(  646) !
+(  647) ! I. Dummy arguments declaration
+(  648) USE LFI_PRECISION
+(  649) USE PARKIND1, ONLY : JPRB
+(  650) IMPLICIT NONE
+(  651) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  652) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  653) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  654) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  655) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  656) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  657) REAL(KIND=8), DIMENSION(KSIZE), INTENT(OUT) :: PCHAMP
+(  658) LOGICAL, INTENT(IN) :: LDCOSP
+(  659) !
+(  660) ! II. Local variables declaration
+(  661) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  662) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  663) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  664) !
+(  665) ! III. Field reading
+(  666) INUMER=INT(KNUMER, JPLIKB)
+(  667) INIVAU=INT(KNIVAU, JPLIKB)
+(  668) CALL FACILE64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 14
+
+(  669) PCHAMP(:)=REAL(ZCHAMP(:),KIND=8)
+(  670) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  671)   ! not a LFI error, treated beyond
+(  672)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FACILE','',.FALSE.)
+(  673) ENDIF
+(  674) KRETURNCODE=INT(IRETURNCODE,8)
+(  675) END SUBROUTINE WFACILE
+(  676) 
+(  677) !______________________________________________________________________
+(  678) 
+(  679) SUBROUTINE WFACILO(KRETURNCODE,KSIZE, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, LDUNDEF, PDUNDEF)
+(  680) ! ** PURPOSE
+(  681) !    Wrapper to FACILO
+(  682) !
+(  683) ! ** DUMMY ARGUMENTS
+(  684) !    KRETURNCODE: error code
+(  685) !    KSIZE: size of array to read
+(  686) !    KNUMER: logical unit number associated to file
+(  687) !    CDPREF: potential prefix of record name
+(  688) !    KNIVAU: potential vertical level
+(  689) !    CDSUFF: potential suffix of record name
+(  690) !    PCHAMP: float values read
+(  691) !    LDCOSP: true if spectral
+(  692) !    LDUNDEF: true if the field has undef values
+(  693) !    PDUNDEF: if LDUNDEF is true, value of undef in field
+(  694) !
+(  695) ! ** AUTHOR
+(  696) !    9 April 2014, S. Riette
+(  697) !
+(  698) ! ** MODIFICATIONS
+(  699) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  700) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  701) !
+(  702) ! I. Dummy arguments declaration
+(  703) USE LFI_PRECISION
+(  704) USE PARKIND1, ONLY : JPRB
+(  705) IMPLICIT NONE
+(  706) #include "facilo64.h"
+(  707) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  708) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  709) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  710) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  711) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  712) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  713) REAL(KIND=8), DIMENSION(KSIZE), INTENT(OUT) :: PCHAMP
+(  714) LOGICAL, INTENT(IN) :: LDCOSP
+(  715) LOGICAL, INTENT(OUT) :: LDUNDEF
+(  716) REAL(KIND=8), INTENT(OUT) :: PDUNDEF
+(  717) !
+(  718) ! II. Local variables declaration
+(  719) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  720) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  721) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  722) REAL(KIND=JPRB) :: ZUNDEF
+(  723) !
+(  724) ! III. Field reading
+(  725) INUMER=INT(KNUMER, JPLIKB)
+(  726) INIVAU=INT(KNIVAU, JPLIKB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 15
+
+(  727) CALL FACILO64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP, LDUNDF=LDUNDEF, PUNDF=ZUNDEF)
+(  728) PCHAMP(:)=REAL(ZCHAMP(:),KIND=8)
+(  729) PDUNDEF=REAL(ZUNDEF,KIND=8)
+(  730) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  731)   ! not a LFI error, treated beyond
+(  732)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FACILO','',.FALSE.)
+(  733) ENDIF
+(  734) KRETURNCODE=INT(IRETURNCODE,8)
+(  735) END SUBROUTINE WFACILO
+(  736) 
+(  737) !______________________________________________________________________
+(  738) 
+(  739) SUBROUTINE WFAISAN(KRETURNCODE, KNUMER, CDNOMA, KSIZE, PDONNE)
+(  740) ! ** PURPOSE
+(  741) !    Wrapper to FAISAN
+(  742) !
+(  743) ! ** DUMMY ARGUMENTS
+(  744) !    KRETURNCODE: error code
+(  745) !    KNUMER: logical unit number associated to file
+(  746) !    CDNOMA: name of record
+(  747) !    KSIZE: Size of PDONNE
+(  748) !    PDONNE: data to write
+(  749) !
+(  750) ! ** AUTHOR
+(  751) !    9 April 2014, S. Riette
+(  752) !
+(  753) ! ** MODIFICATIONS
+(  754) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  755) !    26 sept 2014, S. Riette: suppression of assumed-shape array
+(  756) !
+(  757) ! I. Dummy arguments declaration
+(  758) USE LFI_PRECISION
+(  759) IMPLICIT NONE
+(  760) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  761) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  762) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  763) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  764) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PDONNE
+(  765) !
+(  766) ! II. Local variables declaration
+(  767) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  768) INTEGER(KIND=JPLIKB) :: INUMER
+(  769) !
+(  770) ! III FAISAN call
+(  771) INUMER=INT(KNUMER, JPLIKB)
+(  772) CALL FAISAN64(IRETURNCODE, INUMER, CDNOMA, PDONNE, KSIZE)
+(  773) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  774)   ! not a LFI error, treated beyond
+(  775)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAISAN','',.FALSE.)
+(  776) ENDIF
+(  777) KRETURNCODE=INT(IRETURNCODE,8)
+(  778) END SUBROUTINE WFAISAN
+(  779) 
+(  780) !______________________________________________________________________
+(  781) 
+(  782) SUBROUTINE WFALAIS(KRETURNCODE, KNUMER, CDNOMA, PDONNE, KLONGD)
+(  783) ! ** PURPOSE
+(  784) !    Wrapper to FALAIS
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 16
+
+(  785) !
+(  786) ! ** DUMMY ARGUMENTS
+(  787) !    KRETURNCODE: error code
+(  788) !    KNUMER: logical unit number associated to file
+(  789) !    CDNOMA: name of record
+(  790) !    PDONNE: data to read
+(  791) !    KLONGD: length of PDONNE
+(  792) !
+(  793) ! ** AUTHOR
+(  794) !    9 April 2014, S. Riette
+(  795) !
+(  796) ! ** MODIFICATIONS
+(  797) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  798) !
+(  799) ! I. Dummy arguments declaration
+(  800) USE LFI_PRECISION
+(  801) IMPLICIT NONE
+(  802) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  803) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  804) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  805) INTEGER(KIND=8), INTENT(IN) :: KLONGD
+(  806) REAL(KIND=8), DIMENSION(KLONGD), INTENT(OUT) :: PDONNE
+(  807) !
+(  808) ! II. Local variables declaration
+(  809) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  810) INTEGER(KIND=JPLIKB) :: INUMER
+(  811) !
+(  812) ! III FALAIS call
+(  813) INUMER=INT(KNUMER, JPLIKB)
+(  814) CALL FALAIS64(IRETURNCODE, INUMER, CDNOMA, PDONNE, KLONGD)
+(  815) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  816)   ! not a LFI error, treated beyond
+(  817)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FALAIS','',.FALSE.)
+(  818) ENDIF
+(  819) KRETURNCODE=INT(IRETURNCODE,8)
+(  820) END SUBROUTINE WFALAIS
+(  821) 
+(  822) !_________________________________________________________________________
+(  823) 
+(  824) SUBROUTINE WFAIENC(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, KSIZE, PCHAMP, LDCOSP)
+(  825) ! ** PURPOSE
+(  826) !    Wrapper to FAIENC
+(  827) !
+(  828) ! ** DUMMY ARGUMENTS
+(  829) !    KRETURNCODE: error code
+(  830) !    KNUMER: logical unit number associated to file
+(  831) !    CDPREF: potential prefix of record name
+(  832) !    KNIVAU: potential vertical level
+(  833) !    CDSUFF: potential suffix of record name
+(  834) !    KSIZE: size of PCHAMP
+(  835) !    PCHAMP: float values write
+(  836) !    LDCOSP: true if spectral
+(  837) !
+(  838) ! ** AUTHOR
+(  839) !    9 April 2014, S. Riette
+(  840) !
+(  841) ! ** MODIFICATIONS
+(  842) !    11 April 2014, S. Riette: use 64bits FA subroutines
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 17
+
+(  843) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  844) !                             suppression of assumed-shape array
+(  845) !
+(  846) ! I. Dummy arguments declaration
+(  847) USE LFI_PRECISION
+(  848) IMPLICIT NONE
+(  849) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  850) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  851) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  852) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  853) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  854) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  855) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PCHAMP
+(  856) LOGICAL, INTENT(IN) :: LDCOSP
+(  857) !
+(  858) ! II. Local variables declaration
+(  859) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  860) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  861) !
+(  862) ! III. Field writing
+(  863) INUMER=INT(KNUMER, JPLIKB)
+(  864) INIVAU=INT(KNIVAU, JPLIKB)
+(  865) CALL FAIENC64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, LDCOSP)
+(  866) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  867)   ! not a LFI error, treated beyond
+(  868)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIENC','',.FALSE.)
+(  869) ENDIF
+(  870) KRETURNCODE=INT(IRETURNCODE,8)
+(  871) END SUBROUTINE WFAIENC
+(  872) 
+(  873) !_________________________________________________________________________
+(  874) 
+(  875) SUBROUTINE WFAIENO(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, KSIZE, PCHAMP, LDCOSP, LDUNDEF, PDUNDEF)
+(  876) ! ** PURPOSE
+(  877) !    Wrapper to FAIENO
+(  878) !
+(  879) ! ** DUMMY ARGUMENTS
+(  880) !    KRETURNCODE: error code
+(  881) !    KNUMER: logical unit number associated to file
+(  882) !    CDPREF: potential prefix of record name
+(  883) !    KNIVAU: potential vertical level
+(  884) !    CDSUFF: potential suffix of record name
+(  885) !    KSIZE: size of PCHAMP
+(  886) !    PCHAMP: float values write
+(  887) !    LDCOSP: true if spectral
+(  888) !    LDUNDEF: true if the field has undef values
+(  889) !    PDUNDEF: if LDUNDEF is true, value of undef in field
+(  890) !
+(  891) ! ** AUTHOR
+(  892) !    9 April 2014, S. Riette
+(  893) !
+(  894) ! ** MODIFICATIONS
+(  895) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  896) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  897) !                             suppression of assumed-shape array
+(  898) !
+(  899) ! I. Dummy arguments declaration
+(  900) USE LFI_PRECISION
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 18
+
+(  901) USE PARKIND1, ONLY : JPRB
+(  902) IMPLICIT NONE
+(  903) #include "faieno64.h"
+(  904) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  905) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  906) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  907) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  908) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  909) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  910) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PCHAMP
+(  911) LOGICAL, INTENT(IN) :: LDCOSP
+(  912) LOGICAL, INTENT(IN) :: LDUNDEF
+(  913) REAL(KIND=8), INTENT(IN) :: PDUNDEF
+(  914) !
+(  915) ! II. Local variables declaration
+(  916) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  917) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  918) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  919) REAL(KIND=JPRB) :: ZUNDEF
+(  920) !
+(  921) ! III. Field writing
+(  922) INUMER=INT(KNUMER, JPLIKB)
+(  923) INIVAU=INT(KNIVAU, JPLIKB)
+(  924) ZCHAMP(:)=REAL(PCHAMP(:),KIND=JPRB)
+(  925) ZUNDEF=REAL(PDUNDEF,KIND=JPRB)
+(  926) CALL FAIENO64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP, LDUNDF=LDUNDEF, PUNDF=ZUNDEF)
+(  927) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  928)   ! not a LFI error, treated beyond
+(  929)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIENO','',.FALSE.)
+(  930) ENDIF
+(  931) KRETURNCODE=INT(IRETURNCODE,8)
+(  932) END SUBROUTINE WFAIENO
+(  933) 
+(  934) !______________________________________________________________________
+(  935) 
+(  936) SUBROUTINE WFANDAR(KRETURNCODE, KNUMER, KDATEF)
+(  937) ! ** PURPOSE
+(  938) !    Wrapper to FANDAR
+(  939) !
+(  940) ! ** DUMMY ARGUMENTS
+(  941) !    KRETURNCODE: error code
+(  942) !    KNUMER: logical unit number associated to file
+(  943) !    KDATEF: array of date elements
+(  944) !
+(  945) ! ** AUTHOR
+(  946) !    9 April 2014, S. Riette
+(  947) !
+(  948) ! ** MODIFICATIONS
+(  949) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  950) !
+(  951) ! I. Dummy arguments declaration
+(  952) USE LFI_PRECISION
+(  953) IMPLICIT NONE
+(  954) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  955) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  956) INTEGER(KIND=8), DIMENSION(11), INTENT(IN) :: KDATEF
+(  957) !
+(  958) ! II. Local variables declaration
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 19
+
+(  959) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  960) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  961) INTEGER(KIND=JPLIKB) :: INUMER
+(  962) INTEGER(KIND=JPLIKB) :: JI
+(  963) !
+(  964) ! III. FANDAR call
+(  965) DO JI=1, SIZE(KDATEF)
+(  966)   IDATEF(JI)=INT(KDATEF(JI), JPLIKB)
+(  967) ENDDO
+(  968) INUMER=INT(KNUMER, JPLIKB)
+(  969) CALL FANDAR64(IRETURNCODE, INUMER, IDATEF)
+(  970) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  971)   ! not a LFI error, treated beyond
+(  972)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANDAR','',.FALSE.)
+(  973) ENDIF
+(  974) KRETURNCODE=INT(IRETURNCODE,8)
+(  975) END SUBROUTINE WFANDAR
+(  976) 
+(  977) !__________________________________________________________________________
+(  978) 
+(  979) 
+(  980) SUBROUTINE WFANDAX(KRETURNCODE, KNUMER, KDATEF)
+(  981) ! ** PURPOSE
+(  982) !    Wrapper to FANDAX
+(  983) !
+(  984) ! ** DUMMY ARGUMENTS
+(  985) !    KRETURNCODE: error code
+(  986) !    KNUMER: logical unit number associated to file
+(  987) !    KDATEF: array of date elements
+(  988) !
+(  989) ! ** AUTHOR
+(  990) !    9 April 2014, S. Riette
+(  991) !
+(  992) ! ** MODIFICATIONS
+(  993) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  994) !
+(  995) ! I. Dummy arguments declaration
+(  996) USE LFI_PRECISION
+(  997) IMPLICIT NONE
+(  998) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  999) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+( 1000) INTEGER(KIND=8), DIMENSION(22), INTENT(IN) :: KDATEF
+( 1001) !
+( 1002) ! II. Local variables declaration
+( 1003) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+( 1004) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+( 1005) INTEGER(KIND=JPLIKB) :: INUMER
+( 1006) INTEGER(KIND=JPLIKB) :: JI
+( 1007) !
+( 1008) ! III. FANDAX call
+( 1009) DO JI=1, SIZE(KDATEF)
+( 1010)   IDATEF(JI)=INT(KDATEF(JI), JPLIKB)
+( 1011) ENDDO
+( 1012) INUMER=INT(KNUMER, JPLIKB)
+( 1013) CALL FANDAX64(IRETURNCODE, INUMER, IDATEF)
+( 1014) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+( 1015)   ! not a LFI error, treated beyond
+( 1016)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANDAX','',.FALSE.)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 20
+
+( 1017) ENDIF
+( 1018) KRETURNCODE=INT(IRETURNCODE,8)
+( 1019) END SUBROUTINE WFANDAX
+( 1020) 
+( 1021) !________________________________________________________________________
+( 1022) 
+( 1023) SUBROUTINE GET_FACST(JPXPAH, JPXIND, JPXGEO, JPXNIV)
+( 1024) ! ** PURPOSE
+( 1025) !    Export maximum sizes used for fa format
+( 1026) !
+( 1027) ! ** DUMMY ARGUMENTS
+( 1028) !    JPXPAH
+( 1029) !    JPXIND
+( 1030) !    JPXGEO
+( 1031) !    JPXNIV
+( 1032) !
+( 1033) ! ** AUTHOR
+( 1034) !    24 sept 2014, S. Riette
+( 1035) !
+( 1036) ! ** MODIFICATIONS
+( 1037) !
+( 1038) USE FA_MOD, ONLY : FA_COM_DEFAULT, FA_COM_DEFAULT_INIT, NEW_FA_DEFAULT
+( 1039) !
+( 1040) ! I. Dummy arguments declaration
+( 1041) IMPLICIT NONE
+( 1042) INTEGER(KIND=8), INTENT(OUT) :: JPXPAH, JPXIND, JPXGEO, JPXNIV
+( 1043) !
+( 1044) ! II.  Local variables declaration
+( 1045) !
+( 1046) ! III. Export
+( 1047) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT()
+( 1048) JPXPAH=FA_COM_DEFAULT%JPXPAH
+( 1049) JPXIND=FA_COM_DEFAULT%JPXIND
+( 1050) JPXGEO=FA_COM_DEFAULT%JPXGEO
+( 1051) JPXNIV=FA_COM_DEFAULT%JPXNIV
+( 1052) END SUBROUTINE GET_FACST
+( 1053) 
+( 1054) !_________________________________________________________________________________________
+( 1055) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 21
+
+(    1) # 1 "FA4py.F90"
+(    1) SUBROUTINE WFAITOU(KRETURNCODE, CDFILE, CDSTATE, KNUMER, CDNOMC)
+(    2) ! ** PURPOSE
+(    3) !    Open a FA FILE
+(    4) !
+(    5) ! ** DUMMY ARGUMENTS
+(    6) !    KRETURNCODE: error code
+(    7) !    CDFILE: path to file to open
+(    8) !    CDSTATE: state of file ('NEW', 'OLD')
+(    9) !    KNUMER: logical unit number associated to file
+(   10) !    CDNOMC: name of "cadre"
+(   11) !
+(   12) ! ** AUTHOR
+(   13) !    9 April 2014, S. Riette
+(   14) !
+(   15) ! ** MODIFICATIONS
+(   16) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(   17) !
+(   18) ! I. Dummy arguments declaration
+(   19) USE LFI_PRECISION
+(   20) IMPLICIT NONE
+(   21) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   22) CHARACTER(LEN=*), INTENT(IN) :: CDFILE
+(   23) CHARACTER(LEN=*), INTENT(IN) :: CDSTATE
+(   24) INTEGER(KIND=8), INTENT(OUT) :: KNUMER
+(   25) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(   26) !
+(   27) ! II. Local variables declaration
+(   28) INTEGER(KIND=JPLIKB), PARAMETER :: JPMAXLOGICALUNITNUMBER=5000
+(   29) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(   30) INTEGER(KIND=JPLIKB) :: INUMER
+(   31) INTEGER(KIND=JPLIKB) :: ILEVEL
+(   32) INTEGER(KIND=JPLIKB) :: IRECORDNUMBER
+(   33) !
+(   34) ! III. File opening
+(   35) !
+(   36) ! III.a Search for an available logical unit
+(   37) !       (unit=0 since 14/12/2015, P.Marguinaud)
+(   38) IRETURNCODE=0_JPLIKB
+(   39) INUMER=0_JPLIKB
+(   40) !
+(   41) # 46 "FA4py.F90"
+(   46) !
+(   47) ! III.c FA file opening
+(   48) ILEVEL=2_JPLIKB
+(   49) CALL FANERG64(ILEVEL) !Global level of fatal error
+(   50) CALL FAITOU64(IRETURNCODE, INUMER, .TRUE., CDFILE, CDSTATE, .FALSE.,& 
+(   51)               &.FALSE., 0_JPLIKB, 1_JPLIKB, IRECORDNUMBER, CDNOMC)
+(   52) IF(IRETURNCODE/=0)THEN
+(   53)   IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(   54)     ! not a LFI error, treated beyond
+(   55)     CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAITOU','',.FALSE.)
+(   56)   ENDIF
+(   57)   IF(IRETURNCODE==-60)THEN
+(   58)     ! Certainly a LFI file opened as a FA file
+(   59)     ! We must close it to be able to open it again as a LFI file
+(   60)     CALL LFIFER64(IRETURNCODE, INUMER, 'KEEP')
+(   61)     IRETURNCODE=-60
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 22
+
+(   62)   ENDIF
+(   63) ENDIF
+(   64) KRETURNCODE=INT(IRETURNCODE,8)
+(   65) KNUMER=INT(INUMER, 8)
+(   66) !
+(   67) # 72 "FA4py.F90"
+(   72) !
+(   73) END SUBROUTINE WFAITOU
+(   74) # 75 "FA4py.F90"
+(   75) !______________________________________________________________________
+(   76) # 77 "FA4py.F90"
+(   77) SUBROUTINE WFADIES(KRETURNCODE, KNUMER, KDATEF)
+(   78) ! ** PURPOSE
+(   79) !    Wrapper to FADIES
+(   80) !
+(   81) ! ** DUMMY ARGUMENTS
+(   82) !    KRETURNCODE: error code
+(   83) !    KNUMER: logical unit number associated to file
+(   84) !    KDATEF: array of date elements
+(   85) !
+(   86) ! ** AUTHOR
+(   87) !    9 April 2014, S. Riette
+(   88) !
+(   89) ! ** MODIFICATIONS
+(   90) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(   91) !
+(   92) ! I. Dummy arguments declaration
+(   93) USE LFI_PRECISION
+(   94) IMPLICIT NONE
+(   95) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(   96) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(   97) INTEGER(KIND=8), DIMENSION(11), INTENT(OUT) :: KDATEF
+(   98) !
+(   99) ! II. Local variables declaration
+(  100) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  101) INTEGER(KIND=JPLIKB) :: INUMER
+(  102) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  103) INTEGER(KIND=JPLIKB) :: JI
+(  104) !
+(  105) ! III. FADIES call
+(  106) INUMER=INT(KNUMER, JPLIKB)
+(  107) CALL FADIES64(IRETURNCODE, INUMER, IDATEF)
+(  108) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  109)   ! not a LFI error, treated beyond
+(  110)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FADIES','',.FALSE.)
+(  111) ENDIF
+(  112) KRETURNCODE=INT(IRETURNCODE,8)
+(  113) DO JI=1, SIZE(KDATEF)
+(  114)   KDATEF(JI)=INT(IDATEF(JI), 8)
+(  115) ENDDO
+(  116) !
+(  117) END SUBROUTINE WFADIES
+(  118) # 119 "FA4py.F90"
+(  119) !______________________________________________________________________
+(  120) # 121 "FA4py.F90"
+(  121) SUBROUTINE WFADIEX(KRETURNCODE, KNUMER, KDATEF)
+(  122) ! ** PURPOSE
+(  123) !    Wrapper to FADIEX
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 23
+
+(  124) !
+(  125) ! ** DUMMY ARGUMENTS
+(  126) !    KRETURNCODE: error code
+(  127) !    KNUMER: logical unit number associated to file
+(  128) !    KDATEF: array of date elements
+(  129) !
+(  130) ! ** AUTHOR
+(  131) !    23 Sept 2014, S. Riette
+(  132) !
+(  133) ! ** MODIFICATIONS
+(  134) !
+(  135) ! I. Dummy arguments declaration
+(  136) USE LFI_PRECISION
+(  137) IMPLICIT NONE
+(  138) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  139) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  140) INTEGER(KIND=8), DIMENSION(22), INTENT(OUT) :: KDATEF
+(  141) !
+(  142) ! II. Local variables declaration
+(  143) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  144) INTEGER(KIND=JPLIKB) :: INUMER
+(  145) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  146) INTEGER(KIND=JPLIKB) :: JI
+(  147) !
+(  148) ! III. FADIEX call
+(  149) INUMER=INT(KNUMER, JPLIKB)
+(  150) CALL FADIEX64(IRETURNCODE, INUMER, IDATEF)
+(  151) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  152)   ! not a LFI error, treated beyond
+(  153)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FADIEX','',.FALSE.)
+(  154) ENDIF
+(  155) KRETURNCODE=INT(IRETURNCODE,8)
+(  156) DO JI=1, SIZE(KDATEF)
+(  157)   KDATEF(JI)=INT(IDATEF(JI), 8)
+(  158) ENDDO
+(  159) !
+(  160) END SUBROUTINE WFADIEX
+(  161) # 162 "FA4py.F90"
+(  162) !______________________________________________________________________
+(  163) # 164 "FA4py.F90"
+(  164) SUBROUTINE WFAVEUR (KRETURNCODE, KNUMER, KNGRIB, KNBPDG, KNBCSP, KSTRON, &
+(  165)                    &KPUILA, KDMOPL)
+(  166) ! ** BUT
+(  167) !    Wrapper to FAVEUR
+(  168) !
+(  169) ! ** DUMMY ARGUMENTS
+(  170) !    KRETURNCODE: error code
+(  171) !    KNUMER: logical unit number associated to file
+(  172) !    KNGRIB: Grib encoding level (-1,0,1,2,3);
+(  173) !    KNBPDG: Number of bits by grid point value
+(  174) !    KNBCSP: Number of bits by real/imaginary part of spectral coefficient
+(  175) !    KSTRON: Unpacked under truncature
+(  176) !    KPUILA: laplacian power
+(  177) !    KDMOPL: KPUILA level of modulation
+(  178) !
+(  179) ! ** AUTHOR
+(  180) !    9 April 2014, S. Riette
+(  181) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 24
+
+(  182) ! ** MODIFICATIONS
+(  183) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  184) !
+(  185) ! I. Dummy arguments declaration
+(  186) USE LFI_PRECISION
+(  187) IMPLICIT NONE
+(  188) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  189) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  190) INTEGER(KIND=8), INTENT(OUT) :: KNGRIB
+(  191) INTEGER(KIND=8), INTENT(OUT) :: KNBPDG
+(  192) INTEGER(KIND=8), INTENT(OUT) :: KNBCSP
+(  193) INTEGER(KIND=8), INTENT(OUT) :: KSTRON
+(  194) INTEGER(KIND=8), INTENT(OUT) :: KPUILA
+(  195) INTEGER(KIND=8), INTENT(OUT) :: KDMOPL
+(  196) !
+(  197) ! II. Local variables declaration
+(  198) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  199) INTEGER(KIND=JPLIKB) :: INUMER
+(  200) INTEGER(KIND=JPLIKB) :: INGRIB, INBPDG, INBCSP, ISTRON, IPUILA, IDMOPL
+(  201) !
+(  202) ! III. FAVEUR call
+(  203) !
+(  204) INUMER=INT(KNUMER, JPLIKB)
+(  205) CALL FAVEUR64(IRETURNCODE, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  206)            &IPUILA, IDMOPL)
+(  207) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  208)   ! not a LFI error, treated beyond
+(  209)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAVEUR','',.FALSE.)
+(  210) ENDIF
+(  211) KRETURNCODE=INT(IRETURNCODE,8)
+(  212) KNGRIB=INT(INGRIB, 8)
+(  213) KNBPDG=INT(INBPDG, 8)
+(  214) KNBCSP=INT(INBCSP, 8)
+(  215) KSTRON=INT(ISTRON, 8)
+(  216) KPUILA=INT(IPUILA, 8)
+(  217) KDMOPL=INT(IDMOPL, 8)
+(  218) !
+(  219) END SUBROUTINE WFAVEUR
+(  220) # 221 "FA4py.F90"
+(  221) !______________________________________________________________________
+(  222) # 223 "FA4py.F90"
+(  223) SUBROUTINE WFAGOTE (KRETURNCODE, KNUMER, KNGRIB, KNBPDG, KNBCSP, KSTRON, &
+(  224)                    &KPUILA, KDMOPL)
+(  225) ! ** BUT
+(  226) !    Wrapper to FAGOTE
+(  227) !
+(  228) ! ** DUMMY ARGUMENTS
+(  229) !    KRETURNCODE: error code
+(  230) !    KNUMER: logical unit number associated to file
+(  231) !    KNGRIB: Grib encoding level (-1,0,1,2,3);
+(  232) !    KNBPDG: Number of bits by grid point value
+(  233) !    KNBCSP: Number of bits by real/imaginary part of spectral coefficient
+(  234) !    KSTRON: Unpacked under truncature
+(  235) !    KPUILA: laplacian power
+(  236) !    KDMOPL: KPUILA level of modulation
+(  237) !
+(  238) ! ** AUTHOR
+(  239) !    9 April 2014, S. Riette
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 25
+
+(  240) !
+(  241) ! ** MODIFICATIONS
+(  242) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  243) !
+(  244) ! I. Dummy arguments declaration
+(  245) USE LFI_PRECISION
+(  246) IMPLICIT NONE
+(  247) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  248) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  249) INTEGER(KIND=8), INTENT(IN) :: KNGRIB
+(  250) INTEGER(KIND=8), INTENT(IN) :: KNBPDG
+(  251) INTEGER(KIND=8), INTENT(IN) :: KNBCSP
+(  252) INTEGER(KIND=8), INTENT(IN) :: KSTRON
+(  253) INTEGER(KIND=8), INTENT(IN) :: KPUILA
+(  254) INTEGER(KIND=8), INTENT(IN) :: KDMOPL
+(  255) # 256 "FA4py.F90"
+(  256) !
+(  257) ! II. Local variables declaration
+(  258) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  259) INTEGER(KIND=JPLIKB) :: INUMER
+(  260) INTEGER(KIND=JPLIKB) :: INGRIB
+(  261) INTEGER(KIND=JPLIKB) :: INBPDG
+(  262) INTEGER(KIND=JPLIKB) :: INBCSP
+(  263) INTEGER(KIND=JPLIKB) :: ISTRON
+(  264) INTEGER(KIND=JPLIKB) :: IPUILA
+(  265) INTEGER(KIND=JPLIKB) :: IDMOPL
+(  266) !
+(  267) ! III. FAGOTE call
+(  268) INUMER=INT(KNUMER, JPLIKB)
+(  269) INGRIB=INT(KNGRIB, JPLIKB)
+(  270) INBPDG=INT(KNBPDG, JPLIKB)
+(  271) INBCSP=INT(KNBCSP, JPLIKB)
+(  272) ISTRON=INT(KSTRON, JPLIKB)
+(  273) IPUILA=INT(KPUILA, JPLIKB)
+(  274) IDMOPL=INT(KDMOPL, JPLIKB)
+(  275) CALL FAGOTE64(IRETURNCODE, INUMER, INGRIB, INBPDG, INBCSP, ISTRON, &
+(  276)            &IPUILA, IDMOPL)
+(  277) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  278)   ! not a LFI error, treated beyond
+(  279)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAGOTE','',.FALSE.)
+(  280) ENDIF
+(  281) KRETURNCODE=INT(IRETURNCODE,8)
+(  282) !
+(  283) END SUBROUTINE WFAGOTE
+(  284) # 285 "FA4py.F90"
+(  285) !______________________________________________________________________
+(  286) # 287 "FA4py.F90"
+(  287) SUBROUTINE WFACIES(KXPAH, KXIND, KXGEO, KXNIV,&
+(  288)                   &CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  289)                   &PCODIL, KTRONC, KNLATI, KNXLON, KNLOPA, &
+(  290)                   &KNOZPA, PSINLA, KNIVER, PREFER, PAHYBR, &
+(  291)                   &PBHYBR, LDGARD)
+(  292) ! ** BUT
+(  293) !    Wrapper to FACIES
+(  294) !
+(  295) ! ** DUMMY ARGUMENTS
+(  296) !    KXPAH, KXIND, KXGEO, KXNIV: maximal dimensions
+(  297) !    CDNOMC: name of "cadre"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 26
+
+(  298) !    KTYPTR: Type of horizontal transformation
+(  299) !    PSLAPO: Sinus of latitude of pole of interest
+(  300) !    PCLOPO: Cosinus of longitude of pole of interest
+(  301) !    PSLOPO: Sinus of longitude of pole of interest
+(  302) !    PCODIL: Dilatation coefficient
+(  303) !    KTRONC: Troncature
+(  304) !    KNLATI: Nomber of latitudes (from pole to pole)
+(  305) !    KNXLON: Maximum number of longitudes by parallel
+(  306) !    KNLOPA: Number of longitudes by parallel (from north pole toward equator only)
+(  307) !    KNOZPA: Maximum zonal wave number by parallel (from north pole toward equator only)
+(  308) !    PSINLA: Sinus of latitudes of north hemisphere (from north pole toward equator only)
+(  309) !    KNIVER: Number of vertical levels
+(  310) !    PREFER: Reference pressure (multiplying factor of the first function of hybrid coordinate)
+(  311) !    PAHYBR: Values of "A" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  312) !    PBHYBR: Values of "B" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  313) !    LDGARD: True if "cadre" must be kept even after the last file attached is closed
+(  314) !
+(  315) ! ** AUTHOR
+(  316) !    9 April 2014, S. Riette
+(  317) !
+(  318) ! ** MODIFICATIONS
+(  319) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  320) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  321) !
+(  322) ! I. Dummy arguments declaration
+(  323) USE LFI_PRECISION
+(  324) IMPLICIT NONE
+(  325) INTEGER(KIND=8), INTENT(IN) :: KXPAH, KXIND, KXGEO, KXNIV
+(  326) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(  327) INTEGER(KIND=8), INTENT(OUT) :: KTYPTR
+(  328) REAL(KIND=8), INTENT(OUT) :: PSLAPO, PCLOPO, PSLOPO
+(  329) REAL(KIND=8), INTENT(OUT) :: PCODIL
+(  330) INTEGER(KIND=8), INTENT(OUT) :: KTRONC, KNLATI, KNXLON
+(  331) INTEGER(KIND=8), DIMENSION(KXPAH), INTENT(OUT) :: KNLOPA
+(  332) INTEGER(KIND=8), DIMENSION(KXIND), INTENT(OUT) :: KNOZPA
+(  333) REAL(KIND=8), DIMENSION(KXGEO), INTENT(OUT) :: PSINLA
+(  334) INTEGER(KIND=8), INTENT(OUT) :: KNIVER
+(  335) REAL(KIND=8), INTENT(OUT) :: PREFER
+(  336) REAL(KIND=8), DIMENSION(0:KXNIV), INTENT(OUT) :: PAHYBR, PBHYBR
+(  337) LOGICAL, INTENT(OUT) :: LDGARD
+(  338) !
+(  339) ! II. Local variables declaration
+(  340) INTEGER(KIND=JPLIKB) :: ITYPTR, ITRONC, INLATI, INXLON, INIVER
+(  341) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNLOPA)) :: INLOPA
+(  342) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNOZPA)) :: INOZPA
+(  343) INTEGER(KIND=JPLIKB) :: JI
+(  344) !
+(  345) ! III. FACIES call
+(  346) CALL FACIES64(CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  347)              &PCODIL, ITRONC, INLATI, INXLON, INLOPA, &
+(  348)              &INOZPA, PSINLA, INIVER, PREFER, PAHYBR, &
+(  349)              &PBHYBR, LDGARD)
+(  350) KTYPTR=INT(ITYPTR, 8)
+(  351) KTRONC=INT(ITRONC, 8)
+(  352) KNLATI=INT(INLATI, 8)
+(  353) KNXLON=INT(INXLON, 8)
+(  354) KNIVER=INT(INIVER, 8)
+(  355) DO JI=1, SIZE(KNLOPA)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 27
+
+(  356)   KNLOPA(JI)=INT(INLOPA(JI), 8)
+(  357) ENDDO
+(  358) DO JI=1, SIZE(KNLOPA)
+(  359)   KNOZPA(JI)=INT(INOZPA(JI), 8)
+(  360) ENDDO
+(  361) !
+(  362) END SUBROUTINE WFACIES
+(  363) # 364 "FA4py.F90"
+(  364) !______________________________________________________________________
+(  365) # 366 "FA4py.F90"
+(  366) SUBROUTINE WFACADE(CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  367)                   &PCODIL, KTRONC, KNLATI, KNXLON, KSNLOPA, KNLOPA, &
+(  368)                   &KSNOZPA, KNOZPA, KSSINLA, PSINLA, KNIVER, PREFER, PAHYBR, &
+(  369)                   &PBHYBR, LDGARD)
+(  370) ! ** BUT
+(  371) !    Wrapper to FACADE
+(  372) !
+(  373) ! ** DUMMY ARGUMENTS
+(  374) !    CDNOMC: name of "cadre"
+(  375) !    KTYPTR: Type of horizontal transformation
+(  376) !    PSLAPO: Sinus of latitude of pole of interest
+(  377) !    PCLOPO: Cosinus of longitude of pole of interest
+(  378) !    PSLOPO: Sinus of longitude of pole of interest
+(  379) !    PCODIL: Dilatation coefficient
+(  380) !    KTRONC: Troncature
+(  381) !    KNLATI: Nomber of latitudes (from pole to pole)
+(  382) !    KNXLON: Maximum number of longitudes by parallel
+(  383) !    KSNLOPA: Size of KNLOPA
+(  384) !    KNLOPA: Number of longitudes by parallel (from north pole toward equator only)
+(  385) !    KSNOZPA: Size of KNOZPA
+(  386) !    KNOZPA: Maximum zonal wave number by parallel (from north pole toward equator only)
+(  387) !    KSSINLA: Size of PSINLA
+(  388) !    PSINLA: Sinus of latitudes of north hemisphere (from north pole toward equator only)
+(  389) !    KNIVER: Number of vertical levels
+(  390) !    PREFER: Reference pressure (multiplying factor of the first function of hybrid coordinate)
+(  391) !    PAHYBR: Values of "A" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  392) !    PBHYBR: Values of "B" function of the hybrid coordinate at LAYERiS BOUNDARIES
+(  393) !    LDGARD: True if "cadre" must be kept even after the last file attached is closed
+(  394) !
+(  395) ! ** AUTHOR
+(  396) !    9 April 2014, S. Riette
+(  397) !
+(  398) ! ** MODIFICATIONS
+(  399) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  400) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  401) !                             suppression of assumed-shape array
+(  402) !
+(  403) ! I. Dummy arguments declaration
+(  404) USE LFI_PRECISION
+(  405) IMPLICIT NONE
+(  406) CHARACTER(LEN=16), INTENT(IN) :: CDNOMC
+(  407) INTEGER(KIND=8), INTENT(IN) :: KTYPTR
+(  408) REAL(KIND=8), INTENT(IN) :: PSLAPO, PCLOPO, PSLOPO
+(  409) REAL(KIND=8), INTENT(IN) :: PCODIL
+(  410) INTEGER(KIND=8), INTENT(IN) :: KTRONC, KNLATI, KNXLON
+(  411) INTEGER(KIND=8), INTENT(IN) :: KSNLOPA
+(  412) INTEGER(KIND=8), DIMENSION(KSNLOPA), INTENT(IN) :: KNLOPA
+(  413) INTEGER(KIND=8), INTENT(IN) :: KSNOZPA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 28
+
+(  414) INTEGER(KIND=8), DIMENSION(KSNOZPA), INTENT(IN) :: KNOZPA
+(  415) INTEGER(KIND=8), INTENT(IN) :: KSSINLA
+(  416) REAL(KIND=8), DIMENSION(KSSINLA), INTENT(IN) :: PSINLA
+(  417) INTEGER(KIND=8), INTENT(IN) :: KNIVER
+(  418) REAL(KIND=8), INTENT(IN) :: PREFER
+(  419) REAL(KIND=8), DIMENSION(KNIVER+1), INTENT(IN) :: PAHYBR, PBHYBR
+(  420) LOGICAL, INTENT(IN) :: LDGARD
+(  421) !
+(  422) ! II. Local variables declaration
+(  423) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNLOPA)) :: INLOPA
+(  424) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KNOZPA)) :: INOZPA
+(  425) INTEGER(KIND=JPLIKB) :: ITYPTR, ITRONC, INLATI, INXLON, INIVER
+(  426) INTEGER(KIND=JPLIKB) :: JI
+(  427) !
+(  428) ! III. FACADE call
+(  429) DO JI=1, SIZE(INLOPA)
+(  430)   INLOPA(JI)=INT(KNLOPA(JI), JPLIKB)
+(  431) ENDDO
+(  432) DO JI=1, SIZE(INOZPA)
+(  433)   INOZPA(JI)=INT(KNOZPA(JI), JPLIKB)
+(  434) ENDDO
+(  435) ITYPTR=INT(KTYPTR, JPLIKB)
+(  436) ITRONC=INT(KTRONC, JPLIKB)
+(  437) INLATI=INT(KNLATI, JPLIKB)
+(  438) INXLON=INT(KNXLON, JPLIKB)
+(  439) INIVER=INT(KNIVER, JPLIKB)
+(  440) CALL FACADE64(CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, &
+(  441)              &PCODIL, ITRONC, INLATI, INXLON, INLOPA, &
+(  442)              &INOZPA, PSINLA, INIVER, PREFER, PAHYBR, &
+(  443)              &PBHYBR, LDGARD)
+(  444) !
+(  445) END SUBROUTINE WFACADE
+(  446) # 447 "FA4py.F90"
+(  447) !______________________________________________________________________
+(  448) # 449 "FA4py.F90"
+(  449) SUBROUTINE WFALSIF(KRETURNCODE, KNUMER, CDIDEN)
+(  450) ! ** PURPOSE
+(  451) !    Wrapper to FALSIF
+(  452) !
+(  453) ! ** DUMMY ARGUMENTS
+(  454) !    KRETURNCODE: error code
+(  455) !    KNUMER: logical unit number associated to file
+(  456) !    CDIDEN: identifier of file
+(  457) !
+(  458) ! ** AUTHOR
+(  459) !    9 April 2014, S. Riette
+(  460) !
+(  461) ! ** MODIFICATIONS
+(  462) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  463) !
+(  464) ! I. Dummy arguments declaration
+(  465) USE LFI_PRECISION
+(  466) IMPLICIT NONE
+(  467) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  468) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  469) CHARACTER(LEN=80), INTENT(OUT) :: CDIDEN
+(  470) !
+(  471) ! II. Local variables declaration
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 29
+
+(  472) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  473) INTEGER(KIND=JPLIKB) :: INUMER
+(  474) !
+(  475) ! III. FALSIF call
+(  476) INUMER=INT(KNUMER, JPLIKB)
+(  477) CALL FALSIF64(IRETURNCODE, INUMER, CDIDEN)
+(  478) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  479)   ! not a LFI error, treated beyond
+(  480)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FALSIF','',.FALSE.)
+(  481) ENDIF
+(  482) KRETURNCODE=INT(IRETURNCODE,8)
+(  483) !
+(  484) END SUBROUTINE WFALSIF
+(  485) # 486 "FA4py.F90"
+(  486) !______________________________________________________________________
+(  487) # 488 "FA4py.F90"
+(  488) SUBROUTINE WFAUTIF(KRETURNCODE, KNUMER, CDIDEN)
+(  489) ! ** PURPOSE
+(  490) !    Wrapper to FAUTIF
+(  491) !
+(  492) ! ** DUMMY ARGUMENTS
+(  493) !    KRETURNCODE: error code
+(  494) !    KNUMER: logical unit number associated to file
+(  495) !    CDIDEN: identifier of file
+(  496) !
+(  497) ! ** AUTHOR
+(  498) !    9 April 2014, S. Riette
+(  499) !
+(  500) ! ** MODIFICATIONS
+(  501) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  502) !
+(  503) ! I. Dummy arguments declaration
+(  504) USE LFI_PRECISION
+(  505) IMPLICIT NONE
+(  506) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  507) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  508) CHARACTER(LEN=80), INTENT(IN) :: CDIDEN
+(  509) !
+(  510) ! II. Local variables declaration
+(  511) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  512) INTEGER(KIND=JPLIKB) :: INUMER
+(  513) !
+(  514) ! III. FAUTIF call
+(  515) INUMER=INT(KNUMER, JPLIKB)
+(  516) CALL FAUTIF64(IRETURNCODE, INUMER, CDIDEN)
+(  517) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  518)   ! not a LFI error, treated beyond
+(  519)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAUTIF','',.FALSE.)
+(  520) ENDIF
+(  521) KRETURNCODE=INT(IRETURNCODE,8)
+(  522) !
+(  523) END SUBROUTINE WFAUTIF
+(  524) # 526 "FA4py.F90"
+(  526) !______________________________________________________________________
+(  527) # 528 "FA4py.F90"
+(  528) SUBROUTINE WFANION(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, LDEXIS, &
+(  529)                   &LDCOSP, KNGRIB, KNBITS, KSTRON, KPUILA)
+(  530) ! ** PURPOSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 30
+
+(  531) !    Wrapper to FANION
+(  532) !
+(  533) ! ** DUMMY ARGUMENTS
+(  534) !    KRETURNCODE: error code
+(  535) !    KNUMER: logical unit number associated to file
+(  536) !    CDPREF: potential prefix of record name
+(  537) !    KNIVAU: potential vertical level
+(  538) !    CDSUFF: potential suffix of record name
+(  539) !    LDEXIS: true if record exists
+(  540) !    LDCOSP: true if field is spectral
+(  541) !    KNGRIB: level of GRIB encoding
+(  542) !    KNBITS: numbers of encoding bits
+(  543) !    KSTRON: potential under-trocature
+(  544) !    KPUILA: potential laplacian power
+(  545) !
+(  546) ! ** AUTHOR
+(  547) !    9 April 2014, S. Riette
+(  548) !
+(  549) ! ** MODIFICATIONS
+(  550) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  551) !
+(  552) ! I. Dummy arguments declaration
+(  553) USE LFI_PRECISION
+(  554) IMPLICIT NONE
+(  555) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  556) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  557) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  558) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  559) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  560) LOGICAL, INTENT(OUT) :: LDEXIS, LDCOSP
+(  561) INTEGER(KIND=8), INTENT(OUT) :: KNGRIB, KNBITS, KSTRON, KPUILA
+(  562) !
+(  563) ! II. Local variables declaration
+(  564) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  565) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  566) INTEGER(KIND=JPLIKB) :: INGRIB, INBITS, ISTRON, IPUILA
+(  567) !
+(  568) ! III. FALSIF call
+(  569) INUMER=INT(KNUMER, JPLIKB)
+(  570) INIVAU=INT(KNIVAU, JPLIKB)
+(  571) CALL FANION64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, LDEXIS, &
+(  572)              &LDCOSP, INGRIB, INBITS, ISTRON, IPUILA)
+(  573) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  574)   ! not a LFI error, treated beyond
+(  575)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANION','',.FALSE.)
+(  576) ENDIF
+(  577) KRETURNCODE=INT(IRETURNCODE,8)
+(  578) KNGRIB=INT(INGRIB, 8)
+(  579) KNBITS=INT(INBITS, 8)
+(  580) KSTRON=INT(ISTRON, 8)
+(  581) KPUILA=INT(IPUILA, 8)
+(  582) !
+(  583) END SUBROUTINE WFANION
+(  584) # 585 "FA4py.F90"
+(  585) !______________________________________________________________________
+(  586) # 587 "FA4py.F90"
+(  587) SUBROUTINE WFAIRME(KRETURNCODE, KNUMER, CDSTTU)
+(  588) ! ** PURPOSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 31
+
+(  589) !    Wrapper to FAIRME
+(  590) !
+(  591) ! ** DUMMY ARGUMENTS
+(  592) !    KRETURNCODE: error code
+(  593) !    KNUMER: logical unit number associated to file
+(  594) !    CDSTTU: status ('KEEP', 'DELETE', 'DEFAUT')
+(  595) !
+(  596) ! ** AUTHOR
+(  597) !    9 April 2014, S. Riette
+(  598) !
+(  599) ! ** MODIFICATIONS
+(  600) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  601) !
+(  602) ! I. Dummy arguments declaration
+(  603) USE LFI_PRECISION
+(  604) IMPLICIT NONE
+(  605) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  606) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  607) CHARACTER(LEN=7), INTENT(IN) :: CDSTTU
+(  608) !
+(  609) ! II. Local variables declaration
+(  610) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  611) INTEGER(KIND=JPLIKB) :: INUMER
+(  612) !
+(  613) ! III. File closing
+(  614) INUMER=INT(KNUMER, JPLIKB)
+(  615) CALL FAIRME64(IRETURNCODE, INUMER, CDSTTU)
+(  616) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  617)   ! not a LFI error, treated beyond
+(  618)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIRME','',.FALSE.)
+(  619) ENDIF
+(  620) KRETURNCODE=INT(IRETURNCODE,8)
+(  621) END SUBROUTINE WFAIRME
+(  622) # 623 "FA4py.F90"
+(  623) !______________________________________________________________________
+(  624) # 625 "FA4py.F90"
+(  625) SUBROUTINE WFACILE(KRETURNCODE,KSIZE, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP) 
+(  626) ! ** PURPOSE
+(  627) !    Wrapper to FACILE
+(  628) !
+(  629) ! ** DUMMY ARGUMENTS
+(  630) !    KRETURNCODE: error code
+(  631) !    KSIZE: size of array to read
+(  632) !    KNUMER: logical unit number associated to file
+(  633) !    CDPREF: potential prefix of record name
+(  634) !    KNIVAU: potential vertical level
+(  635) !    CDSUFF: potential suffix of record name
+(  636) !    PCHAMP: float values read
+(  637) !    LDCOSP: true if spectral
+(  638) !
+(  639) ! ** AUTHOR
+(  640) !    9 April 2014, S. Riette
+(  641) !
+(  642) ! ** MODIFICATIONS
+(  643) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  644) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  645) !    31 Jan 2019 R. El Khatib : fix for single precision compilation
+(  646) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 32
+
+(  647) ! I. Dummy arguments declaration
+(  648) USE LFI_PRECISION
+(  649) USE PARKIND1, ONLY : JPRB
+(  650) IMPLICIT NONE
+(  651) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  652) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  653) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  654) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  655) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  656) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  657) REAL(KIND=8), DIMENSION(KSIZE), INTENT(OUT) :: PCHAMP
+(  658) LOGICAL, INTENT(IN) :: LDCOSP
+(  659) !
+(  660) ! II. Local variables declaration
+(  661) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  662) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  663) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  664) !
+(  665) ! III. Field reading
+(  666) INUMER=INT(KNUMER, JPLIKB)
+(  667) INIVAU=INT(KNIVAU, JPLIKB)
+(  668) CALL FACILE64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP)
+(  669) PCHAMP(:)=REAL(ZCHAMP(:),KIND=8)
+(  670) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  671)   ! not a LFI error, treated beyond
+(  672)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FACILE','',.FALSE.)
+(  673) ENDIF
+(  674) KRETURNCODE=INT(IRETURNCODE,8)
+(  675) END SUBROUTINE WFACILE
+(  676) # 677 "FA4py.F90"
+(  677) !______________________________________________________________________
+(  678) # 679 "FA4py.F90"
+(  679) SUBROUTINE WFACILO(KRETURNCODE,KSIZE, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, LDUNDEF, PDUNDEF)
+(  680) ! ** PURPOSE
+(  681) !    Wrapper to FACILO
+(  682) !
+(  683) ! ** DUMMY ARGUMENTS
+(  684) !    KRETURNCODE: error code
+(  685) !    KSIZE: size of array to read
+(  686) !    KNUMER: logical unit number associated to file
+(  687) !    CDPREF: potential prefix of record name
+(  688) !    KNIVAU: potential vertical level
+(  689) !    CDSUFF: potential suffix of record name
+(  690) !    PCHAMP: float values read
+(  691) !    LDCOSP: true if spectral
+(  692) !    LDUNDEF: true if the field has undef values
+(  693) !    PDUNDEF: if LDUNDEF is true, value of undef in field
+(  694) !
+(  695) ! ** AUTHOR
+(  696) !    9 April 2014, S. Riette
+(  697) !
+(  698) ! ** MODIFICATIONS
+(  699) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  700) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  701) !
+(  702) ! I. Dummy arguments declaration
+(  703) USE LFI_PRECISION
+(  704) USE PARKIND1, ONLY : JPRB
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 33
+
+(  705) IMPLICIT NONE
+(  706) # 706 "FA4py.F90"
+(  706) # 1 ".D[27]/facilo64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/facilo64.h"
+(    3) SUBROUTINE FACILO64                                        &
+(    4) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(    5) &           LDCOSP, LDUNDF, PUNDF)
+(    6) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(    7) &                  FA_COM_DEFAULT_INIT,  &
+(    8) &                  NEW_FA_DEFAULT
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) ! Arguments
+(   12) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   13) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   14) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   15) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   16) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   17) REAL (KIND=JPDBLR)     PCHAMP     (*)                         !   OUT
+(   18) LOGICAL                LDCOSP                                 ! IN   
+(   19) LOGICAL,               OPTIONAL :: LDUNDF                     !   OUT
+(   20) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      !   OUT
+(   21) END SUBROUTINE
+(   22) # 23 ".D[27]/facilo64.h"
+(   23) END INTERFACE
+(   24) # 707 "FA4py.F90"
+(  707) # 707 "FA4py.F90"
+(  707) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  708) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  709) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  710) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  711) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  712) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  713) REAL(KIND=8), DIMENSION(KSIZE), INTENT(OUT) :: PCHAMP
+(  714) LOGICAL, INTENT(IN) :: LDCOSP
+(  715) LOGICAL, INTENT(OUT) :: LDUNDEF
+(  716) REAL(KIND=8), INTENT(OUT) :: PDUNDEF
+(  717) !
+(  718) ! II. Local variables declaration
+(  719) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  720) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  721) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  722) REAL(KIND=JPRB) :: ZUNDEF
+(  723) !
+(  724) ! III. Field reading
+(  725) INUMER=INT(KNUMER, JPLIKB)
+(  726) INIVAU=INT(KNIVAU, JPLIKB)
+(  727) CALL FACILO64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP, LDUNDF=LDUNDEF, PUNDF=ZUNDEF)
+(  728) PCHAMP(:)=REAL(ZCHAMP(:),KIND=8)
+(  729) PDUNDEF=REAL(ZUNDEF,KIND=8)
+(  730) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  731)   ! not a LFI error, treated beyond
+(  732)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FACILO','',.FALSE.)
+(  733) ENDIF
+(  734) KRETURNCODE=INT(IRETURNCODE,8)
+(  735) END SUBROUTINE WFACILO
+(  736) # 737 "FA4py.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 34
+
+(  737) !______________________________________________________________________
+(  738) # 739 "FA4py.F90"
+(  739) SUBROUTINE WFAISAN(KRETURNCODE, KNUMER, CDNOMA, KSIZE, PDONNE)
+(  740) ! ** PURPOSE
+(  741) !    Wrapper to FAISAN
+(  742) !
+(  743) ! ** DUMMY ARGUMENTS
+(  744) !    KRETURNCODE: error code
+(  745) !    KNUMER: logical unit number associated to file
+(  746) !    CDNOMA: name of record
+(  747) !    KSIZE: Size of PDONNE
+(  748) !    PDONNE: data to write
+(  749) !
+(  750) ! ** AUTHOR
+(  751) !    9 April 2014, S. Riette
+(  752) !
+(  753) ! ** MODIFICATIONS
+(  754) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  755) !    26 sept 2014, S. Riette: suppression of assumed-shape array
+(  756) !
+(  757) ! I. Dummy arguments declaration
+(  758) USE LFI_PRECISION
+(  759) IMPLICIT NONE
+(  760) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  761) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  762) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  763) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  764) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PDONNE
+(  765) !
+(  766) ! II. Local variables declaration
+(  767) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  768) INTEGER(KIND=JPLIKB) :: INUMER
+(  769) !
+(  770) ! III FAISAN call
+(  771) INUMER=INT(KNUMER, JPLIKB)
+(  772) CALL FAISAN64(IRETURNCODE, INUMER, CDNOMA, PDONNE, KSIZE)
+(  773) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  774)   ! not a LFI error, treated beyond
+(  775)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAISAN','',.FALSE.)
+(  776) ENDIF
+(  777) KRETURNCODE=INT(IRETURNCODE,8)
+(  778) END SUBROUTINE WFAISAN
+(  779) # 780 "FA4py.F90"
+(  780) !______________________________________________________________________
+(  781) # 782 "FA4py.F90"
+(  782) SUBROUTINE WFALAIS(KRETURNCODE, KNUMER, CDNOMA, PDONNE, KLONGD)
+(  783) ! ** PURPOSE
+(  784) !    Wrapper to FALAIS
+(  785) !
+(  786) ! ** DUMMY ARGUMENTS
+(  787) !    KRETURNCODE: error code
+(  788) !    KNUMER: logical unit number associated to file
+(  789) !    CDNOMA: name of record
+(  790) !    PDONNE: data to read
+(  791) !    KLONGD: length of PDONNE
+(  792) !
+(  793) ! ** AUTHOR
+(  794) !    9 April 2014, S. Riette
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 35
+
+(  795) !
+(  796) ! ** MODIFICATIONS
+(  797) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  798) !
+(  799) ! I. Dummy arguments declaration
+(  800) USE LFI_PRECISION
+(  801) IMPLICIT NONE
+(  802) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  803) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  804) CHARACTER(LEN=16), INTENT(IN) :: CDNOMA
+(  805) INTEGER(KIND=8), INTENT(IN) :: KLONGD
+(  806) REAL(KIND=8), DIMENSION(KLONGD), INTENT(OUT) :: PDONNE
+(  807) !
+(  808) ! II. Local variables declaration
+(  809) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  810) INTEGER(KIND=JPLIKB) :: INUMER
+(  811) !
+(  812) ! III FALAIS call
+(  813) INUMER=INT(KNUMER, JPLIKB)
+(  814) CALL FALAIS64(IRETURNCODE, INUMER, CDNOMA, PDONNE, KLONGD)
+(  815) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  816)   ! not a LFI error, treated beyond
+(  817)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FALAIS','',.FALSE.)
+(  818) ENDIF
+(  819) KRETURNCODE=INT(IRETURNCODE,8)
+(  820) END SUBROUTINE WFALAIS
+(  821) # 822 "FA4py.F90"
+(  822) !_________________________________________________________________________
+(  823) # 824 "FA4py.F90"
+(  824) SUBROUTINE WFAIENC(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, KSIZE, PCHAMP, LDCOSP)
+(  825) ! ** PURPOSE
+(  826) !    Wrapper to FAIENC
+(  827) !
+(  828) ! ** DUMMY ARGUMENTS
+(  829) !    KRETURNCODE: error code
+(  830) !    KNUMER: logical unit number associated to file
+(  831) !    CDPREF: potential prefix of record name
+(  832) !    KNIVAU: potential vertical level
+(  833) !    CDSUFF: potential suffix of record name
+(  834) !    KSIZE: size of PCHAMP
+(  835) !    PCHAMP: float values write
+(  836) !    LDCOSP: true if spectral
+(  837) !
+(  838) ! ** AUTHOR
+(  839) !    9 April 2014, S. Riette
+(  840) !
+(  841) ! ** MODIFICATIONS
+(  842) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  843) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  844) !                             suppression of assumed-shape array
+(  845) !
+(  846) ! I. Dummy arguments declaration
+(  847) USE LFI_PRECISION
+(  848) IMPLICIT NONE
+(  849) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  850) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  851) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  852) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 36
+
+(  853) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  854) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  855) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PCHAMP
+(  856) LOGICAL, INTENT(IN) :: LDCOSP
+(  857) !
+(  858) ! II. Local variables declaration
+(  859) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  860) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  861) !
+(  862) ! III. Field writing
+(  863) INUMER=INT(KNUMER, JPLIKB)
+(  864) INIVAU=INT(KNIVAU, JPLIKB)
+(  865) CALL FAIENC64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, LDCOSP)
+(  866) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  867)   ! not a LFI error, treated beyond
+(  868)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIENC','',.FALSE.)
+(  869) ENDIF
+(  870) KRETURNCODE=INT(IRETURNCODE,8)
+(  871) END SUBROUTINE WFAIENC
+(  872) # 873 "FA4py.F90"
+(  873) !_________________________________________________________________________
+(  874) # 875 "FA4py.F90"
+(  875) SUBROUTINE WFAIENO(KRETURNCODE, KNUMER, CDPREF, KNIVAU, CDSUFF, KSIZE, PCHAMP, LDCOSP, LDUNDEF, PDUNDEF)
+(  876) ! ** PURPOSE
+(  877) !    Wrapper to FAIENO
+(  878) !
+(  879) ! ** DUMMY ARGUMENTS
+(  880) !    KRETURNCODE: error code
+(  881) !    KNUMER: logical unit number associated to file
+(  882) !    CDPREF: potential prefix of record name
+(  883) !    KNIVAU: potential vertical level
+(  884) !    CDSUFF: potential suffix of record name
+(  885) !    KSIZE: size of PCHAMP
+(  886) !    PCHAMP: float values write
+(  887) !    LDCOSP: true if spectral
+(  888) !    LDUNDEF: true if the field has undef values
+(  889) !    PDUNDEF: if LDUNDEF is true, value of undef in field
+(  890) !
+(  891) ! ** AUTHOR
+(  892) !    9 April 2014, S. Riette
+(  893) !
+(  894) ! ** MODIFICATIONS
+(  895) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  896) !    26 sept 2014, S. Riette: use of true logical instead of integer
+(  897) !                             suppression of assumed-shape array
+(  898) !
+(  899) ! I. Dummy arguments declaration
+(  900) USE LFI_PRECISION
+(  901) USE PARKIND1, ONLY : JPRB
+(  902) IMPLICIT NONE
+(  903) # 903 "FA4py.F90"
+(  903) # 1 ".D[27]/faieno64.h"
+(    1) INTERFACE
+(    2) # 3 ".D[27]/faieno64.h"
+(    3) SUBROUTINE FAIENO64 (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, LDCOSP, &
+(    4)                    & LDUNDF, PUNDF)
+(    5) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(    6) &                  FA_COM_DEFAULT_INIT,  &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 37
+
+(    7) &                  NEW_FA_DEFAULT
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) ! Arguments
+(   11) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   12) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   13) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   14) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   15) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   16) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   17) LOGICAL                LDCOSP                                 ! IN   
+(   18) LOGICAL,               OPTIONAL :: LDUNDF                     ! IN
+(   19) REAL (KIND=JPDBLR),    OPTIONAL :: PUNDF                      ! IN
+(   20) END SUBROUTINE
+(   21) # 22 ".D[27]/faieno64.h"
+(   22) END INTERFACE
+(   23) # 904 "FA4py.F90"
+(  904) # 904 "FA4py.F90"
+(  904) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  905) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  906) CHARACTER(LEN=4), INTENT(IN) :: CDPREF
+(  907) INTEGER(KIND=8), INTENT(IN) :: KNIVAU
+(  908) CHARACTER(LEN=12), INTENT(IN) :: CDSUFF
+(  909) INTEGER(KIND=8), INTENT(IN) :: KSIZE
+(  910) REAL(KIND=8), DIMENSION(KSIZE), INTENT(IN) :: PCHAMP
+(  911) LOGICAL, INTENT(IN) :: LDCOSP
+(  912) LOGICAL, INTENT(IN) :: LDUNDEF
+(  913) REAL(KIND=8), INTENT(IN) :: PDUNDEF
+(  914) !
+(  915) ! II. Local variables declaration
+(  916) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  917) INTEGER(KIND=JPLIKB) :: INUMER, INIVAU
+(  918) REAL(KIND=JPRB), DIMENSION(KSIZE):: ZCHAMP
+(  919) REAL(KIND=JPRB) :: ZUNDEF
+(  920) !
+(  921) ! III. Field writing
+(  922) INUMER=INT(KNUMER, JPLIKB)
+(  923) INIVAU=INT(KNIVAU, JPLIKB)
+(  924) ZCHAMP(:)=REAL(PCHAMP(:),KIND=JPRB)
+(  925) ZUNDEF=REAL(PDUNDEF,KIND=JPRB)
+(  926) CALL FAIENO64(IRETURNCODE, INUMER, CDPREF, INIVAU, CDSUFF, ZCHAMP, LDCOSP, LDUNDF=LDUNDEF, PUNDF=ZUNDEF)
+(  927) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  928)   ! not a LFI error, treated beyond
+(  929)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FAIENO','',.FALSE.)
+(  930) ENDIF
+(  931) KRETURNCODE=INT(IRETURNCODE,8)
+(  932) END SUBROUTINE WFAIENO
+(  933) # 934 "FA4py.F90"
+(  934) !______________________________________________________________________
+(  935) # 936 "FA4py.F90"
+(  936) SUBROUTINE WFANDAR(KRETURNCODE, KNUMER, KDATEF)
+(  937) ! ** PURPOSE
+(  938) !    Wrapper to FANDAR
+(  939) !
+(  940) ! ** DUMMY ARGUMENTS
+(  941) !    KRETURNCODE: error code
+(  942) !    KNUMER: logical unit number associated to file
+(  943) !    KDATEF: array of date elements
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 38
+
+(  944) !
+(  945) ! ** AUTHOR
+(  946) !    9 April 2014, S. Riette
+(  947) !
+(  948) ! ** MODIFICATIONS
+(  949) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  950) !
+(  951) ! I. Dummy arguments declaration
+(  952) USE LFI_PRECISION
+(  953) IMPLICIT NONE
+(  954) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  955) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+(  956) INTEGER(KIND=8), DIMENSION(11), INTENT(IN) :: KDATEF
+(  957) !
+(  958) ! II. Local variables declaration
+(  959) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+(  960) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+(  961) INTEGER(KIND=JPLIKB) :: INUMER
+(  962) INTEGER(KIND=JPLIKB) :: JI
+(  963) !
+(  964) ! III. FANDAR call
+(  965) DO JI=1, SIZE(KDATEF)
+(  966)   IDATEF(JI)=INT(KDATEF(JI), JPLIKB)
+(  967) ENDDO
+(  968) INUMER=INT(KNUMER, JPLIKB)
+(  969) CALL FANDAR64(IRETURNCODE, INUMER, IDATEF)
+(  970) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+(  971)   ! not a LFI error, treated beyond
+(  972)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANDAR','',.FALSE.)
+(  973) ENDIF
+(  974) KRETURNCODE=INT(IRETURNCODE,8)
+(  975) END SUBROUTINE WFANDAR
+(  976) # 977 "FA4py.F90"
+(  977) !__________________________________________________________________________
+(  978) # 980 "FA4py.F90"
+(  980) SUBROUTINE WFANDAX(KRETURNCODE, KNUMER, KDATEF)
+(  981) ! ** PURPOSE
+(  982) !    Wrapper to FANDAX
+(  983) !
+(  984) ! ** DUMMY ARGUMENTS
+(  985) !    KRETURNCODE: error code
+(  986) !    KNUMER: logical unit number associated to file
+(  987) !    KDATEF: array of date elements
+(  988) !
+(  989) ! ** AUTHOR
+(  990) !    9 April 2014, S. Riette
+(  991) !
+(  992) ! ** MODIFICATIONS
+(  993) !    11 April 2014, S. Riette: use 64bits FA subroutines
+(  994) !
+(  995) ! I. Dummy arguments declaration
+(  996) USE LFI_PRECISION
+(  997) IMPLICIT NONE
+(  998) INTEGER(KIND=8), INTENT(OUT) :: KRETURNCODE
+(  999) INTEGER(KIND=8), INTENT(IN) :: KNUMER
+( 1000) INTEGER(KIND=8), DIMENSION(22), INTENT(IN) :: KDATEF
+( 1001) !
+( 1002) ! II. Local variables declaration
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:02      page 39
+
+( 1003) INTEGER(KIND=JPLIKB) :: IRETURNCODE
+( 1004) INTEGER(KIND=JPLIKB), DIMENSION(SIZE(KDATEF)) :: IDATEF
+( 1005) INTEGER(KIND=JPLIKB) :: INUMER
+( 1006) INTEGER(KIND=JPLIKB) :: JI
+( 1007) !
+( 1008) ! III. FANDAX call
+( 1009) DO JI=1, SIZE(KDATEF)
+( 1010)   IDATEF(JI)=INT(KDATEF(JI), JPLIKB)
+( 1011) ENDDO
+( 1012) INUMER=INT(KNUMER, JPLIKB)
+( 1013) CALL FANDAX64(IRETURNCODE, INUMER, IDATEF)
+( 1014) IF (IRETURNCODE > 0 .OR. IRETURNCODE < -50) THEN
+( 1015)   ! not a LFI error, treated beyond
+( 1016)   CALL FAIPAR64(INUMER,0_JPLIKB,IRETURNCODE,.FALSE.,'','FANDAX','',.FALSE.)
+( 1017) ENDIF
+( 1018) KRETURNCODE=INT(IRETURNCODE,8)
+( 1019) END SUBROUTINE WFANDAX
+( 1020) # 1021 "FA4py.F90"
+( 1021) !________________________________________________________________________
+( 1022) # 1023 "FA4py.F90"
+( 1023) SUBROUTINE GET_FACST(JPXPAH, JPXIND, JPXGEO, JPXNIV)
+( 1024) ! ** PURPOSE
+( 1025) !    Export maximum sizes used for fa format
+( 1026) !
+( 1027) ! ** DUMMY ARGUMENTS
+( 1028) !    JPXPAH
+( 1029) !    JPXIND
+( 1030) !    JPXGEO
+( 1031) !    JPXNIV
+( 1032) !
+( 1033) ! ** AUTHOR
+( 1034) !    24 sept 2014, S. Riette
+( 1035) !
+( 1036) ! ** MODIFICATIONS
+( 1037) !
+( 1038) USE FA_MOD, ONLY : FA_COM_DEFAULT, FA_COM_DEFAULT_INIT, NEW_FA_DEFAULT
+( 1039) !
+( 1040) ! I. Dummy arguments declaration
+( 1041) IMPLICIT NONE
+( 1042) INTEGER(KIND=8), INTENT(OUT) :: JPXPAH, JPXIND, JPXGEO, JPXNIV
+( 1043) !
+( 1044) ! II.  Local variables declaration
+( 1045) !
+( 1046) ! III. Export
+( 1047) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT()
+( 1048) JPXPAH=FA_COM_DEFAULT%JPXPAH
+( 1049) JPXIND=FA_COM_DEFAULT%JPXIND
+( 1050) JPXGEO=FA_COM_DEFAULT%JPXGEO
+( 1051) JPXNIV=FA_COM_DEFAULT%JPXNIV
+( 1052) END SUBROUTINE GET_FACST
+( 1053) # 1054 "FA4py.F90"
+( 1054) !_________________________________________________________________________________________

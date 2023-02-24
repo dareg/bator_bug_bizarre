@@ -1,0 +1,952 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: facade.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACADE_MT64                                                &
+(    4) &                     (FA,  CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO,   &
+(    5) &                      PCODIL, KTRONC, KNLATI, KNXLON, KNLOPA,        &
+(    6) &                      KNOZPA, PSINLA, KNIVER, PREFER, PAHYBR,        &
+(    7) &                      PBHYBR, LDGARD )
+(    8) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    9) USE PARKIND1, ONLY : JPRB
+(   10) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   11) USE LFI_PRECISION
+(   12) IMPLICIT NONE
+(   13) !****
+(   14) !        Sous-programme servant a DEfinir un CADre, voire a le
+(   15) !     redefinir.
+(   16) !**
+(   17) !        Arguments : CDNOMC ==> Nom symbolique du cadre;
+(   18) !  (tous d'Entree)   KTYPTR ==> Type de transformation horizontale;
+(   19) !                    PSLAPO ==> Sinus de la latitude du pole d'interet;
+(   20) !                    PCLOPO ==> Cosinus " " longitude "   "       "   ;
+(   21) !                    PSLOPO ==> Sinus   " " longitude "   "       "   ;
+(   22) !                    PCODIL ==> Coefficient de dilatation;
+(   23) !                    KTRONC ==> Troncature;
+(   24) !                    KNLATI ==> Nombre de latitudes (de pole a pole);
+(   25) !                    KNXLON ==> Nombre maxi de longitudes par parallele;
+(   26) !         (Tableau)  KNLOPA ==> Nombre de longitudes par parallele;
+(   27) !                               (du pole nord vers l'equateur seulement)
+(   28) !         (Tableau)  KNOZPA ==> Nombre d'onde zonal maxi par parallele;
+(   29) !                               (du pole nord vers l'equateur seulement)
+(   30) !         (Tableau)  PSINLA ==> Sinus des latitudes de l'hemisphere nord
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 3
+
+(   31) !                               (du pole nord vers l'equateur seulement)
+(   32) !                    KNIVER ==> Nombre de niveaux verticaux;
+(   33) !                    PREFER ==> Pression de reference (facteur multipli-
+(   34) !                               catif de la premiere fonction de la
+(   35) !                               coordonnee hybride)
+(   36) !         (Tableau)  PAHYBR ==> Valeurs de la fonction "A" de la coordo-
+(   37) !                               nnee hybride AUX LIMITES DE COUCHES;
+(   38) !         (Tableau)  PBHYBR ==> Valeurs de la fonction "B" de la coordo-
+(   39) !                               nnee hybride AUX LIMITES DE COUCHES;
+(   40) !                    LDGARD ==> Vrai si le cadre doit etre conserve meme
+(   41) !                               apres la fermeture du dernier fichier
+(   42) !                               qui s'y rattache.
+(   43) !*
+(   44) !        La "redefinition" d'un cadre est possible a l'une de ces
+(   45) !     conditions:
+(   46) !
+(   47) !     - le cadre a ete defini, mais n'a aucun fichier qui s'y rattache;
+(   48) !     - le cadre defini a au moins un fichier qui s'y rattache, et les
+(   49) !       nouveaux parametres de definition sont identiques a ceux deja
+(   50) !       definis.
+(   51) !
+(   52) !        Toute "redefinition" de cadre donne lieu a une messagerie
+(   53) !     de niveau 1, donc non masquee par defaut.
+(   54) !
+(   55) !
+(   56) !
+(   57) TYPE(FA_COM) :: FA
+(   58) INTEGER (KIND=JPLIKB) KTYPTR, KTRONC, KNLATI, KNXLON, KNIVER
+(   59) !
+(   60) INTEGER (KIND=JPLIKB) KNLOPA (FA%JPXPAH), KNOZPA (FA%JPXIND)
+(   61) !
+(   62) REAL (KIND=JPDBLR) PSLAPO, PCLOPO, PSLOPO, PCODIL, PREFER
+(   63) !
+(   64) REAL (KIND=JPDBLR) PSINLA ((1+KNLATI)/2), PAHYBR (0:KNIVER), PBHYBR (0:KNIVER)
+(   65) !
+(   66) CHARACTER CDNOMC*(*)
+(   67) !
+(   68) LOGICAL LDGARD
+(   69) !
+(   70) INTEGER (KIND=JPLIKB) IPHASE, IGARDE, IREP, IRANGC
+(   71) INTEGER (KIND=JPLIKB) ILNOMC, INIMES, INUMER
+(   72) !
+(   73) LOGICAL LLREDF, LLMODC
+(   74) !
+(   75) !
+(   76) !
+(   77) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   78) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   79) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   80) LOGICAL                  LLFATA
+(   81) 
+(   82) !**
+(   83) !     1.  -  SI PREMIERE UTILISATION, APPEL AU SOUS-PROGRAMME "FARINE".
+(   84) !-----------------------------------------------------------------------
+(   85) !
+(   86) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   87) IF (LHOOK) CALL DR_HOOK('FACADE_MT',0,ZHOOK_HANDLE)
+(   88) CLACTI=''
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 4
+
+(   89) IF (FA%FACADE_LLPREA) THEN
+(   90)   CALL FARINE_MT64              &
+(   91) &                 (FA, 2_JPLIKB )
+(   92)   FA%FACADE_LLPREA=.FALSE.
+(   93) ENDIF
+(   94) !**
+(   95) !     2.  -  LE TRAVAIL EST SOUS-TRAITE AU SOUS-PROGRAMME "FACADI".
+(   96) !-----------------------------------------------------------------------
+(   97) !
+(   98) IPHASE=0
+(   99) !
+(  100) IF (LDGARD) THEN
+(  101)   IGARDE=2
+(  102) ELSE
+(  103)   IGARDE=0
+(  104) ENDIF
+(  105) !
+(  106) !             Verrouillage global prealable, si necessaire.
+(  107) !
+(  108) IF (FA%LFAMUL) CALL LFIVER_MT64                        &
+(  109) &                              (FA%LFI, FA%VRGLAS,'ON')
+(  110) !
+(  111) CALL FACADI_MT64                                                &
+(  112) &            (FA, IREP,CDNOMC,KTYPTR,PSLAPO,PCLOPO,             &
+(  113) &             PSLOPO,PCODIL,                                    &
+(  114) &             KTRONC,KNLATI,KNXLON,KNLOPA,KNOZPA,PSINLA,KNIVER, &
+(  115) &             PREFER,PAHYBR,PBHYBR,LLMODC,LLREDF,IPHASE,IRANGC, &
+(  116) &             ILNOMC,IGARDE)
+(  117) ILNOMC=MIN (ILNOMC,FA%NCPCAD)
+(  118) !**
+(  119) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  120) !            VIA LE sous-programme "FAIPAR" .
+(  121) !-----------------------------------------------------------------------
+(  122) !
+(  123) !
+(  124) !          Deverrouillage global eventuel.
+(  125) !
+(  126) IF (FA%LFAMUL) CALL LFIVER_MT64                         &
+(  127) &                              (FA%LFI, FA%VRGLAS,'OFF')
+(  128) !
+(  129) LLFATA=LLMOER(IREP,0_JPLIKB )
+(  130) !
+(  131) IF (LLFATA) THEN
+(  132)   INIMES=2
+(  133) ELSEIF (FA%NIMSGA.EQ.0) THEN
+(  134)   INIMES=0
+(  135) ELSEIF (LLMODC) THEN
+(  136)   INIMES=1
+(  137)   WRITE (UNIT=CLMESS,FMT=                                         &
+(  138) &  '(''PARAMETRES NUMERIQUES DU CADRE '''''',A,'''''' MODIFIES '', &
+(  139) &    '' - CONSERVATION A LA FERMETURE DU DERNIER FICHIER= '',L1)') &
+(  140) &   CDNOMC(1:ILNOMC),LDGARD
+(  141) ELSEIF (LLREDF) THEN
+(  142)   INIMES=1
+(  143)   WRITE (UNIT=CLMESS,FMT='(''CADRE '''''',A,                 &
+(  144) & '''''' REDEFINI - MEMES PARAMETRES NUMERIQUES - '',         &
+(  145) & '' CONSERVATION A LA FERMETURE DU DERNIER FICHIER= '',L1)') &
+(  146) &   CDNOMC(1:ILNOMC),LDGARD
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 5
+
+(  147) ELSEIF (FA%NIMSGA.EQ.2) THEN
+(  148)   INIMES=2
+(  149) ELSE
+(  150)   INIMES=0
+(  151) ENDIF
+(  152) !
+(  153) IF (INIMES.EQ.0)  THEN 
+(  154)   IF (LHOOK) CALL DR_HOOK('FACADE_MT',1,ZHOOK_HANDLE)
+(  155)   RETURN
+(  156) ENDIF
+(  157) !
+(  158) CLNSPR='FACADE'
+(  159) INUMER=JPNIIL
+(  160) !
+(  161) IF (INIMES.EQ.1.AND.FA%NIMSGA.EQ.2) THEN
+(  162) !
+(  163) !        Cas ou il faut en fait 2 messages.
+(  164) !
+(  165)   CALL FAIPAR_MT64                                      &
+(  166) &                 (FA, INUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(  167) &                  CLNSPR,CLACTI,.FALSE.)
+(  168)   INIMES=2
+(  169) ENDIF
+(  170) !
+(  171) IF (INIMES.EQ.2) THEN
+(  172) !
+(  173)   IF (IREP.EQ.-65.AND.ILNOMC.EQ.1) THEN
+(  174)     ILNOMC=8
+(  175)     CLACTI(1:ILNOMC)=FA%CHAINC(:ILNOMC)
+(  176)   ELSE
+(  177)     ILNOMC=MIN (INT (LEN (CLACTI), JPLIKB),ILNOMC,FA%NCPCAD)
+(  178)     CLACTI(1:ILNOMC)=CDNOMC(1:ILNOMC)
+(  179)   ENDIF
+(  180) !
+(  181)   WRITE (UNIT=CLMESS,                                             &
+(  182) &         FMT='(''ARGUMENTS SIMPLES= '''''',A,'''''',''            &
+(  183) &  ,I2,4('','',F7.4),3('','',I6),'','',I5,'','',F11.4,'', '',L1)') &
+(  184) &       CLACTI(1:ILNOMC),KTYPTR,PSLAPO,PCLOPO,PSLOPO,PCODIL,       &
+(  185) &       KTRONC,KNLATI,KNXLON,KNIVER,PREFER,LDGARD
+(  186) ENDIF
+(  187) !
+(  188) CALL FAIPAR_MT64                                     &
+(  189) &               (FA, INUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  190) &                CLNSPR,CLACTI(1:ILNOMC),.FALSE.)
+(  191) !
+(  192) IF (LHOOK) CALL DR_HOOK('FACADE_MT',1,ZHOOK_HANDLE)
+(  193) 
+(  194) CONTAINS
+(  195) 
+(  196) #include "facom2.llmoer.h"
+(  197) 
+(  198) END SUBROUTINE FACADE_MT64
+(  199) 
+(  200) 
+(  201) 
+(  202) ! Oct-2012 P. Marguinaud 64b LFI
+(  203) SUBROUTINE FACADE64                                        &
+(  204) &           (CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 6
+
+(  205) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,  &
+(  206) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  207) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  208) &                   FA_COM_DEFAULT_INIT,  &
+(  209) &                   NEW_FA_DEFAULT
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+(  213) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  214) INTEGER (KIND=JPLIKB)  KTYPTR                                 ! IN   
+(  215) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  216) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  217) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  218) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  219) INTEGER (KIND=JPLIKB)  KTRONC                                 ! IN   
+(  220) INTEGER (KIND=JPLIKB)  KNLATI                                 ! IN   
+(  221) INTEGER (KIND=JPLIKB)  KNXLON                                 ! IN   
+(  222) INTEGER (KIND=JPLIKB)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  223) INTEGER (KIND=JPLIKB)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  224) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  225) INTEGER (KIND=JPLIKB)  KNIVER                                 ! IN   
+(  226) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  227) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  228) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  229) LOGICAL                LDGARD                                 ! IN   
+(  230) 
+(  231) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  232) 
+(  233) CALL FACADE_MT64                                               &
+(  234) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  235) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  236) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  237) 
+(  238) END SUBROUTINE FACADE64
+(  239) 
+(  240) SUBROUTINE FACADE                                          &
+(  241) &           (CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  242) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,  &
+(  243) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  244) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  245) &                   FA_COM_DEFAULT_INIT,  &
+(  246) &                   NEW_FA_DEFAULT
+(  247) USE LFI_PRECISION
+(  248) IMPLICIT NONE
+(  249) ! Arguments
+(  250) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  251) INTEGER (KIND=JPLIKM)  KTYPTR                                 ! IN   
+(  252) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  253) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  254) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  255) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  256) INTEGER (KIND=JPLIKM)  KTRONC                                 ! IN   
+(  257) INTEGER (KIND=JPLIKM)  KNLATI                                 ! IN   
+(  258) INTEGER (KIND=JPLIKM)  KNXLON                                 ! IN   
+(  259) INTEGER (KIND=JPLIKM)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  260) INTEGER (KIND=JPLIKM)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  261) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  262) INTEGER (KIND=JPLIKM)  KNIVER                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 7
+
+(  263) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  264) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  265) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  266) LOGICAL                LDGARD                                 ! IN   
+(  267) 
+(  268) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  269) 
+(  270) CALL FACADE_MT                                                 &
+(  271) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  272) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  273) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  274) 
+(  275) END SUBROUTINE FACADE
+(  276) 
+(  277) SUBROUTINE FACADE_MT                                           &
+(  278) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  279) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  280) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  281) USE FA_MOD, ONLY : FA_COM
+(  282) USE LFI_PRECISION
+(  283) IMPLICIT NONE
+(  284) ! Arguments
+(  285) TYPE (FA_COM)          FA                                     ! INOUT
+(  286) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  287) INTEGER (KIND=JPLIKM)  KTYPTR                                 ! IN   
+(  288) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  289) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  290) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  291) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  292) INTEGER (KIND=JPLIKM)  KTRONC                                 ! IN   
+(  293) INTEGER (KIND=JPLIKM)  KNLATI                                 ! IN   
+(  294) INTEGER (KIND=JPLIKM)  KNXLON                                 ! IN   
+(  295) INTEGER (KIND=JPLIKM)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  296) INTEGER (KIND=JPLIKM)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  297) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  298) INTEGER (KIND=JPLIKM)  KNIVER                                 ! IN   
+(  299) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  300) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  301) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  302) LOGICAL                LDGARD                                 ! IN   
+(  303) ! Local integers
+(  304) INTEGER (KIND=JPLIKB)  ITYPTR                                 ! IN   
+(  305) INTEGER (KIND=JPLIKB)  ITRONC                                 ! IN   
+(  306) INTEGER (KIND=JPLIKB)  INLATI                                 ! IN   
+(  307) INTEGER (KIND=JPLIKB)  INXLON                                 ! IN   
+(  308) INTEGER (KIND=JPLIKB)  INLOPA     (FA%JPXPAH)                 ! IN   
+(  309) INTEGER (KIND=JPLIKB)  INOZPA     (FA%JPXIND)                 ! IN   
+(  310) INTEGER (KIND=JPLIKB)  INIVER                                 ! IN   
+(  311) ! Ancillary varibles
+(  312) LOGICAL                LLMLAM
+(  313) INTEGER (KIND=JPLIKB)  ISZNLOPA, ISZNOZPA
+(  314) ! Convert arguments
+(  315) 
+(  316) LLMLAM=KTYPTR.LE.0
+(  317) 
+(  318) IF (.NOT.LLMLAM) THEN
+(  319)   ISZNLOPA=INT ((1+KNLATI)/2, JPLIKB)
+(  320)   ISZNOZPA=INT ((1+KNLATI)/2, JPLIKB)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 8
+
+(  321) ELSE
+(  322)   ISZNLOPA=8
+(  323)   ISZNOZPA=0
+(  324) ENDIF
+(  325) 
+(  326) ITYPTR     = INT (    KTYPTR, JPLIKB)
+(  327) ITRONC     = INT (    KTRONC, JPLIKB)
+(  328) INLATI     = INT (    KNLATI, JPLIKB)
+(  329) INXLON     = INT (    KNXLON, JPLIKB)
+(  330) INIVER     = INT (    KNIVER, JPLIKB)
+(  331) 
+(  332) INLOPA (1:ISZNLOPA) = INT (KNLOPA (1:ISZNLOPA), JPLIKB)
+(  333) INOZPA (1:ISZNOZPA) = INT (KNOZPA (1:ISZNOZPA), JPLIKB)
+(  334) 
+(  335) CALL FACADE_MT64                                               &
+(  336) &           (FA, CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  337) &           ITRONC, INLATI, INXLON, INLOPA, INOZPA, PSINLA,      &
+(  338) &           INIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  339) 
+(  340) 
+(  341) END SUBROUTINE FACADE_MT
+(  342) 
+(  343) !INTF CDNOMC        IN                                  
+(  344) !INTF KTYPTR        IN                                  
+(  345) !INTF PSLAPO        IN                                  
+(  346) !INTF PCLOPO        IN                                  
+(  347) !INTF PSLOPO        IN                                  
+(  348) !INTF PCODIL        IN                                  
+(  349) !INTF KTRONC        IN                                  
+(  350) !INTF KNLATI        IN                                  
+(  351) !INTF KNXLON        IN                                  
+(  352) !INTF KNLOPA        IN    DIMS=FA%JPXPAH                
+(  353) !INTF KNOZPA        IN    DIMS=FA%JPXIND                
+(  354) !INTF PSINLA        IN    DIMS=(1+KNLATI)/2             
+(  355) !INTF KNIVER        IN                                  
+(  356) !INTF PREFER        IN                                  
+(  357) !INTF PAHYBR        IN    DIMS=0:KNIVER                 
+(  358) !INTF PBHYBR        IN    DIMS=0:KNIVER                 
+(  359) !INTF LDGARD        IN                                  
+(  360) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 9
+
+(    1) # 1 "facade.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACADE_MT64                                                &
+(    4) &                     (FA,  CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO,   &
+(    5) &                      PCODIL, KTRONC, KNLATI, KNXLON, KNLOPA,        &
+(    6) &                      KNOZPA, PSINLA, KNIVER, PREFER, PAHYBR,        &
+(    7) &                      PBHYBR, LDGARD )
+(    8) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    9) USE PARKIND1, ONLY : JPRB
+(   10) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   11) USE LFI_PRECISION
+(   12) IMPLICIT NONE
+(   13) !****
+(   14) !        Sous-programme servant a DEfinir un CADre, voire a le
+(   15) !     redefinir.
+(   16) !**
+(   17) !        Arguments : CDNOMC ==> Nom symbolique du cadre;
+(   18) !  (tous d'Entree)   KTYPTR ==> Type de transformation horizontale;
+(   19) !                    PSLAPO ==> Sinus de la latitude du pole d'interet;
+(   20) !                    PCLOPO ==> Cosinus " " longitude "   "       "   ;
+(   21) !                    PSLOPO ==> Sinus   " " longitude "   "       "   ;
+(   22) !                    PCODIL ==> Coefficient de dilatation;
+(   23) !                    KTRONC ==> Troncature;
+(   24) !                    KNLATI ==> Nombre de latitudes (de pole a pole);
+(   25) !                    KNXLON ==> Nombre maxi de longitudes par parallele;
+(   26) !         (Tableau)  KNLOPA ==> Nombre de longitudes par parallele;
+(   27) !                               (du pole nord vers l'equateur seulement)
+(   28) !         (Tableau)  KNOZPA ==> Nombre d'onde zonal maxi par parallele;
+(   29) !                               (du pole nord vers l'equateur seulement)
+(   30) !         (Tableau)  PSINLA ==> Sinus des latitudes de l'hemisphere nord
+(   31) !                               (du pole nord vers l'equateur seulement)
+(   32) !                    KNIVER ==> Nombre de niveaux verticaux;
+(   33) !                    PREFER ==> Pression de reference (facteur multipli-
+(   34) !                               catif de la premiere fonction de la
+(   35) !                               coordonnee hybride)
+(   36) !         (Tableau)  PAHYBR ==> Valeurs de la fonction "A" de la coordo-
+(   37) !                               nnee hybride AUX LIMITES DE COUCHES;
+(   38) !         (Tableau)  PBHYBR ==> Valeurs de la fonction "B" de la coordo-
+(   39) !                               nnee hybride AUX LIMITES DE COUCHES;
+(   40) !                    LDGARD ==> Vrai si le cadre doit etre conserve meme
+(   41) !                               apres la fermeture du dernier fichier
+(   42) !                               qui s'y rattache.
+(   43) !*
+(   44) !        La "redefinition" d'un cadre est possible a l'une de ces
+(   45) !     conditions:
+(   46) !
+(   47) !     - le cadre a ete defini, mais n'a aucun fichier qui s'y rattache;
+(   48) !     - le cadre defini a au moins un fichier qui s'y rattache, et les
+(   49) !       nouveaux parametres de definition sont identiques a ceux deja
+(   50) !       definis.
+(   51) !
+(   52) !        Toute "redefinition" de cadre donne lieu a une messagerie
+(   53) !     de niveau 1, donc non masquee par defaut.
+(   54) !
+(   55) !
+(   56) !
+(   57) TYPE(FA_COM) :: FA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 10
+
+(   58) INTEGER (KIND=JPLIKB) KTYPTR, KTRONC, KNLATI, KNXLON, KNIVER
+(   59) !
+(   60) INTEGER (KIND=JPLIKB) KNLOPA (FA%JPXPAH), KNOZPA (FA%JPXIND)
+(   61) !
+(   62) REAL (KIND=JPDBLR) PSLAPO, PCLOPO, PSLOPO, PCODIL, PREFER
+(   63) !
+(   64) REAL (KIND=JPDBLR) PSINLA ((1+KNLATI)/2), PAHYBR (0:KNIVER), PBHYBR (0:KNIVER)
+(   65) !
+(   66) CHARACTER CDNOMC*(*)
+(   67) !
+(   68) LOGICAL LDGARD
+(   69) !
+(   70) INTEGER (KIND=JPLIKB) IPHASE, IGARDE, IREP, IRANGC
+(   71) INTEGER (KIND=JPLIKB) ILNOMC, INIMES, INUMER
+(   72) !
+(   73) LOGICAL LLREDF, LLMODC
+(   74) !
+(   75) !
+(   76) !
+(   77) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   78) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   79) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   80) LOGICAL                  LLFATA
+(   81) # 82 "facade.F90"
+(   82) !**
+(   83) !     1.  -  SI PREMIERE UTILISATION, APPEL AU SOUS-PROGRAMME "FARINE".
+(   84) !-----------------------------------------------------------------------
+(   85) !
+(   86) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   87) IF (LHOOK) CALL DR_HOOK('FACADE_MT',0,ZHOOK_HANDLE)
+(   88) CLACTI=''
+(   89) IF (FA%FACADE_LLPREA) THEN
+(   90)   CALL FARINE_MT64              &
+(   91) &                 (FA, 2_JPLIKB )
+(   92)   FA%FACADE_LLPREA=.FALSE.
+(   93) ENDIF
+(   94) !**
+(   95) !     2.  -  LE TRAVAIL EST SOUS-TRAITE AU SOUS-PROGRAMME "FACADI".
+(   96) !-----------------------------------------------------------------------
+(   97) !
+(   98) IPHASE=0
+(   99) !
+(  100) IF (LDGARD) THEN
+(  101)   IGARDE=2
+(  102) ELSE
+(  103)   IGARDE=0
+(  104) ENDIF
+(  105) !
+(  106) !             Verrouillage global prealable, si necessaire.
+(  107) !
+(  108) IF (FA%LFAMUL) CALL LFIVER_MT64                        &
+(  109) &                              (FA%LFI, FA%VRGLAS,'ON')
+(  110) !
+(  111) CALL FACADI_MT64                                                &
+(  112) &            (FA, IREP,CDNOMC,KTYPTR,PSLAPO,PCLOPO,             &
+(  113) &             PSLOPO,PCODIL,                                    &
+(  114) &             KTRONC,KNLATI,KNXLON,KNLOPA,KNOZPA,PSINLA,KNIVER, &
+(  115) &             PREFER,PAHYBR,PBHYBR,LLMODC,LLREDF,IPHASE,IRANGC, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 11
+
+(  116) &             ILNOMC,IGARDE)
+(  117) ILNOMC=MIN (ILNOMC,FA%NCPCAD)
+(  118) !**
+(  119) !    10.  -  PHASE TERMINALE : MESSAGERIE, AVEC "ABORT" EVENTUEL,
+(  120) !            VIA LE sous-programme "FAIPAR" .
+(  121) !-----------------------------------------------------------------------
+(  122) !
+(  123) !
+(  124) !          Deverrouillage global eventuel.
+(  125) !
+(  126) IF (FA%LFAMUL) CALL LFIVER_MT64                         &
+(  127) &                              (FA%LFI, FA%VRGLAS,'OFF')
+(  128) !
+(  129) LLFATA=LLMOER(IREP,0_JPLIKB )
+(  130) !
+(  131) IF (LLFATA) THEN
+(  132)   INIMES=2
+(  133) ELSEIF (FA%NIMSGA.EQ.0) THEN
+(  134)   INIMES=0
+(  135) ELSEIF (LLMODC) THEN
+(  136)   INIMES=1
+(  137)   WRITE (UNIT=CLMESS,FMT=                                         &
+(  138) &  '(''PARAMETRES NUMERIQUES DU CADRE '''''',A,'''''' MODIFIES '', &
+(  139) &    '' - CONSERVATION A LA FERMETURE DU DERNIER FICHIER= '',L1)') &
+(  140) &   CDNOMC(1:ILNOMC),LDGARD
+(  141) ELSEIF (LLREDF) THEN
+(  142)   INIMES=1
+(  143)   WRITE (UNIT=CLMESS,FMT='(''CADRE '''''',A,                 &
+(  144) & '''''' REDEFINI - MEMES PARAMETRES NUMERIQUES - '',         &
+(  145) & '' CONSERVATION A LA FERMETURE DU DERNIER FICHIER= '',L1)') &
+(  146) &   CDNOMC(1:ILNOMC),LDGARD
+(  147) ELSEIF (FA%NIMSGA.EQ.2) THEN
+(  148)   INIMES=2
+(  149) ELSE
+(  150)   INIMES=0
+(  151) ENDIF
+(  152) !
+(  153) IF (INIMES.EQ.0)  THEN 
+(  154)   IF (LHOOK) CALL DR_HOOK('FACADE_MT',1,ZHOOK_HANDLE)
+(  155)   RETURN
+(  156) ENDIF
+(  157) !
+(  158) CLNSPR='FACADE'
+(  159) INUMER=JPNIIL
+(  160) !
+(  161) IF (INIMES.EQ.1.AND.FA%NIMSGA.EQ.2) THEN
+(  162) !
+(  163) !        Cas ou il faut en fait 2 messages.
+(  164) !
+(  165)   CALL FAIPAR_MT64                                      &
+(  166) &                 (FA, INUMER,INIMES,IREP,.FALSE.,CLMESS, &
+(  167) &                  CLNSPR,CLACTI,.FALSE.)
+(  168)   INIMES=2
+(  169) ENDIF
+(  170) !
+(  171) IF (INIMES.EQ.2) THEN
+(  172) !
+(  173)   IF (IREP.EQ.-65.AND.ILNOMC.EQ.1) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 12
+
+(  174)     ILNOMC=8
+(  175)     CLACTI(1:ILNOMC)=FA%CHAINC(:ILNOMC)
+(  176)   ELSE
+(  177)     ILNOMC=MIN (INT (LEN (CLACTI), JPLIKB),ILNOMC,FA%NCPCAD)
+(  178)     CLACTI(1:ILNOMC)=CDNOMC(1:ILNOMC)
+(  179)   ENDIF
+(  180) !
+(  181)   WRITE (UNIT=CLMESS,                                             &
+(  182) &         FMT='(''ARGUMENTS SIMPLES= '''''',A,'''''',''            &
+(  183) &  ,I2,4('','',F7.4),3('','',I6),'','',I5,'','',F11.4,'', '',L1)') &
+(  184) &       CLACTI(1:ILNOMC),KTYPTR,PSLAPO,PCLOPO,PSLOPO,PCODIL,       &
+(  185) &       KTRONC,KNLATI,KNXLON,KNIVER,PREFER,LDGARD
+(  186) ENDIF
+(  187) !
+(  188) CALL FAIPAR_MT64                                     &
+(  189) &               (FA, INUMER,INIMES,IREP,LLFATA,CLMESS, &
+(  190) &                CLNSPR,CLACTI(1:ILNOMC),.FALSE.)
+(  191) !
+(  192) IF (LHOOK) CALL DR_HOOK('FACADE_MT',1,ZHOOK_HANDLE)
+(  193) # 194 "facade.F90"
+(  194) CONTAINS
+(  195) # 196 "facade.F90"
+(  196) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 197 "facade.F90"
+(  197) # 198 "facade.F90"
+(  198) END SUBROUTINE FACADE_MT64
+(  199) # 202 "facade.F90"
+(  202) ! Oct-2012 P. Marguinaud 64b LFI
+(  203) SUBROUTINE FACADE64                                        &
+(  204) &           (CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  205) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,  &
+(  206) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  207) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  208) &                   FA_COM_DEFAULT_INIT,  &
+(  209) &                   NEW_FA_DEFAULT
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+(  213) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  214) INTEGER (KIND=JPLIKB)  KTYPTR                                 ! IN   
+(  215) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  216) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  217) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  218) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  219) INTEGER (KIND=JPLIKB)  KTRONC                                 ! IN   
+(  220) INTEGER (KIND=JPLIKB)  KNLATI                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 13
+
+(  221) INTEGER (KIND=JPLIKB)  KNXLON                                 ! IN   
+(  222) INTEGER (KIND=JPLIKB)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  223) INTEGER (KIND=JPLIKB)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  224) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  225) INTEGER (KIND=JPLIKB)  KNIVER                                 ! IN   
+(  226) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  227) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  228) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  229) LOGICAL                LDGARD                                 ! IN   
+(  230) # 231 "facade.F90"
+(  231) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  232) # 233 "facade.F90"
+(  233) CALL FACADE_MT64                                               &
+(  234) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  235) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  236) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  237) # 238 "facade.F90"
+(  238) END SUBROUTINE FACADE64
+(  239) # 240 "facade.F90"
+(  240) SUBROUTINE FACADE                                          &
+(  241) &           (CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  242) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,  &
+(  243) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  244) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  245) &                   FA_COM_DEFAULT_INIT,  &
+(  246) &                   NEW_FA_DEFAULT
+(  247) USE LFI_PRECISION
+(  248) IMPLICIT NONE
+(  249) ! Arguments
+(  250) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  251) INTEGER (KIND=JPLIKM)  KTYPTR                                 ! IN   
+(  252) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  253) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  254) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  255) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  256) INTEGER (KIND=JPLIKM)  KTRONC                                 ! IN   
+(  257) INTEGER (KIND=JPLIKM)  KNLATI                                 ! IN   
+(  258) INTEGER (KIND=JPLIKM)  KNXLON                                 ! IN   
+(  259) INTEGER (KIND=JPLIKM)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  260) INTEGER (KIND=JPLIKM)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  261) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  262) INTEGER (KIND=JPLIKM)  KNIVER                                 ! IN   
+(  263) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  264) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  265) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  266) LOGICAL                LDGARD                                 ! IN   
+(  267) # 268 "facade.F90"
+(  268) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  269) # 270 "facade.F90"
+(  270) CALL FACADE_MT                                                 &
+(  271) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+(  272) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  273) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  274) # 275 "facade.F90"
+(  275) END SUBROUTINE FACADE
+(  276) # 277 "facade.F90"
+(  277) SUBROUTINE FACADE_MT                                           &
+(  278) &           (FA, CDNOMC, KTYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 14
+
+(  279) &           KTRONC, KNLATI, KNXLON, KNLOPA, KNOZPA, PSINLA,      &
+(  280) &           KNIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  281) USE FA_MOD, ONLY : FA_COM
+(  282) USE LFI_PRECISION
+(  283) IMPLICIT NONE
+(  284) ! Arguments
+(  285) TYPE (FA_COM)          FA                                     ! INOUT
+(  286) CHARACTER (LEN=*)      CDNOMC                                 ! IN   
+(  287) INTEGER (KIND=JPLIKM)  KTYPTR                                 ! IN   
+(  288) REAL (KIND=JPDBLR)     PSLAPO                                 ! IN   
+(  289) REAL (KIND=JPDBLR)     PCLOPO                                 ! IN   
+(  290) REAL (KIND=JPDBLR)     PSLOPO                                 ! IN   
+(  291) REAL (KIND=JPDBLR)     PCODIL                                 ! IN   
+(  292) INTEGER (KIND=JPLIKM)  KTRONC                                 ! IN   
+(  293) INTEGER (KIND=JPLIKM)  KNLATI                                 ! IN   
+(  294) INTEGER (KIND=JPLIKM)  KNXLON                                 ! IN   
+(  295) INTEGER (KIND=JPLIKM)  KNLOPA     (FA%JPXPAH)                 ! IN   
+(  296) INTEGER (KIND=JPLIKM)  KNOZPA     (FA%JPXIND)                 ! IN   
+(  297) REAL (KIND=JPDBLR)     PSINLA     ((1+KNLATI)/2)              ! IN   
+(  298) INTEGER (KIND=JPLIKM)  KNIVER                                 ! IN   
+(  299) REAL (KIND=JPDBLR)     PREFER                                 ! IN   
+(  300) REAL (KIND=JPDBLR)     PAHYBR     (0:KNIVER)                  ! IN   
+(  301) REAL (KIND=JPDBLR)     PBHYBR     (0:KNIVER)                  ! IN   
+(  302) LOGICAL                LDGARD                                 ! IN   
+(  303) ! Local integers
+(  304) INTEGER (KIND=JPLIKB)  ITYPTR                                 ! IN   
+(  305) INTEGER (KIND=JPLIKB)  ITRONC                                 ! IN   
+(  306) INTEGER (KIND=JPLIKB)  INLATI                                 ! IN   
+(  307) INTEGER (KIND=JPLIKB)  INXLON                                 ! IN   
+(  308) INTEGER (KIND=JPLIKB)  INLOPA     (FA%JPXPAH)                 ! IN   
+(  309) INTEGER (KIND=JPLIKB)  INOZPA     (FA%JPXIND)                 ! IN   
+(  310) INTEGER (KIND=JPLIKB)  INIVER                                 ! IN   
+(  311) ! Ancillary varibles
+(  312) LOGICAL                LLMLAM
+(  313) INTEGER (KIND=JPLIKB)  ISZNLOPA, ISZNOZPA
+(  314) ! Convert arguments
+(  315) # 316 "facade.F90"
+(  316) LLMLAM=KTYPTR.LE.0
+(  317) # 318 "facade.F90"
+(  318) IF (.NOT.LLMLAM) THEN
+(  319)   ISZNLOPA=INT ((1+KNLATI)/2, JPLIKB)
+(  320)   ISZNOZPA=INT ((1+KNLATI)/2, JPLIKB)
+(  321) ELSE
+(  322)   ISZNLOPA=8
+(  323)   ISZNOZPA=0
+(  324) ENDIF
+(  325) # 326 "facade.F90"
+(  326) ITYPTR     = INT (    KTYPTR, JPLIKB)
+(  327) ITRONC     = INT (    KTRONC, JPLIKB)
+(  328) INLATI     = INT (    KNLATI, JPLIKB)
+(  329) INXLON     = INT (    KNXLON, JPLIKB)
+(  330) INIVER     = INT (    KNIVER, JPLIKB)
+(  331) # 332 "facade.F90"
+(  332) INLOPA (1:ISZNLOPA) = INT (KNLOPA (1:ISZNLOPA), JPLIKB)
+(  333) INOZPA (1:ISZNOZPA) = INT (KNOZPA (1:ISZNOZPA), JPLIKB)
+(  334) # 335 "facade.F90"
+(  335) CALL FACADE_MT64                                               &
+(  336) &           (FA, CDNOMC, ITYPTR, PSLAPO, PCLOPO, PSLOPO, PCODIL, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 15
+
+(  337) &           ITRONC, INLATI, INXLON, INLOPA, INOZPA, PSINLA,      &
+(  338) &           INIVER, PREFER, PAHYBR, PBHYBR, LDGARD)
+(  339) # 341 "facade.F90"
+(  341) END SUBROUTINE FACADE_MT
+(  342) # 343 "facade.F90"
+(  343) !INTF CDNOMC        IN                                  
+(  344) !INTF KTYPTR        IN                                  
+(  345) !INTF PSLAPO        IN                                  
+(  346) !INTF PCLOPO        IN                                  
+(  347) !INTF PSLOPO        IN                                  
+(  348) !INTF PCODIL        IN                                  
+(  349) !INTF KTRONC        IN                                  
+(  350) !INTF KNLATI        IN                                  
+(  351) !INTF KNXLON        IN                                  
+(  352) !INTF KNLOPA        IN    DIMS=FA%JPXPAH                
+(  353) !INTF KNOZPA        IN    DIMS=FA%JPXIND                
+(  354) !INTF PSINLA        IN    DIMS=(1+KNLATI)/2             
+(  355) !INTF KNIVER        IN                                  
+(  356) !INTF PREFER        IN                                  
+(  357) !INTF PAHYBR        IN    DIMS=0:KNIVER                 
+(  358) !INTF PBHYBR        IN    DIMS=0:KNIVER                 
+(  359) !INTF LDGARD        IN                                  

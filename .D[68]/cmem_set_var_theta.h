@@ -1,0 +1,10 @@
+INTERFACE
+  SUBROUTINE CMEM_SET_VAR_THETA(cmem_conf, cmem_var, theta)
+  USE PARKIND1,     ONLY : JPIM, JPRB
+  USE YOMCMEMTYPES, ONLY : CMEM_CONF_TYPE, CMEM_VAR_TYPE
+  TYPE(CMEM_CONF_TYPE), INTENT(IN)             :: cmem_conf
+  TYPE(CMEM_VAR_TYPE),  INTENT(INOUT)          :: cmem_var
+  REAL(KIND=JPRB),      INTENT(IN),   OPTIONAL :: theta(cmem_var % field % N)
+  INTEGER(KIND=JPIM)                           :: ii
+  END SUBROUTINE CMEM_SET_VAR_THETA
+END INTERFACE

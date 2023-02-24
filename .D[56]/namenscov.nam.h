@@ -1,0 +1,9 @@
+!     ------------------------------------------------------------------
+NAMELIST/NAMENSCOV/ &
+! logical:
+& LAPPLY_LOC_VERT,LAPPLY_LOC_HORZ,LENSPERT2ONE,LSPLOC,LGPLOC,LUVLOC,LDUAL_RES,&
+! integer:
+  & NSMAX_ENS,NMSMAX_ENS,NENS,NLAGGED,&
+! real:
+  & ENS_WEIGHT,STC_WEIGHT,HORZ_LOC,VERT_LOC
+!     ------------------------------------------------------------------

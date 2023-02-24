@@ -1,0 +1,789 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: eggrvs.F90
+
+(    1) SUBROUTINE EGGRVS (PRPI, PRA, PDELX, PDELY, KPROF,&
+(    2)  & KBEG, KEND, KULOUT, PGELAM, PGELAT, PGM, PGNORX, PGNORY)  
+(    3) !****
+(    4) !---------------------------------------------------------------------
+(    5) 
+(    6) !     GEOGRAPHY OF GRID-POINTS, INVERSION FROM GRID TO GEOGRAPHICAL SPHERE
+(    7) !     ARPEGE-ALADIN
+(    8) !     --------------------------------------------------------------------
+(    9) 
+(   10) !       ---------------------------------------------------
+(   11) !     PURPOSE
+(   12) !     -------
+(   13) !      KNOWING THE PRECISE GEOGRAPHICAL TRANSFORMATION FROM
+(   14) !      ARGUMENTS AND COMMON /YEMGGCM/, COMPUTES THE LOCATION
+(   15) !      ON THEE GEOGRAPHICAL POINTS GIVEN IN INPUT BY THEIR LOCATION
+(   16) !      ON THE ARPEGE-ALADIN GRID
+(   17) 
+(   18) !      MUST BE USED IN CONNECTION WITH SUBROUTINE EGGX
+(   19) !      EITHER WITHIN IT OR AFTER IT
+(   20) 
+(   21) !     INPUT PARAMETERS
+(   22) !     ----------------
+(   23) !      PRPI : PI (3.14ETC)
+(   24) !      PRA  : A, RADIUS OF PLANET
+(   25) !      PDELX, PDELY : GRID SIZE IN M IF PROJECTION, OR IN RADIANS
+(   26) !      KPROF : SIZE OF (1D) ARRAYS
+(   27) !      KBEG, KEND : BEGINNING AND END POINTS OF CALCULATIONS
+(   28) !      KULOUT : LOGICAL UNIT OF LISTING
+(   29) !      PGELAM(KPROF) : X LOCATION OF POINTS, DISTANCE UNDER PROJECTION,
+(   30) !                            RELATIVE ROTATED LONGITUDE UNDER ROTATION,
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 3
+
+(   31) !                      DEFINED AS (JLON-KDLUN)*PDELX
+(   32) !      PGELAT(KPROF) : Y LOCATION OF POINTS, DISTANCE UNDER PROJECTION,
+(   33) !                            RELATIVE ROTATED LATITUDE UNDER ROTATION,
+(   34) !                      DEFINED AS (JLAT-KDGUN)*PDELY
+(   35) !            UNDER ROTATION, THE POSITION OF THE ORIGIN (XLAT1R,XLON1U)
+(   36) !            IS HANDLED BY THIS SUBROUTINE : ONLY RELATIVE LOCATION
+(   37) !            NEED TO BE SPECIFIED
+(   38) 
+(   39) !     IMPLICIT INPUT
+(   40) !     --------------
+(   41) !      COMMON /YEMGGCM/ MUST HAVE BEEN INITIALIZED
+(   42) 
+(   43) !     OUTPUT PARAMETERS
+(   44) !     -----------------
+(   45) !      PGELAM (KPROF): GEOGRAPHICAL LONGITUDE
+(   46) !      PGELAT (KPROF): GEOGRAPHICAL LATITUDE
+(   47) !      PGM    (KRPOF): MAP FACTOR
+(   48) !      PGNORX (KPROF): PROJECTION OF GEOGRAPHICAL NORTH ON X
+(   49) !      PGNORY (KPROF): PROJECTION OF GEOGRAPHICAL NORTH ON Y
+(   50) 
+(   51) !     WRITTEN BY
+(   52) !     ---------- ALAIN JOLY
+(   53) 
+(   54) !      ORIGINAL NORTHERN HEMISPHERE VERSION : 27/2/92
+(   55) !      SOUTHERN HEMISPHERE VERSION : 27/1/93
+(   56) 
+(   57) !     Modified:
+(   58) !     --------
+(   59) 
+(   60) !            98-05-07: P. Le Moigne :vectorization of eggrvs (LLSTOP)
+(   61) 
+(   62) !-------------------------------------------------------------------
+(   63) 
+(   64) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   65) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   66) 
+(   67) USE YEMGGCM  , ONLY : NYMGGI   ,NYMGGR   ,NYMGGWH  ,XLATR    ,&
+(   68)  & XLONR    ,XGGPK    ,XRPKSM   ,XLAT0R   ,XLON0R   ,&
+(   69)  & XLON0U   ,XIPORE   ,XJPORE   ,XGGM0    ,XLON1U   ,&
+(   70)  & XLAT1R   ,HSUD     ,XBETA  
+(   71) 
+(   72) !-------------------------------------------------------------------
+(   73) 
+(   74) IMPLICIT NONE
+(   75) 
+(   76) INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
+(   77) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPI 
+(   78) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA 
+(   79) REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELX 
+(   80) REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELY 
+(   81) INTEGER(KIND=JPIM),INTENT(IN)    :: KBEG 
+(   82) INTEGER(KIND=JPIM),INTENT(IN)    :: KEND 
+(   83) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT 
+(   84) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGELAM(KPROF) 
+(   85) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGELAT(KPROF) 
+(   86) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KPROF) 
+(   87) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KPROF) 
+(   88) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KPROF) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 4
+
+(   89) 
+(   90) !-------------------------------------------------------------------
+(   91) 
+(   92) INTEGER(KIND=JPIM) :: JJ
+(   93) 
+(   94) LOGICAL :: LLGWH, LLSTOP
+(   95) 
+(   96) REAL(KIND=JPRB) :: Z2PIPK, ZCOBETA, ZCOLA, ZCOSA, ZCOSOG, ZDIST,&
+(   97)  & ZFUN, ZGAM, ZGM, ZKDL, ZLAT, ZLATG, ZLON, &
+(   98)  & ZLONG, ZNORX, ZNORXP, ZNORY, ZNORYP, ZPIS2, &
+(   99)  & ZPIS4, ZRPKSM2, ZSECAN, ZSECUR, ZSIBETA, &
+(  100)  & ZSINAG, ZSINOG, ZURA2, ZX, ZY  
+(  101) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  102) 
+(  103) !-------------------------------------------------------------------
+(  104) 
+(  105) #include "abor1.intfb.h"
+(  106) 
+(  107) !-------------------------------------------------------------------
+(  108) IF (LHOOK) CALL DR_HOOK('EGGRVS',0,ZHOOK_HANDLE)
+(  109) !-------------------------------------------------------------------
+(  110) 
+(  111) LLSTOP=.FALSE.
+(  112) IF ( NYMGGI /= 10 ) THEN
+(  113)   WRITE (KULOUT,*) '*** EGGRVS *** UNINITIALISED MODULE '
+(  114)   CALL ABOR1(' EGGRVS: NYMGGI /= 10 ')
+(  115) ENDIF
+(  116) 
+(  117) !     INITIALISE ROTATION ANGLE AND OTHER CONSTANTS
+(  118) !     ---------------------------------------------
+(  119) ZPIS2 = PRPI*0.5_JPRB
+(  120) ZPIS4 = PRPI*0.25_JPRB
+(  121) ZSECUR = 1.E-12_JPRB
+(  122) ZSECAN = 1.E-05_JPRB
+(  123) LLGWH = .FALSE.
+(  124) IF ( NYMGGWH == 1 ) LLGWH = .TRUE.
+(  125) 
+(  126) DO JJ = KBEG, KEND
+(  127)   PGM(JJ) = 1.0_JPRB
+(  128)   PGNORX(JJ) = 0.0_JPRB
+(  129)   PGNORY(JJ) = 1.0_JPRB
+(  130) ENDDO
+(  131) 
+(  132) !     CORRECTION OF POSITION UNDER ROTATION ONLY
+(  133) !     -------------------------------------------
+(  134) 
+(  135) IF ( XGGPK < 0.0_JPRB ) THEN
+(  136)   DO JJ = KBEG, KEND
+(  137)     PGELAM(JJ) = XLON1U + PGELAM(JJ)
+(  138)     IF ( PGELAM(JJ) >= 2.0_JPRB*PRPI )PGELAM(JJ) = PGELAM(JJ) - 2.0_JPRB*PRPI
+(  139)     PGELAT(JJ) = XLAT1R + PGELAT(JJ)
+(  140)   ENDDO
+(  141) ENDIF
+(  142) 
+(  143) !*
+(  144) !--------------------------------------------------------------------
+(  145) !     1.- REVERSE STEREO-LAMBERT PROJECTION
+(  146) !     -------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 5
+
+(  147) IF ( XGGPK > 0.0_JPRB ) THEN
+(  148)   ZRPKSM2 = XRPKSM*XRPKSM
+(  149)   ZURA2 = 1.0_JPRB/( PRA*PRA )
+(  150)   Z2PIPK = 2.0_JPRB*PRPI*XGGPK
+(  151) 
+(  152)   DO JJ = KBEG, KEND
+(  153)     ZX = PGELAM(JJ) - XIPORE*PDELX
+(  154)     ZY = PGELAT(JJ) - XJPORE*PDELY
+(  155)     ZDIST = (ZRPKSM2*( ZX*ZX + ZY*ZY )*ZURA2)**(1.0_JPRB/(2.0_JPRB*XGGPK))
+(  156) 
+(  157)     ZLAT = ZPIS2 - 2.0_JPRB*ATAN( ZDIST )
+(  158) 
+(  159)     IF ( ZDIST  < ZSECUR ) THEN
+(  160)       ! THE POLE IS TOO NEAR TO DEFINE LONGITUDE
+(  161)       ZLON = 0.0_JPRB
+(  162)       IF ( XGGPK /= 1.0_JPRB ) LLSTOP=.TRUE.
+(  163)       ! MAP FACTOR AT POLE FOR STEREOGRAPHIC PROJECTION
+(  164)       ZGM = ( 1.0_JPRB + SIN( XLAT0R ) )/( 1.0_JPRB + SIN( ZLAT ) )
+(  165)     ELSE
+(  166)       IF ( HSUD > 0.0_JPRB ) THEN
+(  167)         ZKDL = ATAN2( ZX,-ZY )
+(  168)       ELSE
+(  169)         ZKDL = ATAN2( ZX,ZY )
+(  170)       ENDIF
+(  171)       ZLON = XLON0R + (ZKDL + XBETA)/XGGPK
+(  172)       IF ( ZLON < 0.0_JPRB ) ZLON = 2.0_JPRB*PRPI + ZLON
+(  173)       ZGM = XGGM0*( COS( ZLAT )**(XGGPK-1.0_JPRB) )*&
+(  174)        & ( ( 1.0_JPRB + SIN( ZLAT ) )**(-XGGPK) )  
+(  175)     ENDIF
+(  176) 
+(  177)     PGELAM(JJ) = ZLON
+(  178)     PGELAT(JJ) = HSUD*ZLAT
+(  179)     PGM(JJ) = ZGM
+(  180)     ! COMPONENTS OF VECTOR ROTATION MATRIX
+(  181)     IF ( LLGWH ) ZLON = ZLON + 2.0_JPRB*PRPI
+(  182)     IF ( XGGPK < 1.0_JPRB .AND. (ZLON-XLON0U)  >  Z2PIPK )&
+(  183)      & ZLON = ZLON - 2.0_JPRB*PRPI  
+(  184)     ZGAM = HSUD*(XGGPK*( ZLON - XLON0U ) - XBETA)
+(  185)     PGNORX(JJ) = -SIN( ZGAM )
+(  186)     PGNORY(JJ) = COS( ZGAM )
+(  187)   ENDDO
+(  188)   IF ( LLSTOP ) THEN
+(  189)     WRITE (KULOUT,*) ' POLE WITHIN LAMBERT DOMAIN '
+(  190)     CALL ABOR1(' EGGRVS: POLE WITHIN LAMBERT DOMAIN ')
+(  191)   ENDIF
+(  192) ENDIF
+(  193) 
+(  194) !*
+(  195) !--------------------------------------------------------------------
+(  196) !     2.- REVERSE MERCATOR PROJECTION
+(  197) !     -------------------------------
+(  198) IF ( XGGPK == 0.0_JPRB ) THEN
+(  199)   ZSIBETA = SIN( XBETA )
+(  200)   ZCOBETA = COS( XBETA )
+(  201)   DO JJ = KBEG, KEND
+(  202)     ZY = PGELAM(JJ)*ZSIBETA + PGELAT(JJ)*ZCOBETA - XJPORE*PDELY
+(  203)     ZDIST = EXP( -ZY/( PRA*COS(XLAT0R) ) )
+(  204)     ZLAT = ZPIS2 - 2.0_JPRB*ATAN( ZDIST )
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 6
+
+(  205) 
+(  206)     ZGM = COS( XLAT0R )/COS( ZLAT )
+(  207) 
+(  208)     ZX = PGELAM(JJ)*ZCOBETA - PGELAT(JJ)*ZSIBETA - XIPORE*PDELX
+(  209)     ZLON = XLON0U + ZX/( PRA*COS( XLAT0R ) )
+(  210)     IF ( ZLON >= 2.0_JPRB*PRPI ) ZLON = ZLON - 2.0_JPRB*PRPI
+(  211) 
+(  212)     PGELAM(JJ) = ZLON
+(  213)     PGELAT(JJ) = ZLAT
+(  214)     PGM(JJ) = ZGM
+(  215)     ! COMPONENTS OF VECTOR ROTATION MATRIX
+(  216)     PGNORX(JJ) = ZSIBETA
+(  217)     PGNORY(JJ) = ZCOBETA
+(  218)   ENDDO
+(  219) ENDIF
+(  220) 
+(  221) !*
+(  222) !--------------------------------------------------------------------
+(  223) !     3.- REVERSE ROTATION
+(  224) !     --------------------
+(  225) IF ( NYMGGR /= 0 ) THEN
+(  226)   DO JJ = KBEG, KEND
+(  227)     ZLON = PGELAM(JJ)
+(  228)     ZLAT = PGELAT(JJ)
+(  229)     ZSINAG = SIN( XLATR )*COS( ZLAT )*COS( ZLON ) +COS( XLATR )*SIN( ZLAT )
+(  230)     ZSINAG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZSINAG))
+(  231)     ZLATG = ASIN( ZSINAG )
+(  232)     IF ( ABS( ZLATG ) >= ZPIS2 ) THEN
+(  233)       ZLONG = 0.0_JPRB
+(  234)     ELSE
+(  235)       ZCOSA = COS( ZLATG )
+(  236)       ZFUN = COS( XLATR )*COS( ZLAT )*COS( ZLON ) -SIN( XLATR )*SIN( ZLAT )
+(  237)       ZCOSOG = ( COS( XLONR )*ZFUN - SIN( XLONR )*COS( ZLAT )*&
+(  238)        & SIN( ZLON ) )/ZCOSA  
+(  239)       ZCOSOG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZCOSOG))
+(  240)       ZSINOG = ( SIN( XLONR )*ZFUN + COS( XLONR )*COS( ZLAT )*&
+(  241)        & SIN( ZLON ) )/ZCOSA  
+(  242)       ZSINOG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZSINOG))
+(  243)       ZLONG = ACOS( ZCOSOG )
+(  244)       IF ( ASIN(ZSINOG) < 0.0_JPRB ) ZLONG = 2.0_JPRB*PRPI - ZLONG
+(  245)     ENDIF
+(  246)     PGELAM(JJ) = ZLONG
+(  247)     PGELAT(JJ) = ZLATG
+(  248)     ! COMPONENTS OF ROTATION MATRIX DUE TO ROTATION
+(  249)     ZCOLA = SQRT( ABS( 1.0_JPRB - (COS( XLATR )*SIN( ZLATG )-&
+(  250)      & SIN( XLATR )*COS( ZLATG )*COS( ZLONG-XLONR ))**2 ) )  
+(  251)     IF ( ZCOLA < ZSECUR ) THEN
+(  252)       WRITE (KULOUT,*) ' *** EGGX QUASI ERROR ***',&
+(  253)        & ' DOMAIN EXTENDS UP TO NEW POLE : IT IS PROBABLY TOO LARGE'  
+(  254)       ZNORY = 1.0_JPRB
+(  255)       ZNORX = 0.0_JPRB
+(  256)     ELSE
+(  257)       ZNORY = ( COS( XLATR )*COS( ZLATG ) + SIN( XLATR )*&
+(  258)        & SIN( ZLATG )*COS( ZLONG-XLONR ) )/ZCOLA  
+(  259)       ZNORX = - SIN( XLATR )*SIN( ZLONG-XLONR )/ZCOLA
+(  260)     ENDIF
+(  261)     ! COMPOSITION OF THIS ROTATION WITH THE ONE RESULTING FROM PROJECTION
+(  262)     ZNORYP = PGNORY(JJ)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 7
+
+(  263)     ZNORXP = PGNORX(JJ)
+(  264)     PGNORY(JJ) = ZNORY*ZNORYP - ZNORX*ZNORXP
+(  265)     PGNORX(JJ) = ZNORX*ZNORYP + ZNORY*ZNORXP
+(  266)   ENDDO
+(  267) ENDIF
+(  268) 
+(  269) !-------------------------------------------------------------------
+(  270) IF (LHOOK) CALL DR_HOOK('EGGRVS',1,ZHOOK_HANDLE)
+(  271) END SUBROUTINE EGGRVS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 8
+
+(    1) # 1 "eggrvs.F90"
+(    1) SUBROUTINE EGGRVS (PRPI, PRA, PDELX, PDELY, KPROF,&
+(    2)  & KBEG, KEND, KULOUT, PGELAM, PGELAT, PGM, PGNORX, PGNORY)  
+(    3) !****
+(    4) !---------------------------------------------------------------------
+(    5) # 6 "eggrvs.F90"
+(    6) !     GEOGRAPHY OF GRID-POINTS, INVERSION FROM GRID TO GEOGRAPHICAL SPHERE
+(    7) !     ARPEGE-ALADIN
+(    8) !     --------------------------------------------------------------------
+(    9) # 10 "eggrvs.F90"
+(   10) !       ---------------------------------------------------
+(   11) !     PURPOSE
+(   12) !     -------
+(   13) !      KNOWING THE PRECISE GEOGRAPHICAL TRANSFORMATION FROM
+(   14) !      ARGUMENTS AND COMMON /YEMGGCM/, COMPUTES THE LOCATION
+(   15) !      ON THEE GEOGRAPHICAL POINTS GIVEN IN INPUT BY THEIR LOCATION
+(   16) !      ON THE ARPEGE-ALADIN GRID
+(   17) # 18 "eggrvs.F90"
+(   18) !      MUST BE USED IN CONNECTION WITH SUBROUTINE EGGX
+(   19) !      EITHER WITHIN IT OR AFTER IT
+(   20) # 21 "eggrvs.F90"
+(   21) !     INPUT PARAMETERS
+(   22) !     ----------------
+(   23) !      PRPI : PI (3.14ETC)
+(   24) !      PRA  : A, RADIUS OF PLANET
+(   25) !      PDELX, PDELY : GRID SIZE IN M IF PROJECTION, OR IN RADIANS
+(   26) !      KPROF : SIZE OF (1D) ARRAYS
+(   27) !      KBEG, KEND : BEGINNING AND END POINTS OF CALCULATIONS
+(   28) !      KULOUT : LOGICAL UNIT OF LISTING
+(   29) !      PGELAM(KPROF) : X LOCATION OF POINTS, DISTANCE UNDER PROJECTION,
+(   30) !                            RELATIVE ROTATED LONGITUDE UNDER ROTATION,
+(   31) !                      DEFINED AS (JLON-KDLUN)*PDELX
+(   32) !      PGELAT(KPROF) : Y LOCATION OF POINTS, DISTANCE UNDER PROJECTION,
+(   33) !                            RELATIVE ROTATED LATITUDE UNDER ROTATION,
+(   34) !                      DEFINED AS (JLAT-KDGUN)*PDELY
+(   35) !            UNDER ROTATION, THE POSITION OF THE ORIGIN (XLAT1R,XLON1U)
+(   36) !            IS HANDLED BY THIS SUBROUTINE : ONLY RELATIVE LOCATION
+(   37) !            NEED TO BE SPECIFIED
+(   38) # 39 "eggrvs.F90"
+(   39) !     IMPLICIT INPUT
+(   40) !     --------------
+(   41) !      COMMON /YEMGGCM/ MUST HAVE BEEN INITIALIZED
+(   42) # 43 "eggrvs.F90"
+(   43) !     OUTPUT PARAMETERS
+(   44) !     -----------------
+(   45) !      PGELAM (KPROF): GEOGRAPHICAL LONGITUDE
+(   46) !      PGELAT (KPROF): GEOGRAPHICAL LATITUDE
+(   47) !      PGM    (KRPOF): MAP FACTOR
+(   48) !      PGNORX (KPROF): PROJECTION OF GEOGRAPHICAL NORTH ON X
+(   49) !      PGNORY (KPROF): PROJECTION OF GEOGRAPHICAL NORTH ON Y
+(   50) # 51 "eggrvs.F90"
+(   51) !     WRITTEN BY
+(   52) !     ---------- ALAIN JOLY
+(   53) # 54 "eggrvs.F90"
+(   54) !      ORIGINAL NORTHERN HEMISPHERE VERSION : 27/2/92
+(   55) !      SOUTHERN HEMISPHERE VERSION : 27/1/93
+(   56) # 57 "eggrvs.F90"
+(   57) !     Modified:
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 9
+
+(   58) !     --------
+(   59) # 60 "eggrvs.F90"
+(   60) !            98-05-07: P. Le Moigne :vectorization of eggrvs (LLSTOP)
+(   61) # 62 "eggrvs.F90"
+(   62) !-------------------------------------------------------------------
+(   63) # 64 "eggrvs.F90"
+(   64) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   65) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   66) # 67 "eggrvs.F90"
+(   67) USE YEMGGCM  , ONLY : NYMGGI   ,NYMGGR   ,NYMGGWH  ,XLATR    ,&
+(   68)  & XLONR    ,XGGPK    ,XRPKSM   ,XLAT0R   ,XLON0R   ,&
+(   69)  & XLON0U   ,XIPORE   ,XJPORE   ,XGGM0    ,XLON1U   ,&
+(   70)  & XLAT1R   ,HSUD     ,XBETA  
+(   71) # 72 "eggrvs.F90"
+(   72) !-------------------------------------------------------------------
+(   73) # 74 "eggrvs.F90"
+(   74) IMPLICIT NONE
+(   75) # 76 "eggrvs.F90"
+(   76) INTEGER(KIND=JPIM),INTENT(IN)    :: KPROF 
+(   77) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRPI 
+(   78) REAL(KIND=JPRB)   ,INTENT(IN)    :: PRA 
+(   79) REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELX 
+(   80) REAL(KIND=JPRB)   ,INTENT(IN)    :: PDELY 
+(   81) INTEGER(KIND=JPIM),INTENT(IN)    :: KBEG 
+(   82) INTEGER(KIND=JPIM),INTENT(IN)    :: KEND 
+(   83) INTEGER(KIND=JPIM),INTENT(IN)    :: KULOUT 
+(   84) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGELAM(KPROF) 
+(   85) REAL(KIND=JPRB)   ,INTENT(INOUT) :: PGELAT(KPROF) 
+(   86) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGM(KPROF) 
+(   87) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORX(KPROF) 
+(   88) REAL(KIND=JPRB)   ,INTENT(OUT)   :: PGNORY(KPROF) 
+(   89) # 90 "eggrvs.F90"
+(   90) !-------------------------------------------------------------------
+(   91) # 92 "eggrvs.F90"
+(   92) INTEGER(KIND=JPIM) :: JJ
+(   93) # 94 "eggrvs.F90"
+(   94) LOGICAL :: LLGWH, LLSTOP
+(   95) # 96 "eggrvs.F90"
+(   96) REAL(KIND=JPRB) :: Z2PIPK, ZCOBETA, ZCOLA, ZCOSA, ZCOSOG, ZDIST,&
+(   97)  & ZFUN, ZGAM, ZGM, ZKDL, ZLAT, ZLATG, ZLON, &
+(   98)  & ZLONG, ZNORX, ZNORXP, ZNORY, ZNORYP, ZPIS2, &
+(   99)  & ZPIS4, ZRPKSM2, ZSECAN, ZSECUR, ZSIBETA, &
+(  100)  & ZSINAG, ZSINOG, ZURA2, ZX, ZY  
+(  101) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(  102) # 103 "eggrvs.F90"
+(  103) !-------------------------------------------------------------------
+(  104) # 105 "eggrvs.F90"
+(  105) # 1 ".D[61]/abor1.intfb.h"
+(    1) INTERFACE
+(    2) # 3 ".D[61]/abor1.intfb.h"
+(    3) SUBROUTINE ABOR1(CDTEXT)
+(    4) CHARACTER(LEN=*), INTENT(IN) :: CDTEXT
+(    5) END SUBROUTINE ABOR1
+(    6) # 7 ".D[61]/abor1.intfb.h"
+(    7) SUBROUTINE ABOR1FL(CDFILE, KLINENUM, CDTEXT)
+(    8) USE PARKIND1  ,ONLY : JPIM
+(    9) CHARACTER(LEN=*), INTENT(IN) :: CDFILE,CDTEXT
+(   10) INTEGER(KIND=JPIM), INTENT(IN) :: KLINENUM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 10
+
+(   11) END SUBROUTINE ABOR1FL
+(   12) # 13 ".D[61]/abor1.intfb.h"
+(   13) SUBROUTINE ABOR1_EXCEPTION_HANDLER()
+(   14) END SUBROUTINE ABOR1_EXCEPTION_HANDLER
+(   15) # 16 ".D[61]/abor1.intfb.h"
+(   16) END INTERFACE
+(   17) # 106 "eggrvs.F90"
+(  106) # 107 "eggrvs.F90"
+(  107) !-------------------------------------------------------------------
+(  108) IF (LHOOK) CALL DR_HOOK('EGGRVS',0,ZHOOK_HANDLE)
+(  109) !-------------------------------------------------------------------
+(  110) # 111 "eggrvs.F90"
+(  111) LLSTOP=.FALSE.
+(  112) IF ( NYMGGI /= 10 ) THEN
+(  113)   WRITE (KULOUT,*) '*** EGGRVS *** UNINITIALISED MODULE '
+(  114)   CALL ABOR1(' EGGRVS: NYMGGI /= 10 ')
+(  115) ENDIF
+(  116) # 117 "eggrvs.F90"
+(  117) !     INITIALISE ROTATION ANGLE AND OTHER CONSTANTS
+(  118) !     ---------------------------------------------
+(  119) ZPIS2 = PRPI*0.5_JPRB
+(  120) ZPIS4 = PRPI*0.25_JPRB
+(  121) ZSECUR = 1.E-12_JPRB
+(  122) ZSECAN = 1.E-05_JPRB
+(  123) LLGWH = .FALSE.
+(  124) IF ( NYMGGWH == 1 ) LLGWH = .TRUE.
+(  125) # 126 "eggrvs.F90"
+(  126) DO JJ = KBEG, KEND
+(  127)   PGM(JJ) = 1.0_JPRB
+(  128)   PGNORX(JJ) = 0.0_JPRB
+(  129)   PGNORY(JJ) = 1.0_JPRB
+(  130) ENDDO
+(  131) # 132 "eggrvs.F90"
+(  132) !     CORRECTION OF POSITION UNDER ROTATION ONLY
+(  133) !     -------------------------------------------
+(  134) # 135 "eggrvs.F90"
+(  135) IF ( XGGPK < 0.0_JPRB ) THEN
+(  136)   DO JJ = KBEG, KEND
+(  137)     PGELAM(JJ) = XLON1U + PGELAM(JJ)
+(  138)     IF ( PGELAM(JJ) >= 2.0_JPRB*PRPI )PGELAM(JJ) = PGELAM(JJ) - 2.0_JPRB*PRPI
+(  139)     PGELAT(JJ) = XLAT1R + PGELAT(JJ)
+(  140)   ENDDO
+(  141) ENDIF
+(  142) # 143 "eggrvs.F90"
+(  143) !*
+(  144) !--------------------------------------------------------------------
+(  145) !     1.- REVERSE STEREO-LAMBERT PROJECTION
+(  146) !     -------------------------------------
+(  147) IF ( XGGPK > 0.0_JPRB ) THEN
+(  148)   ZRPKSM2 = XRPKSM*XRPKSM
+(  149)   ZURA2 = 1.0_JPRB/( PRA*PRA )
+(  150)   Z2PIPK = 2.0_JPRB*PRPI*XGGPK
+(  151) # 152 "eggrvs.F90"
+(  152)   DO JJ = KBEG, KEND
+(  153)     ZX = PGELAM(JJ) - XIPORE*PDELX
+(  154)     ZY = PGELAT(JJ) - XJPORE*PDELY
+(  155)     ZDIST = (ZRPKSM2*( ZX*ZX + ZY*ZY )*ZURA2)**(1.0_JPRB/(2.0_JPRB*XGGPK))
+(  156) # 157 "eggrvs.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 11
+
+(  157)     ZLAT = ZPIS2 - 2.0_JPRB*ATAN( ZDIST )
+(  158) # 159 "eggrvs.F90"
+(  159)     IF ( ZDIST  < ZSECUR ) THEN
+(  160)       ! THE POLE IS TOO NEAR TO DEFINE LONGITUDE
+(  161)       ZLON = 0.0_JPRB
+(  162)       IF ( XGGPK /= 1.0_JPRB ) LLSTOP=.TRUE.
+(  163)       ! MAP FACTOR AT POLE FOR STEREOGRAPHIC PROJECTION
+(  164)       ZGM = ( 1.0_JPRB + SIN( XLAT0R ) )/( 1.0_JPRB + SIN( ZLAT ) )
+(  165)     ELSE
+(  166)       IF ( HSUD > 0.0_JPRB ) THEN
+(  167)         ZKDL = ATAN2( ZX,-ZY )
+(  168)       ELSE
+(  169)         ZKDL = ATAN2( ZX,ZY )
+(  170)       ENDIF
+(  171)       ZLON = XLON0R + (ZKDL + XBETA)/XGGPK
+(  172)       IF ( ZLON < 0.0_JPRB ) ZLON = 2.0_JPRB*PRPI + ZLON
+(  173)       ZGM = XGGM0*( COS( ZLAT )**(XGGPK-1.0_JPRB) )*&
+(  174)        & ( ( 1.0_JPRB + SIN( ZLAT ) )**(-XGGPK) )  
+(  175)     ENDIF
+(  176) # 177 "eggrvs.F90"
+(  177)     PGELAM(JJ) = ZLON
+(  178)     PGELAT(JJ) = HSUD*ZLAT
+(  179)     PGM(JJ) = ZGM
+(  180)     ! COMPONENTS OF VECTOR ROTATION MATRIX
+(  181)     IF ( LLGWH ) ZLON = ZLON + 2.0_JPRB*PRPI
+(  182)     IF ( XGGPK < 1.0_JPRB .AND. (ZLON-XLON0U)  >  Z2PIPK )&
+(  183)      & ZLON = ZLON - 2.0_JPRB*PRPI  
+(  184)     ZGAM = HSUD*(XGGPK*( ZLON - XLON0U ) - XBETA)
+(  185)     PGNORX(JJ) = -SIN( ZGAM )
+(  186)     PGNORY(JJ) = COS( ZGAM )
+(  187)   ENDDO
+(  188)   IF ( LLSTOP ) THEN
+(  189)     WRITE (KULOUT,*) ' POLE WITHIN LAMBERT DOMAIN '
+(  190)     CALL ABOR1(' EGGRVS: POLE WITHIN LAMBERT DOMAIN ')
+(  191)   ENDIF
+(  192) ENDIF
+(  193) # 194 "eggrvs.F90"
+(  194) !*
+(  195) !--------------------------------------------------------------------
+(  196) !     2.- REVERSE MERCATOR PROJECTION
+(  197) !     -------------------------------
+(  198) IF ( XGGPK == 0.0_JPRB ) THEN
+(  199)   ZSIBETA = SIN( XBETA )
+(  200)   ZCOBETA = COS( XBETA )
+(  201)   DO JJ = KBEG, KEND
+(  202)     ZY = PGELAM(JJ)*ZSIBETA + PGELAT(JJ)*ZCOBETA - XJPORE*PDELY
+(  203)     ZDIST = EXP( -ZY/( PRA*COS(XLAT0R) ) )
+(  204)     ZLAT = ZPIS2 - 2.0_JPRB*ATAN( ZDIST )
+(  205) # 206 "eggrvs.F90"
+(  206)     ZGM = COS( XLAT0R )/COS( ZLAT )
+(  207) # 208 "eggrvs.F90"
+(  208)     ZX = PGELAM(JJ)*ZCOBETA - PGELAT(JJ)*ZSIBETA - XIPORE*PDELX
+(  209)     ZLON = XLON0U + ZX/( PRA*COS( XLAT0R ) )
+(  210)     IF ( ZLON >= 2.0_JPRB*PRPI ) ZLON = ZLON - 2.0_JPRB*PRPI
+(  211) # 212 "eggrvs.F90"
+(  212)     PGELAM(JJ) = ZLON
+(  213)     PGELAT(JJ) = ZLAT
+(  214)     PGM(JJ) = ZGM
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:38:15      page 12
+
+(  215)     ! COMPONENTS OF VECTOR ROTATION MATRIX
+(  216)     PGNORX(JJ) = ZSIBETA
+(  217)     PGNORY(JJ) = ZCOBETA
+(  218)   ENDDO
+(  219) ENDIF
+(  220) # 221 "eggrvs.F90"
+(  221) !*
+(  222) !--------------------------------------------------------------------
+(  223) !     3.- REVERSE ROTATION
+(  224) !     --------------------
+(  225) IF ( NYMGGR /= 0 ) THEN
+(  226)   DO JJ = KBEG, KEND
+(  227)     ZLON = PGELAM(JJ)
+(  228)     ZLAT = PGELAT(JJ)
+(  229)     ZSINAG = SIN( XLATR )*COS( ZLAT )*COS( ZLON ) +COS( XLATR )*SIN( ZLAT )
+(  230)     ZSINAG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZSINAG))
+(  231)     ZLATG = ASIN( ZSINAG )
+(  232)     IF ( ABS( ZLATG ) >= ZPIS2 ) THEN
+(  233)       ZLONG = 0.0_JPRB
+(  234)     ELSE
+(  235)       ZCOSA = COS( ZLATG )
+(  236)       ZFUN = COS( XLATR )*COS( ZLAT )*COS( ZLON ) -SIN( XLATR )*SIN( ZLAT )
+(  237)       ZCOSOG = ( COS( XLONR )*ZFUN - SIN( XLONR )*COS( ZLAT )*&
+(  238)        & SIN( ZLON ) )/ZCOSA  
+(  239)       ZCOSOG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZCOSOG))
+(  240)       ZSINOG = ( SIN( XLONR )*ZFUN + COS( XLONR )*COS( ZLAT )*&
+(  241)        & SIN( ZLON ) )/ZCOSA  
+(  242)       ZSINOG = MIN(1.0_JPRB,MAX(-1.0_JPRB,ZSINOG))
+(  243)       ZLONG = ACOS( ZCOSOG )
+(  244)       IF ( ASIN(ZSINOG) < 0.0_JPRB ) ZLONG = 2.0_JPRB*PRPI - ZLONG
+(  245)     ENDIF
+(  246)     PGELAM(JJ) = ZLONG
+(  247)     PGELAT(JJ) = ZLATG
+(  248)     ! COMPONENTS OF ROTATION MATRIX DUE TO ROTATION
+(  249)     ZCOLA = SQRT( ABS( 1.0_JPRB - (COS( XLATR )*SIN( ZLATG )-&
+(  250)      & SIN( XLATR )*COS( ZLATG )*COS( ZLONG-XLONR ))**2 ) )  
+(  251)     IF ( ZCOLA < ZSECUR ) THEN
+(  252)       WRITE (KULOUT,*) ' *** EGGX QUASI ERROR ***',&
+(  253)        & ' DOMAIN EXTENDS UP TO NEW POLE : IT IS PROBABLY TOO LARGE'  
+(  254)       ZNORY = 1.0_JPRB
+(  255)       ZNORX = 0.0_JPRB
+(  256)     ELSE
+(  257)       ZNORY = ( COS( XLATR )*COS( ZLATG ) + SIN( XLATR )*&
+(  258)        & SIN( ZLATG )*COS( ZLONG-XLONR ) )/ZCOLA  
+(  259)       ZNORX = - SIN( XLATR )*SIN( ZLONG-XLONR )/ZCOLA
+(  260)     ENDIF
+(  261)     ! COMPOSITION OF THIS ROTATION WITH THE ONE RESULTING FROM PROJECTION
+(  262)     ZNORYP = PGNORY(JJ)
+(  263)     ZNORXP = PGNORX(JJ)
+(  264)     PGNORY(JJ) = ZNORY*ZNORYP - ZNORX*ZNORXP
+(  265)     PGNORX(JJ) = ZNORX*ZNORYP + ZNORY*ZNORXP
+(  266)   ENDDO
+(  267) ENDIF
+(  268) # 269 "eggrvs.F90"
+(  269) !-------------------------------------------------------------------
+(  270) IF (LHOOK) CALL DR_HOOK('EGGRVS',1,ZHOOK_HANDLE)
+(  271) END SUBROUTINE EGGRVS

@@ -1,0 +1,289 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:08      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:08      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: sucst_ifsaux.F90
+
+(    1) SUBROUTINE SUCST_IFSAUX
+(    2) 
+(    3) !**** *SUCST_IFSAUX * - Routine to initialize the constants of the model.
+(    4) 
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !           Initialize and print the common YOMCST_IFSAUX
+(    8) !           Should be consistent with the content of arp/setup/sucst.F90
+(    9) !           Do not use currently with LDYNCORE=T, RPLRADI /=1
+(   10) 
+(   11) !**   Interface.
+(   12) !     ----------
+(   13) !        *CALL* *SUCST_IFSAUX (..)
+(   14) 
+(   15) !        Explicit arguments :
+(   16) !        --------------------
+(   17) !        none
+(   18) 
+(   19) !        Implicit arguments :
+(   20) !        --------------------
+(   21) !        COMMON YOMCST_IFSAUX
+(   22) 
+(   23) !     Method.
+(   24) !     -------
+(   25) !        See documentation
+(   26) 
+(   27) !     Externals.
+(   28) !     ----------
+(   29) 
+(   30) !     Reference.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:08      page 3
+
+(   31) !     ----------
+(   32) !        ECMWF Research Department documentation of the IFS
+(   33) 
+(   34) !     Author.
+(   35) !     -------
+(   36) !        Mats Hamrud and Philippe Courtier  *ECMWF*
+(   37) 
+(   38) !     Modifications.
+(   39) !     --------------
+(   40) !        Original : 87-10-15
+(   41) !        K. Yessad (Jun 2009): IFSAUX version
+(   42) !     ------------------------------------------------------------------
+(   43) 
+(   44) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   45) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   46) 
+(   47) USE YOMCST_IFSAUX, ONLY : XRPI     ,XRA
+(   48) 
+(   49) !      -----------------------------------------------------------------
+(   50) 
+(   51) IMPLICIT NONE
+(   52) 
+(   53) REAL(KIND=JPRB) :: ZXRPLRADI
+(   54) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   55) 
+(   56) !      -----------------------------------------------------------------
+(   57) IF (LHOOK) CALL DR_HOOK('SUCST_IFSAUX',0,ZHOOK_HANDLE)
+(   58) !      -----------------------------------------------------------------
+(   59) 
+(   60) !*       1.    DEFINE FUNDAMENTAL CONSTANTS.
+(   61) !              -----------------------------
+(   62) 
+(   63) XRPI=2.0_JPRB*ASIN(1.0_JPRB)
+(   64) 
+(   65) !     ------------------------------------------------------------------
+(   66) 
+(   67) !*       2.    DEFINE GEOIDE.
+(   68) !              --------------
+(   69) 
+(   70) ZXRPLRADI=1.0_JPRB
+(   71) XRA=6371229._JPRB*ZXRPLRADI
+(   72) 
+(   73) !     ------------------------------------------------------------------
+(   74) 
+(   75) IF (LHOOK) CALL DR_HOOK('SUCST_IFSAUX',1,ZHOOK_HANDLE)
+(   76) END SUBROUTINE SUCST_IFSAUX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:08      page 4
+
+(    1) # 1 "sucst_ifsaux.F90"
+(    1) SUBROUTINE SUCST_IFSAUX
+(    2) # 3 "sucst_ifsaux.F90"
+(    3) !**** *SUCST_IFSAUX * - Routine to initialize the constants of the model.
+(    4) # 5 "sucst_ifsaux.F90"
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !           Initialize and print the common YOMCST_IFSAUX
+(    8) !           Should be consistent with the content of arp/setup/sucst.F90
+(    9) !           Do not use currently with LDYNCORE=T, RPLRADI /=1
+(   10) # 11 "sucst_ifsaux.F90"
+(   11) !**   Interface.
+(   12) !     ----------
+(   13) !        *CALL* *SUCST_IFSAUX (..)
+(   14) # 15 "sucst_ifsaux.F90"
+(   15) !        Explicit arguments :
+(   16) !        --------------------
+(   17) !        none
+(   18) # 19 "sucst_ifsaux.F90"
+(   19) !        Implicit arguments :
+(   20) !        --------------------
+(   21) !        COMMON YOMCST_IFSAUX
+(   22) # 23 "sucst_ifsaux.F90"
+(   23) !     Method.
+(   24) !     -------
+(   25) !        See documentation
+(   26) # 27 "sucst_ifsaux.F90"
+(   27) !     Externals.
+(   28) !     ----------
+(   29) # 30 "sucst_ifsaux.F90"
+(   30) !     Reference.
+(   31) !     ----------
+(   32) !        ECMWF Research Department documentation of the IFS
+(   33) # 34 "sucst_ifsaux.F90"
+(   34) !     Author.
+(   35) !     -------
+(   36) !        Mats Hamrud and Philippe Courtier  *ECMWF*
+(   37) # 38 "sucst_ifsaux.F90"
+(   38) !     Modifications.
+(   39) !     --------------
+(   40) !        Original : 87-10-15
+(   41) !        K. Yessad (Jun 2009): IFSAUX version
+(   42) !     ------------------------------------------------------------------
+(   43) # 44 "sucst_ifsaux.F90"
+(   44) USE PARKIND1  ,ONLY : JPIM     ,JPRB
+(   45) USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+(   46) # 47 "sucst_ifsaux.F90"
+(   47) USE YOMCST_IFSAUX, ONLY : XRPI     ,XRA
+(   48) # 49 "sucst_ifsaux.F90"
+(   49) !      -----------------------------------------------------------------
+(   50) # 51 "sucst_ifsaux.F90"
+(   51) IMPLICIT NONE
+(   52) # 53 "sucst_ifsaux.F90"
+(   53) REAL(KIND=JPRB) :: ZXRPLRADI
+(   54) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   55) # 56 "sucst_ifsaux.F90"
+(   56) !      -----------------------------------------------------------------
+(   57) IF (LHOOK) CALL DR_HOOK('SUCST_IFSAUX',0,ZHOOK_HANDLE)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:37:08      page 5
+
+(   58) !      -----------------------------------------------------------------
+(   59) # 60 "sucst_ifsaux.F90"
+(   60) !*       1.    DEFINE FUNDAMENTAL CONSTANTS.
+(   61) !              -----------------------------
+(   62) # 63 "sucst_ifsaux.F90"
+(   63) XRPI=2.0_JPRB*ASIN(1.0_JPRB)
+(   64) # 65 "sucst_ifsaux.F90"
+(   65) !     ------------------------------------------------------------------
+(   66) # 67 "sucst_ifsaux.F90"
+(   67) !*       2.    DEFINE GEOIDE.
+(   68) !              --------------
+(   69) # 70 "sucst_ifsaux.F90"
+(   70) ZXRPLRADI=1.0_JPRB
+(   71) XRA=6371229._JPRB*ZXRPLRADI
+(   72) # 73 "sucst_ifsaux.F90"
+(   73) !     ------------------------------------------------------------------
+(   74) # 75 "sucst_ifsaux.F90"
+(   75) IF (LHOOK) CALL DR_HOOK('SUCST_IFSAUX',1,ZHOOK_HANDLE)
+(   76) END SUBROUTINE SUCST_IFSAUX

@@ -1,0 +1,950 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fanfar.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FANFAR_MT64                                            &
+(    4) &                     (FA,  KREP, KRANG, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      CDNOMA, KB1PAR, KLPRFU, KLSUFU, KLNOMU )
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   13) !     fabrication d'un nom article devant contenir un champ horizontal.
+(   14) !              (Nom a Fabriquer pour un ARticle)
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !                CDNOMA (Sortie) ==> Nom d'article;
+(   22) !    ( Tableau ) KB1PAR (Sortie) ==> 3 elements du "Bloc 1" des
+(   23) !                                    interfaces GRIB concernes par la
+(   24) !                                    coordonnee et le niveau verticaux;
+(   25) !                KLPRFU (Sortie) ==> Longueur utile du prefixe;
+(   26) !                KLSUFU (Sortie) ==> Longueur utile du suffixe;
+(   27) !                KLNOMU (Sortie) ==> Longueur utile du nom d'article.
+(   28) !*
+(   29) !       En mode multi-taches, il doit y avoir verrouillage du fichier
+(   30) !     concerne avant l'appel au sous-programme.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 3
+
+(   31) !
+(   32) !
+(   33) !
+(   34) TYPE(FA_COM) :: FA
+(   35) INTEGER (KIND=JPLIKB) KREP, KRANG, KNIVAU
+(   36) INTEGER (KIND=JPLIKB) KLPRFU, KLSUFU, KLNOMU
+(   37) INTEGER (KIND=JPLIKB) KB1PAR (3)
+(   38) !
+(   39) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*), CLAUXI*(FA%JPXNOM)
+(   40) !
+(   41) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, ILPRFU
+(   42) INTEGER (KIND=JPLIKB) ILSUFU, J, INCHIF, INIMES
+(   43) INTEGER (KIND=JPLIKB) INUMER, ILACTI, ILNOMA, ILAUXI
+(   44) INTEGER (KIND=JPLIKB) ITYNIV, INIVAU
+(   45) !
+(   46) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   47) CHARACTER(LEN=FA%JPXNOM) CLNOMA
+(   48) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   49) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   50) LOGICAL                  LLFATA
+(   51) 
+(   52) !**
+(   53) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, INITIALISATIONS.
+(   54) !-----------------------------------------------------------------------
+(   55) !
+(   56) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   57) IF (LHOOK) CALL DR_HOOK('FANFAR_MT',0,ZHOOK_HANDLE)
+(   58) CLACTI=''
+(   59) ILPREF=INT (LEN (CDPREF), JPLIKB)
+(   60) ILSUFF=INT (LEN (CDSUFF), JPLIKB)
+(   61) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   62) ILPRFU=MAX (0_JPLIKB , ILPREF)
+(   63) ILSUFU=MAX (0_JPLIKB , ILSUFF)
+(   64) KLNOMU=MAX (0_JPLIKB , ILCDNO)
+(   65) !
+(   66) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   67)   KREP=-66
+(   68)   GOTO 1001
+(   69) ENDIF
+(   70) !
+(   71) IF (ILCDNO.LE.0.OR.ILCDNO.GT.FA%NCPCAD) THEN
+(   72)   KREP=-66
+(   73)   GOTO 1001
+(   74) ELSEIF (MIN (ILPREF,ILSUFF).LE.0) THEN
+(   75)   KREP=-65
+(   76)   GOTO 1001
+(   77) ELSEIF (CDPREF.EQ.' '.OR.CDSUFF.EQ.' ') THEN
+(   78)   KREP=-86
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) !
+(   82) !       Decompte du nombre de caracteres utiles dans prefixe et suffixe.
+(   83) !
+(   84) DO J=ILPREF,1,-1
+(   85) !
+(   86) IF (CDPREF(J:J).NE.' ') THEN
+(   87)   ILPRFU=J
+(   88)   GOTO 104
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 4
+
+(   89) ENDIF
+(   90) !
+(   91) ENDDO
+(   92) !
+(   93) KREP=-66
+(   94) GOTO 1001
+(   95) !
+(   96) 104 CONTINUE
+(   97) !
+(   98) IF (ILPRFU.GT.FA%JPXPRF) THEN
+(   99)   KREP=-87
+(  100)   GOTO 1001
+(  101) ENDIF
+(  102) !
+(  103) DO J=ILSUFF,1,-1
+(  104) !
+(  105) IF (CDSUFF(J:J).NE.' ') THEN
+(  106)   ILSUFU=J
+(  107)   GOTO 106
+(  108) ENDIF
+(  109) !
+(  110) ENDDO
+(  111) !
+(  112) KREP=-66
+(  113) GOTO 1001
+(  114) !
+(  115) 106 CONTINUE
+(  116) !**
+(  117) !     2.  -  DIFFERENTS CAS, SELON LE PREFIXE.
+(  118) !-----------------------------------------------------------------------
+(  119) !
+(  120) DO J=1,FA%JPTNIV
+(  121) !
+(  122) IF (CDPREF.EQ.FA%CTNPRF(J)) THEN
+(  123)   ITYNIV=J
+(  124)   GOTO 202
+(  125) ENDIF
+(  126) !
+(  127) ENDDO
+(  128) !
+(  129) ITYNIV=0
+(  130) !
+(  131) 202 CONTINUE
+(  132) !
+(  133) INCHIF=FA%NIVDSC(0,ITYNIV)
+(  134) !
+(  135) IF (INCHIF.EQ.0) THEN
+(  136) !
+(  137)   INIVAU=0
+(  138) !
+(  139) ELSEIF (KNIVAU.LT.FA%NIVDSC(1,ITYNIV).OR.   &
+(  140) &       KNIVAU.GT.FA%NIVDSC(2,ITYNIV)) THEN
+(  141) !
+(  142)   KREP=-64
+(  143)   GOTO 1001
+(  144) !
+(  145) ELSEIF (CDPREF.EQ.'S'.AND.KNIVAU.GT.      &
+(  146) &        FA%CADRE(FA%FICHIER(KRANG)%NUCADR)%NNIVER) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 5
+
+(  147) !
+(  148)   KREP=-64
+(  149)   GOTO 1001
+(  150) !
+(  151) ELSEIF (CDPREF.EQ.'L'.AND.KNIVAU.GT.      &
+(  152) &        FA%CADRE(FA%FICHIER(KRANG)%NUCADR)%NNIVER) THEN
+(  153) !
+(  154)   KREP=-64
+(  155)   GOTO 1001
+(  156) !
+(  157) ELSE
+(  158) !
+(  159)   INIVAU=KNIVAU
+(  160) !
+(  161) ENDIF
+(  162) !
+(  163) KB1PAR(1)=FA%NIVDSC(3,ITYNIV)
+(  164) KB1PAR(2)=FA%NIVDSC(4,ITYNIV)
+(  165) KB1PAR(3)=INIVAU
+(  166) !
+(  167) ILSUFU=MIN (ILCDNO-ILPRFU-INCHIF,ILSUFU)
+(  168) KLNOMU=ILPRFU+INCHIF+ILSUFU
+(  169) !
+(  170) IF (INCHIF.NE.0) THEN
+(  171)   WRITE (UNIT=CLNOMA,FMT='(I8.8)') KNIVAU
+(  172)   CDNOMA=CDPREF(1:ILPRFU)//CLNOMA(9-INCHIF:8)//CDSUFF(1:ILSUFU)
+(  173) ELSE
+(  174)   CDNOMA=CDPREF(1:ILPRFU)//CDSUFF(1:ILSUFU)
+(  175) ENDIF
+(  176) !
+(  177) IF (CDNOMA.EQ.FA%CPCACH.OR.CDNOMA.EQ.FA%CPCADI.OR.CDNOMA.EQ. &
+(  178) &    FA%CPCAFS.OR.                                           &
+(  179) &    CDNOMA.EQ.FA%CPCARP.OR.CDNOMA.EQ.FA%CPDATE.OR.          &
+(  180) &    CDNOMA.EQ.FA%CPDATX.OR.                                 &
+(  181) &    CDNOMA.EQ.FA%FICHIER(KRANG)%CIDENT) THEN
+(  182)   KREP=-111
+(  183)   GOTO 1001
+(  184) ENDIF
+(  185) !
+(  186) KREP=0
+(  187) !**
+(  188) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(  189) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  190) !-----------------------------------------------------------------------
+(  191) !
+(  192) 1001 CONTINUE
+(  193) KLPRFU=ILPRFU
+(  194) KLSUFU=ILSUFU
+(  195) LLFATA=LLMOER (KREP,KRANG)
+(  196) !
+(  197) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  198)   INIMES=2
+(  199)   CLNSPR='FANFAR'
+(  200)   INUMER=JPNIIL
+(  201) !
+(  202)   IF (ILPRFU.GE.1) THEN
+(  203)     ILACTI=MIN (ILPRFU,FA%NCPCAD)
+(  204)     CLACTI(1:ILACTI)=CDPREF(1:ILACTI)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 6
+
+(  205)   ELSE
+(  206)     ILACTI=8
+(  207)     CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  208)   ENDIF
+(  209) !
+(  210)   IF (ILSUFU.GE.1) THEN
+(  211)     ILNOMA=MIN (ILSUFU,FA%NCPCAD)
+(  212)     CLNOMA(1:ILNOMA)=CDSUFF(1:ILNOMA)
+(  213)   ELSE
+(  214)     ILNOMA=8
+(  215)     CLNOMA(1:ILNOMA)=FA%CHAINC(:ILNOMA)
+(  216)   ENDIF
+(  217) !
+(  218)   IF (KLNOMU.GE.1) THEN
+(  219)     ILAUXI=MIN (KLNOMU,INT (LEN(CLAUXI), JPLIKB))
+(  220)     CLAUXI(1:ILAUXI)=CDNOMA(1:ILAUXI)
+(  221)   ELSE
+(  222)     ILAUXI=8
+(  223)     CLAUXI(1:ILAUXI)=FA%CHAINC(:ILAUXI)
+(  224)   ENDIF
+(  225) !
+(  226)   WRITE (UNIT=CLMESS,                                           &
+(  227) &         FMT='(''ARGUMENTS='',2(I4,'', ''),'''''''',A,         &
+(  228) &         '''''','',I6,'', '''''',A,'''''',  '''''',A,'''''''', &
+(  229) &         2('','',I4),'','',I6,3('','',I3))')                   &
+(  230) &     KREP,KRANG,CLACTI(1:ILACTI),KNIVAU,CLNOMA(1:ILNOMA),      &
+(  231) &     CLAUXI(1:ILAUXI),KB1PAR,KLPRFU,KLSUFU,KLNOMU
+(  232)   CALL FAIPAR_MT64                                        &
+(  233) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  234) &                  CLNSPR, CLACTI(1:ILACTI),.FALSE.)
+(  235) ENDIF
+(  236) !
+(  237) IF (LHOOK) CALL DR_HOOK('FANFAR_MT',1,ZHOOK_HANDLE)
+(  238) 
+(  239) CONTAINS
+(  240) 
+(  241) #include "facom2.llmoer.h"
+(  242) 
+(  243) END SUBROUTINE FANFAR_MT64
+(  244) 
+(  245) 
+(  246) 
+(  247) 
+(  248) 
+(  249) 
+(  250) 
+(  251) 
+(  252) ! Oct-2012 P. Marguinaud 64b LFI
+(  253) SUBROUTINE FANFAR64                                       &
+(  254) &           (KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  255) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  256) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  257) &                  FA_COM_DEFAULT_INIT,  &
+(  258) &                  NEW_FA_DEFAULT
+(  259) USE LFI_PRECISION
+(  260) IMPLICIT NONE
+(  261) ! Arguments
+(  262) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 7
+
+(  263) INTEGER (KIND=JPLIKB)  KRANG                                  ! IN   
+(  264) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  265) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  266) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  267) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  268) INTEGER (KIND=JPLIKB)  KB1PAR     (3)                         !   OUT
+(  269) INTEGER (KIND=JPLIKB)  KLPRFU                                 !   OUT
+(  270) INTEGER (KIND=JPLIKB)  KLSUFU                                 !   OUT
+(  271) INTEGER (KIND=JPLIKB)  KLNOMU                                 !   OUT
+(  272) 
+(  273) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  274) 
+(  275) CALL FANFAR_MT64                                              &
+(  276) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  277) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  278) 
+(  279) END SUBROUTINE FANFAR64
+(  280) 
+(  281) SUBROUTINE FANFAR                                         &
+(  282) &           (KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  283) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  284) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  285) &                  FA_COM_DEFAULT_INIT,  &
+(  286) &                  NEW_FA_DEFAULT
+(  287) USE LFI_PRECISION
+(  288) IMPLICIT NONE
+(  289) ! Arguments
+(  290) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  291) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  292) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  293) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  294) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  295) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  296) INTEGER (KIND=JPLIKM)  KB1PAR     (3)                         !   OUT
+(  297) INTEGER (KIND=JPLIKM)  KLPRFU                                 !   OUT
+(  298) INTEGER (KIND=JPLIKM)  KLSUFU                                 !   OUT
+(  299) INTEGER (KIND=JPLIKM)  KLNOMU                                 !   OUT
+(  300) 
+(  301) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  302) 
+(  303) CALL FANFAR_MT                                                &
+(  304) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  305) &            KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  306) 
+(  307) END SUBROUTINE FANFAR
+(  308) 
+(  309) SUBROUTINE FANFAR_MT                                          &
+(  310) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  311) &            KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  312) USE FA_MOD, ONLY : FA_COM
+(  313) USE LFI_PRECISION
+(  314) IMPLICIT NONE
+(  315) ! Arguments
+(  316) TYPE (FA_COM)          FA                                     ! INOUT
+(  317) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  318) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  319) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  320) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 8
+
+(  321) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  322) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  323) INTEGER (KIND=JPLIKM)  KB1PAR     (3)                         !   OUT
+(  324) INTEGER (KIND=JPLIKM)  KLPRFU                                 !   OUT
+(  325) INTEGER (KIND=JPLIKM)  KLSUFU                                 !   OUT
+(  326) INTEGER (KIND=JPLIKM)  KLNOMU                                 !   OUT
+(  327) ! Local integers
+(  328) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  329) INTEGER (KIND=JPLIKB)  IRANG                                  ! IN   
+(  330) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  331) INTEGER (KIND=JPLIKB)  IB1PAR     (3)                         !   OUT
+(  332) INTEGER (KIND=JPLIKB)  ILPRFU                                 !   OUT
+(  333) INTEGER (KIND=JPLIKB)  ILSUFU                                 !   OUT
+(  334) INTEGER (KIND=JPLIKB)  ILNOMU                                 !   OUT
+(  335) ! Convert arguments
+(  336) 
+(  337) IRANG      = INT (     KRANG, JPLIKB)
+(  338) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  339) 
+(  340) CALL FANFAR_MT64                                              &
+(  341) &           (FA, IREP, IRANG, CDPREF, INIVAU, CDSUFF, CDNOMA, &
+(  342) &            IB1PAR, ILPRFU, ILSUFU, ILNOMU)
+(  343) 
+(  344) KREP       = INT (      IREP, JPLIKM)
+(  345) KB1PAR     = INT (    IB1PAR, JPLIKM)
+(  346) KLPRFU     = INT (    ILPRFU, JPLIKM)
+(  347) KLSUFU     = INT (    ILSUFU, JPLIKM)
+(  348) KLNOMU     = INT (    ILNOMU, JPLIKM)
+(  349) 
+(  350) END SUBROUTINE FANFAR_MT
+(  351) 
+(  352) !INTF KREP            OUT                               
+(  353) !INTF KRANG         IN                                  
+(  354) !INTF CDPREF        IN                                  
+(  355) !INTF KNIVAU        IN                                  
+(  356) !INTF CDSUFF        IN                                  
+(  357) !INTF CDNOMA          OUT                               
+(  358) !INTF KB1PAR          OUT DIMS=3                        
+(  359) !INTF KLPRFU          OUT                               
+(  360) !INTF KLSUFU          OUT                               
+(  361) !INTF KLNOMU          OUT                               
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 9
+
+(    1) # 1 "fanfar.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FANFAR_MT64                                            &
+(    4) &                     (FA,  KREP, KRANG, CDPREF, KNIVAU, CDSUFF,  &
+(    5) &                      CDNOMA, KB1PAR, KLPRFU, KLSUFU, KLNOMU )
+(    6) USE FA_MOD, ONLY : FA_COM, JPNIIL
+(    7) USE PARKIND1, ONLY : JPRB
+(    8) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    9) USE LFI_PRECISION
+(   10) IMPLICIT NONE
+(   11) !****
+(   12) !        Sous-programme INTERNE du logiciel de Fichiers ARPEGE:
+(   13) !     fabrication d'un nom article devant contenir un champ horizontal.
+(   14) !              (Nom a Fabriquer pour un ARticle)
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                KRANG  (Entree) ==> Rang de l'unite logique;
+(   18) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   19) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   20) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   21) !                CDNOMA (Sortie) ==> Nom d'article;
+(   22) !    ( Tableau ) KB1PAR (Sortie) ==> 3 elements du "Bloc 1" des
+(   23) !                                    interfaces GRIB concernes par la
+(   24) !                                    coordonnee et le niveau verticaux;
+(   25) !                KLPRFU (Sortie) ==> Longueur utile du prefixe;
+(   26) !                KLSUFU (Sortie) ==> Longueur utile du suffixe;
+(   27) !                KLNOMU (Sortie) ==> Longueur utile du nom d'article.
+(   28) !*
+(   29) !       En mode multi-taches, il doit y avoir verrouillage du fichier
+(   30) !     concerne avant l'appel au sous-programme.
+(   31) !
+(   32) !
+(   33) !
+(   34) TYPE(FA_COM) :: FA
+(   35) INTEGER (KIND=JPLIKB) KREP, KRANG, KNIVAU
+(   36) INTEGER (KIND=JPLIKB) KLPRFU, KLSUFU, KLNOMU
+(   37) INTEGER (KIND=JPLIKB) KB1PAR (3)
+(   38) !
+(   39) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*), CLAUXI*(FA%JPXNOM)
+(   40) !
+(   41) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, ILPRFU
+(   42) INTEGER (KIND=JPLIKB) ILSUFU, J, INCHIF, INIMES
+(   43) INTEGER (KIND=JPLIKB) INUMER, ILACTI, ILNOMA, ILAUXI
+(   44) INTEGER (KIND=JPLIKB) ITYNIV, INIVAU
+(   45) !
+(   46) CHARACTER(LEN=FA%JPXNOM) CLACTI 
+(   47) CHARACTER(LEN=FA%JPXNOM) CLNOMA
+(   48) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   49) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   50) LOGICAL                  LLFATA
+(   51) # 52 "fanfar.F90"
+(   52) !**
+(   53) !     1.  -  CONTROLES DES PARAMETRES D'APPEL, INITIALISATIONS.
+(   54) !-----------------------------------------------------------------------
+(   55) !
+(   56) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   57) IF (LHOOK) CALL DR_HOOK('FANFAR_MT',0,ZHOOK_HANDLE)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 10
+
+(   58) CLACTI=''
+(   59) ILPREF=INT (LEN (CDPREF), JPLIKB)
+(   60) ILSUFF=INT (LEN (CDSUFF), JPLIKB)
+(   61) ILCDNO=INT (LEN (CDNOMA), JPLIKB)
+(   62) ILPRFU=MAX (0_JPLIKB , ILPREF)
+(   63) ILSUFU=MAX (0_JPLIKB , ILSUFF)
+(   64) KLNOMU=MAX (0_JPLIKB , ILCDNO)
+(   65) !
+(   66) IF (KRANG.LE.0.OR.KRANG.GT.FA%JPNXFA) THEN
+(   67)   KREP=-66
+(   68)   GOTO 1001
+(   69) ENDIF
+(   70) !
+(   71) IF (ILCDNO.LE.0.OR.ILCDNO.GT.FA%NCPCAD) THEN
+(   72)   KREP=-66
+(   73)   GOTO 1001
+(   74) ELSEIF (MIN (ILPREF,ILSUFF).LE.0) THEN
+(   75)   KREP=-65
+(   76)   GOTO 1001
+(   77) ELSEIF (CDPREF.EQ.' '.OR.CDSUFF.EQ.' ') THEN
+(   78)   KREP=-86
+(   79)   GOTO 1001
+(   80) ENDIF
+(   81) !
+(   82) !       Decompte du nombre de caracteres utiles dans prefixe et suffixe.
+(   83) !
+(   84) DO J=ILPREF,1,-1
+(   85) !
+(   86) IF (CDPREF(J:J).NE.' ') THEN
+(   87)   ILPRFU=J
+(   88)   GOTO 104
+(   89) ENDIF
+(   90) !
+(   91) ENDDO
+(   92) !
+(   93) KREP=-66
+(   94) GOTO 1001
+(   95) !
+(   96) 104 CONTINUE
+(   97) !
+(   98) IF (ILPRFU.GT.FA%JPXPRF) THEN
+(   99)   KREP=-87
+(  100)   GOTO 1001
+(  101) ENDIF
+(  102) !
+(  103) DO J=ILSUFF,1,-1
+(  104) !
+(  105) IF (CDSUFF(J:J).NE.' ') THEN
+(  106)   ILSUFU=J
+(  107)   GOTO 106
+(  108) ENDIF
+(  109) !
+(  110) ENDDO
+(  111) !
+(  112) KREP=-66
+(  113) GOTO 1001
+(  114) !
+(  115) 106 CONTINUE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 11
+
+(  116) !**
+(  117) !     2.  -  DIFFERENTS CAS, SELON LE PREFIXE.
+(  118) !-----------------------------------------------------------------------
+(  119) !
+(  120) DO J=1,FA%JPTNIV
+(  121) !
+(  122) IF (CDPREF.EQ.FA%CTNPRF(J)) THEN
+(  123)   ITYNIV=J
+(  124)   GOTO 202
+(  125) ENDIF
+(  126) !
+(  127) ENDDO
+(  128) !
+(  129) ITYNIV=0
+(  130) !
+(  131) 202 CONTINUE
+(  132) !
+(  133) INCHIF=FA%NIVDSC(0,ITYNIV)
+(  134) !
+(  135) IF (INCHIF.EQ.0) THEN
+(  136) !
+(  137)   INIVAU=0
+(  138) !
+(  139) ELSEIF (KNIVAU.LT.FA%NIVDSC(1,ITYNIV).OR.   &
+(  140) &       KNIVAU.GT.FA%NIVDSC(2,ITYNIV)) THEN
+(  141) !
+(  142)   KREP=-64
+(  143)   GOTO 1001
+(  144) !
+(  145) ELSEIF (CDPREF.EQ.'S'.AND.KNIVAU.GT.      &
+(  146) &        FA%CADRE(FA%FICHIER(KRANG)%NUCADR)%NNIVER) THEN
+(  147) !
+(  148)   KREP=-64
+(  149)   GOTO 1001
+(  150) !
+(  151) ELSEIF (CDPREF.EQ.'L'.AND.KNIVAU.GT.      &
+(  152) &        FA%CADRE(FA%FICHIER(KRANG)%NUCADR)%NNIVER) THEN
+(  153) !
+(  154)   KREP=-64
+(  155)   GOTO 1001
+(  156) !
+(  157) ELSE
+(  158) !
+(  159)   INIVAU=KNIVAU
+(  160) !
+(  161) ENDIF
+(  162) !
+(  163) KB1PAR(1)=FA%NIVDSC(3,ITYNIV)
+(  164) KB1PAR(2)=FA%NIVDSC(4,ITYNIV)
+(  165) KB1PAR(3)=INIVAU
+(  166) !
+(  167) ILSUFU=MIN (ILCDNO-ILPRFU-INCHIF,ILSUFU)
+(  168) KLNOMU=ILPRFU+INCHIF+ILSUFU
+(  169) !
+(  170) IF (INCHIF.NE.0) THEN
+(  171)   WRITE (UNIT=CLNOMA,FMT='(I8.8)') KNIVAU
+(  172)   CDNOMA=CDPREF(1:ILPRFU)//CLNOMA(9-INCHIF:8)//CDSUFF(1:ILSUFU)
+(  173) ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 12
+
+(  174)   CDNOMA=CDPREF(1:ILPRFU)//CDSUFF(1:ILSUFU)
+(  175) ENDIF
+(  176) !
+(  177) IF (CDNOMA.EQ.FA%CPCACH.OR.CDNOMA.EQ.FA%CPCADI.OR.CDNOMA.EQ. &
+(  178) &    FA%CPCAFS.OR.                                           &
+(  179) &    CDNOMA.EQ.FA%CPCARP.OR.CDNOMA.EQ.FA%CPDATE.OR.          &
+(  180) &    CDNOMA.EQ.FA%CPDATX.OR.                                 &
+(  181) &    CDNOMA.EQ.FA%FICHIER(KRANG)%CIDENT) THEN
+(  182)   KREP=-111
+(  183)   GOTO 1001
+(  184) ENDIF
+(  185) !
+(  186) KREP=0
+(  187) !**
+(  188) !    10.  -  PHASE TERMINALE : MESSAGERIE EVENTUELLE,
+(  189) !            VIA LE SOUS-PROGRAMME "FAIPAR" .
+(  190) !-----------------------------------------------------------------------
+(  191) !
+(  192) 1001 CONTINUE
+(  193) KLPRFU=ILPRFU
+(  194) KLSUFU=ILSUFU
+(  195) LLFATA=LLMOER (KREP,KRANG)
+(  196) !
+(  197) IF (FA%LFAMOP.OR.LLFATA) THEN
+(  198)   INIMES=2
+(  199)   CLNSPR='FANFAR'
+(  200)   INUMER=JPNIIL
+(  201) !
+(  202)   IF (ILPRFU.GE.1) THEN
+(  203)     ILACTI=MIN (ILPRFU,FA%NCPCAD)
+(  204)     CLACTI(1:ILACTI)=CDPREF(1:ILACTI)
+(  205)   ELSE
+(  206)     ILACTI=8
+(  207)     CLACTI(1:ILACTI)=FA%CHAINC(:ILACTI)
+(  208)   ENDIF
+(  209) !
+(  210)   IF (ILSUFU.GE.1) THEN
+(  211)     ILNOMA=MIN (ILSUFU,FA%NCPCAD)
+(  212)     CLNOMA(1:ILNOMA)=CDSUFF(1:ILNOMA)
+(  213)   ELSE
+(  214)     ILNOMA=8
+(  215)     CLNOMA(1:ILNOMA)=FA%CHAINC(:ILNOMA)
+(  216)   ENDIF
+(  217) !
+(  218)   IF (KLNOMU.GE.1) THEN
+(  219)     ILAUXI=MIN (KLNOMU,INT (LEN(CLAUXI), JPLIKB))
+(  220)     CLAUXI(1:ILAUXI)=CDNOMA(1:ILAUXI)
+(  221)   ELSE
+(  222)     ILAUXI=8
+(  223)     CLAUXI(1:ILAUXI)=FA%CHAINC(:ILAUXI)
+(  224)   ENDIF
+(  225) !
+(  226)   WRITE (UNIT=CLMESS,                                           &
+(  227) &         FMT='(''ARGUMENTS='',2(I4,'', ''),'''''''',A,         &
+(  228) &         '''''','',I6,'', '''''',A,'''''',  '''''',A,'''''''', &
+(  229) &         2('','',I4),'','',I6,3('','',I3))')                   &
+(  230) &     KREP,KRANG,CLACTI(1:ILACTI),KNIVAU,CLNOMA(1:ILNOMA),      &
+(  231) &     CLAUXI(1:ILAUXI),KB1PAR,KLPRFU,KLSUFU,KLNOMU
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 13
+
+(  232)   CALL FAIPAR_MT64                                        &
+(  233) &                 (FA, INUMER,INIMES,KREP,.FALSE.,CLMESS, &
+(  234) &                  CLNSPR, CLACTI(1:ILACTI),.FALSE.)
+(  235) ENDIF
+(  236) !
+(  237) IF (LHOOK) CALL DR_HOOK('FANFAR_MT',1,ZHOOK_HANDLE)
+(  238) # 239 "fanfar.F90"
+(  239) CONTAINS
+(  240) # 241 "fanfar.F90"
+(  241) # 1 ".D[27]/facom2.llmoer.h"
+(    1) !
+(    2) !       Fonction servant a rendre fatale ou non une erreur detectee,
+(    3) !       a l'aide du code reponse courant, du niveau de filtrage global,
+(    4) !       et de l'option d'erreur fatale propre au fichier.
+(    5) !       s'il n'y a pas de fichier (I5678=0, d'ou dimensionnement de
+(    6) !          *LERRFA*), le niveau de filtrage joue le role principal.
+(    7) !
+(    8) LOGICAL FUNCTION LLMOER (I1234,I5678)
+(    9) INTEGER (KIND=JPLIKB) :: I1234,I5678
+(   10) LLMOER=I1234.EQ.-66_JPLIKB .OR. (I1234.NE.0_JPLIKB .AND.(FA%NRFAGA.EQ.0_JPLIKB &
+(   11)      & .OR. (FA%NRFAGA.EQ.1_JPLIKB .AND.FA%FICHIER(I5678)%LERRFA)))
+(   12) END FUNCTION
+(   13) # 242 "fanfar.F90"
+(  242) # 243 "fanfar.F90"
+(  243) END SUBROUTINE FANFAR_MT64
+(  244) # 252 "fanfar.F90"
+(  252) ! Oct-2012 P. Marguinaud 64b LFI
+(  253) SUBROUTINE FANFAR64                                       &
+(  254) &           (KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  255) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  256) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  257) &                  FA_COM_DEFAULT_INIT,  &
+(  258) &                  NEW_FA_DEFAULT
+(  259) USE LFI_PRECISION
+(  260) IMPLICIT NONE
+(  261) ! Arguments
+(  262) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  263) INTEGER (KIND=JPLIKB)  KRANG                                  ! IN   
+(  264) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  265) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(  266) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  267) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  268) INTEGER (KIND=JPLIKB)  KB1PAR     (3)                         !   OUT
+(  269) INTEGER (KIND=JPLIKB)  KLPRFU                                 !   OUT
+(  270) INTEGER (KIND=JPLIKB)  KLSUFU                                 !   OUT
+(  271) INTEGER (KIND=JPLIKB)  KLNOMU                                 !   OUT
+(  272) # 273 "fanfar.F90"
+(  273) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  274) # 275 "fanfar.F90"
+(  275) CALL FANFAR_MT64                                              &
+(  276) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  277) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  278) # 279 "fanfar.F90"
+(  279) END SUBROUTINE FANFAR64
+(  280) # 281 "fanfar.F90"
+(  281) SUBROUTINE FANFAR                                         &
+(  282) &           (KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  283) &           KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 14
+
+(  284) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  285) &                  FA_COM_DEFAULT_INIT,  &
+(  286) &                  NEW_FA_DEFAULT
+(  287) USE LFI_PRECISION
+(  288) IMPLICIT NONE
+(  289) ! Arguments
+(  290) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  291) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  292) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  293) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  294) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  295) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  296) INTEGER (KIND=JPLIKM)  KB1PAR     (3)                         !   OUT
+(  297) INTEGER (KIND=JPLIKM)  KLPRFU                                 !   OUT
+(  298) INTEGER (KIND=JPLIKM)  KLSUFU                                 !   OUT
+(  299) INTEGER (KIND=JPLIKM)  KLNOMU                                 !   OUT
+(  300) # 301 "fanfar.F90"
+(  301) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  302) # 303 "fanfar.F90"
+(  303) CALL FANFAR_MT                                                &
+(  304) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  305) &            KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  306) # 307 "fanfar.F90"
+(  307) END SUBROUTINE FANFAR
+(  308) # 309 "fanfar.F90"
+(  309) SUBROUTINE FANFAR_MT                                          &
+(  310) &           (FA, KREP, KRANG, CDPREF, KNIVAU, CDSUFF, CDNOMA, &
+(  311) &            KB1PAR, KLPRFU, KLSUFU, KLNOMU)
+(  312) USE FA_MOD, ONLY : FA_COM
+(  313) USE LFI_PRECISION
+(  314) IMPLICIT NONE
+(  315) ! Arguments
+(  316) TYPE (FA_COM)          FA                                     ! INOUT
+(  317) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  318) INTEGER (KIND=JPLIKM)  KRANG                                  ! IN   
+(  319) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  320) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  321) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  322) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  323) INTEGER (KIND=JPLIKM)  KB1PAR     (3)                         !   OUT
+(  324) INTEGER (KIND=JPLIKM)  KLPRFU                                 !   OUT
+(  325) INTEGER (KIND=JPLIKM)  KLSUFU                                 !   OUT
+(  326) INTEGER (KIND=JPLIKM)  KLNOMU                                 !   OUT
+(  327) ! Local integers
+(  328) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  329) INTEGER (KIND=JPLIKB)  IRANG                                  ! IN   
+(  330) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  331) INTEGER (KIND=JPLIKB)  IB1PAR     (3)                         !   OUT
+(  332) INTEGER (KIND=JPLIKB)  ILPRFU                                 !   OUT
+(  333) INTEGER (KIND=JPLIKB)  ILSUFU                                 !   OUT
+(  334) INTEGER (KIND=JPLIKB)  ILNOMU                                 !   OUT
+(  335) ! Convert arguments
+(  336) # 337 "fanfar.F90"
+(  337) IRANG      = INT (     KRANG, JPLIKB)
+(  338) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  339) # 340 "fanfar.F90"
+(  340) CALL FANFAR_MT64                                              &
+(  341) &           (FA, IREP, IRANG, CDPREF, INIVAU, CDSUFF, CDNOMA, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:26      page 15
+
+(  342) &            IB1PAR, ILPRFU, ILSUFU, ILNOMU)
+(  343) # 344 "fanfar.F90"
+(  344) KREP       = INT (      IREP, JPLIKM)
+(  345) KB1PAR     = INT (    IB1PAR, JPLIKM)
+(  346) KLPRFU     = INT (    ILPRFU, JPLIKM)
+(  347) KLSUFU     = INT (    ILSUFU, JPLIKM)
+(  348) KLNOMU     = INT (    ILNOMU, JPLIKM)
+(  349) # 350 "fanfar.F90"
+(  350) END SUBROUTINE FANFAR_MT
+(  351) # 352 "fanfar.F90"
+(  352) !INTF KREP            OUT                               
+(  353) !INTF KRANG         IN                                  
+(  354) !INTF CDPREF        IN                                  
+(  355) !INTF KNIVAU        IN                                  
+(  356) !INTF CDSUFF        IN                                  
+(  357) !INTF CDNOMA          OUT                               
+(  358) !INTF KB1PAR          OUT DIMS=3                        
+(  359) !INTF KLPRFU          OUT                               
+(  360) !INTF KLSUFU          OUT                               
+(  361) !INTF KLNOMU          OUT                               

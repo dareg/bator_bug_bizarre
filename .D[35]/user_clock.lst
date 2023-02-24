@@ -1,0 +1,285 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:36      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:36      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: user_clock.F90
+
+(    1) SUBROUTINE USER_CLOCK(PELAPSED_TIME,PELAPSED_TIME_SINCE,PVECTOR_CP,PTOTAL_CP)
+(    2) 
+(    3) !**** *USER_CLOCK* - interface to system dependent timer routines
+(    4) 
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !        Returns elapsed and CP from the start of execution.
+(    8) !        Elapsed time is made relative to the first call to USER_CLOCK.
+(    9) 
+(   10) !**   Interface.
+(   11) !     ----------
+(   12) !        ZTIME=USER_CLOCK(PELAPSED_TIME,PELAPSED_TIME_SINCE,
+(   13) !                         PVECTOR_CP,PTOTAL_CP)
+(   14) 
+(   15) !        Explicit arguments: (All are optional arguments)
+(   16) !                           PELAPSED_TIME=wall clock time (seconds)
+(   17) !                           PELAPSED_TIME_SINCE=wall clock time (seconds)
+(   18) !                             change from input value of this parameter
+(   19) !                           PVECTOR_CP=CP vector time  (seconds)
+(   20) !                           PTOTAL_CP=total CP time   (seconds)
+(   21) 
+(   22) !     Author.
+(   23) !     -------
+(   24) !        D.Dent      *ECMWF*
+(   25) 
+(   26) !     External References:
+(   27) !     -------------------
+(   28) 
+(   29) !        TIMEF,CPTIME
+(   30) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:36      page 3
+
+(   31) !     Modifications.
+(   32) !     --------------
+(   33) !        Original  : 97-09-25
+(   34) !      F. Vana  05-Mar-2015  Support for single precision
+(   35) !     ----------------------------------------------------------
+(   36) 
+(   37) 
+(   38) USE PARKIND1  ,ONLY : JPRD, JPIM
+(   39) 
+(   40) IMPLICIT NONE
+(   41) 
+(   42) REAL(KIND=JPRD),INTENT(OUT) :: PELAPSED_TIME,PVECTOR_CP,PTOTAL_CP
+(   43) REAL(KIND=JPRD),INTENT(INOUT) :: PELAPSED_TIME_SINCE
+(   44) OPTIONAL            PELAPSED_TIME,PELAPSED_TIME_SINCE
+(   45) OPTIONAL            PVECTOR_CP,PTOTAL_CP
+(   46) REAL(KIND=JPRD)      :: ZVECTOR_CP,ZTOTAL_CP,ZWALL
+(   47) REAL(KIND=JPRD),EXTERNAL :: TIMEF
+(   48) 
+(   49) 
+(   50) ! === END OF INTERFACE BLOCK ===
+(   51) IF(PRESENT(PELAPSED_TIME).OR. PRESENT(PELAPSED_TIME_SINCE)) THEN
+(   52) 
+(   53)   ZWALL=TIMEF()
+(   54) !             TIMEF returns milliseconds since first call to TIMEF
+(   55)   IF(PRESENT(PELAPSED_TIME)) THEN
+(   56)     PELAPSED_TIME=ZWALL*1.0E-3_JPRD
+(   57)   ENDIF
+(   58)   IF(PRESENT(PELAPSED_TIME_SINCE)) THEN
+(   59)     PELAPSED_TIME_SINCE=ZWALL*1.0E-3_JPRD - PELAPSED_TIME_SINCE
+(   60)   ENDIF
+(   61) ENDIF
+(   62) 
+(   63) IF( PRESENT(PVECTOR_CP) .OR. PRESENT(PTOTAL_CP) ) THEN
+(   64)   CALL CPTIME(ZVECTOR_CP,ZTOTAL_CP)
+(   65) ENDIF
+(   66) IF( PRESENT(PVECTOR_CP) ) THEN
+(   67)   PVECTOR_CP=ZVECTOR_CP
+(   68) ENDIF
+(   69) IF( PRESENT(PTOTAL_CP) ) THEN
+(   70)   PTOTAL_CP=ZTOTAL_CP
+(   71) ENDIF
+(   72) 
+(   73) RETURN
+(   74) END SUBROUTINE USER_CLOCK
+(   75) 
+(   76) 
+(   77) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:36      page 4
+
+(    1) # 1 "user_clock.F90"
+(    1) SUBROUTINE USER_CLOCK(PELAPSED_TIME,PELAPSED_TIME_SINCE,PVECTOR_CP,PTOTAL_CP)
+(    2) # 3 "user_clock.F90"
+(    3) !**** *USER_CLOCK* - interface to system dependent timer routines
+(    4) # 5 "user_clock.F90"
+(    5) !     Purpose.
+(    6) !     --------
+(    7) !        Returns elapsed and CP from the start of execution.
+(    8) !        Elapsed time is made relative to the first call to USER_CLOCK.
+(    9) # 10 "user_clock.F90"
+(   10) !**   Interface.
+(   11) !     ----------
+(   12) !        ZTIME=USER_CLOCK(PELAPSED_TIME,PELAPSED_TIME_SINCE,
+(   13) !                         PVECTOR_CP,PTOTAL_CP)
+(   14) # 15 "user_clock.F90"
+(   15) !        Explicit arguments: (All are optional arguments)
+(   16) !                           PELAPSED_TIME=wall clock time (seconds)
+(   17) !                           PELAPSED_TIME_SINCE=wall clock time (seconds)
+(   18) !                             change from input value of this parameter
+(   19) !                           PVECTOR_CP=CP vector time  (seconds)
+(   20) !                           PTOTAL_CP=total CP time   (seconds)
+(   21) # 22 "user_clock.F90"
+(   22) !     Author.
+(   23) !     -------
+(   24) !        D.Dent      *ECMWF*
+(   25) # 26 "user_clock.F90"
+(   26) !     External References:
+(   27) !     -------------------
+(   28) # 29 "user_clock.F90"
+(   29) !        TIMEF,CPTIME
+(   30) # 31 "user_clock.F90"
+(   31) !     Modifications.
+(   32) !     --------------
+(   33) !        Original  : 97-09-25
+(   34) !      F. Vana  05-Mar-2015  Support for single precision
+(   35) !     ----------------------------------------------------------
+(   36) # 38 "user_clock.F90"
+(   38) USE PARKIND1  ,ONLY : JPRD, JPIM
+(   39) # 40 "user_clock.F90"
+(   40) IMPLICIT NONE
+(   41) # 42 "user_clock.F90"
+(   42) REAL(KIND=JPRD),INTENT(OUT) :: PELAPSED_TIME,PVECTOR_CP,PTOTAL_CP
+(   43) REAL(KIND=JPRD),INTENT(INOUT) :: PELAPSED_TIME_SINCE
+(   44) OPTIONAL            PELAPSED_TIME,PELAPSED_TIME_SINCE
+(   45) OPTIONAL            PVECTOR_CP,PTOTAL_CP
+(   46) REAL(KIND=JPRD)      :: ZVECTOR_CP,ZTOTAL_CP,ZWALL
+(   47) REAL(KIND=JPRD),EXTERNAL :: TIMEF
+(   48) # 50 "user_clock.F90"
+(   50) ! === END OF INTERFACE BLOCK ===
+(   51) IF(PRESENT(PELAPSED_TIME).OR. PRESENT(PELAPSED_TIME_SINCE)) THEN
+(   52) # 53 "user_clock.F90"
+(   53)   ZWALL=TIMEF()
+(   54) !             TIMEF returns milliseconds since first call to TIMEF
+(   55)   IF(PRESENT(PELAPSED_TIME)) THEN
+(   56)     PELAPSED_TIME=ZWALL*1.0E-3_JPRD
+(   57)   ENDIF
+(   58)   IF(PRESENT(PELAPSED_TIME_SINCE)) THEN
+(   59)     PELAPSED_TIME_SINCE=ZWALL*1.0E-3_JPRD - PELAPSED_TIME_SINCE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:34:36      page 5
+
+(   60)   ENDIF
+(   61) ENDIF
+(   62) # 63 "user_clock.F90"
+(   63) IF( PRESENT(PVECTOR_CP) .OR. PRESENT(PTOTAL_CP) ) THEN
+(   64)   CALL CPTIME(ZVECTOR_CP,ZTOTAL_CP)
+(   65) ENDIF
+(   66) IF( PRESENT(PVECTOR_CP) ) THEN
+(   67)   PVECTOR_CP=ZVECTOR_CP
+(   68) ENDIF
+(   69) IF( PRESENT(PTOTAL_CP) ) THEN
+(   70)   PTOTAL_CP=ZTOTAL_CP
+(   71) ENDIF
+(   72) # 73 "user_clock.F90"
+(   73) RETURN
+(   74) END SUBROUTINE USER_CLOCK

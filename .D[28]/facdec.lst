@@ -1,0 +1,672 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: facdec.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACDEC_MT64                                &
+(    4) &                     (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de calcul du FACteur d'echelle DECimal optimal
+(   12) !     pour coder un champ d'amplitude PA donnee, sur KNBIT bits avec
+(   13) !     une precision maximale, compte tenu d'un intervalle fixe
+(   14) !     de facteurs decimaux.
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                                    0: OK; -1: pb rencontre
+(   18) !                PA     (Entree) ==> Amplitude du champ a compacter;
+(   19) !                PMIN   (Entree) ==> Minimum du champ a compacter;
+(   20) !                KNBIT  (Entree) ==> Nb de bits servant au compactage;
+(   21) !                KDEC   (Sortie) ==> Facteur d'echelle decimal optimal;
+(   22) !
+(   23) !     Modifications:
+(   24) !      R. El Khatib 12-Aug-2009 Bugfix for compatibility with Gribex
+(   25) !      R. El Khatib 22-Jul-2015 Threshold for the field amplitude raised
+(   26) !        from 1.E-12 to 1.E-11 in order to avoid the deterioration of too flat fields
+(   27) !
+(   28) TYPE(FA_COM) :: FA
+(   29) REAL (KIND=JPDBLR) PA, PMIN
+(   30) INTEGER (KIND=JPLIKB) KREP, KNBIT, KDEC
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 3
+
+(   31) !
+(   32) REAL (KIND=JPDBLR) XNBINT, XTINYR4, XHUGER4
+(   33) INTEGER (KIND=JPLIKB) IDECMIN, IDECMAX, INBINT
+(   34) INTEGER (KIND=JPLIKB) JDEC, IE, INUTIL, INUMAX, IEMAX
+(   35) INTEGER (KIND=JPLIKB) INU0, IE0
+(   36) 
+(   37) !
+(   38) !**
+(   39) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   40) !-----------------------------------------------------------------------
+(   41) !
+(   42) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   43) IF (LHOOK) CALL DR_HOOK('FACDEC_MT',0,ZHOOK_HANDLE)
+(   44) IF (KNBIT.LE.0 .OR. KNBIT.GT.64) THEN
+(   45)   KREP=-1
+(   46)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(   47)   WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(   48) &         '**** FACDEC: ERROR, bits number out of range 1-64'
+(   49)   WRITE (UNIT=FA%NULOUT,FMT=*)'****         KNBIT = ',KNBIT
+(   50)   WRITE (UNIT=FA%NULOUT,FMT=*)                                   &
+(   51) &         '**** ! Optimal decimal scale factor is not computed !'
+(   52)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(   53)   GOTO 1001
+(   54) ENDIF
+(   55) IF (ABS(PA) .LT. TINY(PA)) THEN
+(   56)   KREP = 0
+(   57)   KDEC = 0
+(   58)   IF (FA%LFAMOP) THEN
+(   59)     WRITE (UNIT=FA%NULOUT,FMT=*)'////'
+(   60)     WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(   61) &         '//// FACDEC: WARNING, range of the field is null :', &
+(   62) &                        PA
+(   63)     WRITE (UNIT=FA%NULOUT,FMT=*)'////'
+(   64)   ENDIF
+(   65)   GOTO 1001
+(   66) ENDIF
+(   67) 
+(   68) KREP    = 0
+(   69) INUMAX  = 0
+(   70) IDECMIN = -15
+(   71) IDECMAX =   5
+(   72) XTINYR4 = TINY(1._4)
+(   73) XHUGER4 = HUGE(1._4)
+(   74) INBINT  = 2**KNBIT -1
+(   75) XNBINT  = REAL (INBINT, JPDBLR)
+(   76) ! Cas du facteur decimal nul (reference a calculer dans tous les cas)
+(   77) JDEC    = 0
+(   78) CALL FACTEC_MT64                                    &
+(   79) &              (FA, KREP, PA, KNBIT, JDEC, IE0, INU0)
+(   80) !
+(   81) !**
+(   82) !     2.  -  BOUCLE TESTANT LES FACTEURS DECIMAUX
+(   83) !-----------------------------------------------------------------------
+(   84) !
+(   85) !!OCL SCALAR
+(   86) DO JDEC = IDECMIN, IDECMAX
+(   87) !
+(   88) ! 3 tests sur la pertinence de ce facteur decimal
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 4
+
+(   89) !
+(   90) ! 0/ PA * 10**JDEC > 1.E-11
+(   91) !    Du fait d'un test exagere dans gribex 
+(   92)   IF (PA * 10._JPDBLR**JDEC .LE. 1.E-11_JPDBLR) CYCLE
+(   93) ! 1/ PMIN * 10**JDEC > TINY(real*4) pour decodage eventuel
+(   94) !    de la valeur de reference en arithmetique 32 bits IEEE.
+(   95)   IF (ABS(PMIN) .GT. TINY(PMIN)) THEN
+(   96)     IF (LOG10(ABS(PMIN))+REAL (JDEC, JPDBLR) .LE. LOG10( XTINYR4 ) ) CYCLE
+(   97)   ELSE
+(   98) !  instruction "bidon" pour que l'optimisation ne fasse pas
+(   99) !  l'evaluation de LOG10(ABS(PMIN)) par anticipation (Pb sur VPP5000)
+(  100)     PMIN = 0._JPDBLR
+(  101)   ENDIF
+(  102) ! 2/ PA * 10**JDEC inclus dans le domaine de validite des real*8
+(  103)   IF (ABS(LOG10(ABS(PA))+REAL (JDEC, JPDBLR)) .GE. REAL (RANGE(PA), JPDBLR)) CYCLE
+(  104) !
+(  105)   CALL FACTEC_MT64                                     &
+(  106) &                (FA, KREP, PA, KNBIT, JDEC, IE, INUTIL)
+(  107)   IF (KREP.NE.0) CYCLE
+(  108) ! 3/ PMIN*10**JDEC + (2**KNBIT-1)*2**IE < HUGE(real*4) pour decodage
+(  109) !    eventuel du max du champ en arithmetique 32 bits IEEE.
+(  110)   IF (PMIN*10._JPDBLR**JDEC + XNBINT*2._JPDBLR**IE .GE. XHUGER4) CYCLE
+(  111) ! 4/ Le facteur d'echelle binaire doit pouvoir etre code sur 1 octet,
+(  112) !    il doit donc etre compris entre -126 et 127:
+(  113)   IF (IE.LT.-126 .OR. IE.GT.127) CYCLE
+(  114) !
+(  115)   IF (INUTIL.GT.INUMAX) THEN
+(  116)     INUMAX = INUTIL
+(  117)     IEMAX  = IE
+(  118)     KDEC   = JDEC
+(  119)   ENDIF
+(  120) ENDDO
+(  121) !
+(  122) IF (INUMAX.EQ.0) THEN
+(  123)   KREP=-1
+(  124)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(  125)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  126) &         '**** FACDEC: all the decimal factors comprised between'
+(  127)   WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  128) &         '**** ',IDECMIN,' and ',IDECMAX,' are rejected !!'
+(  129)   WRITE (UNIT=FA%NULOUT,FMT=*)                             &
+(  130) &         '**** Range and min of the field are :', PA, PMIN
+(  131)   WRITE (UNIT=FA%NULOUT,FMT=*) &
+(  132) &         '****'
+(  133)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(  134)   GOTO 1001
+(  135) ENDIF
+(  136) IF (FA%LFAMOP) THEN
+(  137)   WRITE (UNIT=FA%NULOUT,FMT=*)                                 &
+(  138) &         'FACDEC: champ d''amplitude ',PA,' ,de minimum ',PMIN
+(  139)   WRITE (UNIT=FA%NULOUT,FMT=*)                  &
+(  140) &         '        => fact decimal opt de',KDEC, &
+(  141) &          ' ,pour 1 fact binaire de ',IEMAX
+(  142)   WRITE (UNIT=FA%NULOUT,FMT='(1X,A,I3,A,I9,A,I9,A,F5.1,A,E11.4)') &
+(  143) &    ' Eff des',                                                   &
+(  144) &    KNBIT,' bits = ',INUMAX,' sur ',INBINT,' soit: ',             &
+(  145) &    REAL (INUMAX, JPDBLR)*100._JPDBLR/XNBINT,                     &
+(  146) &    ' % et une precision de ',                                    &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 5
+
+(  147) &    10._JPDBLR**(-KDEC)*2._JPDBLR**(IEMAX-1)
+(  148)   WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  149) &         '        a comparer, si le fact decimal = 0, avec'
+(  150)   WRITE (UNIT=FA%NULOUT,FMT='(1X,A,I9,A,I9,A,F5.1,A,E11.4)') &
+(  151) &   ' une efficacite de ',                                    &
+(  152) &   INU0,' sur ',INBINT,' soit: ',                            &
+(  153) &   REAL (INU0, JPDBLR)*100._JPDBLR/XNBINT,                   &
+(  154) &   ' % et une precision de ',2._JPDBLR**(IE0-1)
+(  155) ENDIF
+(  156) !
+(  157) 1001 CONTINUE
+(  158) !
+(  159) IF (LHOOK) CALL DR_HOOK('FACDEC_MT',1,ZHOOK_HANDLE)
+(  160) END SUBROUTINE FACDEC_MT64
+(  161) 
+(  162) 
+(  163) 
+(  164) ! Oct-2012 P. Marguinaud 64b LFI
+(  165) SUBROUTINE FACDEC64                     &
+(  166) &           (KREP, PA, PMIN, KNBIT, KDEC)
+(  167) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  168) &                   FA_COM_DEFAULT_INIT,  &
+(  169) &                   NEW_FA_DEFAULT
+(  170) USE LFI_PRECISION
+(  171) IMPLICIT NONE
+(  172) ! Arguments
+(  173) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  174) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  175) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+(  176) INTEGER (KIND=JPLIKB)  KNBIT                                  ! IN   
+(  177) INTEGER (KIND=JPLIKB)  KDEC                                   !   OUT
+(  178) 
+(  179) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  180) 
+(  181) CALL FACDEC_MT64                            &
+(  182) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  183) 
+(  184) END SUBROUTINE FACDEC64
+(  185) 
+(  186) SUBROUTINE FACDEC                       &
+(  187) &           (KREP, PA, PMIN, KNBIT, KDEC)
+(  188) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  189) &                   FA_COM_DEFAULT_INIT,  &
+(  190) &                   NEW_FA_DEFAULT
+(  191) USE LFI_PRECISION
+(  192) IMPLICIT NONE
+(  193) ! Arguments
+(  194) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  195) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  196) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+(  197) INTEGER (KIND=JPLIKM)  KNBIT                                  ! IN   
+(  198) INTEGER (KIND=JPLIKM)  KDEC                                   !   OUT
+(  199) 
+(  200) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  201) 
+(  202) CALL FACDEC_MT                              &
+(  203) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  204) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 6
+
+(  205) END SUBROUTINE FACDEC
+(  206) 
+(  207) SUBROUTINE FACDEC_MT                        &
+(  208) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  209) USE FA_MOD, ONLY : FA_COM
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+(  213) TYPE (FA_COM)          FA                                     ! INOUT
+(  214) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  215) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  216) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+(  217) INTEGER (KIND=JPLIKM)  KNBIT                                  ! IN   
+(  218) INTEGER (KIND=JPLIKM)  KDEC                                   !   OUT
+(  219) ! Local integers
+(  220) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  221) INTEGER (KIND=JPLIKB)  INBIT                                  ! IN   
+(  222) INTEGER (KIND=JPLIKB)  IDEC                                   !   OUT
+(  223) ! Convert arguments
+(  224) 
+(  225) INBIT      = INT (     KNBIT, JPLIKB)
+(  226) 
+(  227) CALL FACDEC_MT64                            &
+(  228) &           (FA, IREP, PA, PMIN, INBIT, IDEC)
+(  229) 
+(  230) KREP       = INT (      IREP, JPLIKM)
+(  231) KDEC       = INT (      IDEC, JPLIKM)
+(  232) 
+(  233) END SUBROUTINE FACDEC_MT
+(  234) 
+(  235) !INTF KREP            OUT 
+(  236) !INTF PA            IN    
+(  237) !INTF PMIN          IN    
+(  238) !INTF KNBIT         IN    
+(  239) !INTF KDEC            OUT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 7
+
+(    1) # 1 "facdec.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACDEC_MT64                                &
+(    4) &                     (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(    5) USE FA_MOD, ONLY : FA_COM
+(    6) USE PARKIND1, ONLY : JPRB
+(    7) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(    8) USE LFI_PRECISION
+(    9) IMPLICIT NONE
+(   10) !****
+(   11) !      Sous-programme de calcul du FACteur d'echelle DECimal optimal
+(   12) !     pour coder un champ d'amplitude PA donnee, sur KNBIT bits avec
+(   13) !     une precision maximale, compte tenu d'un intervalle fixe
+(   14) !     de facteurs decimaux.
+(   15) !**
+(   16) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   17) !                                    0: OK; -1: pb rencontre
+(   18) !                PA     (Entree) ==> Amplitude du champ a compacter;
+(   19) !                PMIN   (Entree) ==> Minimum du champ a compacter;
+(   20) !                KNBIT  (Entree) ==> Nb de bits servant au compactage;
+(   21) !                KDEC   (Sortie) ==> Facteur d'echelle decimal optimal;
+(   22) !
+(   23) !     Modifications:
+(   24) !      R. El Khatib 12-Aug-2009 Bugfix for compatibility with Gribex
+(   25) !      R. El Khatib 22-Jul-2015 Threshold for the field amplitude raised
+(   26) !        from 1.E-12 to 1.E-11 in order to avoid the deterioration of too flat fields
+(   27) !
+(   28) TYPE(FA_COM) :: FA
+(   29) REAL (KIND=JPDBLR) PA, PMIN
+(   30) INTEGER (KIND=JPLIKB) KREP, KNBIT, KDEC
+(   31) !
+(   32) REAL (KIND=JPDBLR) XNBINT, XTINYR4, XHUGER4
+(   33) INTEGER (KIND=JPLIKB) IDECMIN, IDECMAX, INBINT
+(   34) INTEGER (KIND=JPLIKB) JDEC, IE, INUTIL, INUMAX, IEMAX
+(   35) INTEGER (KIND=JPLIKB) INU0, IE0
+(   36) # 37 "facdec.F90"
+(   37) !
+(   38) !**
+(   39) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   40) !-----------------------------------------------------------------------
+(   41) !
+(   42) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   43) IF (LHOOK) CALL DR_HOOK('FACDEC_MT',0,ZHOOK_HANDLE)
+(   44) IF (KNBIT.LE.0 .OR. KNBIT.GT.64) THEN
+(   45)   KREP=-1
+(   46)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(   47)   WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(   48) &         '**** FACDEC: ERROR, bits number out of range 1-64'
+(   49)   WRITE (UNIT=FA%NULOUT,FMT=*)'****         KNBIT = ',KNBIT
+(   50)   WRITE (UNIT=FA%NULOUT,FMT=*)                                   &
+(   51) &         '**** ! Optimal decimal scale factor is not computed !'
+(   52)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(   53)   GOTO 1001
+(   54) ENDIF
+(   55) IF (ABS(PA) .LT. TINY(PA)) THEN
+(   56)   KREP = 0
+(   57)   KDEC = 0
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 8
+
+(   58)   IF (FA%LFAMOP) THEN
+(   59)     WRITE (UNIT=FA%NULOUT,FMT=*)'////'
+(   60)     WRITE (UNIT=FA%NULOUT,FMT=*)                               &
+(   61) &         '//// FACDEC: WARNING, range of the field is null :', &
+(   62) &                        PA
+(   63)     WRITE (UNIT=FA%NULOUT,FMT=*)'////'
+(   64)   ENDIF
+(   65)   GOTO 1001
+(   66) ENDIF
+(   67) # 68 "facdec.F90"
+(   68) KREP    = 0
+(   69) INUMAX  = 0
+(   70) IDECMIN = -15
+(   71) IDECMAX =   5
+(   72) XTINYR4 = TINY(1._4)
+(   73) XHUGER4 = HUGE(1._4)
+(   74) INBINT  = 2**KNBIT -1
+(   75) XNBINT  = REAL (INBINT, JPDBLR)
+(   76) ! Cas du facteur decimal nul (reference a calculer dans tous les cas)
+(   77) JDEC    = 0
+(   78) CALL FACTEC_MT64                                    &
+(   79) &              (FA, KREP, PA, KNBIT, JDEC, IE0, INU0)
+(   80) !
+(   81) !**
+(   82) !     2.  -  BOUCLE TESTANT LES FACTEURS DECIMAUX
+(   83) !-----------------------------------------------------------------------
+(   84) !
+(   85) !!OCL SCALAR
+(   86) DO JDEC = IDECMIN, IDECMAX
+(   87) !
+(   88) ! 3 tests sur la pertinence de ce facteur decimal
+(   89) !
+(   90) ! 0/ PA * 10**JDEC > 1.E-11
+(   91) !    Du fait d'un test exagere dans gribex 
+(   92)   IF (PA * 10._JPDBLR**JDEC .LE. 1.E-11_JPDBLR) CYCLE
+(   93) ! 1/ PMIN * 10**JDEC > TINY(real*4) pour decodage eventuel
+(   94) !    de la valeur de reference en arithmetique 32 bits IEEE.
+(   95)   IF (ABS(PMIN) .GT. TINY(PMIN)) THEN
+(   96)     IF (LOG10(ABS(PMIN))+REAL (JDEC, JPDBLR) .LE. LOG10( XTINYR4 ) ) CYCLE
+(   97)   ELSE
+(   98) !  instruction "bidon" pour que l'optimisation ne fasse pas
+(   99) !  l'evaluation de LOG10(ABS(PMIN)) par anticipation (Pb sur VPP5000)
+(  100)     PMIN = 0._JPDBLR
+(  101)   ENDIF
+(  102) ! 2/ PA * 10**JDEC inclus dans le domaine de validite des real*8
+(  103)   IF (ABS(LOG10(ABS(PA))+REAL (JDEC, JPDBLR)) .GE. REAL (RANGE(PA), JPDBLR)) CYCLE
+(  104) !
+(  105)   CALL FACTEC_MT64                                     &
+(  106) &                (FA, KREP, PA, KNBIT, JDEC, IE, INUTIL)
+(  107)   IF (KREP.NE.0) CYCLE
+(  108) ! 3/ PMIN*10**JDEC + (2**KNBIT-1)*2**IE < HUGE(real*4) pour decodage
+(  109) !    eventuel du max du champ en arithmetique 32 bits IEEE.
+(  110)   IF (PMIN*10._JPDBLR**JDEC + XNBINT*2._JPDBLR**IE .GE. XHUGER4) CYCLE
+(  111) ! 4/ Le facteur d'echelle binaire doit pouvoir etre code sur 1 octet,
+(  112) !    il doit donc etre compris entre -126 et 127:
+(  113)   IF (IE.LT.-126 .OR. IE.GT.127) CYCLE
+(  114) !
+(  115)   IF (INUTIL.GT.INUMAX) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 9
+
+(  116)     INUMAX = INUTIL
+(  117)     IEMAX  = IE
+(  118)     KDEC   = JDEC
+(  119)   ENDIF
+(  120) ENDDO
+(  121) !
+(  122) IF (INUMAX.EQ.0) THEN
+(  123)   KREP=-1
+(  124)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(  125)   WRITE (UNIT=FA%NULOUT,FMT=*)                                    &
+(  126) &         '**** FACDEC: all the decimal factors comprised between'
+(  127)   WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  128) &         '**** ',IDECMIN,' and ',IDECMAX,' are rejected !!'
+(  129)   WRITE (UNIT=FA%NULOUT,FMT=*)                             &
+(  130) &         '**** Range and min of the field are :', PA, PMIN
+(  131)   WRITE (UNIT=FA%NULOUT,FMT=*) &
+(  132) &         '****'
+(  133)   WRITE (UNIT=FA%NULOUT,FMT=*)'****'
+(  134)   GOTO 1001
+(  135) ENDIF
+(  136) IF (FA%LFAMOP) THEN
+(  137)   WRITE (UNIT=FA%NULOUT,FMT=*)                                 &
+(  138) &         'FACDEC: champ d''amplitude ',PA,' ,de minimum ',PMIN
+(  139)   WRITE (UNIT=FA%NULOUT,FMT=*)                  &
+(  140) &         '        => fact decimal opt de',KDEC, &
+(  141) &          ' ,pour 1 fact binaire de ',IEMAX
+(  142)   WRITE (UNIT=FA%NULOUT,FMT='(1X,A,I3,A,I9,A,I9,A,F5.1,A,E11.4)') &
+(  143) &    ' Eff des',                                                   &
+(  144) &    KNBIT,' bits = ',INUMAX,' sur ',INBINT,' soit: ',             &
+(  145) &    REAL (INUMAX, JPDBLR)*100._JPDBLR/XNBINT,                     &
+(  146) &    ' % et une precision de ',                                    &
+(  147) &    10._JPDBLR**(-KDEC)*2._JPDBLR**(IEMAX-1)
+(  148)   WRITE (UNIT=FA%NULOUT,FMT=*)                              &
+(  149) &         '        a comparer, si le fact decimal = 0, avec'
+(  150)   WRITE (UNIT=FA%NULOUT,FMT='(1X,A,I9,A,I9,A,F5.1,A,E11.4)') &
+(  151) &   ' une efficacite de ',                                    &
+(  152) &   INU0,' sur ',INBINT,' soit: ',                            &
+(  153) &   REAL (INU0, JPDBLR)*100._JPDBLR/XNBINT,                   &
+(  154) &   ' % et une precision de ',2._JPDBLR**(IE0-1)
+(  155) ENDIF
+(  156) !
+(  157) 1001 CONTINUE
+(  158) !
+(  159) IF (LHOOK) CALL DR_HOOK('FACDEC_MT',1,ZHOOK_HANDLE)
+(  160) END SUBROUTINE FACDEC_MT64
+(  161) # 164 "facdec.F90"
+(  164) ! Oct-2012 P. Marguinaud 64b LFI
+(  165) SUBROUTINE FACDEC64                     &
+(  166) &           (KREP, PA, PMIN, KNBIT, KDEC)
+(  167) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  168) &                   FA_COM_DEFAULT_INIT,  &
+(  169) &                   NEW_FA_DEFAULT
+(  170) USE LFI_PRECISION
+(  171) IMPLICIT NONE
+(  172) ! Arguments
+(  173) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(  174) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  175) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 10
+
+(  176) INTEGER (KIND=JPLIKB)  KNBIT                                  ! IN   
+(  177) INTEGER (KIND=JPLIKB)  KDEC                                   !   OUT
+(  178) # 179 "facdec.F90"
+(  179) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  180) # 181 "facdec.F90"
+(  181) CALL FACDEC_MT64                            &
+(  182) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  183) # 184 "facdec.F90"
+(  184) END SUBROUTINE FACDEC64
+(  185) # 186 "facdec.F90"
+(  186) SUBROUTINE FACDEC                       &
+(  187) &           (KREP, PA, PMIN, KNBIT, KDEC)
+(  188) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  189) &                   FA_COM_DEFAULT_INIT,  &
+(  190) &                   NEW_FA_DEFAULT
+(  191) USE LFI_PRECISION
+(  192) IMPLICIT NONE
+(  193) ! Arguments
+(  194) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  195) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  196) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+(  197) INTEGER (KIND=JPLIKM)  KNBIT                                  ! IN   
+(  198) INTEGER (KIND=JPLIKM)  KDEC                                   !   OUT
+(  199) # 200 "facdec.F90"
+(  200) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  201) # 202 "facdec.F90"
+(  202) CALL FACDEC_MT                              &
+(  203) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  204) # 205 "facdec.F90"
+(  205) END SUBROUTINE FACDEC
+(  206) # 207 "facdec.F90"
+(  207) SUBROUTINE FACDEC_MT                        &
+(  208) &           (FA, KREP, PA, PMIN, KNBIT, KDEC)
+(  209) USE FA_MOD, ONLY : FA_COM
+(  210) USE LFI_PRECISION
+(  211) IMPLICIT NONE
+(  212) ! Arguments
+(  213) TYPE (FA_COM)          FA                                     ! INOUT
+(  214) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  215) REAL (KIND=JPDBLR)     PA                                     ! IN   
+(  216) REAL (KIND=JPDBLR)     PMIN                                   ! IN   
+(  217) INTEGER (KIND=JPLIKM)  KNBIT                                  ! IN   
+(  218) INTEGER (KIND=JPLIKM)  KDEC                                   !   OUT
+(  219) ! Local integers
+(  220) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  221) INTEGER (KIND=JPLIKB)  INBIT                                  ! IN   
+(  222) INTEGER (KIND=JPLIKB)  IDEC                                   !   OUT
+(  223) ! Convert arguments
+(  224) # 225 "facdec.F90"
+(  225) INBIT      = INT (     KNBIT, JPLIKB)
+(  226) # 227 "facdec.F90"
+(  227) CALL FACDEC_MT64                            &
+(  228) &           (FA, IREP, PA, PMIN, INBIT, IDEC)
+(  229) # 230 "facdec.F90"
+(  230) KREP       = INT (      IREP, JPLIKM)
+(  231) KDEC       = INT (      IDEC, JPLIKM)
+(  232) # 233 "facdec.F90"
+(  233) END SUBROUTINE FACDEC_MT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:47      page 11
+
+(  234) # 235 "facdec.F90"
+(  235) !INTF KREP            OUT 
+(  236) !INTF PA            IN    
+(  237) !INTF PMIN          IN    
+(  238) !INTF KNBIT         IN    
+(  239) !INTF KDEC            OUT 

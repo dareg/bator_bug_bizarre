@@ -1,0 +1,2358 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_write_source_data_cover.F90
+
+(    1) #ifdef RS6K
+(    2) @PROCESS NOOPTIMIZE
+(    3) #endif
+(    4) !     #########################
+(    5)       PROGRAM WRITE_SOURCE_DATA_COVER
+(    6) !     #########################
+(    7) !
+(    8) !!**** *WRITE_SOURCE_DATA_COVER* writes cover-field correspondance arrays in a file
+(    9) !!
+(   10) !!    PURPOSE
+(   11) !!    -------
+(   12) !!
+(   13) !!    METHOD
+(   14) !!    ------
+(   15) !!
+(   16) !!
+(   17) !!    EXTERNAL
+(   18) !!    --------
+(   19) !!
+(   20) !!    IMPLICIT ARGUMENTS
+(   21) !!    ------------------
+(   22) !!
+(   23) !!    REFERENCE
+(   24) !!    ---------
+(   25) !!
+(   26) !!    AUTHOR
+(   27) !!    ------
+(   28) !!
+(   29) !!    V. Masson        Meteo-France
+(   30) !!
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 3
+
+(   31) !!    MODIFICATION
+(   32) !!    ------------
+(   33) !!
+(   34) !!    Original    
+(   35) !----------------------------------------------------------------------------
+(   36) !
+(   37) !*    0.     DECLARATION
+(   38) !            -----------
+(   39) !
+(   40) IMPLICIT NONE
+(   41) !
+(   42) !*    0.1    Declaration of arguments
+(   43) !            ------------------------
+(   44) !
+(   45) !*    0.2    Declaration of local variables
+(   46) !            ------------------------------
+(   47) !
+(   48) INTEGER, PARAMETER             :: JPCOVER   =573 ! number of cover types
+(   49) INTEGER, PARAMETER             :: NVEGTYPE  =19  ! number of vegtypes
+(   50) INTEGER, PARAMETER             :: NECOCLIMAP=2   ! number of ecoclimap data files
+(   51) INTEGER, PARAMETER             :: NECO2_START_YEAR=2002
+(   52) INTEGER, PARAMETER             :: NECO2_END_YEAR=2006
+(   53) REAL*8,  PARAMETER             :: XUNDEF    =1.E20
+(   54) INTEGER, PARAMETER             :: NUNDEF    =1E9
+(   55) INTEGER, PARAMETER             :: NDATA_ROOF_LAYER=3
+(   56) INTEGER, PARAMETER             :: NDATA_ROAD_LAYER=3
+(   57) INTEGER, PARAMETER             :: NDATA_WALL_LAYER=3
+(   58) 
+(   59) 
+(   60) REAL*8, DIMENSION(JPCOVER) :: XDATA_TOWN, XDATA_NATURE, XDATA_SEA, XDATA_WATER,       &
+(   61)                                   XDATA_Z0_TOWN, XDATA_BLD_HEIGHT, XDATA_WALL_O_HOR,&
+(   62)                                   XDATA_BLD, XDATA_GARDEN,                          &
+(   63)                                   XDATA_ALB_ROOF, XDATA_ALB_ROAD, XDATA_ALB_WALL,   &
+(   64)                                   XDATA_EMIS_ROOF, XDATA_EMIS_ROAD, XDATA_EMIS_WALL,&
+(   65)                                   XDATA_H_TRAFFIC, XDATA_LE_TRAFFIC,                &
+(   66)                                   XDATA_H_INDUSTRY, XDATA_LE_INDUSTRY
+(   67) REAL*8, DIMENSION(JPCOVER,NDATA_ROOF_LAYER) :: XDATA_HC_ROOF, XDATA_TC_ROOF, XDATA_D_ROOF
+(   68) REAL*8, DIMENSION(JPCOVER,NDATA_ROAD_LAYER) :: XDATA_HC_ROAD, XDATA_TC_ROAD, XDATA_D_ROAD
+(   69) REAL*8, DIMENSION(JPCOVER,NDATA_WALL_LAYER) :: XDATA_HC_WALL, XDATA_TC_WALL, XDATA_D_WALL
+(   70) REAL*8, DIMENSION(JPCOVER,NVEGTYPE)    :: XDATA_VEGTYPE, XDATA_H_TREE, XDATA_WATSUP, XDATA_IRRIG, &
+(   71)                                         XDATA_ROOT_DEPTH, XDATA_GROUND_DEPTH, XDATA_DICE
+(   72) REAL*8, DIMENSION(JPCOVER,36,  NVEGTYPE) :: XDATA_LAI
+(   73) REAL*8, DIMENSION(JPCOVER,5*36,NVEGTYPE) :: XDATA_LAI_ALL_YEARS
+(   74) INTEGER*4, DIMENSION(JPCOVER,NVEGTYPE) :: IDATA_SEED_MONTH, IDATA_REAP_MONTH, &
+(   75)                                           IDATA_SEED_DAY  , IDATA_REAP_DAY  
+(   76) !
+(   77) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_VEG_NIR  ! near infra-red albedo
+(   78) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_VEG_VIS  ! visible albedo
+(   79) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_SOIL_NIR ! near infra-red albedo
+(   80) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_SOIL_VIS ! visible albedo
+(   81) !
+(   82) 
+(   83) INTEGER, DIMENSION(NECOCLIMAP) :: NBCOVERS, NBAN, NUNIT
+(   84) INTEGER         :: IECO         ! file being read
+(   85) INTEGER         :: ICOVER       ! cover being read
+(   86) INTEGER         :: JCOVER       ! loop counters on covers
+(   87) INTEGER         :: J            ! loop counters on decades
+(   88) INTEGER         :: JYEAR        ! loop counters on years
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 4
+
+(   89) INTEGER         :: JL           ! loop counters on layers
+(   90) INTEGER         :: JVEGTYPE     ! loop counters on vegtypes
+(   91) CHARACTER(LEN=28):: YFILE       ! file name
+(   92) CHARACTER(LEN=28):: YNAME       ! subroutine name
+(   93) CHARACTER(LEN=30)::YMASK
+(   94) INTEGER         :: IREC
+(   95) INTEGER         :: IUNIT
+(   96) REAL*8, DIMENSION(JPCOVER) :: ZSEED
+(   97) REAL*8, DIMENSION(36) :: ZLAI
+(   98) REAL*8                :: ZEXP
+(   99) !
+(  100) INTEGER         :: IOUT
+(  101) !-------------------------------------------------------------------------------
+(  102) !
+(  103) !*    1.0    Open binary files
+(  104) !            -----------------
+(  105) !
+(  106) !
+(  107) NUNIT(1)=11
+(  108) OPEN(NUNIT(1),FILE='ecoclimapI_covers_param.bin',FORM='UNFORMATTED',ACCESS='DIRECT',recl=20*8)
+(  109) NBCOVERS(1) = 255
+(  110) NBAN(1) = 1
+(  111) !
+(  112) NUNIT(2)=12
+(  113) OPEN(NUNIT(2),FILE='ecoclimapII_eu_covers_param.bin',FORM='UNFORMATTED',ACCESS='DIRECT',recl=20*8)
+(  114) NBCOVERS(2) = 273
+(  115) NBAN(2) = 5
+(  116) !
+(  117) !-------------------------------------------------------------------------------
+(  118) !
+(  119) !*    1.1    Open output fortran file
+(  120) !            ------------------------
+(  121) !
+(  122) OPEN(20,FILE='test/default_data_cover.F90',FORM='FORMATTED')
+(  123) !
+(  124) !------------------------------------------------------------------------------
+(  125) !
+(  126) !
+(  127) !*    2.0    Initializes data
+(  128) !            ----------------
+(  129) !
+(  130) XDATA_TOWN        = 0.
+(  131) XDATA_NATURE      = 0.
+(  132) XDATA_SEA         = 0.
+(  133) XDATA_WATER       = 0.
+(  134) XDATA_Z0_TOWN     = XUNDEF
+(  135) XDATA_BLD_HEIGHT  = XUNDEF
+(  136) XDATA_WALL_O_HOR  = XUNDEF
+(  137) XDATA_BLD         = XUNDEF
+(  138) XDATA_GARDEN      = 0.
+(  139) XDATA_ALB_ROOF    = XUNDEF
+(  140) XDATA_ALB_ROAD    = XUNDEF
+(  141) XDATA_ALB_WALL    = XUNDEF
+(  142) XDATA_EMIS_ROOF   = XUNDEF
+(  143) XDATA_EMIS_ROAD   = XUNDEF
+(  144) XDATA_EMIS_WALL   = XUNDEF
+(  145) XDATA_HC_ROOF     = XUNDEF
+(  146) XDATA_HC_ROAD     = XUNDEF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 5
+
+(  147) XDATA_HC_WALL     = XUNDEF
+(  148) XDATA_TC_ROOF     = XUNDEF
+(  149) XDATA_TC_ROAD     = XUNDEF
+(  150) XDATA_TC_WALL     = XUNDEF
+(  151) XDATA_D_ROOF      = XUNDEF
+(  152) XDATA_D_ROAD      = XUNDEF
+(  153) XDATA_D_WALL      = XUNDEF
+(  154) XDATA_H_TRAFFIC   = XUNDEF
+(  155) XDATA_LE_TRAFFIC  = XUNDEF
+(  156) XDATA_H_INDUSTRY  = XUNDEF
+(  157) XDATA_LE_INDUSTRY = XUNDEF
+(  158) !
+(  159) XDATA_VEGTYPE(:,:)      = 0.
+(  160) XDATA_H_TREE(:,:)       = XUNDEF
+(  161) XDATA_WATSUP(:,:)       = XUNDEF
+(  162) XDATA_IRRIG(:,:)        = XUNDEF
+(  163) XDATA_ROOT_DEPTH(:,:)   = XUNDEF
+(  164) XDATA_GROUND_DEPTH(:,:) = XUNDEF
+(  165) XDATA_DICE(:,:)         = XUNDEF
+(  166) 
+(  167) XDATA_LAI(:,:,:) = XUNDEF
+(  168) XDATA_LAI_ALL_YEARS(:,:,:) = XUNDEF
+(  169) IDATA_SEED_MONTH(:,:) = 1E9
+(  170) IDATA_SEED_DAY  (:,:) = 1E9
+(  171) IDATA_REAP_MONTH(:,:) = 1E9
+(  172) IDATA_REAP_DAY  (:,:) = 1E9
+(  173) 
+(  174) XDATA_ALB_VEG_NIR  = XUNDEF
+(  175) XDATA_ALB_VEG_VIS  = XUNDEF
+(  176) XDATA_ALB_SOIL_NIR = XUNDEF
+(  177) XDATA_ALB_SOIL_VIS = XUNDEF
+(  178) 
+(  179) !------------------------------------------------------------------------------
+(  180) !
+(  181) !
+(  182) !*    3.0    Read data in binary files
+(  183) !            -------------------------
+(  184) !
+(  185) DO IECO=1,NECOCLIMAP
+(  186)  IUNIT=NUNIT(IECO)
+(  187)  IREC = 0
+(  188)  DO JCOVER=1,NBCOVERS(IECO)
+(  189)   IREC = IREC+1
+(  190)   READ(IUNIT,REC=IREC) ICOVER
+(  191)   IREC = IREC+1
+(  192)   READ(IUNIT,REC=IREC) XDATA_TOWN(ICOVER),XDATA_NATURE(ICOVER),XDATA_WATER(ICOVER),XDATA_SEA(ICOVER)
+(  193) 
+(  194)   IF (XDATA_NATURE(ICOVER).GT.0.) CALL READ_NATURE
+(  195) 
+(  196)   IF (XDATA_TOWN(ICOVER).NE.0.) THEN
+(  197)     !main town parameters
+(  198)     IREC=IREC+1
+(  199)     READ(IUNIT,REC=IREC) XDATA_Z0_TOWN(ICOVER),XDATA_BLD_HEIGHT(ICOVER),XDATA_WALL_O_HOR(ICOVER),&
+(  200)         XDATA_BLD(ICOVER),XDATA_GARDEN(ICOVER)
+(  201)     !town albedos
+(  202)     IREC=IREC+1
+(  203)     READ(IUNIT,rec=IREC) XDATA_ALB_ROOF(ICOVER),XDATA_ALB_ROAD(ICOVER),XDATA_ALB_WALL(ICOVER)
+(  204)     !town emissivities
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 6
+
+(  205)     IREC=IREC+1
+(  206)     READ(IUNIT,rec=IREC) XDATA_EMIS_ROOF(ICOVER),XDATA_EMIS_ROAD(ICOVER),XDATA_EMIS_WALL(ICOVER)
+(  207)     !town heat capacity
+(  208)     IREC=IREC+1
+(  209)     READ(IUNIT,rec=IREC) XDATA_HC_ROOF(ICOVER,:)
+(  210)     IREC=IREC+1
+(  211)     READ(IUNIT,rec=IREC) XDATA_HC_ROAD(ICOVER,:)
+(  212)     IREC=IREC+1
+(  213)     READ(IUNIT,rec=IREC) XDATA_HC_WALL(ICOVER,:)
+(  214)     !town thermal conductivity
+(  215)     IREC=IREC+1
+(  216)     READ(IUNIT,rec=IREC) XDATA_TC_ROOF(ICOVER,:)
+(  217)     IREC=IREC+1
+(  218)     READ(IUNIT,rec=IREC) XDATA_TC_ROAD(ICOVER,:)
+(  219)     IREC=IREC+1
+(  220)     READ(IUNIT,rec=IREC) XDATA_TC_WALL(ICOVER,:)
+(  221)     !town depths
+(  222)     IREC=IREC+1
+(  223)     READ(IUNIT,rec=IREC) XDATA_D_ROOF(ICOVER,:)
+(  224)     IREC=IREC+1
+(  225)     READ(IUNIT,rec=IREC) XDATA_D_ROAD(ICOVER,:)
+(  226)     IREC=IREC+1
+(  227)     READ(IUNIT,rec=IREC) XDATA_D_WALL(ICOVER,:)
+(  228)     !traffic and industry fluxes
+(  229)     IREC=IREC+1
+(  230)     READ(IUNIT,rec=IREC) XDATA_H_TRAFFIC(ICOVER),XDATA_LE_TRAFFIC(ICOVER),XDATA_H_INDUSTRY(ICOVER),XDATA_LE_INDUSTRY(ICOVER)
+(  231)     IF (XDATA_GARDEN(ICOVER).NE.0. .AND. XDATA_NATURE(ICOVER).EQ.0.) CALL READ_NATURE
+(  232)   ENDIF
+(  233) 
+(  234)  END DO
+(  235) END DO
+(  236) !
+(  237) !------------------------------------------------------------------------------
+(  238) !
+(  239) !
+(  240) !*    4.0    Writes the data in the output fortran file
+(  241) !            ------------------------------------------
+(  242) !
+(  243) CALL WRITE_HEADER('DEFAULT_DATA_COVER')
+(  244) WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK(''DEFAULT_DATA_COVER'',0,ZHOOK_HANDLE) '  
+(  245) WRITE(20,FMT='(A)')'!'
+(  246) !
+(  247) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_TOWN          ',XDATA_TOWN(:))
+(  248) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_NATURE        ',XDATA_NATURE(:))
+(  249) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_WATER         ',XDATA_WATER(:))
+(  250) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_SEA           ',XDATA_SEA(:))
+(  251) !
+(  252) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.3','XDATA_Z0_TOWN       ',XDATA_Z0_TOWN(:))
+(  253) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_BLD_HEIGHT    ',XDATA_BLD_HEIGHT(:))
+(  254) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_WALL_O_HOR    ',XDATA_WALL_O_HOR(:))
+(  255) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_BLD           ',XDATA_BLD(:))
+(  256) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_GARDEN        ',XDATA_GARDEN(:))
+(  257) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_ROOF      ',XDATA_ALB_ROOF(:))
+(  258) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_ROAD      ',XDATA_ALB_ROAD(:))
+(  259) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_WALL      ',XDATA_ALB_WALL(:))
+(  260) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_ROOF     ',XDATA_EMIS_ROOF(:))
+(  261) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_ROAD     ',XDATA_EMIS_ROAD(:))
+(  262) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_WALL     ',XDATA_EMIS_WALL(:))
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 7
+
+(  263) !
+(  264) ZEXP = 1.E-6
+(  265) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  266)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_ROOF       ',XDATA_HC_ROOF(:,JL),KIND1=JL, &
+(  267)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  268) END DO
+(  269) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  270)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_ROOF       ',XDATA_TC_ROOF(:,JL),KIND1=JL)
+(  271) END DO
+(  272) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  273)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_ROOF        ',XDATA_D_ROOF(:,JL),KIND1=JL)
+(  274) END DO
+(  275) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  276)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_ROAD       ',XDATA_HC_ROAD(:,JL),KIND1=JL, &
+(  277)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  278) END DO
+(  279) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  280)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_ROAD       ',XDATA_TC_ROAD(:,JL),KIND1=JL)
+(  281) END DO
+(  282) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  283)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_ROAD        ',XDATA_D_ROAD(:,JL),KIND1=JL)
+(  284) END DO
+(  285) DO JL=1,SIZE(XDATA_HC_WALL,2)
+(  286)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_WALL       ',XDATA_HC_WALL(:,JL),KIND1=JL, &
+(  287)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  288) END DO
+(  289) DO JL=1,SIZE(XDATA_HC_WALL,2)
+(  290)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_WALL       ',XDATA_TC_WALL(:,JL),KIND1=JL)
+(  291) END DO
+(  292) DO JL=1,SIZE(XDATA_HC_WALL,2)
+(  293)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_WALL        ',XDATA_D_WALL(:,JL),KIND1=JL)
+(  294) END DO
+(  295) !
+(  296) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_H_TRAFFIC     ',XDATA_H_TRAFFIC(:))
+(  297) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_LE_TRAFFIC    ',XDATA_LE_TRAFFIC(:))
+(  298) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_H_INDUSTRY    ',XDATA_H_INDUSTRY(:))
+(  299) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_LE_INDUSTRY   ',XDATA_LE_INDUSTRY(:))
+(  300) !
+(  301) DO JL=1,NVEGTYPE
+(  302)   CALL WRITE_SOURCE_DATA_A(IUNIT,'XDATA_NATURE>0.',4,'F4.2','XDATA_VEGTYPE       ',XDATA_VEGTYPE(:,JL),KIND1=JL)
+(  303) END DO
+(  304) DO JL=1,NVEGTYPE
+(  305)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  306)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,5,'F5.0','XDATA_H_TREE        ',XDATA_H_TREE(:,JL),KIND1=JL)
+(  307) END DO
+(  308) DO JL=1,NVEGTYPE
+(  309)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  310)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.0','XDATA_WATSUP        ',XDATA_WATSUP(:,JL),KIND1=JL)
+(  311) END DO
+(  312) DO JL=1,NVEGTYPE
+(  313)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  314)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_IRRIG         ',XDATA_IRRIG(:,JL),KIND1=JL)
+(  315) END DO
+(  316) DO JL=1,NVEGTYPE
+(  317)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  318)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_ROOT_DEPTH    ',XDATA_ROOT_DEPTH(:,JL),KIND1=JL)
+(  319) END DO
+(  320) DO JL=1,NVEGTYPE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 8
+
+(  321)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  322)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_GROUND_DEPTH  ',XDATA_GROUND_DEPTH(:,JL),KIND1=JL)
+(  323) END DO
+(  324) DO JL=1,NVEGTYPE
+(  325)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  326)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_DICE          ',XDATA_DICE(:,JL),KIND1=JL)
+(  327) END DO
+(  328) !
+(  329) !
+(  330) DO JL=1,NVEGTYPE
+(  331)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  332)   ZSEED(:) = FLOAT(IDATA_SEED_DAY(:,JL))
+(  333)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_SEED          ',ZSEED,KIND1=JL,HTYPE='%TDATE%DAY')
+(  334) END DO
+(  335) DO JL=1,NVEGTYPE
+(  336)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  337)   ZSEED(:) = FLOAT(IDATA_SEED_MONTH(:,JL))
+(  338)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_SEED          ',ZSEED,KIND1=JL,HTYPE='%TDATE%MONTH')
+(  339) END DO
+(  340) DO JL=1,NVEGTYPE
+(  341)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  342)   ZSEED(:) = FLOAT(IDATA_REAP_DAY(:,JL))
+(  343)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_REAP          ',ZSEED,KIND1=JL,HTYPE='%TDATE%DAY')
+(  344) END DO
+(  345) DO JL=1,NVEGTYPE
+(  346)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  347)   ZSEED(:) = FLOAT(IDATA_REAP_MONTH(:,JL))
+(  348)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_REAP          ',ZSEED,KIND1=JL,HTYPE='%TDATE%MONTH')
+(  349) END DO
+(  350) !
+(  351) WRITE(20,FMT='(A)')'!'
+(  352) WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK(''DEFAULT_DATA_COVER'',1,ZHOOK_HANDLE) '  
+(  353) WRITE(20,FMT='(A)')'!'
+(  354) WRITE(20,FMT='(A,A)') 'END SUBROUTINE ','DEFAULT_DATA_COVER'
+(  355) !
+(  356) CLOSE(20)
+(  357) !
+(  358) !
+(  359) !------------------------------------------------------------------------------
+(  360) !
+(  361) !
+(  362) !*    5.0    Writes the LAI for ecoclimap1 in one separate fortran file
+(  363) !            ------------------------------------------
+(  364) !
+(  365) YFILE = 'test/default_lai_eco1.F90'
+(  366) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  367) !
+(  368) DO JVEGTYPE=1,NVEGTYPE
+(  369)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_LAI_ECO1_',JVEGTYPE
+(  370)   IF(JVEGTYPE>1)THEN
+(  371)     WRITE(20,FMT='(A)') '!'
+(  372)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  373)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  374)     WRITE(20,FMT='(A)') '!'
+(  375)   ENDIF
+(  376)   CALL WRITE_HEADER(YNAME)
+(  377)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  378)   WRITE(20,FMT='(A)')'!'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 9
+
+(  379) 
+(  380)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(1:255,',JVEGTYPE,')>0.'
+(  381)   DO JL=1,SIZE(XDATA_LAI,2)
+(  382)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,3,'F3.1','XDATA_LAI           ',XDATA_LAI(:,JL,JVEGTYPE),&
+(  383)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  384)   END DO
+(  385)   WRITE(20,FMT='(A)')'!'
+(  386)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  387)   WRITE(20,FMT='(A)')'!'
+(  388)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  389) END DO
+(  390) !
+(  391) CLOSE(20)
+(  392) !------------------------------------------------------------------------------
+(  393) !
+(  394) !
+(  395) !*    6.0    Writes the LAI for all ecoclimap2 years in the separate fortran files
+(  396) !            ------------------------------------------
+(  397) !
+(  398) YFILE = 'test/default_lai_eco2.F90'
+(  399) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  400) !
+(  401) DO JVEGTYPE=1,NVEGTYPE
+(  402)   JL=0
+(  403)   DO JYEAR=1,NBAN(2)
+(  404)     WRITE(YNAME,FMT='(A,I4.4,A,I2.2)') 'DEFAULT_LAI_ECO2_Y',NECO2_START_YEAR-1+JYEAR,'_',JVEGTYPE
+(  405)     IF(JVEGTYPE>1.OR.JYEAR>1)THEN
+(  406)       WRITE(20,FMT='(A)') '!'
+(  407)       WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  408)       WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  409)       WRITE(20,FMT='(A)') '!'
+(  410)     ENDIF    
+(  411)     CALL WRITE_HEADER(YNAME)
+(  412)     WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  413)     WRITE(20,FMT='(A)')'!'
+(  414)     
+(  415)     WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(301:573,',JVEGTYPE,')>0.'
+(  416) 
+(  417)     DO J=1,SIZE(XDATA_LAI_ALL_YEARS,2)/NBAN(2)
+(  418)       JL=JL+1
+(  419)       CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,3,'F3.1','XDATA_LAI_ALL_YEARS ',XDATA_LAI_ALL_YEARS(:,JL,JVEGTYPE),&
+(  420)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  421)     END DO
+(  422)     WRITE(20,FMT='(A)')'!'
+(  423)     WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  424)     WRITE(20,FMT='(A)')'!'    
+(  425)     WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  426)   END DO
+(  427) END DO
+(  428) 
+(  429) CLOSE(20)
+(  430) !
+(  431) !
+(  432) !*    7.0    Writes the albedo veg for ecoclimap1 in one separate fortran file
+(  433) !            ------------------------------------------
+(  434) !
+(  435) YFILE = 'test/default_alb_eco1.F90'
+(  436) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 10
+
+(  437) !
+(  438) WRITE(20,FMT='(A)') '!'
+(  439) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  440) WRITE(20,FMT='(A)') '!Soil albedo (the same for all 19 vegtypes)'
+(  441) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  442) WRITE(20,FMT='(A)') '!'
+(  443) !
+(  444) DO JVEGTYPE=1,1
+(  445)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_SOIL_ECO1'!_',JVEGTYPE
+(  446)   CALL WRITE_HEADER(YNAME)
+(  447)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  448)   WRITE(20,FMT='(A)')'!'
+(  449) 
+(  450)   WRITE(YMASK,FMT='(A,I2,A)') ' '
+(  451)   DO JL=1,SIZE(XDATA_ALB_SOIL_NIR,2)
+(  452)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_NIR   ',XDATA_ALB_SOIL_NIR(:,JL,JVEGTYPE),&
+(  453)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)                   
+(  454)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_VIS   ',XDATA_ALB_SOIL_VIS(:,JL,JVEGTYPE),&
+(  455)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  456)   END DO
+(  457)   WRITE(20,FMT='(A)')'!'
+(  458)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  459)   WRITE(20,FMT='(A)')'!'
+(  460)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  461) END DO
+(  462) !
+(  463) WRITE(20,FMT='(A)') '!'
+(  464) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  465) WRITE(20,FMT='(A)') '!Vegetation albedo for all 19 vegtypes'
+(  466) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  467) WRITE(20,FMT='(A)') '!'
+(  468) !
+(  469) DO JVEGTYPE=1,NVEGTYPE
+(  470)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_VEG_ECO1_',JVEGTYPE
+(  471)   IF(JVEGTYPE>1)THEN
+(  472)     WRITE(20,FMT='(A)') '!'
+(  473)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  474)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  475)     WRITE(20,FMT='(A)') '!'
+(  476)   ENDIF
+(  477)   CALL WRITE_HEADER(YNAME)
+(  478)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  479)   WRITE(20,FMT='(A)')'!'
+(  480) 
+(  481)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(1:255,',JVEGTYPE,')>0.'
+(  482)   DO JL=1,SIZE(XDATA_ALB_VEG_NIR,2)
+(  483)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_NIR   ',XDATA_ALB_VEG_NIR(:,JL,JVEGTYPE),&
+(  484)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)                   
+(  485)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_VIS   ',XDATA_ALB_VEG_VIS(:,JL,JVEGTYPE),&
+(  486)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  487)   END DO
+(  488)   WRITE(20,FMT='(A)')'!'
+(  489)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  490)   WRITE(20,FMT='(A)')'!'
+(  491)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  492) END DO
+(  493) !
+(  494) CLOSE(20)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 11
+
+(  495) !
+(  496) !
+(  497) !*    8.0    Writes the albedo veg for ecoclimap1 in one separate fortran file
+(  498) !            ------------------------------------------
+(  499) !
+(  500) YFILE = 'test/default_alb_eco2.F90'
+(  501) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  502) !
+(  503) WRITE(20,FMT='(A)') '!'
+(  504) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  505) WRITE(20,FMT='(A)') '!Soil albedo (the same for all 19 vegtypes)'
+(  506) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  507) WRITE(20,FMT='(A)') '!'
+(  508) !
+(  509) DO JVEGTYPE=1,1
+(  510)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_SOIL_ECO2'!_',JVEGTYPE
+(  511)   CALL WRITE_HEADER(YNAME)
+(  512)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  513)   WRITE(20,FMT='(A)')'!'
+(  514) 
+(  515)   WRITE(YMASK,FMT='(A,I2,A)') ' '
+(  516)   DO JL=1,SIZE(XDATA_ALB_SOIL_NIR,2)
+(  517)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_NIR   ',XDATA_ALB_SOIL_NIR(:,JL,JVEGTYPE),&
+(  518)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)                   
+(  519)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_VIS   ',XDATA_ALB_SOIL_VIS(:,JL,JVEGTYPE),&
+(  520)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  521)   END DO
+(  522)   WRITE(20,FMT='(A)')'!'
+(  523)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  524)   WRITE(20,FMT='(A)')'!'
+(  525)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  526) END DO
+(  527) !
+(  528) WRITE(20,FMT='(A)') '!'
+(  529) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  530) WRITE(20,FMT='(A)') '!Vegetation albedo for all 19 vegtypes'
+(  531) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  532) WRITE(20,FMT='(A)') '!'
+(  533) !
+(  534) DO JVEGTYPE=1,NVEGTYPE
+(  535)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_VEG_ECO2_',JVEGTYPE
+(  536)   IF(JVEGTYPE>1)THEN
+(  537)     WRITE(20,FMT='(A)') '!'
+(  538)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  539)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  540)     WRITE(20,FMT='(A)') '!'
+(  541)   ENDIF
+(  542)   CALL WRITE_HEADER(YNAME)
+(  543)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  544)   WRITE(20,FMT='(A)')'!'
+(  545) 
+(  546)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(301:573,',JVEGTYPE,')>0.'
+(  547)   DO JL=1,SIZE(XDATA_ALB_VEG_NIR,2)
+(  548)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_NIR   ',XDATA_ALB_VEG_NIR(:,JL,JVEGTYPE),&
+(  549)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)                   
+(  550)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_VIS   ',XDATA_ALB_VEG_VIS(:,JL,JVEGTYPE),&
+(  551)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  552)   END DO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 12
+
+(  553)   WRITE(20,FMT='(A)')'!'
+(  554)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  555)   WRITE(20,FMT='(A)')'!'
+(  556)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  557) END DO
+(  558) !
+(  559) CLOSE(20)
+(  560) !
+(  561) !------------------------------------------------------------------------------
+(  562) CONTAINS
+(  563) !------------------------------------------------------------------------------
+(  564) SUBROUTINE READ_NATURE
+(  565) !
+(  566) INTEGER               :: JVEGTYPE, JLAI
+(  567) !
+(  568) !
+(  569) !fractions of vegtypes
+(  570) IREC=IREC+1
+(  571) READ(IUNIT,REC=IREC) XDATA_VEGTYPE(ICOVER,:)
+(  572) 
+(  573) !albedos for the soil
+(  574) IF (IECO<=2 .AND. XDATA_NATURE(ICOVER)/=0.) THEN
+(  575)   IREC=IREC+1
+(  576)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,1:12,1)
+(  577)   IREC=IREC+1
+(  578)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,13:24,1)
+(  579)   IREC=IREC+1
+(  580)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,25:36,1)
+(  581)   IREC=IREC+1
+(  582)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,1:12,1)
+(  583)   IREC=IREC+1
+(  584)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,13:24,1)
+(  585)   IREC=IREC+1
+(  586)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,25:36,1)
+(  587)   DO JVEGTYPE=2,NVEGTYPE
+(  588)     XDATA_ALB_SOIL_NIR(ICOVER,:,JVEGTYPE) = XDATA_ALB_SOIL_NIR(ICOVER,:,1)
+(  589)     XDATA_ALB_SOIL_VIS(ICOVER,:,JVEGTYPE) = XDATA_ALB_SOIL_VIS(ICOVER,:,1)
+(  590)   ENDDO
+(  591) ENDIF
+(  592) 
+(  593) DO JVEGTYPE=1,NVEGTYPE
+(  594)   !not null fraction of vegtype
+(  595)   IF (XDATA_VEGTYPE(ICOVER,JVEGTYPE).NE.0.) THEN
+(  596)     !root and soil depths
+(  597)     IREC=IREC+1      
+(  598)     READ(IUNIT,REC=IREC) XDATA_ROOT_DEPTH(ICOVER,JVEGTYPE), XDATA_GROUND_DEPTH(ICOVER,JVEGTYPE), XDATA_DICE(ICOVER,JVEGTYPE)
+(  599)     IF (JVEGTYPE.GT.3) THEN
+(  600)       !LAI
+(  601)       DO JLAI=1,NBAN(IECO)*3
+(  602)         IREC=IREC+1
+(  603)         IF (IECO==1) THEN
+(  604)           READ(IUNIT,REC=IREC) XDATA_LAI(ICOVER,(JLAI-1)*12+1:JLAI*12,JVEGTYPE)
+(  605)         ELSEIF (IECO==2) THEN
+(  606)           READ(IUNIT,REC=IREC) XDATA_LAI_ALL_YEARS(ICOVER,(JLAI-1)*12+1:JLAI*12,JVEGTYPE)
+(  607)         ENDIF
+(  608)       ENDDO
+(  609)       !Heights of trees
+(  610)       IF ((JVEGTYPE < 7) .OR. (JVEGTYPE > 12 .AND. JVEGTYPE /= 18)) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 13
+
+(  611)         IREC=IREC+1
+(  612)         READ(IUNIT,REC=IREC) XDATA_H_TREE(ICOVER,JVEGTYPE)
+(  613)       ENDIF
+(  614) 
+(  615)       !albedos for the vegetation
+(  616)       IF (IECO<=2 .AND. XDATA_NATURE(ICOVER)/=0.) THEN
+(  617)         IREC=IREC+1
+(  618)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,1:12,JVEGTYPE)
+(  619)         IREC=IREC+1
+(  620)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,13:24,JVEGTYPE)
+(  621)         IREC=IREC+1
+(  622)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,25:36,JVEGTYPE)
+(  623)         IREC=IREC+1
+(  624)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,1:12,JVEGTYPE)
+(  625)         IREC=IREC+1
+(  626)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,13:24,JVEGTYPE)
+(  627)         IREC=IREC+1
+(  628)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,25:36,JVEGTYPE)
+(  629)       ENDIF
+(  630)       
+(  631)     ELSE
+(  632)       !LAI for bare areas
+(  633)       IF (IECO==1) THEN
+(  634)         XDATA_LAI(ICOVER,:,JVEGTYPE) = 0.
+(  635)       ELSEIF (IECO==2) THEN
+(  636)         XDATA_LAI_ALL_YEARS(ICOVER,:,JVEGTYPE) = 0.
+(  637)       ENDIF
+(  638)       XDATA_ALB_VEG_NIR(ICOVER,:,JVEGTYPE) = 0.3
+(  639)       XDATA_ALB_VEG_VIS(ICOVER,:,JVEGTYPE) = 0.1      
+(  640)     ENDIF
+(  641)     !irrigation
+(  642)     IF (JVEGTYPE.EQ.8 .AND. IECO.EQ.1 .OR. JVEGTYPE.EQ.9 .AND. IECO.EQ.2) THEN
+(  643)       IREC=IREC+1
+(  644)       READ(IUNIT,REC=IREC) IDATA_SEED_MONTH(ICOVER,JVEGTYPE), IDATA_SEED_DAY(ICOVER,JVEGTYPE), &
+(  645)         IDATA_REAP_MONTH(ICOVER,JVEGTYPE), IDATA_REAP_DAY(ICOVER,JVEGTYPE), &
+(  646)         XDATA_WATSUP(ICOVER,JVEGTYPE),XDATA_IRRIG(ICOVER,JVEGTYPE)
+(  647)     ENDIF
+(  648)   ENDIF
+(  649) ENDDO
+(  650) !
+(  651) END SUBROUTINE READ_NATURE
+(  652) !------------------------------------------------------------------------------
+(  653) SUBROUTINE WRITE_SOURCE_DATA_A(KUNIT,HMASK,KFMT,HFMT,HFIELD,PFIELD,KIND1,KIND2,KEXP,KCOV1,KCOV2)
+(  654) !
+(  655) INTEGER,                  INTENT(IN) :: KUNIT
+(  656) CHARACTER(LEN=*),         INTENT(IN) :: HMASK   ! where field is defined
+(  657) INTEGER,                  INTENT(IN) :: KFMT
+(  658) CHARACTER(LEN=4),         INTENT(IN) :: HFMT
+(  659) CHARACTER(LEN=20),        INTENT(IN) :: HFIELD
+(  660) REAL*8, DIMENSION(JPCOVER), INTENT(IN) :: PFIELD
+(  661) INTEGER, OPTIONAL,        INTENT(IN) :: KIND1
+(  662) INTEGER, OPTIONAL,        INTENT(IN) :: KIND2
+(  663) INTEGER, OPTIONAL,        INTENT(IN) :: KEXP
+(  664) INTEGER, OPTIONAL,        INTENT(IN) :: KCOV1  ! first cover index
+(  665) INTEGER, OPTIONAL,        INTENT(IN) :: KCOV2  ! last  cover index
+(  666) 
+(  667) CHARACTER(LEN=90) :: YFIELD 
+(  668) CHARACTER(LEN=120):: YLINE 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 14
+
+(  669) CHARACTER(LEN=4)  :: YFMT
+(  670) CHARACTER(LEN=120) :: YFMT_LINE
+(  671) INTEGER           :: ICOVER, JCOVER, JI
+(  672) INTEGER           :: ICOVER_DEB, ICOVER_FIN
+(  673) LOGICAL           :: LUNIFORM
+(  674) REAL*8            :: ZFIELD
+(  675) !
+(  676) IF (PRESENT(KCOV1) .AND. PRESENT(KCOV2)) THEN
+(  677)   ICOVER_DEB=KCOV1
+(  678)   ICOVER_FIN=KCOV2
+(  679)   WRITE(YFIELD,FMT='(A,A1,I3,A1,I3)') TRIM(HFIELD), '(',KCOV1,':',KCOV2
+(  680) ELSE
+(  681)   ICOVER_DEB=1
+(  682)   ICOVER_FIN=JPCOVER
+(  683)   YFIELD = TRIM(HFIELD) // '(:'
+(  684) END IF
+(  685) IF (PRESENT(KIND1)) THEN
+(  686)   IF (KIND1<10) THEN
+(  687)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),',  ',KIND1
+(  688)   ELSEIF (KIND1<100) THEN
+(  689)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),', ',KIND1
+(  690)   ELSE
+(  691)     WRITE(YFIELD,FMT='(A,A,I3)') TRIM(YFIELD),',',KIND1
+(  692)   END IF
+(  693) END IF
+(  694) IF (PRESENT(KIND2)) THEN
+(  695)   IF (KIND2<10) THEN
+(  696)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),', ',KIND2
+(  697)   ELSE
+(  698)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),',',KIND2
+(  699)   END IF
+(  700) END IF
+(  701) !
+(  702) CALL UNIFORM_FIELD(PFIELD,LUNIFORM,ZFIELD)
+(  703) IF (LUNIFORM) THEN
+(  704)   IF (ZFIELD==XUNDEF) RETURN
+(  705)   WRITE(YFMT_LINE,FMT='(A,A4,A1)' ) '(A,A4,',HFMT,')'
+(  706)   WRITE(YFIELD,FMT=YFMT_LINE) TRIM(YFIELD),') = ',ZFIELD
+(  707)   IF (HMASK/='ALL') YFIELD = 'WHERE('//TRIM(HMASK)//') '//YFIELD
+(  708)   WRITE(20,FMT='(A)') YFIELD
+(  709)   YLINE  = '!-------------------------------------------------------------------'
+(  710)   WRITE(20,FMT='(A)') YLINE
+(  711)   RETURN
+(  712) END IF
+(  713) 
+(  714) 
+(  715) YFIELD = TRIM(YFIELD)//') = (/          &'
+(  716) 
+(  717) WRITE(20,FMT='(A)') TRIM(YFIELD)
+(  718) 
+(  719) !
+(  720) ICOVER=ICOVER_DEB
+(  721) DO JCOVER=ICOVER_DEB/10+1,ICOVER_FIN/10+1
+(  722)   YLINE=' '
+(  723)   DO JI=1,10
+(  724)     IF (ICOVER <= MIN(ICOVER_FIN,JPCOVER)) THEN
+(  725)       IF (JI>=2) YFMT_LINE = TRIM(YFMT_LINE)//','
+(  726)       IF (PFIELD(ICOVER)/=XUNDEF) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 15
+
+(  727)         IF (.NOT. PRESENT(KEXP)) THEN
+(  728)           WRITE(YFMT_LINE,FMT='(A4,I1.1,A1,A4,A1)' ) '(A,A',7-KFMT,',',HFMT,')'
+(  729)           WRITE(YLINE,FMT=YFMT_LINE) TRIM(YLINE),'     ',PFIELD(ICOVER)
+(  730)         ELSE
+(  731)           WRITE(YFMT_LINE,FMT='(A4,I1.1,A1,A4,A7)' ) '(A,A',5-KFMT,',',HFMT,',A1,I1)'
+(  732)           WRITE(YLINE,FMT=YFMT_LINE) TRIM(YLINE),' ',PFIELD(ICOVER)/10**KEXP,'E',KEXP
+(  733)         END IF
+(  734)       ELSE
+(  735)         YLINE = TRIM(YLINE)//' XUNDEF'
+(  736)       END IF
+(  737)       IF (ICOVER<MIN(ICOVER_FIN,JPCOVER)) YLINE=TRIM(YLINE)//','
+(  738)       ICOVER = ICOVER + 1
+(  739)     END IF
+(  740)   END DO
+(  741)   YLINE=TRIM(YLINE)//' &'
+(  742)   WRITE(20,FMT='(A)') TRIM(YLINE)
+(  743) END DO
+(  744) 
+(  745) YFIELD = '         /)'
+(  746) WRITE(20,FMT='(A)') TRIM(YFIELD)
+(  747) YLINE  = '!-------------------------------------------------------------------'
+(  748) WRITE(20,FMT='(A)') YLINE
+(  749) !
+(  750) END SUBROUTINE WRITE_SOURCE_DATA_A
+(  751) !
+(  752) !------------------------------------------------------------------------------
+(  753) SUBROUTINE WRITE_SOURCE_DATA_B(KUNIT,HMASK,KFMT,HFMT,HFIELD,PFIELD,KIND1,KIND2,PEXP,HEXP,HTYPE,LFREQUENT)
+(  754) !
+(  755) INTEGER,                  INTENT(IN) :: KUNIT
+(  756) CHARACTER(LEN=*),         INTENT(IN) :: HMASK   ! where field is defined
+(  757) INTEGER,                  INTENT(IN) :: KFMT
+(  758) CHARACTER(LEN=4),         INTENT(IN) :: HFMT
+(  759) CHARACTER(LEN=20),        INTENT(IN) :: HFIELD
+(  760) REAL*8, DIMENSION(JPCOVER), INTENT(IN) :: PFIELD
+(  761) INTEGER, OPTIONAL,        INTENT(IN) :: KIND1
+(  762) INTEGER, OPTIONAL,        INTENT(IN) :: KIND2
+(  763) REAL*8,  OPTIONAL,        INTENT(IN) :: PEXP
+(  764) CHARACTER(LEN=*), OPTIONAL,  INTENT(IN) :: HEXP   ! formula to add to the right of the values
+(  765) CHARACTER(LEN=*), OPTIONAL,  INTENT(IN) :: HTYPE  ! characters to add to the right of the field def.
+(  766) LOGICAL,          OPTIONAL,  INTENT(IN) :: LFREQUENT ! checks if a value is more frequent than others
+(  767) 
+(  768) REAL*8            :: ZFIELD
+(  769) CHARACTER(LEN=40) :: YFIELD1
+(  770) CHARACTER(LEN=40) :: YFIELD
+(  771) CHARACTER(LEN=120):: YLINE 
+(  772) CHARACTER(LEN=4)  :: YFMT
+(  773) CHARACTER(LEN=120) :: YFMT_LINE
+(  774) INTEGER           :: ICOVER, JCOVER, JI
+(  775) INTEGER           :: ICOVER_DEB, ICOVER_FIN
+(  776) LOGICAL           :: LUNIFORM
+(  777) LOGICAL           :: LPRINT
+(  778) REAL*8            :: ZFREQUENT_VAL
+(  779) !
+(  780) YFIELD1 = TRIM(HFIELD) // '('
+(  781) YFIELD  = ''
+(  782) IF (PRESENT(KIND1)) THEN
+(  783)   IF (KIND1<10) THEN
+(  784)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),',  ',KIND1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 16
+
+(  785)   ELSEIF (KIND1<100) THEN
+(  786)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),', ',KIND1
+(  787)   ELSE
+(  788)     WRITE(YFIELD,FMT='(A,A,I3)') TRIM(YFIELD),',',KIND1
+(  789)   END IF
+(  790) END IF
+(  791) IF (PRESENT(KIND2)) THEN
+(  792)   IF (KIND2<10) THEN
+(  793)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),', ',KIND2
+(  794)   ELSE
+(  795)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),',',KIND2
+(  796)   END IF
+(  797) END IF
+(  798) YFIELD = TRIM(YFIELD)//')'
+(  799) IF (PRESENT(HTYPE)) YFIELD = TRIM(YFIELD)//TRIM(HTYPE)
+(  800) YFIELD = TRIM(YFIELD)//' = '
+(  801) !
+(  802) CALL UNIFORM_FIELD(PFIELD,LUNIFORM,ZFIELD)
+(  803) CALL MORE_FREQUENT_VALUE(PFIELD,ZFREQUENT_VAL)
+(  804) !
+(  805) !
+(  806) IF (PRESENT(LFREQUENT)) THEN
+(  807)   IF (.NOT. LFREQUENT) ZFREQUENT_VAL = XUNDEF
+(  808) END IF
+(  809) !
+(  810) IF (LUNIFORM) THEN
+(  811)   ZFREQUENT_VAL = ZFIELD
+(  812) END IF
+(  813) !
+(  814) LPRINT = .FALSE.
+(  815) !
+(  816) IF (LUNIFORM .AND. ZFIELD==XUNDEF) RETURN
+(  817) !
+(  818) IF (LUNIFORM .OR. ZFREQUENT_VAL/=XUNDEF) THEN
+(  819)   ZFIELD = ZFREQUENT_VAL
+(  820)   IF (PRESENT(PEXP)) ZFIELD = ZFREQUENT_VAL * PEXP
+(  821)   WRITE(YFMT_LINE,FMT='(A,A4,A1)' ) '(A6,A,A2,A,A1,A,',HFMT,')'
+(  822)   IF (HFMT(1:1)=='I') THEN
+(  823)     WRITE(YLINE,FMT=YFMT_LINE) 'WHERE(',HMASK,') ',TRIM(YFIELD1),':',TRIM(YFIELD),NINT(ZFIELD)
+(  824)   ELSE
+(  825)     WRITE(YLINE,FMT=YFMT_LINE) 'WHERE(',HMASK,') ',TRIM(YFIELD1),':',TRIM(YFIELD),ZFIELD
+(  826)   END IF
+(  827)   IF (PRESENT(HEXP)) THEN
+(  828)     WRITE(YLINE,FMT='(A,A)') TRIM(YLINE),HEXP
+(  829)   END IF
+(  830)   WRITE(20,FMT='(A)') TRIM(YLINE)
+(  831)   LPRINT = .TRUE.
+(  832) END IF
+(  833) !
+(  834) IF (LUNIFORM) THEN
+(  835)   YLINE  = '!-------------------------------------------------------------------'
+(  836)   WRITE(20,FMT='(A)') YLINE
+(  837)   RETURN
+(  838) END IF
+(  839) !
+(  840) ICOVER=1
+(  841) DO JCOVER=1,JPCOVER
+(  842)   YLINE=' '
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 17
+
+(  843)     IF (ICOVER <= JPCOVER) THEN
+(  844)       IF (PFIELD(ICOVER)/=XUNDEF .AND. NINT(PFIELD(ICOVER))/=NUNDEF ) THEN
+(  845)         ZFIELD = PFIELD(ICOVER)
+(  846)         IF (PRESENT(PEXP)) ZFIELD = PFIELD(ICOVER) * PEXP
+(  847)         IF (PFIELD(ICOVER)/=ZFREQUENT_VAL ) THEN
+(  848)           WRITE(YFMT_LINE,FMT='(A8,A4,A1)' ) '(A,I3,A,',HFMT,')'
+(  849)           IF (HFMT(1:1)=='I') THEN
+(  850)             WRITE(YLINE,FMT=YFMT_LINE) TRIM(YFIELD1),ICOVER,TRIM(YFIELD),NINT(ZFIELD)
+(  851)           ELSE
+(  852)             WRITE(YLINE,FMT=YFMT_LINE) TRIM(YFIELD1),ICOVER,TRIM(YFIELD),ZFIELD
+(  853)           END IF
+(  854)           LPRINT = .TRUE.
+(  855)           IF (PRESENT(HEXP)) THEN
+(  856)             WRITE(YLINE,FMT='(A,A)') TRIM(YLINE),HEXP
+(  857)           END IF
+(  858)           WRITE(20,FMT='(A)') TRIM(YLINE)
+(  859)         END IF
+(  860)       END IF
+(  861)       ICOVER = ICOVER + 1
+(  862)     END IF
+(  863) END DO
+(  864) 
+(  865) YLINE  = '!-------------------------------------------------------------------'
+(  866) IF (LPRINT) WRITE(20,FMT='(A)') YLINE
+(  867) !
+(  868) END SUBROUTINE WRITE_SOURCE_DATA_B
+(  869) !
+(  870) !------------------------------------------------------------------------------
+(  871) !------------------------------------------------------------------------------
+(  872) !
+(  873) SUBROUTINE UNIFORM_FIELD(PFIELD,OUNIFORM,PUNIF)
+(  874) 
+(  875) REAL*8,  DIMENSION(:), INTENT(IN)  :: PFIELD
+(  876) LOGICAL, INTENT(OUT) :: OUNIFORM
+(  877) REAL*8,  INTENT(OUT) :: PUNIF
+(  878) 
+(  879) OUNIFORM=.TRUE.
+(  880) PUNIF = XUNDEF
+(  881) DO JCOVER=1,JPCOVER
+(  882)   IF (PFIELD(JCOVER)/=XUNDEF .AND. NINT(PFIELD(JCOVER))/=NUNDEF) THEN
+(  883)     IF (PUNIF==XUNDEF) THEN
+(  884)       PUNIF=PFIELD(JCOVER)
+(  885)     ELSE
+(  886)       IF (PFIELD(JCOVER)/=PUNIF) OUNIFORM=.FALSE.
+(  887)     END IF
+(  888)   END IF
+(  889) END DO
+(  890) 
+(  891) END SUBROUTINE UNIFORM_FIELD
+(  892) !
+(  893) !------------------------------------------------------------------------------
+(  894) !------------------------------------------------------------------------------
+(  895) !
+(  896) SUBROUTINE MORE_FREQUENT_VALUE(PFIELD,PVAL)
+(  897) 
+(  898) REAL*8,  DIMENSION(:), INTENT(IN)  :: PFIELD
+(  899) REAL*8,  INTENT(OUT) :: PVAL
+(  900) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 18
+
+(  901) INTEGER :: ICOUNT_VAL
+(  902) INTEGER, DIMENSION(JPCOVER) :: ICOUNT
+(  903) REAL*8,  DIMENSION(JPCOVER) :: ZVAL
+(  904) LOGICAL                     :: LADD
+(  905) INTEGER                     :: I
+(  906) INTEGER, DIMENSION(1)       :: IMAX
+(  907) !
+(  908) ZVAL(:) = XUNDEF
+(  909) ICOUNT=0
+(  910) ICOUNT_VAL = 0
+(  911) !
+(  912) DO JCOVER=1,JPCOVER
+(  913)   IF (PFIELD(JCOVER)/=XUNDEF .AND. NINT(PFIELD(JCOVER))/=NUNDEF) THEN
+(  914)     IF (ICOUNT_VAL==0) THEN
+(  915)       ICOUNT_VAL = 1
+(  916)       ICOUNT(1) = 1
+(  917)       ZVAL(1) = PFIELD(JCOVER)
+(  918)       CYCLE
+(  919)     END IF
+(  920)     !
+(  921)     LADD = .FALSE.
+(  922)     DO I=1,ICOUNT_VAL
+(  923)     IF (PFIELD(JCOVER)==ZVAL(I)) THEN
+(  924)       ICOUNT(I) = ICOUNT(I) + 1
+(  925)       LADD = .TRUE.
+(  926)       EXIT
+(  927)     END IF
+(  928)     END DO
+(  929)     !
+(  930)     IF (.NOT. LADD) THEN
+(  931)       ICOUNT_VAL = ICOUNT_VAL+1
+(  932)       ICOUNT(ICOUNT_VAL) = 1
+(  933)       ZVAL(ICOUNT_VAL) = PFIELD(JCOVER)
+(  934)     END IF
+(  935)   END IF
+(  936) END DO
+(  937) !
+(  938) IF (ICOUNT_VAL>0) THEN
+(  939)   IMAX = MAXLOC(ICOUNT)
+(  940)   PVAL = ZVAL(IMAX(1))
+(  941) ELSE
+(  942)   PVAL = XUNDEF
+(  943) END IF
+(  944) 
+(  945) END SUBROUTINE MORE_FREQUENT_VALUE
+(  946) !
+(  947) !------------------------------------------------------------------------------
+(  948) !------------------------------------------------------------------------------
+(  949) !
+(  950) SUBROUTINE WRITE_HEADER(HNAME)
+(  951) 
+(  952) CHARACTER(LEN=*), INTENT(IN) :: HNAME
+(  953) WRITE(20,FMT='(A,A)') 'SUBROUTINE ',TRIM(HNAME)
+(  954) WRITE(20,FMT='(A)') '!'
+(  955) WRITE(20,FMT='(A)') 'USE MODD_SURF_PAR'
+(  956) WRITE(20,FMT='(A)') 'USE MODD_DATA_COVER_PAR'
+(  957) WRITE(20,FMT='(A)') 'USE MODD_DATA_COVER'
+(  958) WRITE(20,FMT='(A)') 'USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 19
+
+(  959) WRITE(20,FMT='(A)') 'USE PARKIND1  ,ONLY : JPRB'
+(  960) WRITE(20,FMT='(A)') 'IMPLICIT NONE'
+(  961) WRITE(20,FMT='(A)') '!'
+(  962) WRITE(20,FMT='(A)') '!*    Declaration of local variables'
+(  963) WRITE(20,FMT='(A)') '!     ------------------------------ '
+(  964) WRITE(20,FMT='(A)') '!'
+(  965) WRITE(20,FMT='(A)') 'REAL(KIND=JPRB) :: ZHOOK_HANDLE'
+(  966) WRITE(20,FMT='(A)') '!'
+(  967) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  968) WRITE(20,FMT='(A)') '!'
+(  969) END SUBROUTINE WRITE_HEADER
+(  970) !------------------------------------------------------------------------------
+(  971) !------------------------------------------------------------------------------
+(  972) END PROGRAM WRITE_SOURCE_DATA_COVER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 20
+
+(    1) # 1 "modi_write_source_data_cover.F90"
+(    1) # 4 "modi_write_source_data_cover.F90"
+(    4) !     #########################
+(    5)       PROGRAM WRITE_SOURCE_DATA_COVER
+(    6) !     #########################
+(    7) !
+(    8) !!**** *WRITE_SOURCE_DATA_COVER* writes cover-field correspondance arrays in a file
+(    9) !!
+(   10) !!    PURPOSE
+(   11) !!    -------
+(   12) !!
+(   13) !!    METHOD
+(   14) !!    ------
+(   15) !!
+(   16) !!
+(   17) !!    EXTERNAL
+(   18) !!    --------
+(   19) !!
+(   20) !!    IMPLICIT ARGUMENTS
+(   21) !!    ------------------
+(   22) !!
+(   23) !!    REFERENCE
+(   24) !!    ---------
+(   25) !!
+(   26) !!    AUTHOR
+(   27) !!    ------
+(   28) !!
+(   29) !!    V. Masson        Meteo-France
+(   30) !!
+(   31) !!    MODIFICATION
+(   32) !!    ------------
+(   33) !!
+(   34) !!    Original    
+(   35) !----------------------------------------------------------------------------
+(   36) !
+(   37) !*    0.     DECLARATION
+(   38) !            -----------
+(   39) !
+(   40) IMPLICIT NONE
+(   41) !
+(   42) !*    0.1    Declaration of arguments
+(   43) !            ------------------------
+(   44) !
+(   45) !*    0.2    Declaration of local variables
+(   46) !            ------------------------------
+(   47) !
+(   48) INTEGER, PARAMETER             :: JPCOVER   =573 ! number of cover types
+(   49) INTEGER, PARAMETER             :: NVEGTYPE  =19  ! number of vegtypes
+(   50) INTEGER, PARAMETER             :: NECOCLIMAP=2   ! number of ecoclimap data files
+(   51) INTEGER, PARAMETER             :: NECO2_START_YEAR=2002
+(   52) INTEGER, PARAMETER             :: NECO2_END_YEAR=2006
+(   53) REAL*8,  PARAMETER             :: XUNDEF    =1.E20
+(   54) INTEGER, PARAMETER             :: NUNDEF    =1E9
+(   55) INTEGER, PARAMETER             :: NDATA_ROOF_LAYER=3
+(   56) INTEGER, PARAMETER             :: NDATA_ROAD_LAYER=3
+(   57) INTEGER, PARAMETER             :: NDATA_WALL_LAYER=3
+(   58) # 60 "modi_write_source_data_cover.F90"
+(   60) REAL*8, DIMENSION(JPCOVER) :: XDATA_TOWN, XDATA_NATURE, XDATA_SEA, XDATA_WATER,       &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 21
+
+(   61)                                   XDATA_Z0_TOWN, XDATA_BLD_HEIGHT, XDATA_WALL_O_HOR,&
+(   62)                                   XDATA_BLD, XDATA_GARDEN,                          &
+(   63)                                   XDATA_ALB_ROOF, XDATA_ALB_ROAD, XDATA_ALB_WALL,   &
+(   64)                                   XDATA_EMIS_ROOF, XDATA_EMIS_ROAD, XDATA_EMIS_WALL,&
+(   65)                                   XDATA_H_TRAFFIC, XDATA_LE_TRAFFIC,                &
+(   66)                                   XDATA_H_INDUSTRY, XDATA_LE_INDUSTRY
+(   67) REAL*8, DIMENSION(JPCOVER,NDATA_ROOF_LAYER) :: XDATA_HC_ROOF, XDATA_TC_ROOF, XDATA_D_ROOF
+(   68) REAL*8, DIMENSION(JPCOVER,NDATA_ROAD_LAYER) :: XDATA_HC_ROAD, XDATA_TC_ROAD, XDATA_D_ROAD
+(   69) REAL*8, DIMENSION(JPCOVER,NDATA_WALL_LAYER) :: XDATA_HC_WALL, XDATA_TC_WALL, XDATA_D_WALL
+(   70) REAL*8, DIMENSION(JPCOVER,NVEGTYPE)    :: XDATA_VEGTYPE, XDATA_H_TREE, XDATA_WATSUP, XDATA_IRRIG, &
+(   71)                                         XDATA_ROOT_DEPTH, XDATA_GROUND_DEPTH, XDATA_DICE
+(   72) REAL*8, DIMENSION(JPCOVER,36,  NVEGTYPE) :: XDATA_LAI
+(   73) REAL*8, DIMENSION(JPCOVER,5*36,NVEGTYPE) :: XDATA_LAI_ALL_YEARS
+(   74) INTEGER*4, DIMENSION(JPCOVER,NVEGTYPE) :: IDATA_SEED_MONTH, IDATA_REAP_MONTH, &
+(   75)                                           IDATA_SEED_DAY  , IDATA_REAP_DAY  
+(   76) !
+(   77) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_VEG_NIR  ! near infra-red albedo
+(   78) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_VEG_VIS  ! visible albedo
+(   79) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_SOIL_NIR ! near infra-red albedo
+(   80) REAL*8, DIMENSION(JPCOVER,36,NVEGTYPE) ::  XDATA_ALB_SOIL_VIS ! visible albedo
+(   81) !
+(   82) # 83 "modi_write_source_data_cover.F90"
+(   83) INTEGER, DIMENSION(NECOCLIMAP) :: NBCOVERS, NBAN, NUNIT
+(   84) INTEGER         :: IECO         ! file being read
+(   85) INTEGER         :: ICOVER       ! cover being read
+(   86) INTEGER         :: JCOVER       ! loop counters on covers
+(   87) INTEGER         :: J            ! loop counters on decades
+(   88) INTEGER         :: JYEAR        ! loop counters on years
+(   89) INTEGER         :: JL           ! loop counters on layers
+(   90) INTEGER         :: JVEGTYPE     ! loop counters on vegtypes
+(   91) CHARACTER(LEN=28):: YFILE       ! file name
+(   92) CHARACTER(LEN=28):: YNAME       ! subroutine name
+(   93) CHARACTER(LEN=30)::YMASK
+(   94) INTEGER         :: IREC
+(   95) INTEGER         :: IUNIT
+(   96) REAL*8, DIMENSION(JPCOVER) :: ZSEED
+(   97) REAL*8, DIMENSION(36) :: ZLAI
+(   98) REAL*8                :: ZEXP
+(   99) !
+(  100) INTEGER         :: IOUT
+(  101) !-------------------------------------------------------------------------------
+(  102) !
+(  103) !*    1.0    Open binary files
+(  104) !            -----------------
+(  105) !
+(  106) !
+(  107) NUNIT(1)=11
+(  108) OPEN(NUNIT(1),FILE='ecoclimapI_covers_param.bin',FORM='UNFORMATTED',ACCESS='DIRECT',recl=20*8)
+(  109) NBCOVERS(1) = 255
+(  110) NBAN(1) = 1
+(  111) !
+(  112) NUNIT(2)=12
+(  113) OPEN(NUNIT(2),FILE='ecoclimapII_eu_covers_param.bin',FORM='UNFORMATTED',ACCESS='DIRECT',recl=20*8)
+(  114) NBCOVERS(2) = 273
+(  115) NBAN(2) = 5
+(  116) !
+(  117) !-------------------------------------------------------------------------------
+(  118) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 22
+
+(  119) !*    1.1    Open output fortran file
+(  120) !            ------------------------
+(  121) !
+(  122) OPEN(20,FILE='test/default_data_cover.F90',FORM='FORMATTED')
+(  123) !
+(  124) !------------------------------------------------------------------------------
+(  125) !
+(  126) !
+(  127) !*    2.0    Initializes data
+(  128) !            ----------------
+(  129) !
+(  130) XDATA_TOWN        = 0.
+(  131) XDATA_NATURE      = 0.
+(  132) XDATA_SEA         = 0.
+(  133) XDATA_WATER       = 0.
+(  134) XDATA_Z0_TOWN     = XUNDEF
+(  135) XDATA_BLD_HEIGHT  = XUNDEF
+(  136) XDATA_WALL_O_HOR  = XUNDEF
+(  137) XDATA_BLD         = XUNDEF
+(  138) XDATA_GARDEN      = 0.
+(  139) XDATA_ALB_ROOF    = XUNDEF
+(  140) XDATA_ALB_ROAD    = XUNDEF
+(  141) XDATA_ALB_WALL    = XUNDEF
+(  142) XDATA_EMIS_ROOF   = XUNDEF
+(  143) XDATA_EMIS_ROAD   = XUNDEF
+(  144) XDATA_EMIS_WALL   = XUNDEF
+(  145) XDATA_HC_ROOF     = XUNDEF
+(  146) XDATA_HC_ROAD     = XUNDEF
+(  147) XDATA_HC_WALL     = XUNDEF
+(  148) XDATA_TC_ROOF     = XUNDEF
+(  149) XDATA_TC_ROAD     = XUNDEF
+(  150) XDATA_TC_WALL     = XUNDEF
+(  151) XDATA_D_ROOF      = XUNDEF
+(  152) XDATA_D_ROAD      = XUNDEF
+(  153) XDATA_D_WALL      = XUNDEF
+(  154) XDATA_H_TRAFFIC   = XUNDEF
+(  155) XDATA_LE_TRAFFIC  = XUNDEF
+(  156) XDATA_H_INDUSTRY  = XUNDEF
+(  157) XDATA_LE_INDUSTRY = XUNDEF
+(  158) !
+(  159) XDATA_VEGTYPE(:,:)      = 0.
+(  160) XDATA_H_TREE(:,:)       = XUNDEF
+(  161) XDATA_WATSUP(:,:)       = XUNDEF
+(  162) XDATA_IRRIG(:,:)        = XUNDEF
+(  163) XDATA_ROOT_DEPTH(:,:)   = XUNDEF
+(  164) XDATA_GROUND_DEPTH(:,:) = XUNDEF
+(  165) XDATA_DICE(:,:)         = XUNDEF
+(  166) # 167 "modi_write_source_data_cover.F90"
+(  167) XDATA_LAI(:,:,:) = XUNDEF
+(  168) XDATA_LAI_ALL_YEARS(:,:,:) = XUNDEF
+(  169) IDATA_SEED_MONTH(:,:) = 1E9
+(  170) IDATA_SEED_DAY  (:,:) = 1E9
+(  171) IDATA_REAP_MONTH(:,:) = 1E9
+(  172) IDATA_REAP_DAY  (:,:) = 1E9
+(  173) # 174 "modi_write_source_data_cover.F90"
+(  174) XDATA_ALB_VEG_NIR  = XUNDEF
+(  175) XDATA_ALB_VEG_VIS  = XUNDEF
+(  176) XDATA_ALB_SOIL_NIR = XUNDEF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 23
+
+(  177) XDATA_ALB_SOIL_VIS = XUNDEF
+(  178) # 179 "modi_write_source_data_cover.F90"
+(  179) !------------------------------------------------------------------------------
+(  180) !
+(  181) !
+(  182) !*    3.0    Read data in binary files
+(  183) !            -------------------------
+(  184) !
+(  185) DO IECO=1,NECOCLIMAP
+(  186)  IUNIT=NUNIT(IECO)
+(  187)  IREC = 0
+(  188)  DO JCOVER=1,NBCOVERS(IECO)
+(  189)   IREC = IREC+1
+(  190)   READ(IUNIT,REC=IREC) ICOVER
+(  191)   IREC = IREC+1
+(  192)   READ(IUNIT,REC=IREC) XDATA_TOWN(ICOVER),XDATA_NATURE(ICOVER),XDATA_WATER(ICOVER),XDATA_SEA(ICOVER)
+(  193) # 194 "modi_write_source_data_cover.F90"
+(  194)   IF (XDATA_NATURE(ICOVER).GT.0.) CALL READ_NATURE
+(  195) # 196 "modi_write_source_data_cover.F90"
+(  196)   IF (XDATA_TOWN(ICOVER).NE.0.) THEN
+(  197)     !main town parameters
+(  198)     IREC=IREC+1
+(  199)     READ(IUNIT,REC=IREC) XDATA_Z0_TOWN(ICOVER),XDATA_BLD_HEIGHT(ICOVER),XDATA_WALL_O_HOR(ICOVER),&
+(  200)         XDATA_BLD(ICOVER),XDATA_GARDEN(ICOVER)
+(  201)     !town albedos
+(  202)     IREC=IREC+1
+(  203)     READ(IUNIT,rec=IREC) XDATA_ALB_ROOF(ICOVER),XDATA_ALB_ROAD(ICOVER),XDATA_ALB_WALL(ICOVER)
+(  204)     !town emissivities
+(  205)     IREC=IREC+1
+(  206)     READ(IUNIT,rec=IREC) XDATA_EMIS_ROOF(ICOVER),XDATA_EMIS_ROAD(ICOVER),XDATA_EMIS_WALL(ICOVER)
+(  207)     !town heat capacity
+(  208)     IREC=IREC+1
+(  209)     READ(IUNIT,rec=IREC) XDATA_HC_ROOF(ICOVER,:)
+(  210)     IREC=IREC+1
+(  211)     READ(IUNIT,rec=IREC) XDATA_HC_ROAD(ICOVER,:)
+(  212)     IREC=IREC+1
+(  213)     READ(IUNIT,rec=IREC) XDATA_HC_WALL(ICOVER,:)
+(  214)     !town thermal conductivity
+(  215)     IREC=IREC+1
+(  216)     READ(IUNIT,rec=IREC) XDATA_TC_ROOF(ICOVER,:)
+(  217)     IREC=IREC+1
+(  218)     READ(IUNIT,rec=IREC) XDATA_TC_ROAD(ICOVER,:)
+(  219)     IREC=IREC+1
+(  220)     READ(IUNIT,rec=IREC) XDATA_TC_WALL(ICOVER,:)
+(  221)     !town depths
+(  222)     IREC=IREC+1
+(  223)     READ(IUNIT,rec=IREC) XDATA_D_ROOF(ICOVER,:)
+(  224)     IREC=IREC+1
+(  225)     READ(IUNIT,rec=IREC) XDATA_D_ROAD(ICOVER,:)
+(  226)     IREC=IREC+1
+(  227)     READ(IUNIT,rec=IREC) XDATA_D_WALL(ICOVER,:)
+(  228)     !traffic and industry fluxes
+(  229)     IREC=IREC+1
+(  230)     READ(IUNIT,rec=IREC) XDATA_H_TRAFFIC(ICOVER),XDATA_LE_TRAFFIC(ICOVER),XDATA_H_INDUSTRY(ICOVER),XDATA_LE_INDUSTRY(ICOVER)
+(  231)     IF (XDATA_GARDEN(ICOVER).NE.0. .AND. XDATA_NATURE(ICOVER).EQ.0.) CALL READ_NATURE
+(  232)   ENDIF
+(  233) # 234 "modi_write_source_data_cover.F90"
+(  234)  END DO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 24
+
+(  235) END DO
+(  236) !
+(  237) !------------------------------------------------------------------------------
+(  238) !
+(  239) !
+(  240) !*    4.0    Writes the data in the output fortran file
+(  241) !            ------------------------------------------
+(  242) !
+(  243) CALL WRITE_HEADER('DEFAULT_DATA_COVER')
+(  244) WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK(''DEFAULT_DATA_COVER'',0,ZHOOK_HANDLE) '  
+(  245) WRITE(20,FMT='(A)')'!'
+(  246) !
+(  247) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_TOWN          ',XDATA_TOWN(:))
+(  248) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_NATURE        ',XDATA_NATURE(:))
+(  249) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_WATER         ',XDATA_WATER(:))
+(  250) CALL WRITE_SOURCE_DATA_A(IUNIT,'ALL',4,'F4.2','XDATA_SEA           ',XDATA_SEA(:))
+(  251) !
+(  252) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.3','XDATA_Z0_TOWN       ',XDATA_Z0_TOWN(:))
+(  253) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_BLD_HEIGHT    ',XDATA_BLD_HEIGHT(:))
+(  254) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_WALL_O_HOR    ',XDATA_WALL_O_HOR(:))
+(  255) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_BLD           ',XDATA_BLD(:))
+(  256) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_GARDEN        ',XDATA_GARDEN(:))
+(  257) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_ROOF      ',XDATA_ALB_ROOF(:))
+(  258) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_ROAD      ',XDATA_ALB_ROAD(:))
+(  259) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_ALB_WALL      ',XDATA_ALB_WALL(:))
+(  260) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_ROOF     ',XDATA_EMIS_ROOF(:))
+(  261) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_ROAD     ',XDATA_EMIS_ROAD(:))
+(  262) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_EMIS_WALL     ',XDATA_EMIS_WALL(:))
+(  263) !
+(  264) ZEXP = 1.E-6
+(  265) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  266)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_ROOF       ',XDATA_HC_ROOF(:,JL),KIND1=JL, &
+(  267)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  268) END DO
+(  269) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  270)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_ROOF       ',XDATA_TC_ROOF(:,JL),KIND1=JL)
+(  271) END DO
+(  272) DO JL=1,SIZE(XDATA_HC_ROOF,2)
+(  273)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_ROOF        ',XDATA_D_ROOF(:,JL),KIND1=JL)
+(  274) END DO
+(  275) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  276)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_ROAD       ',XDATA_HC_ROAD(:,JL),KIND1=JL, &
+(  277)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  278) END DO
+(  279) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  280)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_ROAD       ',XDATA_TC_ROAD(:,JL),KIND1=JL)
+(  281) END DO
+(  282) DO JL=1,SIZE(XDATA_HC_ROAD,2)
+(  283)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_ROAD        ',XDATA_D_ROAD(:,JL),KIND1=JL)
+(  284) END DO
+(  285) DO JL=1,SIZE(XDATA_HC_WALL,2)
+(  286)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',4,'F4.2','XDATA_HC_WALL       ',XDATA_HC_WALL(:,JL),KIND1=JL, &
+(  287)   PEXP=ZEXP,HEXP=' * 1.E6')
+(  288) END DO
+(  289) DO JL=1,SIZE(XDATA_HC_WALL,2)
+(  290)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.4','XDATA_TC_WALL       ',XDATA_TC_WALL(:,JL),KIND1=JL)
+(  291) END DO
+(  292) DO JL=1,SIZE(XDATA_HC_WALL,2)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 25
+
+(  293)   CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',5,'F5.3','XDATA_D_WALL        ',XDATA_D_WALL(:,JL),KIND1=JL)
+(  294) END DO
+(  295) !
+(  296) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_H_TRAFFIC     ',XDATA_H_TRAFFIC(:))
+(  297) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_LE_TRAFFIC    ',XDATA_LE_TRAFFIC(:))
+(  298) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_H_INDUSTRY    ',XDATA_H_INDUSTRY(:))
+(  299) CALL WRITE_SOURCE_DATA_B(IUNIT,'XDATA_TOWN>0.',6,'F6.0','XDATA_LE_INDUSTRY   ',XDATA_LE_INDUSTRY(:))
+(  300) !
+(  301) DO JL=1,NVEGTYPE
+(  302)   CALL WRITE_SOURCE_DATA_A(IUNIT,'XDATA_NATURE>0.',4,'F4.2','XDATA_VEGTYPE       ',XDATA_VEGTYPE(:,JL),KIND1=JL)
+(  303) END DO
+(  304) DO JL=1,NVEGTYPE
+(  305)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  306)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,5,'F5.0','XDATA_H_TREE        ',XDATA_H_TREE(:,JL),KIND1=JL)
+(  307) END DO
+(  308) DO JL=1,NVEGTYPE
+(  309)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  310)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.0','XDATA_WATSUP        ',XDATA_WATSUP(:,JL),KIND1=JL)
+(  311) END DO
+(  312) DO JL=1,NVEGTYPE
+(  313)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  314)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_IRRIG         ',XDATA_IRRIG(:,JL),KIND1=JL)
+(  315) END DO
+(  316) DO JL=1,NVEGTYPE
+(  317)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  318)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_ROOT_DEPTH    ',XDATA_ROOT_DEPTH(:,JL),KIND1=JL)
+(  319) END DO
+(  320) DO JL=1,NVEGTYPE
+(  321)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  322)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_GROUND_DEPTH  ',XDATA_GROUND_DEPTH(:,JL),KIND1=JL)
+(  323) END DO
+(  324) DO JL=1,NVEGTYPE
+(  325)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  326)   CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,4,'F4.2','XDATA_DICE          ',XDATA_DICE(:,JL),KIND1=JL)
+(  327) END DO
+(  328) !
+(  329) !
+(  330) DO JL=1,NVEGTYPE
+(  331)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  332)   ZSEED(:) = FLOAT(IDATA_SEED_DAY(:,JL))
+(  333)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_SEED          ',ZSEED,KIND1=JL,HTYPE='%TDATE%DAY')
+(  334) END DO
+(  335) DO JL=1,NVEGTYPE
+(  336)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  337)   ZSEED(:) = FLOAT(IDATA_SEED_MONTH(:,JL))
+(  338)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_SEED          ',ZSEED,KIND1=JL,HTYPE='%TDATE%MONTH')
+(  339) END DO
+(  340) DO JL=1,NVEGTYPE
+(  341)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  342)   ZSEED(:) = FLOAT(IDATA_REAP_DAY(:,JL))
+(  343)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_REAP          ',ZSEED,KIND1=JL,HTYPE='%TDATE%DAY')
+(  344) END DO
+(  345) DO JL=1,NVEGTYPE
+(  346)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(:,',JL,')>0.'
+(  347)   ZSEED(:) = FLOAT(IDATA_REAP_MONTH(:,JL))
+(  348)   CALL WRITE_SOURCE_DATA_B(IUNIT,YMASK,2,'I2.2','TDATA_REAP          ',ZSEED,KIND1=JL,HTYPE='%TDATE%MONTH')
+(  349) END DO
+(  350) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 26
+
+(  351) WRITE(20,FMT='(A)')'!'
+(  352) WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK(''DEFAULT_DATA_COVER'',1,ZHOOK_HANDLE) '  
+(  353) WRITE(20,FMT='(A)')'!'
+(  354) WRITE(20,FMT='(A,A)') 'END SUBROUTINE ','DEFAULT_DATA_COVER'
+(  355) !
+(  356) CLOSE(20)
+(  357) !
+(  358) !
+(  359) !------------------------------------------------------------------------------
+(  360) !
+(  361) !
+(  362) !*    5.0    Writes the LAI for ecoclimap1 in one separate fortran file
+(  363) !            ------------------------------------------
+(  364) !
+(  365) YFILE = 'test/default_lai_eco1.F90'
+(  366) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  367) !
+(  368) DO JVEGTYPE=1,NVEGTYPE
+(  369)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_LAI_ECO1_',JVEGTYPE
+(  370)   IF(JVEGTYPE>1)THEN
+(  371)     WRITE(20,FMT='(A)') '!'
+(  372)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  373)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  374)     WRITE(20,FMT='(A)') '!'
+(  375)   ENDIF
+(  376)   CALL WRITE_HEADER(YNAME)
+(  377)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  378)   WRITE(20,FMT='(A)')'!'
+(  379) # 380 "modi_write_source_data_cover.F90"
+(  380)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(1:255,',JVEGTYPE,')>0.'
+(  381)   DO JL=1,SIZE(XDATA_LAI,2)
+(  382)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,3,'F3.1','XDATA_LAI           ',XDATA_LAI(:,JL,JVEGTYPE),&
+(  383)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  384)   END DO
+(  385)   WRITE(20,FMT='(A)')'!'
+(  386)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  387)   WRITE(20,FMT='(A)')'!'
+(  388)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  389) END DO
+(  390) !
+(  391) CLOSE(20)
+(  392) !------------------------------------------------------------------------------
+(  393) !
+(  394) !
+(  395) !*    6.0    Writes the LAI for all ecoclimap2 years in the separate fortran files
+(  396) !            ------------------------------------------
+(  397) !
+(  398) YFILE = 'test/default_lai_eco2.F90'
+(  399) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  400) !
+(  401) DO JVEGTYPE=1,NVEGTYPE
+(  402)   JL=0
+(  403)   DO JYEAR=1,NBAN(2)
+(  404)     WRITE(YNAME,FMT='(A,I4.4,A,I2.2)') 'DEFAULT_LAI_ECO2_Y',NECO2_START_YEAR-1+JYEAR,'_',JVEGTYPE
+(  405)     IF(JVEGTYPE>1.OR.JYEAR>1)THEN
+(  406)       WRITE(20,FMT='(A)') '!'
+(  407)       WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  408)       WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 27
+
+(  409)       WRITE(20,FMT='(A)') '!'
+(  410)     ENDIF    
+(  411)     CALL WRITE_HEADER(YNAME)
+(  412)     WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  413)     WRITE(20,FMT='(A)')'!'
+(  414)     
+(  415)     WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(301:573,',JVEGTYPE,')>0.'
+(  416) # 417 "modi_write_source_data_cover.F90"
+(  417)     DO J=1,SIZE(XDATA_LAI_ALL_YEARS,2)/NBAN(2)
+(  418)       JL=JL+1
+(  419)       CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,3,'F3.1','XDATA_LAI_ALL_YEARS ',XDATA_LAI_ALL_YEARS(:,JL,JVEGTYPE),&
+(  420)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  421)     END DO
+(  422)     WRITE(20,FMT='(A)')'!'
+(  423)     WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  424)     WRITE(20,FMT='(A)')'!'    
+(  425)     WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  426)   END DO
+(  427) END DO
+(  428) # 429 "modi_write_source_data_cover.F90"
+(  429) CLOSE(20)
+(  430) !
+(  431) !
+(  432) !*    7.0    Writes the albedo veg for ecoclimap1 in one separate fortran file
+(  433) !            ------------------------------------------
+(  434) !
+(  435) YFILE = 'test/default_alb_eco1.F90'
+(  436) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  437) !
+(  438) WRITE(20,FMT='(A)') '!'
+(  439) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  440) WRITE(20,FMT='(A)') '!Soil albedo (the same for all 19 vegtypes)'
+(  441) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  442) WRITE(20,FMT='(A)') '!'
+(  443) !
+(  444) DO JVEGTYPE=1,1
+(  445)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_SOIL_ECO1'!_',JVEGTYPE
+(  446)   CALL WRITE_HEADER(YNAME)
+(  447)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  448)   WRITE(20,FMT='(A)')'!'
+(  449) # 450 "modi_write_source_data_cover.F90"
+(  450)   WRITE(YMASK,FMT='(A,I2,A)') ' '
+(  451)   DO JL=1,SIZE(XDATA_ALB_SOIL_NIR,2)
+(  452)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_NIR   ',XDATA_ALB_SOIL_NIR(:,JL,JVEGTYPE),&
+(  453)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)                   
+(  454)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_VIS   ',XDATA_ALB_SOIL_VIS(:,JL,JVEGTYPE),&
+(  455)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  456)   END DO
+(  457)   WRITE(20,FMT='(A)')'!'
+(  458)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  459)   WRITE(20,FMT='(A)')'!'
+(  460)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  461) END DO
+(  462) !
+(  463) WRITE(20,FMT='(A)') '!'
+(  464) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  465) WRITE(20,FMT='(A)') '!Vegetation albedo for all 19 vegtypes'
+(  466) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 28
+
+(  467) WRITE(20,FMT='(A)') '!'
+(  468) !
+(  469) DO JVEGTYPE=1,NVEGTYPE
+(  470)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_VEG_ECO1_',JVEGTYPE
+(  471)   IF(JVEGTYPE>1)THEN
+(  472)     WRITE(20,FMT='(A)') '!'
+(  473)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  474)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  475)     WRITE(20,FMT='(A)') '!'
+(  476)   ENDIF
+(  477)   CALL WRITE_HEADER(YNAME)
+(  478)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  479)   WRITE(20,FMT='(A)')'!'
+(  480) # 481 "modi_write_source_data_cover.F90"
+(  481)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(1:255,',JVEGTYPE,')>0.'
+(  482)   DO JL=1,SIZE(XDATA_ALB_VEG_NIR,2)
+(  483)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_NIR   ',XDATA_ALB_VEG_NIR(:,JL,JVEGTYPE),&
+(  484)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)                   
+(  485)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_VIS   ',XDATA_ALB_VEG_VIS(:,JL,JVEGTYPE),&
+(  486)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=1,KCOV2=255)
+(  487)   END DO
+(  488)   WRITE(20,FMT='(A)')'!'
+(  489)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  490)   WRITE(20,FMT='(A)')'!'
+(  491)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  492) END DO
+(  493) !
+(  494) CLOSE(20)
+(  495) !
+(  496) !
+(  497) !*    8.0    Writes the albedo veg for ecoclimap1 in one separate fortran file
+(  498) !            ------------------------------------------
+(  499) !
+(  500) YFILE = 'test/default_alb_eco2.F90'
+(  501) OPEN(20,FILE=YFILE,FORM='FORMATTED')
+(  502) !
+(  503) WRITE(20,FMT='(A)') '!'
+(  504) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  505) WRITE(20,FMT='(A)') '!Soil albedo (the same for all 19 vegtypes)'
+(  506) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  507) WRITE(20,FMT='(A)') '!'
+(  508) !
+(  509) DO JVEGTYPE=1,1
+(  510)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_SOIL_ECO2'!_',JVEGTYPE
+(  511)   CALL WRITE_HEADER(YNAME)
+(  512)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  513)   WRITE(20,FMT='(A)')'!'
+(  514) # 515 "modi_write_source_data_cover.F90"
+(  515)   WRITE(YMASK,FMT='(A,I2,A)') ' '
+(  516)   DO JL=1,SIZE(XDATA_ALB_SOIL_NIR,2)
+(  517)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_NIR   ',XDATA_ALB_SOIL_NIR(:,JL,JVEGTYPE),&
+(  518)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)                   
+(  519)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_SOIL_VIS   ',XDATA_ALB_SOIL_VIS(:,JL,JVEGTYPE),&
+(  520)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  521)   END DO
+(  522)   WRITE(20,FMT='(A)')'!'
+(  523)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  524)   WRITE(20,FMT='(A)')'!'
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 29
+
+(  525)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  526) END DO
+(  527) !
+(  528) WRITE(20,FMT='(A)') '!'
+(  529) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  530) WRITE(20,FMT='(A)') '!Vegetation albedo for all 19 vegtypes'
+(  531) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  532) WRITE(20,FMT='(A)') '!'
+(  533) !
+(  534) DO JVEGTYPE=1,NVEGTYPE
+(  535)   WRITE(YNAME,FMT='(A,I2.2)') 'DEFAULT_ALB_VEG_ECO2_',JVEGTYPE
+(  536)   IF(JVEGTYPE>1)THEN
+(  537)     WRITE(20,FMT='(A)') '!'
+(  538)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  539)     WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  540)     WRITE(20,FMT='(A)') '!'
+(  541)   ENDIF
+(  542)   CALL WRITE_HEADER(YNAME)
+(  543)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',0,ZHOOK_HANDLE) '  
+(  544)   WRITE(20,FMT='(A)')'!'
+(  545) # 546 "modi_write_source_data_cover.F90"
+(  546)   WRITE(YMASK,FMT='(A,I2,A)') 'XDATA_VEGTYPE(301:573,',JVEGTYPE,')>0.'
+(  547)   DO JL=1,SIZE(XDATA_ALB_VEG_NIR,2)
+(  548)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_NIR   ',XDATA_ALB_VEG_NIR(:,JL,JVEGTYPE),&
+(  549)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)                   
+(  550)     CALL WRITE_SOURCE_DATA_A(IUNIT,YMASK,6,'F6.4','XDATA_ALB_VEG_VIS   ',XDATA_ALB_VEG_VIS(:,JL,JVEGTYPE),&
+(  551)                            KIND1=JL,KIND2=JVEGTYPE,KCOV1=301,KCOV2=JPCOVER)
+(  552)   END DO
+(  553)   WRITE(20,FMT='(A)')'!'
+(  554)   WRITE(20,FMT='(A)') 'IF (LHOOK) CALL DR_HOOK('''//TRIM(YNAME)//''',1,ZHOOK_HANDLE) '  
+(  555)   WRITE(20,FMT='(A)')'!'
+(  556)   WRITE(20,FMT='(A,A)') 'END SUBROUTINE ',TRIM(YNAME)
+(  557) END DO
+(  558) !
+(  559) CLOSE(20)
+(  560) !
+(  561) !------------------------------------------------------------------------------
+(  562) CONTAINS
+(  563) !------------------------------------------------------------------------------
+(  564) SUBROUTINE READ_NATURE
+(  565) !
+(  566) INTEGER               :: JVEGTYPE, JLAI
+(  567) !
+(  568) !
+(  569) !fractions of vegtypes
+(  570) IREC=IREC+1
+(  571) READ(IUNIT,REC=IREC) XDATA_VEGTYPE(ICOVER,:)
+(  572) # 573 "modi_write_source_data_cover.F90"
+(  573) !albedos for the soil
+(  574) IF (IECO<=2 .AND. XDATA_NATURE(ICOVER)/=0.) THEN
+(  575)   IREC=IREC+1
+(  576)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,1:12,1)
+(  577)   IREC=IREC+1
+(  578)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,13:24,1)
+(  579)   IREC=IREC+1
+(  580)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_NIR(ICOVER,25:36,1)
+(  581)   IREC=IREC+1
+(  582)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,1:12,1)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 30
+
+(  583)   IREC=IREC+1
+(  584)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,13:24,1)
+(  585)   IREC=IREC+1
+(  586)   READ(IUNIT,REC=IREC) XDATA_ALB_SOIL_VIS(ICOVER,25:36,1)
+(  587)   DO JVEGTYPE=2,NVEGTYPE
+(  588)     XDATA_ALB_SOIL_NIR(ICOVER,:,JVEGTYPE) = XDATA_ALB_SOIL_NIR(ICOVER,:,1)
+(  589)     XDATA_ALB_SOIL_VIS(ICOVER,:,JVEGTYPE) = XDATA_ALB_SOIL_VIS(ICOVER,:,1)
+(  590)   ENDDO
+(  591) ENDIF
+(  592) # 593 "modi_write_source_data_cover.F90"
+(  593) DO JVEGTYPE=1,NVEGTYPE
+(  594)   !not null fraction of vegtype
+(  595)   IF (XDATA_VEGTYPE(ICOVER,JVEGTYPE).NE.0.) THEN
+(  596)     !root and soil depths
+(  597)     IREC=IREC+1      
+(  598)     READ(IUNIT,REC=IREC) XDATA_ROOT_DEPTH(ICOVER,JVEGTYPE), XDATA_GROUND_DEPTH(ICOVER,JVEGTYPE), XDATA_DICE(ICOVER,JVEGTYPE)
+(  599)     IF (JVEGTYPE.GT.3) THEN
+(  600)       !LAI
+(  601)       DO JLAI=1,NBAN(IECO)*3
+(  602)         IREC=IREC+1
+(  603)         IF (IECO==1) THEN
+(  604)           READ(IUNIT,REC=IREC) XDATA_LAI(ICOVER,(JLAI-1)*12+1:JLAI*12,JVEGTYPE)
+(  605)         ELSEIF (IECO==2) THEN
+(  606)           READ(IUNIT,REC=IREC) XDATA_LAI_ALL_YEARS(ICOVER,(JLAI-1)*12+1:JLAI*12,JVEGTYPE)
+(  607)         ENDIF
+(  608)       ENDDO
+(  609)       !Heights of trees
+(  610)       IF ((JVEGTYPE < 7) .OR. (JVEGTYPE > 12 .AND. JVEGTYPE /= 18)) THEN
+(  611)         IREC=IREC+1
+(  612)         READ(IUNIT,REC=IREC) XDATA_H_TREE(ICOVER,JVEGTYPE)
+(  613)       ENDIF
+(  614) # 615 "modi_write_source_data_cover.F90"
+(  615)       !albedos for the vegetation
+(  616)       IF (IECO<=2 .AND. XDATA_NATURE(ICOVER)/=0.) THEN
+(  617)         IREC=IREC+1
+(  618)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,1:12,JVEGTYPE)
+(  619)         IREC=IREC+1
+(  620)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,13:24,JVEGTYPE)
+(  621)         IREC=IREC+1
+(  622)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_NIR(ICOVER,25:36,JVEGTYPE)
+(  623)         IREC=IREC+1
+(  624)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,1:12,JVEGTYPE)
+(  625)         IREC=IREC+1
+(  626)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,13:24,JVEGTYPE)
+(  627)         IREC=IREC+1
+(  628)         READ(IUNIT,REC=IREC) XDATA_ALB_VEG_VIS(ICOVER,25:36,JVEGTYPE)
+(  629)       ENDIF
+(  630)       
+(  631)     ELSE
+(  632)       !LAI for bare areas
+(  633)       IF (IECO==1) THEN
+(  634)         XDATA_LAI(ICOVER,:,JVEGTYPE) = 0.
+(  635)       ELSEIF (IECO==2) THEN
+(  636)         XDATA_LAI_ALL_YEARS(ICOVER,:,JVEGTYPE) = 0.
+(  637)       ENDIF
+(  638)       XDATA_ALB_VEG_NIR(ICOVER,:,JVEGTYPE) = 0.3
+(  639)       XDATA_ALB_VEG_VIS(ICOVER,:,JVEGTYPE) = 0.1      
+(  640)     ENDIF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 31
+
+(  641)     !irrigation
+(  642)     IF (JVEGTYPE.EQ.8 .AND. IECO.EQ.1 .OR. JVEGTYPE.EQ.9 .AND. IECO.EQ.2) THEN
+(  643)       IREC=IREC+1
+(  644)       READ(IUNIT,REC=IREC) IDATA_SEED_MONTH(ICOVER,JVEGTYPE), IDATA_SEED_DAY(ICOVER,JVEGTYPE), &
+(  645)         IDATA_REAP_MONTH(ICOVER,JVEGTYPE), IDATA_REAP_DAY(ICOVER,JVEGTYPE), &
+(  646)         XDATA_WATSUP(ICOVER,JVEGTYPE),XDATA_IRRIG(ICOVER,JVEGTYPE)
+(  647)     ENDIF
+(  648)   ENDIF
+(  649) ENDDO
+(  650) !
+(  651) END SUBROUTINE READ_NATURE
+(  652) !------------------------------------------------------------------------------
+(  653) SUBROUTINE WRITE_SOURCE_DATA_A(KUNIT,HMASK,KFMT,HFMT,HFIELD,PFIELD,KIND1,KIND2,KEXP,KCOV1,KCOV2)
+(  654) !
+(  655) INTEGER,                  INTENT(IN) :: KUNIT
+(  656) CHARACTER(LEN=*),         INTENT(IN) :: HMASK   ! where field is defined
+(  657) INTEGER,                  INTENT(IN) :: KFMT
+(  658) CHARACTER(LEN=4),         INTENT(IN) :: HFMT
+(  659) CHARACTER(LEN=20),        INTENT(IN) :: HFIELD
+(  660) REAL*8, DIMENSION(JPCOVER), INTENT(IN) :: PFIELD
+(  661) INTEGER, OPTIONAL,        INTENT(IN) :: KIND1
+(  662) INTEGER, OPTIONAL,        INTENT(IN) :: KIND2
+(  663) INTEGER, OPTIONAL,        INTENT(IN) :: KEXP
+(  664) INTEGER, OPTIONAL,        INTENT(IN) :: KCOV1  ! first cover index
+(  665) INTEGER, OPTIONAL,        INTENT(IN) :: KCOV2  ! last  cover index
+(  666) # 667 "modi_write_source_data_cover.F90"
+(  667) CHARACTER(LEN=90) :: YFIELD 
+(  668) CHARACTER(LEN=120):: YLINE 
+(  669) CHARACTER(LEN=4)  :: YFMT
+(  670) CHARACTER(LEN=120) :: YFMT_LINE
+(  671) INTEGER           :: ICOVER, JCOVER, JI
+(  672) INTEGER           :: ICOVER_DEB, ICOVER_FIN
+(  673) LOGICAL           :: LUNIFORM
+(  674) REAL*8            :: ZFIELD
+(  675) !
+(  676) IF (PRESENT(KCOV1) .AND. PRESENT(KCOV2)) THEN
+(  677)   ICOVER_DEB=KCOV1
+(  678)   ICOVER_FIN=KCOV2
+(  679)   WRITE(YFIELD,FMT='(A,A1,I3,A1,I3)') TRIM(HFIELD), '(',KCOV1,':',KCOV2
+(  680) ELSE
+(  681)   ICOVER_DEB=1
+(  682)   ICOVER_FIN=JPCOVER
+(  683)   YFIELD = TRIM(HFIELD) // '(:'
+(  684) END IF
+(  685) IF (PRESENT(KIND1)) THEN
+(  686)   IF (KIND1<10) THEN
+(  687)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),',  ',KIND1
+(  688)   ELSEIF (KIND1<100) THEN
+(  689)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),', ',KIND1
+(  690)   ELSE
+(  691)     WRITE(YFIELD,FMT='(A,A,I3)') TRIM(YFIELD),',',KIND1
+(  692)   END IF
+(  693) END IF
+(  694) IF (PRESENT(KIND2)) THEN
+(  695)   IF (KIND2<10) THEN
+(  696)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),', ',KIND2
+(  697)   ELSE
+(  698)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),',',KIND2
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 32
+
+(  699)   END IF
+(  700) END IF
+(  701) !
+(  702) CALL UNIFORM_FIELD(PFIELD,LUNIFORM,ZFIELD)
+(  703) IF (LUNIFORM) THEN
+(  704)   IF (ZFIELD==XUNDEF) RETURN
+(  705)   WRITE(YFMT_LINE,FMT='(A,A4,A1)' ) '(A,A4,',HFMT,')'
+(  706)   WRITE(YFIELD,FMT=YFMT_LINE) TRIM(YFIELD),') = ',ZFIELD
+(  707)   IF (HMASK/='ALL') YFIELD = 'WHERE('//TRIM(HMASK)//') '//YFIELD
+(  708)   WRITE(20,FMT='(A)') YFIELD
+(  709)   YLINE  = '!-------------------------------------------------------------------'
+(  710)   WRITE(20,FMT='(A)') YLINE
+(  711)   RETURN
+(  712) END IF
+(  713) # 715 "modi_write_source_data_cover.F90"
+(  715) YFIELD = TRIM(YFIELD)//') = (/          &'
+(  716) # 717 "modi_write_source_data_cover.F90"
+(  717) WRITE(20,FMT='(A)') TRIM(YFIELD)
+(  718) # 719 "modi_write_source_data_cover.F90"
+(  719) !
+(  720) ICOVER=ICOVER_DEB
+(  721) DO JCOVER=ICOVER_DEB/10+1,ICOVER_FIN/10+1
+(  722)   YLINE=' '
+(  723)   DO JI=1,10
+(  724)     IF (ICOVER <= MIN(ICOVER_FIN,JPCOVER)) THEN
+(  725)       IF (JI>=2) YFMT_LINE = TRIM(YFMT_LINE)//','
+(  726)       IF (PFIELD(ICOVER)/=XUNDEF) THEN
+(  727)         IF (.NOT. PRESENT(KEXP)) THEN
+(  728)           WRITE(YFMT_LINE,FMT='(A4,I1.1,A1,A4,A1)' ) '(A,A',7-KFMT,',',HFMT,')'
+(  729)           WRITE(YLINE,FMT=YFMT_LINE) TRIM(YLINE),'     ',PFIELD(ICOVER)
+(  730)         ELSE
+(  731)           WRITE(YFMT_LINE,FMT='(A4,I1.1,A1,A4,A7)' ) '(A,A',5-KFMT,',',HFMT,',A1,I1)'
+(  732)           WRITE(YLINE,FMT=YFMT_LINE) TRIM(YLINE),' ',PFIELD(ICOVER)/10**KEXP,'E',KEXP
+(  733)         END IF
+(  734)       ELSE
+(  735)         YLINE = TRIM(YLINE)//' XUNDEF'
+(  736)       END IF
+(  737)       IF (ICOVER<MIN(ICOVER_FIN,JPCOVER)) YLINE=TRIM(YLINE)//','
+(  738)       ICOVER = ICOVER + 1
+(  739)     END IF
+(  740)   END DO
+(  741)   YLINE=TRIM(YLINE)//' &'
+(  742)   WRITE(20,FMT='(A)') TRIM(YLINE)
+(  743) END DO
+(  744) # 745 "modi_write_source_data_cover.F90"
+(  745) YFIELD = '         /)'
+(  746) WRITE(20,FMT='(A)') TRIM(YFIELD)
+(  747) YLINE  = '!-------------------------------------------------------------------'
+(  748) WRITE(20,FMT='(A)') YLINE
+(  749) !
+(  750) END SUBROUTINE WRITE_SOURCE_DATA_A
+(  751) !
+(  752) !------------------------------------------------------------------------------
+(  753) SUBROUTINE WRITE_SOURCE_DATA_B(KUNIT,HMASK,KFMT,HFMT,HFIELD,PFIELD,KIND1,KIND2,PEXP,HEXP,HTYPE,LFREQUENT)
+(  754) !
+(  755) INTEGER,                  INTENT(IN) :: KUNIT
+(  756) CHARACTER(LEN=*),         INTENT(IN) :: HMASK   ! where field is defined
+(  757) INTEGER,                  INTENT(IN) :: KFMT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 33
+
+(  758) CHARACTER(LEN=4),         INTENT(IN) :: HFMT
+(  759) CHARACTER(LEN=20),        INTENT(IN) :: HFIELD
+(  760) REAL*8, DIMENSION(JPCOVER), INTENT(IN) :: PFIELD
+(  761) INTEGER, OPTIONAL,        INTENT(IN) :: KIND1
+(  762) INTEGER, OPTIONAL,        INTENT(IN) :: KIND2
+(  763) REAL*8,  OPTIONAL,        INTENT(IN) :: PEXP
+(  764) CHARACTER(LEN=*), OPTIONAL,  INTENT(IN) :: HEXP   ! formula to add to the right of the values
+(  765) CHARACTER(LEN=*), OPTIONAL,  INTENT(IN) :: HTYPE  ! characters to add to the right of the field def.
+(  766) LOGICAL,          OPTIONAL,  INTENT(IN) :: LFREQUENT ! checks if a value is more frequent than others
+(  767) # 768 "modi_write_source_data_cover.F90"
+(  768) REAL*8            :: ZFIELD
+(  769) CHARACTER(LEN=40) :: YFIELD1
+(  770) CHARACTER(LEN=40) :: YFIELD
+(  771) CHARACTER(LEN=120):: YLINE 
+(  772) CHARACTER(LEN=4)  :: YFMT
+(  773) CHARACTER(LEN=120) :: YFMT_LINE
+(  774) INTEGER           :: ICOVER, JCOVER, JI
+(  775) INTEGER           :: ICOVER_DEB, ICOVER_FIN
+(  776) LOGICAL           :: LUNIFORM
+(  777) LOGICAL           :: LPRINT
+(  778) REAL*8            :: ZFREQUENT_VAL
+(  779) !
+(  780) YFIELD1 = TRIM(HFIELD) // '('
+(  781) YFIELD  = ''
+(  782) IF (PRESENT(KIND1)) THEN
+(  783)   IF (KIND1<10) THEN
+(  784)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),',  ',KIND1
+(  785)   ELSEIF (KIND1<100) THEN
+(  786)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),', ',KIND1
+(  787)   ELSE
+(  788)     WRITE(YFIELD,FMT='(A,A,I3)') TRIM(YFIELD),',',KIND1
+(  789)   END IF
+(  790) END IF
+(  791) IF (PRESENT(KIND2)) THEN
+(  792)   IF (KIND2<10) THEN
+(  793)     WRITE(YFIELD,FMT='(A,A,I1)') TRIM(YFIELD),', ',KIND2
+(  794)   ELSE
+(  795)     WRITE(YFIELD,FMT='(A,A,I2)') TRIM(YFIELD),',',KIND2
+(  796)   END IF
+(  797) END IF
+(  798) YFIELD = TRIM(YFIELD)//')'
+(  799) IF (PRESENT(HTYPE)) YFIELD = TRIM(YFIELD)//TRIM(HTYPE)
+(  800) YFIELD = TRIM(YFIELD)//' = '
+(  801) !
+(  802) CALL UNIFORM_FIELD(PFIELD,LUNIFORM,ZFIELD)
+(  803) CALL MORE_FREQUENT_VALUE(PFIELD,ZFREQUENT_VAL)
+(  804) !
+(  805) !
+(  806) IF (PRESENT(LFREQUENT)) THEN
+(  807)   IF (.NOT. LFREQUENT) ZFREQUENT_VAL = XUNDEF
+(  808) END IF
+(  809) !
+(  810) IF (LUNIFORM) THEN
+(  811)   ZFREQUENT_VAL = ZFIELD
+(  812) END IF
+(  813) !
+(  814) LPRINT = .FALSE.
+(  815) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 34
+
+(  816) IF (LUNIFORM .AND. ZFIELD==XUNDEF) RETURN
+(  817) !
+(  818) IF (LUNIFORM .OR. ZFREQUENT_VAL/=XUNDEF) THEN
+(  819)   ZFIELD = ZFREQUENT_VAL
+(  820)   IF (PRESENT(PEXP)) ZFIELD = ZFREQUENT_VAL * PEXP
+(  821)   WRITE(YFMT_LINE,FMT='(A,A4,A1)' ) '(A6,A,A2,A,A1,A,',HFMT,')'
+(  822)   IF (HFMT(1:1)=='I') THEN
+(  823)     WRITE(YLINE,FMT=YFMT_LINE) 'WHERE(',HMASK,') ',TRIM(YFIELD1),':',TRIM(YFIELD),NINT(ZFIELD)
+(  824)   ELSE
+(  825)     WRITE(YLINE,FMT=YFMT_LINE) 'WHERE(',HMASK,') ',TRIM(YFIELD1),':',TRIM(YFIELD),ZFIELD
+(  826)   END IF
+(  827)   IF (PRESENT(HEXP)) THEN
+(  828)     WRITE(YLINE,FMT='(A,A)') TRIM(YLINE),HEXP
+(  829)   END IF
+(  830)   WRITE(20,FMT='(A)') TRIM(YLINE)
+(  831)   LPRINT = .TRUE.
+(  832) END IF
+(  833) !
+(  834) IF (LUNIFORM) THEN
+(  835)   YLINE  = '!-------------------------------------------------------------------'
+(  836)   WRITE(20,FMT='(A)') YLINE
+(  837)   RETURN
+(  838) END IF
+(  839) !
+(  840) ICOVER=1
+(  841) DO JCOVER=1,JPCOVER
+(  842)   YLINE=' '
+(  843)     IF (ICOVER <= JPCOVER) THEN
+(  844)       IF (PFIELD(ICOVER)/=XUNDEF .AND. NINT(PFIELD(ICOVER))/=NUNDEF ) THEN
+(  845)         ZFIELD = PFIELD(ICOVER)
+(  846)         IF (PRESENT(PEXP)) ZFIELD = PFIELD(ICOVER) * PEXP
+(  847)         IF (PFIELD(ICOVER)/=ZFREQUENT_VAL ) THEN
+(  848)           WRITE(YFMT_LINE,FMT='(A8,A4,A1)' ) '(A,I3,A,',HFMT,')'
+(  849)           IF (HFMT(1:1)=='I') THEN
+(  850)             WRITE(YLINE,FMT=YFMT_LINE) TRIM(YFIELD1),ICOVER,TRIM(YFIELD),NINT(ZFIELD)
+(  851)           ELSE
+(  852)             WRITE(YLINE,FMT=YFMT_LINE) TRIM(YFIELD1),ICOVER,TRIM(YFIELD),ZFIELD
+(  853)           END IF
+(  854)           LPRINT = .TRUE.
+(  855)           IF (PRESENT(HEXP)) THEN
+(  856)             WRITE(YLINE,FMT='(A,A)') TRIM(YLINE),HEXP
+(  857)           END IF
+(  858)           WRITE(20,FMT='(A)') TRIM(YLINE)
+(  859)         END IF
+(  860)       END IF
+(  861)       ICOVER = ICOVER + 1
+(  862)     END IF
+(  863) END DO
+(  864) # 865 "modi_write_source_data_cover.F90"
+(  865) YLINE  = '!-------------------------------------------------------------------'
+(  866) IF (LPRINT) WRITE(20,FMT='(A)') YLINE
+(  867) !
+(  868) END SUBROUTINE WRITE_SOURCE_DATA_B
+(  869) !
+(  870) !------------------------------------------------------------------------------
+(  871) !------------------------------------------------------------------------------
+(  872) !
+(  873) SUBROUTINE UNIFORM_FIELD(PFIELD,OUNIFORM,PUNIF)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 35
+
+(  874) # 875 "modi_write_source_data_cover.F90"
+(  875) REAL*8,  DIMENSION(:), INTENT(IN)  :: PFIELD
+(  876) LOGICAL, INTENT(OUT) :: OUNIFORM
+(  877) REAL*8,  INTENT(OUT) :: PUNIF
+(  878) # 879 "modi_write_source_data_cover.F90"
+(  879) OUNIFORM=.TRUE.
+(  880) PUNIF = XUNDEF
+(  881) DO JCOVER=1,JPCOVER
+(  882)   IF (PFIELD(JCOVER)/=XUNDEF .AND. NINT(PFIELD(JCOVER))/=NUNDEF) THEN
+(  883)     IF (PUNIF==XUNDEF) THEN
+(  884)       PUNIF=PFIELD(JCOVER)
+(  885)     ELSE
+(  886)       IF (PFIELD(JCOVER)/=PUNIF) OUNIFORM=.FALSE.
+(  887)     END IF
+(  888)   END IF
+(  889) END DO
+(  890) # 891 "modi_write_source_data_cover.F90"
+(  891) END SUBROUTINE UNIFORM_FIELD
+(  892) !
+(  893) !------------------------------------------------------------------------------
+(  894) !------------------------------------------------------------------------------
+(  895) !
+(  896) SUBROUTINE MORE_FREQUENT_VALUE(PFIELD,PVAL)
+(  897) # 898 "modi_write_source_data_cover.F90"
+(  898) REAL*8,  DIMENSION(:), INTENT(IN)  :: PFIELD
+(  899) REAL*8,  INTENT(OUT) :: PVAL
+(  900) # 901 "modi_write_source_data_cover.F90"
+(  901) INTEGER :: ICOUNT_VAL
+(  902) INTEGER, DIMENSION(JPCOVER) :: ICOUNT
+(  903) REAL*8,  DIMENSION(JPCOVER) :: ZVAL
+(  904) LOGICAL                     :: LADD
+(  905) INTEGER                     :: I
+(  906) INTEGER, DIMENSION(1)       :: IMAX
+(  907) !
+(  908) ZVAL(:) = XUNDEF
+(  909) ICOUNT=0
+(  910) ICOUNT_VAL = 0
+(  911) !
+(  912) DO JCOVER=1,JPCOVER
+(  913)   IF (PFIELD(JCOVER)/=XUNDEF .AND. NINT(PFIELD(JCOVER))/=NUNDEF) THEN
+(  914)     IF (ICOUNT_VAL==0) THEN
+(  915)       ICOUNT_VAL = 1
+(  916)       ICOUNT(1) = 1
+(  917)       ZVAL(1) = PFIELD(JCOVER)
+(  918)       CYCLE
+(  919)     END IF
+(  920)     !
+(  921)     LADD = .FALSE.
+(  922)     DO I=1,ICOUNT_VAL
+(  923)     IF (PFIELD(JCOVER)==ZVAL(I)) THEN
+(  924)       ICOUNT(I) = ICOUNT(I) + 1
+(  925)       LADD = .TRUE.
+(  926)       EXIT
+(  927)     END IF
+(  928)     END DO
+(  929)     !
+(  930)     IF (.NOT. LADD) THEN
+(  931)       ICOUNT_VAL = ICOUNT_VAL+1
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:27      page 36
+
+(  932)       ICOUNT(ICOUNT_VAL) = 1
+(  933)       ZVAL(ICOUNT_VAL) = PFIELD(JCOVER)
+(  934)     END IF
+(  935)   END IF
+(  936) END DO
+(  937) !
+(  938) IF (ICOUNT_VAL>0) THEN
+(  939)   IMAX = MAXLOC(ICOUNT)
+(  940)   PVAL = ZVAL(IMAX(1))
+(  941) ELSE
+(  942)   PVAL = XUNDEF
+(  943) END IF
+(  944) # 945 "modi_write_source_data_cover.F90"
+(  945) END SUBROUTINE MORE_FREQUENT_VALUE
+(  946) !
+(  947) !------------------------------------------------------------------------------
+(  948) !------------------------------------------------------------------------------
+(  949) !
+(  950) SUBROUTINE WRITE_HEADER(HNAME)
+(  951) # 952 "modi_write_source_data_cover.F90"
+(  952) CHARACTER(LEN=*), INTENT(IN) :: HNAME
+(  953) WRITE(20,FMT='(A,A)') 'SUBROUTINE ',TRIM(HNAME)
+(  954) WRITE(20,FMT='(A)') '!'
+(  955) WRITE(20,FMT='(A)') 'USE MODD_SURF_PAR'
+(  956) WRITE(20,FMT='(A)') 'USE MODD_DATA_COVER_PAR'
+(  957) WRITE(20,FMT='(A)') 'USE MODD_DATA_COVER'
+(  958) WRITE(20,FMT='(A)') 'USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK'
+(  959) WRITE(20,FMT='(A)') 'USE PARKIND1  ,ONLY : JPRB'
+(  960) WRITE(20,FMT='(A)') 'IMPLICIT NONE'
+(  961) WRITE(20,FMT='(A)') '!'
+(  962) WRITE(20,FMT='(A)') '!*    Declaration of local variables'
+(  963) WRITE(20,FMT='(A)') '!     ------------------------------ '
+(  964) WRITE(20,FMT='(A)') '!'
+(  965) WRITE(20,FMT='(A)') 'REAL(KIND=JPRB) :: ZHOOK_HANDLE'
+(  966) WRITE(20,FMT='(A)') '!'
+(  967) WRITE(20,FMT='(A)') '!------------------------------------------------------------------------------'
+(  968) WRITE(20,FMT='(A)') '!'
+(  969) END SUBROUTINE WRITE_HEADER
+(  970) !------------------------------------------------------------------------------
+(  971) !------------------------------------------------------------------------------
+(  972) END PROGRAM WRITE_SOURCE_DATA_COVER
+NVFORTRAN-W-0155-The type of FLOAT is now double precision with -r8  (modi_write_source_data_cover.F90: 332)

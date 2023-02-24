@@ -1,0 +1,15 @@
+!depfile:get_surf_sizen.F90
+MODULE MODI_GET_SURF_SIZE_n 
+INTERFACE
+      SUBROUTINE GET_SURF_SIZE_n (DTCO, U, &
+                                  HTYPE,KL)
+USE MODD_DATA_COVER_n, ONLY : DATA_COVER_t
+USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+TYPE(DATA_COVER_t), INTENT(INOUT) :: DTCO
+TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+ CHARACTER(LEN=*),  INTENT(IN)    :: HTYPE    ! Type of surface
+INTEGER,           INTENT(OUT)   :: KL       ! number of points of this surface type
+END SUBROUTINE GET_SURF_SIZE_n
+
+END INTERFACE
+END MODULE MODI_GET_SURF_SIZE_n 

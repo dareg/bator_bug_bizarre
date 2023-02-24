@@ -1,0 +1,3450 @@
+module L1B_BufrUtil
+  !---------------------------------
+  !  #[ Description:
+  !
+  ! - a module to form bufr sections and message
+  !   describing the ADM Aeolus instrument data products
+  !
+  ! - here: L1B observation granularity
+  !         = BUFR subtype 251
+  !
+  ! created:     16-11-2005 by M.Rohn (ECMWF)
+  ! last change: 07-03-2006
+  !
+  ! Modifications:
+  !   17-Jan-2006 M.Rohn            single template (OBS+MEAS)
+  !   06-Mar-2006 M.Rohn            consolidated L1B input definition
+  !   01-Sep-2006 D. Tan I. Mallas  remove  parameter
+  !          L1B%PCD_ADS%Measurement_PCD(imeas)%mie_emitted_freq_std_dev
+  !              set the related bufr value to missing
+  !                                 set new parameter 
+  !          L1B%PCD_ADS%Measurement_PCD(imeas)%reference_pulse_FWHM 
+  !                                 for future use
+  !   30-Nov-2006 D. Tan I. Mallas  MDA L1bP V1.04: Padding for Frequency 
+  !                                 Step Response, increase NSPECTROMETER
+  !   30-Nov-2006 D. Tan I. Mallas  Remove 2000 offset for ksec1/year
+  !   15-Dec-2006 D. Tan            Array dimensions for Bufr edition 310
+  !   19-Jan-2007 J. de Kloe        added extra tests to prevent problems
+  !                                 with the log() function used in the dB
+  !                                 calculation
+  !   22-Jan-2007 J. de loe         added some annotations on the meaning of 
+  !                                 the descriptors in the set*dd routines
+  !   08-May-2007 J. de Kloe        added use of the descriptions in the
+  !                                 fill_one_element routine
+  !   03-Sep-2007 P. Poli           modified arguments of L1B_bufr_encode,
+  !                                 fill_L1B_bufr_header to separate between
+  !                                 header information and BRC-level
+  !                                 change L1B_DataType to L1B_BRC_DataType
+  !                                 and L1B_HDR_DataType
+  !   22-Feb-2008 J. de Kloe        added optional FakeDateTime in the
+  !                                 L1B_bufr_encode routine
+  !   09-May-2008 J. de Kloe        added optional FakeDate in the
+  !                                 L1B_bufr_encode routine
+  !   05-Jun-2008 J. de Kloe        imported changes from branch
+  !                                 nl8_CY32R1_Jun04
+  !   24-Oct-2008 J. de Kloe        adapted to the changes in l1b_cal_ads.F90
+  !   07-Nov-2008 J. de Kloe        rename Geoid_Separation_of_Height_Bin to 
+  !                                 Geoid_Separation
+  !   08-Dec-2008 J. de Kloe        added optional FakeYear in the
+  !                                 L1B_bufr_encode routine
+  !   05-Feb-2009 J. de Kloe        added new adm_bufr_descr_codes module to
+  !                                 have a central place to define the
+  !                                 descriptors
+  !   05-Feb-2009 J. de Kloe        pass the descriptor to the routine
+  !                                 fill_one_element to allow range checking
+  !                                 before starting the BUFR encoding process
+  !                                 (usefull for debugging!)
+  !   19-Mar-2009 J. de Kloe        Added extra checks and fixes to prevent 
+  !                                 any warnings to be printed from within 
+  !                                 the BUFR library
+  !   01-Apr-2009 J. de Kloe        change RVIND definition to have 8-byte
+  !                                 precision
+  !   16-Apr-2009 J. de Kloe        fixed lat,lon,alt problem with L1B v1.11
+  !                                 and newer
+  !   23-Apr-2009 D. Tan            Type fix for HP-UX
+  !   23-Apr-2009 J. de Kloe        fixed problem on 64-bit linux
+  !   15-Jun-2009 J. de Kloe/Charles Desportes change default integer constant
+  !                                 at line 3029 to an explicit 8-byte integer
+  !                                 constant to prevent overflow problems at
+  !                                 the NEC machine at MF
+  !   15-Jun-2009 J. de Kloe        fix bug in fill_one_element call on line
+  !                                 2290, as suggested bu David.
+  !   17-Jun-2009 J. de Kloe        fix for Stefano by using the subroutine
+  !                                 get_descriptor_properties from the
+  !                                 bufrwrapper module
+  !   27-Jul-2009 J. de Kloe        fix memory problems on ecgate by limiting
+  !                                 the size of the cvals array to 
+  !                                 NMAX_OBS_SUBSET=10
+  !   07-May-2010 D.Tan             More interfacing to BufrWrapper module
+  !   25-May-2010 B.Krzeminski      Moved fill_one_element() to BufrWrapper
+  !                                 module
+  !   27-May-2010 B.Krzeminski      Additional parameters for L2BP v01.50
+  !   19-Nov-2010 J. de Kloe        fix some mixed-up Mie/Rayleigh flag fields
+  !                                 and adapt to L1B v5.06, IODD 3.11
+  !   07-Jul-2011 J. de Kloe        remove workarounds to read old L1B file
+  !                                 versions
+  !   28-Mar-2012 J. de Kloe        small compatibility bugfix to 64-bit linux
+  !   14-Mar-2014 J. de Kloe        convert some reals explicitely using nint()
+  !   31-Mar-2014 J. de Kloe        make preload_BUFR_tables more explicit
+  !   23-Jun-2014 J. de Kloe        fix some incorrect intents
+  !   11-Jun-2015 J. de Kloe        adapt to some renamed descriptors
+  !   06-Jul-2015 J. de Kloe        update to changed L1B reader
+  !
+  !  #] ---------------------------------
+  !  #[ Modules Used
+  ! generic entries
+  USE adm_bufr_descr_codes, only: &
+       DD_satellite_identifier,        & ! = 001007
+       DD_id_of_originating_center,    & ! = 001033
+       DD_id_of_originating_subcenter, & ! = 001034
+       DD_satellite_instruments,       & ! = 002019
+       DD_seconds_within_a_minute,     & ! = 004007
+       DD_latitude_high_accuracy,      & ! = 005001
+       DD_bearing_or_azimuth,          & ! = 005021
+       DD_longitude_high_accuracy,     & ! = 006001
+       DD_elevation,                   & ! = 007021
+       DD_time_significance,           & ! = 008021
+       DD_first_order_statistics,      & ! = 008023
+       DD_sun_glint_indicator,         & ! = 008065
+       Delayed_Descr_Repl_Factor,      & ! = 031001
+       get_replication_code              ! calc. the replication factor
+
+  ! ADM specific entries
+  USE adm_bufr_descr_codes, only: &
+       ADM_receiver_channel,           & ! = 017001
+       ADM_data_section,               & ! = 017002
+       ADM_height_bin_index,           & ! = 017003
+       ADM_measurement_index,          & ! = 017004
+       ADM_instrum_target_pos_signific,& ! = 017005
+       ADM_geod_separation,            & ! = 017006
+       ADM_height_bin_altitude,        & ! = 017010
+       ADM_backscatter_ratio,          & ! = 040219
+       ADM_SNR_high_accuracy,          & ! = 017021
+       ADM_LOS_ground_corr_velocity,   & ! = 017030
+       ADM_LOS_ground_corr_wght_factor,& ! = 017031
+       ADM_bin_integration_time,       & ! = 017040
+       ADM_background_integration_time,& ! = 017041
+       ADM_useful_signal_quality_flag, & ! = 017050
+       ADM_useful_signal,              & ! = 017051
+       ADM_hlos_velocity,              & ! = 040217
+       ADM_hlos_velocity_error,        & ! = 040218
+       ADM_product_name                  ! = 017100
+  
+  ! ADM CAL and CHAR specific entries
+  USE adm_bufr_descr_codes, only: &
+       ADM_laser_wavelength,           & ! = 017200
+       ADM_error_quantifier,           & ! = 017201
+       ADM_tripod_correction,          & ! = 017202
+       ADM_calibration_validity_code,  & ! = 017203
+       ADM_frequency_validity_code,    & ! = 017204
+       ADM_sat_channel_freq_offset,    & ! = 017205
+       ADM_meas_response,              & ! = 017206
+       ADM_meas_response_error,        & ! = 017207
+       ADM_ref_pulse_response,         & ! = 017208
+       ADM_ref_pulse_response_error,   & ! = 017209
+       ADM_meas_response_slope,        & ! = 017218
+       ADM_meas_response_intercept,    & ! = 017219
+       ADM_meas_response_stddev,       & ! = 017220
+       ADM_ref_pulse_response_slope,   & ! = 017221
+       ADM_ref_pulse_response_intercpt,& ! = 017222
+       ADM_ref_pulse_response_stddev,  & ! = 017223
+       ADM_meas_calibration_flag,      & ! = 017224
+       ADM_ref_pulse_calibration_flag, & ! = 017225
+       ADM_reference_pulses,           & ! = 017226
+       ADM_spectrometer_counts,        & ! = 017227
+       ADM_sat_range,                  & ! = 040215
+       ADM_mie_snr,                    & ! = 017229
+       ADM_ref_pulse_quality_count,    & ! = 017230
+       ADM_meas_quality_count,         & ! = 017231
+       ADM_average_laser_freq_offset,  & ! = 017232
+       ADM_average_uv_energy,          & ! = 017233
+       ADM_mean_emitted_freq,          & ! = 017236
+       ADM_invalid_mie_peak_count        ! = 017238
+
+  ! D-table entries
+  USE adm_bufr_descr_codes, only: &
+       DD_D_date_YYYYMMDD,             & ! = 301011
+       DD_D_time_HHMM,                 & ! = 301012
+       ADM_D_geolocation,              & ! = 331001
+       ADM_D_wind_result,              & ! = 331002
+       ADM_D_geolocation_latlon,       & ! = 331004
+       ADM_D_laser_freq_properties,    & ! = 331005
+       ADM_D_ref_pulse_properties,     & ! = 331006
+       ADM_D_signal_to_noise             ! = 331007
+
+  ! NOTE: these are the only code table entries currently in use in this
+  ! module. The remaining ones seem to have been intended for the L2B template
+  ! anyway, which is another good reason to move them to their own module.
+  USE bufr_ee_code_tables, only: &
+       BCODE_SATID, BCODE_INSTRUMENT,  & ! header items
+       BCODE_CENTRE, BCODE_SUBCENTRE,  & ! header items
+       BCODE_POS_LOS_GEOID,            & ! significance position
+       BCODE_DATA_HEA, BCODE_DATA_GEO, & ! significance data section
+       BCODE_DATA_PCD, BCODE_DATA_GWD, & ! significance data section
+       BCODE_DATA_MEA, BCODE_DATA_WV,  & ! significance data section
+       BCODE_DATA_CC,  BCODE_DATA_US,  & ! significance data section
+       BCODE_TIME_SENSE_START,         & ! significance time
+       BCODE_CHANNEL_MIE, BCODE_CHANNEL_RAY, &     ! receiver channel
+       BCODE_CHANNEL_RAY_A, BCODE_CHANNEL_RAY_B, & ! receiver channel
+       BCODE_STATISTIC_STDEV             ! significance statistics
+
+  USE L1B_DataStructure, only: L1B_BRC_DataType, L1B_HDR_DataType
+  USE L1B_Geoloc_Ads,    only: Obs_Geolocation_type
+  USE L1B_Cal_ADS,       only: Meas_Calib_Valid_type, Ref_Pulse_Calib_Valid_type
+  USE EE_CFI_Datatypes,  only: DateTimeType, Get_Date_from_DateTime, &
+                               Get_Time_from_DateTime, &
+                               IntAs, IntAuc, IntAus, FAdoxy_to_IntAl, &
+                               missing_indicator_IntAs, &
+                               missing_indicator_IntAl
+  USE BufrWrapper, only: BufrMessageType, &
+                         fill_one_element, preload_BUFR_tables
+
+  ! support modules
+  USE DateTimeMod,  only: date_type, time_type, string2date 
+  USE ErrorHandler, only: no_error, error_writing_file, error_reading_file
+  USE Logging,      only: logmsg, log_debug,log_info,log_progress,&
+                          log_warn,log_error
+  USE LunManager,   only: get_lun, free_lun
+  USE c_support,    only: get_filesize, is_dir
+  USE numerics,     only: i4_,i8_, is_NaN, is_PosInf, is_NegInf, &
+                          missing_real, missing_int,&
+                          real2txt_extra_checks, r8_, &
+                          missing_indicator_integer_i4_, &
+                          missing_indicator_real_r8
+  !                   real2dB this one is only available for 4 byte reals
+  !                   TODO: create an 8 byte version in the numerics module
+  !  #]
+  !  #[ 0.0 Parameter/Variable/Type declarations
+
+  implicit none
+
+  ! 0.1 make all module contents public
+  public
+
+  ! 0.2 define precisions 
+!  integer, parameter :: r8_  = Selected_Real_Kind(15,307)  ! = real*8
+
+  ! 0.3 constants
+  logical, parameter :: bufr_test = .false.
+
+  integer, parameter :: BCOMPRESSION_FLAG            = 64 ! 64=compression / 0=no compression
+
+  integer, parameter :: NMAX_OBS_SUBSET              = 10 ! pack max 10 subsets in message 
+
+  ! for DEVELOPMENT
+  integer, parameter :: NOBSERVATION_FOR_DEVELOPMENT = 10 ! currently L1B product contains only 10 obs
+
+  ! this name is a bit misleading, it should be: NrHeightBins
+  integer, parameter :: NPROFILE                     =  24
+
+  integer, parameter :: NSPECTROMETER                =  20
+  integer, parameter :: NTRIPOD_CORR                 =  16
+  integer, parameter :: NFREQUENCY_STEP              =  60
+
+  integer, parameter :: NELEMENTS_L1B_HEAD           =    17
+  integer, parameter :: NELEMENTS_L1B_OBS            =  1687
+  integer, parameter :: NELEMENTS_L1B_MEAS           =  1356
+
+  real(r8_), parameter :: DEGREE_SCALE               =  1000000.0_r8_
+  real(r8_), parameter :: DEGREE_REF_LON             =      180.0_r8_
+
+  ! 0.31 template types
+  integer, parameter :: BEDITION              =   4
+  integer, parameter :: BTABLE_MASTER         =   0
+  integer, parameter :: BTABLE_MASTER_VERSION =  15
+  integer, parameter :: BTABLE_LOCAL_VERSION  =   1
+
+  integer, parameter :: BOBSTYPE         =    3 ! sounding
+  integer, parameter :: RDBTYPE          =    2 ! sounding
+  integer, parameter :: BSUBTYPE_L1B     =  251 ! l1b
+  integer, parameter :: BSUBTYPE_L2B     =  253 ! l2b
+
+  ! 0.32 code tables
+  
+  ! these have been moved into the helper module bufr_ee_code_tables
+  ! to allow them to be reused by the L2BC_ee2bufr converter as well
+
+  ! 0.33 bufr scaling
+  ! these are identical to the missing_indicators used elsewhere
+  ! in the L2BP software
+  !real(r8_), parameter :: RVIND = 1.7E38_r8_
+  real(r8_), parameter :: RVIND = missing_indicator_real_r8
+
+  !integer, parameter   :: NVIND = 2147483647
+  !replaced by:
+  integer, parameter   :: NVIND = missing_indicator_integer_i4_
+
+  integer(i4_), parameter :: jsec0  =       3, &
+                        jsec1  =      40, &
+                        jsec2  =    4096, &
+                        jsec3  =       4, &
+                        jsec4  =       2, &
+                        jkey   =      52, &
+                        ktdlen =     300, & ! max no unexpanded descriptors
+                        krdlen =       1, & ! max no delayed replication factor
+                        kelem  =  160000, & ! max no expanded descriptors
+                        kvals  = 4096000, & ! max no values in message
+                        jbufl  = 1600000    ! max length bufr message  
+
+  ! 0.4 variables
+  integer(i4_) ::       ksec0(jsec0)
+  integer(i4_) ::       ksec1(jsec1)
+  integer(i4_) ::       ksec2(jsec2), &
+                        ksec3(jsec3), &
+                        ksec4(jsec4), &
+                        key(jkey), &      ! packed RDB key
+                        ktdlst(ktdlen), & ! unxepanded descriptor list
+                        kdata(krdlen)     ! delayed replication values
+
+  integer(i4_)::        ktdlst_size, ktdexp_size
+
+  real(r8_)::           key_lat_min, key_lat_max, &
+                        key_lon_min, key_lon_max
+
+  integer      :: key_year, &
+                  key_month, & 
+                  key_day, & 
+                  key_hour, & 
+                  key_minute, &
+                  key_second
+
+  ! The following items are hardcoded in the BUFR library, so we need to hardcode
+  ! them here as well. However, as a double check, the code tries to do a 
+  ! run-time check to see if the values have not changed (which might happen
+  ! when upgrading the BUFR library)
+  integer, parameter :: BUFR_table_B_name_string_size = 64
+  ! see file: ../BUFR_install/bufr_000360/bufrdc/get_tables.F; line 68
+  integer, parameter :: BUFR_table_B_unit_string_size = 24
+  ! see file: ../BUFR_install/bufr_000360/bufrdc/get_tables.F; line 69
+  integer, parameter :: JTAB =3000
+  ! see file ../BUFR_install/bufr_000360/bufrdc/parameter.F; lines 12 and 14
+  ! note that an #include command is not easily possible since this parameter.F
+  ! file is fixed format Fortran77 style fortran, which cannot be mixed
+  ! with our Fortran90 free-format style.
+
+  ! allowed numerical deviation when checking SNR values to be zero
+  ! (which is a missing indicator in older L1B files)
+  real(r8_), parameter :: delta     =  1.e-10_r8_
+
+  !  #]
+  !---------------------------------
+contains
+  !---------------------------------
+  subroutine DefDescrListGeolocation(ktdlst,NrHeightBins,last_used_index)
+    !  #[
+    ! define Geolocation data descriptors, see:
+    ! AE-TN-ECMWF-L2P-0072, BUFR Template definition, sec. 3.2, table 3.3
+    
+    integer(i4_), dimension(ktdlen),&
+             intent(inout) :: ktdlst ! unxepanded descr. list
+    integer, intent(in)    :: NrHeightBins
+    integer, intent(inout) :: last_used_index
+    
+    ! local variable
+    integer :: i
+    
+    i = last_used_index
+    
+    i=i+1;   ktdlst( i )=ADM_data_section    ! (code)
+    i=i+1;   ktdlst( i )=ADM_geod_separation
+    ! mie obs. geolocation
+    i=i+1;   ktdlst( i )=ADM_receiver_channel ! (code)
+    ! repeat the next 2 descriptors (NrHeightBins+1) times
+    i=i+1;   ktdlst( i )=get_replication_code(2,NrHeightBins+1) ! replication factor (25x)
+    i=i+1;   ktdlst( i )=ADM_height_bin_index
+    i=i+1;   ktdlst( i )=ADM_D_geolocation ! geolocation of each mie height bin
+    ! will be expanded as: ! 207001 = ! increase scale, ref. value and data width
+                           ! 005001 = latitude, high acc. [deg]
+                           ! 006001 = longitude, high acc. [deg]
+                           ! 207000 = end of modifier
+                           ! 017010 = altitude [m]
+                           ! 017228 = satellite range of height bin [m]
+                           ! 005021 = azimuth [deg]
+                           ! 007021 = elevation [deg]
+                           ! 008065 = sun_visibility_code/sun-glint indicator
+    
+    ! rayleigh
+    i=i+1;   ktdlst( i )=ADM_receiver_channel ! (code)
+    ! repeat the next 2 descriptors (NrHeightBins+1) times
+    i=i+1;   ktdlst( i )=get_replication_code(2,NrHeightBins+1) ! replication factor (25x)
+    i=i+1;   ktdlst( i )=ADM_height_bin_index
+    i=i+1;   ktdlst( i )=ADM_D_geolocation ! geolocation of each rayleigh height bin 
+    ! will be expanded as: ! 207001 = ! increase scale, ref. value and data width
+                           ! 005001 = latitude, high acc. [deg]
+                           ! 006001 = longitude, high acc. [deg]
+                           ! 207000 = end of modifier
+                           ! 017010 = altitude [m]
+                           ! 017228 = satellite range of height bin [m]
+                           ! 005021 = azimuth [deg]
+                           ! 007021 = elevation [deg]
+                           ! 008065 = sun_visibility_code/sun-glint indicator
+    
+    last_used_index = i
+    
+  end subroutine DefDescrListGeolocation
+  !  #]
+  subroutine FillValuesObsGeolocation(values,NrHeightBins,last_used_index,&
+                                      Obs_Geoloc,error_flag,workaround)
+    !  #[ 
+    ! fill Geolocation data in the values array, see:
+    ! AE-TN-ECMWF-L2P-0072, BUFR Template definition, sec. 3.2, table 3.3
+    real(r8_), dimension(kvals), intent(inout) :: values
+    integer,                     intent(in)    :: NrHeightBins
+    integer,                     intent(inout) :: last_used_index
+    TYPE(Obs_Geolocation_type),  intent(in)    :: Obs_Geoloc
+    integer,                     intent(out)   :: error_flag
+    logical,           optional, intent(in)    :: workaround
+    
+    ! local variable
+    integer   :: i, s, r
+    real(r8_) :: tmp_lon
+
+    ! todo: add a check for the size of the values() array
+    ! to ensure we are not passing its bounds
+
+    ! init
+    error_flag = no_error
+
+    i = last_used_index
+    i=i+1; values(i) = BCODE_DATA_GEO
+
+    !i=i+1; values(i) = Obs_Geoloc%Geoid_Separation
+    ! replaced by:
+    call fill_one_element(values, i,Obs_Geoloc%Geoid_Separation,&
+                          ADM_geod_separation,&
+                          "Geoid_Separation",workaround=workaround)
+
+    i=i+1; values(i) = BCODE_CHANNEL_MIE
+
+    s = size(Obs_Geoloc%Mie_Rangebin_Geoloc)
+    if (s .ne. NrHeightBins+1) then
+       print *,"Error in FillValuesObsGeolocation: inconsistent nr of rangebins"
+       print *,"the L1B ObsGeolocation Mie datastructure uses: ",s
+       print *,"but BUFR ObsGeolocation section expects:       ",NrHeightBins+1
+       goto 999
+    endif
+
+    ! set top upper bin in the field with index=0
+    do r=1,NrHeightBins+1
+      i=i+1; values(i) = r-1 ! store the counter
+      !i=i+1; values(i) = Obs_Geoloc%Mie_Rangebin_Geoloc(r)%lat_of_height_bin / DEGREE_SCALE 
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Mie_Rangebin_Geoloc(r)%&
+                            lat_of_height_bin / DEGREE_SCALE ,&
+                            DD_latitude_high_accuracy,&
+                            "lat_of_height_bin",workaround=workaround)
+
+      ! ensure range is in -180..180 (DEGREE_REF_LON=180 deg.)
+      tmp_lon =  Obs_Geoloc%Mie_Rangebin_Geoloc(r)%lon_of_height_bin / DEGREE_SCALE
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+
+      !i=i+1; values(i) = tmp_lon
+      ! replaced by:
+      call fill_one_element(values, i,tmp_lon,&
+                            DD_longitude_high_accuracy,&
+                            "lon_of_height_bin",workaround=workaround)
+
+      !i=i+1; values(i) = Obs_Geoloc%Mie_Rangebin_Geoloc(r)%alt_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Mie_Rangebin_Geoloc(r)%alt_of_height_bin,&
+                            ADM_height_bin_altitude,&
+                            "alt_of_height_bin",workaround=workaround)
+
+      call fill_one_element(values, i,Obs_Geoloc%Mie_Rangebin_Geoloc(r)%satellite_range_of_height_bin,&
+                            ADM_sat_range,&
+                            "satellite_range_of_height_bin",workaround=workaround)
+
+      !i=i+1; values(i) = Obs_Geoloc%Mie_Rangebin_Geoloc(r)%topoc_azim_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Mie_Rangebin_Geoloc(r)%&
+                            topoc_azim_of_height_bin,&
+                            DD_bearing_or_azimuth,&
+                            "topoc_azim_of_height_bin",workaround=workaround)      
+
+      !i=i+1; values(i) = Obs_Geoloc%Mie_Rangebin_Geoloc(r)%topoc_elev_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Mie_Rangebin_Geoloc(r)%&
+                            topoc_elev_of_height_bin,&
+                            DD_elevation,&
+                            "topoc_elev_of_height_bin",workaround=workaround)   
+
+      !i=i+1; values(i) = code_sun_visibility(Obs_Geoloc%Mie_Rangebin_Geoloc(r)%Target_to_Sun_Visib_Flag)
+      ! replaced by:
+      call fill_one_element(values, i,code_sun_visibility(Obs_Geoloc%Mie_Rangebin_Geoloc(r)%&
+                                                  Target_to_Sun_Visib_Flag),&
+                            DD_sun_glint_indicator,&
+                            "target_to_sun_visibility_flag",workaround=workaround)   
+
+    end do
+
+    i=i+1; values(i) = BCODE_CHANNEL_RAY
+
+    s = size(Obs_Geoloc%Rayleigh_Rangebin_Geoloc)
+    if ( s .ne. NrHeightBins+1 ) then
+       print *,"Error in FillValuesObsGeolocation: inconsistent nr of rangebins"
+       print *,"the L1B ObsGeolocation Rayleigh datastructure uses: ",s
+       print *,"but BUFR ObsGeolocation section expects:            ",NrHeightBins+1
+       goto 999
+    endif
+
+    ! set top upper bin in the field with index=0
+    do r=1,NrHeightBins+1
+      i=i+1; values(i) = r-1
+
+      !i=i+1; values(i) = Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%lat_of_height_bin / DEGREE_SCALE 
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%&
+                            lat_of_height_bin / DEGREE_SCALE ,&
+                            DD_latitude_high_accuracy,&
+                            "lat_of_height_bin",workaround=workaround)
+
+      ! ensure range is in -180..180 (DEGREE_REF_LON=180 deg.)
+      tmp_lon =  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%lon_of_height_bin / DEGREE_SCALE
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+
+      !i=i+1;  values( i) = tmp_lon
+      ! replaced by:
+      call fill_one_element(values, i,tmp_lon,&
+                            DD_longitude_high_accuracy,&
+                            "lon_of_height_bin",workaround=workaround)
+
+      !i=i+1;  values( i) = Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%alt_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%alt_of_height_bin,&
+                            ADM_height_bin_altitude,&
+                            "alt_of_height_bin",workaround=workaround)
+
+      call fill_one_element(values, i,Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%satellite_range_of_height_bin,&
+                            ADM_sat_range,&
+                            "satellite_range_of_height_bin",workaround=workaround)
+
+      !i=i+1;  values( i) = Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%topoc_azim_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%&
+                            topoc_azim_of_height_bin,&
+                            DD_bearing_or_azimuth,&
+                            "topoc_azim_of_height_bin",workaround=workaround)
+
+      !i=i+1;  values( i) = Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%topoc_elev_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i,Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%&
+                            topoc_elev_of_height_bin,&
+                            DD_elevation,&
+                            "topoc_elev_of_height_bin",workaround=workaround) 
+
+      !i=i+1;  values( i) = code_sun_visibility( Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%Target_to_Sun_Visib_Flag )
+      ! replaced by:
+      call fill_one_element(values, i,code_sun_visibility(Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%&
+                                                  Target_to_Sun_Visib_Flag),&
+                            DD_sun_glint_indicator,&
+                            "target_to_sun_visibility_flag",workaround=workaround)   
+    end do
+
+    last_used_index = i
+
+    return
+
+999 print *,"aborting fill of this BUFR message ...."
+    error_flag = error_writing_file
+    return
+
+  end subroutine FillValuesObsGeolocation
+  !  #]
+  subroutine GetValuesObsGeolocation(values,NrHeightBins,last_used_index,&
+                                     Obs_Geoloc,error_flag)
+    !  #[ 
+
+    ! get Geolocation data from the values array, see:
+    ! AE-TN-ECMWF-L2P-0072, BUFR Template definition, sec. 3.2, table 3.3
+    real(r8_), dimension(kvals), intent(in)    :: values
+    integer,                     intent(in)    :: NrHeightBins
+    integer,                     intent(inout) :: last_used_index
+    TYPE(Obs_Geolocation_type),  intent(inout) :: Obs_Geoloc
+    integer,                     intent(out)   :: error_flag
+    
+    ! local variable
+    integer   :: i, s, r
+    real(r8_) :: tmp_lon
+
+    ! init
+    error_flag = no_error
+
+    i = last_used_index
+    i=i+1;  
+    IF (nint(values(i)) .ne. BCODE_DATA_GEO) THEN
+       print *,"Error in GetValuesObsGeolocation: Unexpected BUFR content!"
+       print *,"The BUFR ObsGeolocation section should start with the"
+       print *,"constant parameter BCODE_DATA_GEO=",BCODE_DATA_GEO
+       print *,"but instead the number ",values(i)," was found ..."
+       goto 999
+    END IF
+
+    i=i+1; Obs_Geoloc%Geoid_Separation = values(i) ! FAdoxy
+
+    i=i+1;  
+    IF (nint(values(i)) .ne. BCODE_CHANNEL_MIE) THEN
+       print *,"Error in GetValuesObsGeolocation: Unexpected BUFR content!"
+       print *,"The BUFR ObsGeolocation MIE section should start with the"
+       print *,"constant parameter BCODE_CHANNEL_MIE=",BCODE_CHANNEL_MIE
+       print *,"but instead the number ",values(i)," was found ..."
+       goto 999
+    END IF
+
+    s = size(Obs_Geoloc%Mie_Rangebin_Geoloc) 
+    if (s .ne. NrHeightBins+1) then
+       print *,"Error in GetValuesObsGeolocation: inconsistent nr of rangebins"
+       print *,"BUFR ObsGeolocation Mie section uses:                 ",NrHeightBins+1
+       print *,"but the L1B ObsGeolocation Mie datastructure expects: ",s
+       goto 999
+    endif
+
+    ! remember top upper bin is stored in index=0
+    do r=1,NrHeightBins+1
+      i=i+1;  
+      IF (nint(values(i)) .ne. r-1) THEN
+         print *,"Error in GetValuesObsGeolocation: Unexpected BUFR content!"
+         print *,"The BUFR ObsGeolocation MIE BIN section should start with the"
+         print *,"range bin counter=",r-1
+         print *,"but instead the number ",values(i)," was found ..."
+         goto 999
+      END IF
+      
+      i=i+1;
+      Obs_Geoloc%Mie_Rangebin_Geoloc(r)%lat_of_height_bin = &
+           FAdoxy_to_IntAl(values(i),DEGREE_SCALE)
+
+      i=i+1;
+      tmp_lon =  values(i)
+      ! ensure range is in -180..180 (DEGREE_REF_LON=180 deg.)
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+      Obs_Geoloc%Mie_Rangebin_Geoloc(r)%lon_of_height_bin = &
+           FAdoxy_to_IntAl(tmp_lon,DEGREE_SCALE)
+
+      i=i+1; Obs_Geoloc%Mie_Rangebin_Geoloc(r)%alt_of_height_bin        = values(i)
+      i=i+1; Obs_Geoloc%Mie_Rangebin_Geoloc(r)%satellite_range_of_height_bin = values(i)
+      i=i+1; Obs_Geoloc%Mie_Rangebin_Geoloc(r)%topoc_azim_of_height_bin = values(i) 
+      i=i+1; Obs_Geoloc%Mie_Rangebin_Geoloc(r)%topoc_elev_of_height_bin = values(i) 
+      i=i+1; Obs_Geoloc%Mie_Rangebin_Geoloc(r)%Target_to_Sun_Visib_Flag = &
+                  decode_sun_visibility(values(i))
+    end do
+
+    i=i+1;  
+    IF (nint(values(i)) .ne. BCODE_CHANNEL_RAY) THEN
+       print *,"Error in GetValuesObsGeolocation: Unexpected BUFR content!"
+       print *,"The BUFR ObsGeolocation RAYLEIGH section should start with the"
+       print *,"constant parameter BCODE_CHANNEL_RAY=",BCODE_CHANNEL_RAY
+       print *,"but instead the number ",values(i)," was found ..."
+       goto 999
+    END IF
+
+    s = size(Obs_Geoloc%Rayleigh_Rangebin_Geoloc)
+    if (s .ne. NrHeightBins+1 ) then
+       print *,"Error in GetValuesObsGeolocation: inconsistent nr of rangebins"
+       print *,"BUFR ObsGeolocation Rayleigh section uses:                 ",NrHeightBins+1
+       print *,"but the L1B ObsGeolocation Rayleigh datastructure expects: ",s
+       goto 999
+    endif
+
+    ! remember top upper bin is stored in index=0
+    do r=1,NrHeightBins+1
+       i=i+1;  
+       IF (nint(values(i)) .ne. r-1) THEN
+          print *,"Error in GetValuesObsGeolocation: Unexpected BUFR content!"
+          print *,"The BUFR ObsGeolocation RAYLEIGH BIN section should start with the"
+          print *,"range bin counter=",r-1
+          print *,"but instead the number ",values(i)," was found ..."
+          goto 999
+       END IF
+
+      i=i+1;  
+      Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%lat_of_height_bin = &
+           FAdoxy_to_IntAl(values(i),DEGREE_SCALE)
+
+      i=i+1
+      tmp_lon = values(i)
+      ! ensure range is in -180..180 (DEGREE_REF_LON=180 deg.)
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+      Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%lon_of_height_bin = &
+           FAdoxy_to_IntAl(tmp_lon,DEGREE_SCALE)
+
+      i=i+1;  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%alt_of_height_bin        = values(i)
+      i=i+1;  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%satellite_range_of_height_bin = values(i)
+      i=i+1;  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%topoc_azim_of_height_bin = values(i)
+      i=i+1;  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%topoc_elev_of_height_bin = values(i)
+      i=i+1;  Obs_Geoloc%Rayleigh_Rangebin_Geoloc(r)%Target_to_Sun_Visib_Flag = &
+                  decode_sun_visibility(values(i))
+    end do
+
+    last_used_index = i
+
+    return
+
+999 print *,"aborting read of this BUFR message ...."
+    error_flag = error_reading_file
+    return
+
+  end subroutine GetValuesObsGeolocation
+  !  #]
+  !---------------------------------
+  ! 1.0 L1B_bufr_sec0
+  subroutine set_L1B_bufr_sec0()
+    !  #[
+   !
+   integer:: i
+
+   ksec0( 1)= 0
+   ksec0( 2)= 0
+   ksec0( 3)= BEDITION
+
+   if(bufr_test) then
+      write(*, '(a)'   ) ' ------ set_L1B_bufr_sec0 --------'
+      write(*, '(a)'   ) ' ------ ksec0 '
+      write(*, '(i15)' ) ( ksec0(i), i=1,jsec0 )
+   endif
+
+   return
+  end subroutine set_L1B_bufr_sec0
+  !  #]
+  !---------------------------------
+  ! 2.0 L1B_bufr_sec1
+  subroutine set_L1B_bufr_sec1( &
+                year,month,day,hour,minute )
+    !  #[
+
+   ! arguments
+   integer, intent(in)    :: year,month,day,hour,minute
+
+   ! local variables
+   integer:: i
+
+   ! 2.1 init
+   do i  = 1, jsec1
+      ksec1(i)= 0
+   enddo
+
+   ! 2.2 set
+   ksec1( 1)=  22            ! length sec1 bytes
+   ksec1( 2)= BEDITION       ! bufr edition
+   ksec1( 3)= BCODE_CENTRE   ! originating centre
+   ksec1( 4)=   1            ! update sequence
+   ksec1( 5)= 128            ! (PRESENCE SECT 2) (0/128 = no/yes)
+   ksec1( 6)= BOBSTYPE       ! message type 
+   ksec1( 7)= BSUBTYPE_L1B   ! subtype
+   ksec1( 8)= BTABLE_LOCAL_VERSION ! version of local table
+   ksec1( 9)= int(year,i4_)  ! Without offset year - 2000
+   ksec1(10)= int(month,i4_)
+   ksec1(11)= int(day,i4_)
+   ksec1(12)= int(hour,i4_)
+   ksec1(13)= int(minute,i4_)
+   ksec1(14)= BTABLE_MASTER         ! master table
+   ksec1(15)= BTABLE_MASTER_VERSION ! version of master table
+   ksec1(16)= BCODE_SUBCENTRE ! originating subcentre: new entry for L2B processing facility?
+   ksec1(17)=   0
+   ksec1(18)=   0
+
+   if(bufr_test) then
+      write(*, '(a)'   ) ' ------ set_L1B_bufr_sec1 --------'
+      write(*, '(a)'   ) ' ------ ksec1 '
+      write(*, '(i15)' ) ( ksec1(i), i=1,jsec1 )
+   endif
+
+   return
+  end subroutine set_L1B_bufr_sec1
+
+  !  #]
+  !---------------------------------
+  ! 3.0 L1B_bufr_sec2
+  subroutine set_L1B_bufr_sec2( nsubset )
+    !  #[
+    ! arguments
+    integer,   intent(in)  :: nsubset
+
+    ! local variables
+    integer    i
+    integer(i4_) :: bufr_error_flag
+
+    ! modify unpacked RDB keys (ECMWF only)
+    !---------------------------------
+    do i=1,jkey
+        key( i )= 0
+    end do
+    do i=1,jsec2
+        ksec2( i )= 0
+    end do
+
+    key( 1)= 52                ! length sec2
+    key( 2)= RDBTYPE           ! RDB obtype
+    key( 3)= BSUBTYPE_L1B      ! RDB subtype
+
+    key( 4)= ksec1( 9)         ! Without offset ksec1( 9) + 2000
+    key( 5)= ksec1(10)
+    key( 6)= ksec1(11)
+    key( 7)= ksec1(12)
+    key( 8)= ksec1(13)
+    key( 9)= 0          ! second
+
+    key(10)= int(nint( key_lon_min* 100000.) + 18000000,i4_) ! Lon 1
+    key(11)= int(nint( key_lat_min* 100000.) +  9000000,i4_) ! Lat 1
+    key(12)= int(nint( key_lon_max* 100000.) + 18000000,i4_) ! Lon 2
+    key(13)= int(nint( key_lat_max* 100000.) +  9000000,i4_) ! Lat 2
+
+    key(14)= int(nsubset,i4_)     ! no subsets
+
+    key(15)= BCODE_SATID          ! satellite ID
+    ! CCITTIA5 idents
+        do  i=1,9
+          key(15+i)=ichar('1')
+        enddo
+
+!    key(25)= nbufl        ! length of BUFR message in bytes, not known before packing
+
+    ! RDB, MDB insertion time stamp tbd
+    key(26)= 0 ! day
+    key(27)= 0 ! hour
+    key(28)= 0 ! minute
+    key(29)= 0 ! second
+    key(30)= 0 ! day
+    key(31)= 0 ! hour
+    key(32)= 0 ! minute
+    key(33)= 0 ! second
+
+    key(46)= 0                 ! minimum % confidence
+
+    !---------------------------------
+    ! pack RDB
+
+    ksec2( 1)= 52               ! length sec2 
+
+    bufr_error_flag = 0
+    call bupkey(key,ksec1,ksec2,bufr_error_flag)
+
+    if(bufr_test) then
+        write(*, '(a)'    ) ' ------ set_L1B_bufr_sec2 --------'
+        write(*, '(a)'    ) ' ------ ksec2 '
+        write(*, '(5i15)' ) ( ksec2(i), i=1,jsec2 )
+    endif
+
+    return
+  end subroutine set_L1B_bufr_sec2
+  !  #]
+  !---------------------------------
+  ! 4.0 L1B_bufr_sec3
+  subroutine set_L1B_bufr_sec3( nsubset )
+    !  #[
+    ! arguments
+   integer, intent(in)    :: nsubset
+
+   integer                :: i
+
+   ksec3( 1)= 0
+   ksec3( 2)= 0
+   ksec3( 3)= int(nsubset,i4_)   ! no of data subsets
+   ksec3( 4)= BCOMPRESSION_FLAG  ! 64 FOR COMPRESSION/ 0 MANY SUBSETS
+
+   if(bufr_test) then
+      write(*, '(a)'   ) ' ------ set_L1B_bufr_sec3 --------'
+      write(*, '(a)'   ) ' ------ ksec3 '
+      write(*, '(i15)' ) ( ksec3(i), i=1,jsec3 )
+   endif
+
+   return
+  end subroutine set_L1B_bufr_sec3
+  !  #]
+  !---------------------------------
+  ! 5.0 set_LxB_bufr_header_dd
+  subroutine set_LxB_bufr_header_dd( no_dd_start, no_dd_stop )
+    !  #[
+    ! arguments
+    integer, intent(in )    :: no_dd_start
+    integer, intent(out)    :: no_dd_stop
+   
+    ! local variables
+    integer                :: i
+
+    i = no_dd_start-1 
+
+    ! 5.1 set descriptors
+    !   origin satellite, centre
+    i=i+1; ktdlst(i) = DD_satellite_identifier        ! (code)
+    i=i+1; ktdlst(i) = DD_satellite_instruments       ! (code)
+    i=i+1; ktdlst(i) = DD_id_of_originating_center    ! (code)
+    i=i+1; ktdlst(i) = DD_id_of_originating_subcenter ! (code)
+
+    ! start obs time
+    i=i+1; ktdlst(i) = DD_time_significance ! (code)
+    i=i+1; ktdlst(i) = DD_D_date_YYYYMMDD ! will be unpacked as:
+                       ! 004001 ! year
+                       ! 004002 ! month
+                       ! 004003 ! day
+    i=i+1; ktdlst(i) = DD_D_time_HHMM ! will be unpacked as:
+                       ! 004004 ! hour
+                       ! 004005 ! minute
+    i=i+1; ktdlst(i) = DD_seconds_within_a_minute ! [s]
+
+    ! obs position DEM
+    i=i+1; ktdlst(i) = ADM_instrum_target_pos_signific ! (code)
+    i=i+1; ktdlst(i) = ADM_D_geolocation_latlon ! will be unpacked as:
+                       ! 207001 ! increase scale, ref. value and data width
+                          ! 005001 ! latitude, high acc. [deg]
+                          ! 006001 ! longitude, high acc. [deg]
+                       ! 207000 ! undo the scale change 
+    i=i+1; ktdlst(i) = ADM_height_bin_altitude ! [m]
+
+    ! L1B header info
+    i=i+1; ktdlst(i) = ADM_data_section ! ADM data section type which follows (code)
+
+    ! file version
+    i=i+1; ktdlst(i)=ADM_product_name ! product name (string)
+!    i=i+1; ktdlst(i)=017101 ! ??? yet undefined
+
+
+    ! 5.2 final size 
+    no_dd_stop = i
+
+    if(bufr_test) then
+      write(*, '(a)'   )   ' ------ set_LxB_bufr_header_dd --------'
+      write(*, '(a,2I15)' ) ' ------ no_dd_start,no_dd_stop ', no_dd_start, no_dd_stop
+      write(*, '(a)'   )   ' ------ ktdlst '
+      write(*, '(i15)' ) ( ktdlst(i), i=no_dd_start,no_dd_stop )
+    endif
+
+    return
+
+  end subroutine set_LxB_bufr_header_dd
+  !  #]
+  !---------------------------------
+  ! 6.0 set_L1B_bufr_data_obs_dd
+  subroutine set_L1B_bufr_data_obs_dd( no_dd_start, no_dd_stop )
+    !  #[
+
+    ! arguments
+    integer, intent( in)    :: no_dd_start
+    integer, intent(out)    :: no_dd_stop
+   
+    ! local variables
+    integer                :: i, last_used_index, NrHeightBins
+
+    i = no_dd_start-1
+
+    ! 6.1 set descriptors
+
+    last_used_index = i
+    NrHeightBins    = 24
+    call DefDescrListGeolocation(ktdlst,NrHeightBins,last_used_index)
+    i = last_used_index
+    ! -----------------------------------
+    ! PCD
+    ! -----------------------------------
+    i=i+1; ktdlst(i) = ADM_data_section ! ADM data section type which follows (code)
+
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; ktdlst(i) = get_replication_code(3,NPROFILE+1)
+    i=i+1; ktdlst(i) = ADM_height_bin_index          ! (numeric)
+    i=i+1; ktdlst(i) = ADM_backscatter_ratio         ! [dB]
+    i=i+1; ktdlst(i) = ADM_mie_snr                   ! (numeric)
+    ! Mie 
+    i=i+1; ktdlst(i) = ADM_receiver_channel          ! (code)
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; ktdlst(i) = get_replication_code(3,NPROFILE+1)
+    i=i+1; ktdlst(i) = ADM_height_bin_index          ! (numeric)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_hlos_velocity             ! [m/s]
+    ! Rayleigh 
+    i=i+1; ktdlst(i) = ADM_receiver_channel          ! (code)
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; ktdlst(i) = get_replication_code(3,NPROFILE+1)
+    i=i+1; ktdlst(i) = ADM_height_bin_index          ! (numeric)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_hlos_velocity             ! [m/s]
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_quality_count   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_quality_count   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_quality_count   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_average_laser_freq_offset ! (Hz)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_average_laser_freq_offset ! (Hz)
+    i=i+1; ktdlst(i) = ADM_average_uv_energy         ! (J)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_average_uv_energy         ! (J)
+    i=i+1; ktdlst(i) = ADM_invalid_mie_peak_count    ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_quality_count   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_quality_count        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_quality_count   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_mean_emitted_freq         ! (Hz)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_mean_emitted_freq         ! (Hz)
+    i=i+1; ktdlst(i) = ADM_mean_emitted_freq         ! (Hz)
+    i=i+1; ktdlst(i) = DD_first_order_statistics     ! (code)
+    i=i+1; ktdlst(i) = ADM_mean_emitted_freq         ! (Hz)
+
+ 
+    ! -----------------------------------
+    ! GWD
+    ! -----------------------------------
+    i=i+1; ktdlst(i) = ADM_data_section                ! (code)
+    ! mie
+    i=i+1; ktdlst(i) = ADM_receiver_channel            ! (code)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    ! rayleigh
+    i=i+1; ktdlst(i) = ADM_receiver_channel            ! (code)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_wght_factor ! (numeric)
+    i=i+1; ktdlst(i) = ADM_LOS_ground_corr_velocity    ! [m/s]
+
+    ! -----------------------------------
+    ! MEAS
+    ! -----------------------------------
+    i=i+1; ktdlst(i) = ADM_data_section                ! (code)
+    ! mie
+    i=i+1; ktdlst(i) = ADM_receiver_channel            ! (code)
+    i=i+1; ktdlst(i) = ADM_background_integration_time ! (numeric)
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; ktdlst(i) = get_replication_code(2,NPROFILE)
+    i=i+1; ktdlst(i) = ADM_height_bin_index            ! (numeric)
+    i=i+1; ktdlst(i) = ADM_bin_integration_time        ! (numeric)
+    ! rayleigh
+    i=i+1; ktdlst(i) = ADM_receiver_channel            ! (code)
+    i=i+1; ktdlst(i) = ADM_background_integration_time ! (numeric)
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; ktdlst(i) = get_replication_code(2,NPROFILE)
+    i=i+1; ktdlst(i) = ADM_height_bin_index            ! (numeric)
+    i=i+1; ktdlst(i) = ADM_bin_integration_time        ! (numeric)
+
+    ! -----------------------------------
+    ! US 
+    ! only in measurement scale
+    ! -----------------------------------
+
+    ! -----------------------------------
+    ! WV
+    ! -----------------------------------
+    i=i+1; ktdlst(i) = ADM_data_section     ! (code)
+    ! mie
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; ktdlst(i) = get_replication_code(2,NPROFILE)
+    i=i+1; ktdlst(i) = ADM_height_bin_index ! (numeric)
+    i=i+1; ktdlst(i) = ADM_D_wind_result ! will be unpacked as:
+                          ! 017060 ! ADM_bin_quality_flag
+                          ! 040217 ! ADM_hlos_velocity
+
+    ! rayleigh
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; ktdlst(i) = get_replication_code(2,NPROFILE)
+    i=i+1; ktdlst(i) = ADM_height_bin_index ! (numeric)
+    i=i+1; ktdlst(i) = ADM_D_wind_result ! will be unpacked as:
+                          ! 017060 ! ADM_bin_quality_flag
+                          ! 040217 ! ADM_hlos_velocity
+
+    ! -----------------------------------
+    !  CC calibration and characterization
+    ! -----------------------------------
+    i=i+1; ktdlst(i) = ADM_data_section     ! (code)
+
+    ! --- L1B characterisation 
+    i=i+1; ktdlst(i) = ADM_laser_wavelength ! [nm]
+
+    ! mie
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+
+    ! rayleigh
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+    i=i+1; ktdlst(i) = ADM_error_quantifier ! (numeric)
+
+    ! tripod corr.
+    ! repeat the next descriptor (NTRIPOD_CORR) times
+    i=i+1; ktdlst(i) = get_replication_code(1,NTRIPOD_CORR)
+    i=i+1; ktdlst(i) = ADM_tripod_correction ! (numeric)
+
+    ! Mie response calibration 
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+
+    i=i+1; ktdlst(i) = ADM_calibration_validity_code ! (code)
+    ! -----------------------
+    ! repeat the next 6 descriptors (NFREQUENCY_STEP) times
+    i=i+1; ktdlst(i) = get_replication_code(6,NFREQUENCY_STEP)
+    i=i+1; ktdlst(i) = ADM_sat_channel_freq_offset  ! [GHz]
+    i=i+1; ktdlst(i) = ADM_frequency_validity_code  ! (code)
+    i=i+1; ktdlst(i) = ADM_meas_response            ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_error      ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response       ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_error ! (numeric)
+    ! -----------------------
+    i=i+1; ktdlst(i) = ADM_meas_response_slope         ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_intercept     ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_stddev        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_slope    ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_intercpt ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_stddev   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_calibration_flag       ! (flag table)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_calibration_flag  ! (flag table)
+
+    ! Rayleigh response calibration 
+    i=i+1; ktdlst(i) = ADM_receiver_channel ! (code)
+
+    i=i+1; ktdlst(i) = ADM_calibration_validity_code ! (code)
+    ! -----------------------
+    ! repeat the next 6 descriptors (NFREQUENCY_STEP) times
+    i=i+1; ktdlst(i) = get_replication_code(6,NFREQUENCY_STEP)
+    i=i+1; ktdlst(i) = ADM_sat_channel_freq_offset  ! [GHz]
+    i=i+1; ktdlst(i) = ADM_frequency_validity_code  ! (code)
+    i=i+1; ktdlst(i) = ADM_meas_response            ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_error      ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response       ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_error ! (numeric)
+    ! -----------------------
+    i=i+1; ktdlst(i) = ADM_meas_response_slope         ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_intercept     ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_response_stddev        ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_slope    ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_intercpt ! (numeric)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_response_stddev   ! (numeric)
+    i=i+1; ktdlst(i) = ADM_meas_calibration_flag       ! (flag table)
+    i=i+1; ktdlst(i) = ADM_ref_pulse_calibration_flag  ! (flag table)
+
+    !----------------------------------
+
+    ! 6.2 final size 
+    no_dd_stop = i
+
+    if(bufr_test) then
+      write(*, '(a)'   )   ' ------ set_L1B_bufr_data_obs_dd --------'
+      write(*, '(a,2I15)' ) ' ------ no_dd_start,no_dd_stop ', no_dd_start, no_dd_stop
+      write(*, '(a)'   )   ' ------ ktdlst '
+      write(*, '(i15)' ) ( ktdlst(i), i=no_dd_start,no_dd_stop )
+    endif
+
+    return
+  end subroutine set_L1B_bufr_data_obs_dd
+  !  #]
+  !---------------------------------
+  ! 7.0 set_L1B_bufr_data_meas_dd
+  subroutine set_L1B_bufr_data_meas_dd( no_dd_start, no_dd_stop )
+    !  #[
+
+    ! arguments
+    integer, intent( in)    :: no_dd_start
+    integer, intent(out)    :: no_dd_stop
+   
+    ! local variables
+    integer                :: i
+
+    i = no_dd_start-1
+
+    ! 7.1 set descriptors
+
+    ! delayed replication
+    ! replicate the next 61 descriptors, num_times is not yet defined
+    i=i+1; ktdlst(i) = get_replication_code(61,0)
+    i=i+1; ktdlst(i) = Delayed_Descr_Repl_Factor
+
+    ! -----------------------------------
+    ! measurement granularity
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_measurement_index ! imeas
+
+    ! -----------------------------------
+    ! GEO 
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_data_section ! BCODE_DATA_GEO ! adm data section type which follows
+
+    i=i+1; KTDLST(i) = ADM_instrum_target_pos_signific ! adm instr. target pos. significance
+    i=i+1; KTDLST(i) = ADM_hlos_velocity        ! L1B%Geoloc_ADS%Meas_Geoloc(imeas)%AOCS_LOS_Velocity
+    i=i+1; KTDLST(i) = ADM_D_geolocation_latlon ! will be unpacked as: 
+                                ! 207001 modifier
+                                ! 005001 LATITUDE (HIGH ACCURACY)  [DEGREE]
+                                ! 006001 LONGITUDE (HIGH ACCURACY) [DEGREE]
+                                ! 207000 end of modifier
+    i=i+1; KTDLST(i) = ADM_height_bin_altitude !  L1B%Geoloc_ADS%Meas_Geoloc(imeas)%alt_of_DEM_intersection (height bin alt)
+    ! mie
+    i=i+1; KTDLST(i) = ADM_receiver_channel    ! (Mie or Rayleigh)
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(3,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index    ! iprof-1
+    i=i+1; KTDLST(i) = ADM_D_geolocation_latlon ! will be unpacked as:
+                                ! 207001 modifier
+                                ! 005001 LATITUDE (HIGH ACCURACY)  [DEGREE]
+                                ! 006001 LONGITUDE (HIGH ACCURACY) [DEGREE]
+                                ! 207000 end of modifier
+    i=i+1; KTDLST(i) = ADM_height_bin_altitude ! altitude
+
+    ! rayleigh
+    i=i+1; KTDLST(i) = ADM_receiver_channel    ! adm reciever channel (Mie or Rayleigh)
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(3,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index    ! iprof-1
+    i=i+1; KTDLST(i) = ADM_D_geolocation_latlon ! will be unpacked as:
+                                ! 207001 modifier
+                                ! 005001 LATITUDE (HIGH ACCURACY)  [DEGREE]
+                                ! 006001 LONGITUDE (HIGH ACCURACY) [DEGREE]
+                                ! 207000 end of modifier
+    i=i+1; KTDLST(i) = ADM_height_bin_altitude ! altitude
+
+    ! -----------------------------------
+    ! PCD 
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_data_section ! BCODE_DATA_PCD ! adm data section type which follows
+
+    ! frequency sequence
+    i=i+1; KTDLST(i) = ADM_D_laser_freq_properties ! will be unpacked as:
+                                ! 017001 ADM RECEIVER CHANNEL               [CODE TABLE 017001]
+                                ! 017205 SATELLITE CHANNEL FREQUENCY OFFSET [GHz]
+                                ! 008023 FIRST ORDER STATISTICS             [CODE TABLE 008023]
+                                ! 017205 SATELLITE CHANNEL FREQUENCY OFFSET [GHz]
+                                ! 017230 ADM REFERENCE PULSE QUALITY COUNT  [NUMERIC]
+                                ! 017001 ADM RECEIVER CHANNEL               [CODE TABLE 017001]
+                                ! 017205 SATELLITE CHANNEL FREQUENCY OFFSET [GHz]
+                                ! 008023 FIRST ORDER STATISTICS             [CODE TABLE 008023]
+                                ! 017205 SATELLITE CHANNEL FREQUENCY OFFSET [GHz]
+
+    i=i+1; KTDLST(i) = ADM_average_laser_freq_offset
+    i=i+1; KTDLST(i) = DD_first_order_statistics
+    i=i+1; KTDLST(i) = ADM_average_laser_freq_offset
+
+    i=i+1; KTDLST(i) = ADM_average_uv_energy
+    i=i+1; KTDLST(i) = DD_first_order_statistics
+    i=i+1; KTDLST(i) = ADM_average_uv_energy
+
+    i=i+1; KTDLST(i) = ADM_hlos_velocity_error
+
+    ! scattering ratio
+    ! repeat the next 2 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(2,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index ! adm height bin index
+    i=i+1; KTDLST(i) = ADM_backscatter_ratio ! backscatter [unitless]
+
+    ! signal to noise ratio
+    ! mie
+    i=i+1; KTDLST(i) = ADM_D_signal_to_noise ! will be unpacked as:
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001]
+                                 ! 102025 = replicate the next 2 descriptors 25 (NPROFILE+1) times
+                                 ! 017003 = ADM_height_bin_index                [NUMERIC]
+                                 ! 017021 = ADM_SNR_high_accuracy               [dB]
+    ! rayleigh A
+    i=i+1; KTDLST(i) = ADM_D_signal_to_noise ! will be unpacked as:
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001]
+                                 ! 102025 = replicate the next 2 descriptors 25 (NPROFILE+1) times
+                                 ! 017003 = ADM_height_bin_index                [NUMERIC]
+                                 ! 017021 = ADM_SNR_high_accuracy               [dB]
+    ! rayleigh B
+    i=i+1; KTDLST(i) = ADM_D_signal_to_noise ! will be unpacked as:
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001]
+                                 ! 102025 = replicate the next 2 descriptors 25 (NPROFILE+1) times
+                                 ! 017003 = ADM_height_bin_index                [NUMERIC]
+                                 ! 017021 = ADM_SNR_high_accuracy               [dB]
+
+    ! -----------------------------------
+    ! MEAS
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_data_section
+
+    ! spectrometer sequence contains dimension = NSPECTROMETER:
+    i=i+1; KTDLST(i) = ADM_D_ref_pulse_properties ! will be unpacked as:
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001]
+                                 ! 101020 = replicate the next descriptor 20 times
+                                 ! 017226 = ADM_reference_pulses [NUMERIC]
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001]
+                                 ! 017226 = ADM_reference_pulses [NUMERIC]
+                                 ! 017001 = ADM RECEIVER CHANNEL [CODE TABLE 017001] 
+                                 ! 017226 = ADM_reference_pulses [NUMERIC]
+
+    ! measurement data: 25 x NSPECTROMETER
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(3,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index
+
+    ! repeat the next descriptor (NSPECTROMETER) times
+    i=i+1; KTDLST(i) = get_replication_code(1,NSPECTROMETER)
+    i=i+1; KTDLST(i) = ADM_spectrometer_counts
+
+    ! -----------------------------------
+    ! US 
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_data_section
+
+    ! mie
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    ! repeat the next 3 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(3,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index
+    i=i+1; KTDLST(i) = ADM_useful_signal_quality_flag
+    i=i+1; KTDLST(i) = ADM_useful_signal
+    ! rayleigh
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    ! repeat the next 6 descriptors (NPROFILE+1) times
+    i=i+1; KTDLST(i) = get_replication_code(6,(NPROFILE+1))
+    i=i+1; KTDLST(i) = ADM_height_bin_index
+    i=i+1; KTDLST(i) = ADM_useful_signal_quality_flag
+    ! - B
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    i=i+1; KTDLST(i) = ADM_useful_signal
+    ! - A
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    i=i+1; KTDLST(i) = ADM_useful_signal
+
+    ! -----------------------------------
+    ! WV 
+    ! -----------------------------------
+    i=i+1; KTDLST(i) = ADM_data_section
+
+    ! mie
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; KTDLST(i) = get_replication_code(2,NPROFILE)
+    i=i+1; KTDLST(i) = ADM_height_bin_index
+    i=i+1; KTDLST(i) = ADM_D_wind_result ! will be expanded as:
+                               ! 017060 = ADM_bin_quality_flag [FLAG TABLE 017060]
+                               ! 040217 = ADM_hlos_velocity     [M/S]
+    
+    ! rayleigh
+    i=i+1; KTDLST(i) = ADM_receiver_channel
+    ! repeat the next 2 descriptors (NPROFILE) times
+    i=i+1; KTDLST(i) = get_replication_code(2,NPROFILE)
+    i=i+1; KTDLST(i) = ADM_height_bin_index
+    i=i+1; KTDLST(i) = ADM_D_wind_result ! will be expanded as:
+                               ! 017060 = ADM_bin_quality_flag [FLAG TABLE 017060]
+                               ! 040217 = ADM_hlos_velocity     [M/S]
+
+    !----------------------------------
+    ! 7.2 final size 
+    no_dd_stop = i
+
+    if(bufr_test) then
+      write(*, '(a)'   )   ' ------ set_L1B_bufr_data_meas_dd --------'
+      write(*, '(a,2I15)' ) ' ------ no_dd_start,no_dd_stop ', no_dd_start, no_dd_stop
+      write(*, '(a)'   )   ' ------ ktdlst '
+      write(*, '(i15)' ) ( ktdlst(i), i=no_dd_start,no_dd_stop )
+    endif
+
+    return
+
+  end subroutine set_L1B_bufr_data_meas_dd
+  !  #]
+  !---------------------------------
+  ! 10.0 L1B_bufr_encode
+  subroutine L1B_bufr_encode(L1B_Headers, L1B, isubset, &
+                             BufrMsg, &
+                             error_flag, &
+                             workaround, FakeDateTime, FakeDate, FakeYear)
+    !  #[
+    ! arguments
+    TYPE(L1B_HDR_DataType), intent(in)  :: L1B_Headers
+    TYPE(L1B_BRC_DataType), intent(in)  :: L1B
+    integer,                intent(in)  :: isubset
+    TYPE(BufrMessageType),  intent(inout) :: BufrMsg
+    integer,                intent(out) :: error_flag
+    logical,            optional, intent(in) :: workaround
+    TYPE(DateTimeType), optional, intent(in) :: FakeDateTime
+    TYPE(DateTimeType), optional, intent(in) :: FakeDate
+    integer,            optional, intent(in) :: FakeYear
+
+    ! 0.0 local variables
+
+    ! 0.1 indices, sizes
+    integer    :: no_element_offset, &
+                  imeasurement, &
+                  nmeasurement
+!                  no_element_start, & ! not used
+!                  no_element_stop, &  ! not used
+
+    ! 0.2 date variables
+    integer    :: year, &
+                  month, & 
+                  day, & 
+                  hour, & 
+                  minute!, &
+!                  second ! not used
+
+    ! 0.3 position variables
+    real(r8_)  :: lat, &
+                  lon
+
+    ! init
+    error_flag = no_error
+
+    !---------------------------------
+    ! 1.0 build L1B observation array (single subset)
+
+    ! 1.1 header elements
+    call fill_L1B_bufr_header( L1B_Headers, L1B, isubset, &
+                               BufrMsg, &
+                               year,month,day,hour,minute, & 
+                               lat, lon, FakeDateTime, FakeDate, FakeYear)
+
+    ! 1.2 observation scale
+    call fill_L1B_bufr_data_obs(L1B,isubset,BufrMsg,error_flag,workaround=workaround)
+    if (error_flag .ne. no_error) return
+
+    ! 1.3 measurement scale
+    no_element_offset = (isubset-1) * ktdexp_size & 
+                      + NELEMENTS_L1B_HEAD &
+                      + NELEMENTS_L1B_OBS
+
+    ! 1.3.1 set delayed replication factor
+
+    write(*,*) "TODO : fetch actual number measurements for each observation : currently missing in testdata  "
+!    nmeasurement =  L1B%nr_of_measurements
+    nmeasurement = kdata(1)
+
+    BufrMsg%values(no_element_offset+1) = nmeasurement
+
+ 
+    ! 1.3.2 fetch measurements 
+    if (kdata(1) >= nmeasurement ) then
+
+      do imeasurement = 1, nmeasurement
+
+        call fill_L1B_bufr_data_meas( L1B, imeasurement, isubset,&
+                                      BufrMsg, &
+                                      workaround=workaround)
+
+      end do
+
+    else
+      write(*,*) "Error: L1B_bufr_encode : nmeasurement_max < nmeasurement "
+      stop 2
+    endif
+
+    ! end collect measurements
+
+    ! 2.0 keep key for sec2
+
+    ! 2.1 construct position box
+    if (key_lat_min > lat) key_lat_min = lat
+    if (key_lat_max < lat) key_lat_max = lat
+    if (key_lon_min > lat) key_lon_min = lat
+    if (key_lon_max < lat) key_lon_max = lat
+
+    ! 2.2 keep obs date
+    key_year    = year
+    key_month   = month
+    key_day     = day 
+    key_hour    = hour  
+    key_minute  = minute
+
+    ! why is key_second never updated? 
+    ! even if second is available and defined in the EE file??? JK.
+
+    ! end collect observation
+    !---------------------------------
+
+    return
+  end subroutine L1B_bufr_encode
+  !  #]
+  !---------------------------------
+  ! 11.0 L1B_bufr_encode_init
+  subroutine L1B_bufr_encode_init( nmeasurement, BufrMsg, error_flag)
+    !  #[
+    integer,               intent( in) :: nmeasurement
+    TYPE(BufrMessageType), intent(inout) :: BufrMsg
+    integer,               intent(out) :: error_flag
+
+    ! 0.0 local variables
+    integer    :: no_dd_start, &
+                  no_dd_stop!, &
+!                  error_flag ! not used
+
+
+    ! 1.0 initialise 
+    error_flag  = no_error
+    kdata(1)    = int(nmeasurement,i4_) ! max nr of L1B measurements in this file
+    ktdlst(:)   = 0
+    ktdlst_size = 0
+    ktdexp_size = 0
+
+    ! values arrays
+    BufrMsg%values(:)   = RVIND
+    BufrMsg%cvals(:)    = ''
+    BufrMsg%Buffer(:)   = NVIND
+
+    ! key for sec2 
+    key_lat_min =   90
+    key_lat_max = - 90
+    key_lon_min =  180
+    key_lon_max = -180
+
+    key_year    = 0
+    key_month   = 0
+    key_day     = 0 
+    key_hour    = 0  
+    key_minute  = 0
+    key_second  = 0
+
+
+    ! 2.1 section 0
+    call set_L1B_bufr_sec0()
+
+    ! 1.1 set section 1
+    ! this is needed here to allow constructing the filename for the
+    ! BUFR tables, which must be loaded to allow checking the variables
+    ! while composing the BUFR message.
+    call set_L1B_bufr_sec1( key_year,key_month,key_day,key_hour,key_minute ) 
+
+    ! dont do this:
+    ! BufrMsg%ksec1 => ksec1
+    ! this gives nasty core-dumps because ksec1 is not (a pointer to)
+    ! an allocated array, and this corrupts the code in DeleteBufrMsg.
+    BufrMsg%ksec1(:) = ksec1(:)
+    call preload_BUFR_tables(BufrMsg, error_flag)
+    if (error_flag .ne. no_error) return
+
+    ! 2.2 declare template
+    no_dd_start = 1
+    call set_LxB_bufr_header_dd( no_dd_start, no_dd_stop )
+
+    no_dd_start = no_dd_stop+1
+    call set_L1B_bufr_data_obs_dd( no_dd_start, no_dd_stop )
+
+    no_dd_start = no_dd_stop+1
+    call set_L1B_bufr_data_meas_dd( no_dd_start, no_dd_stop )
+
+    ! 2.3 set dimensions
+    ktdlst_size = int(no_dd_stop ,i4_)
+
+    ktdexp_size = int(NELEMENTS_L1B_HEAD &
+                      + NELEMENTS_L1B_OBS &
+                      + 1 &
+                      + kdata(1) * NELEMENTS_L1B_MEAS,i4_)
+    
+
+    return
+  end subroutine L1B_bufr_encode_init
+  !  #]
+  !---------------------------------
+  ! 12.0 L1B_bufr_encode_finish
+  subroutine L1B_bufr_encode_finish( nsubset, BufrMsg )
+    !  #[
+    integer,               intent( in) :: nsubset
+    TYPE(BufrMessageType), intent(inout) :: BufrMsg
+
+    ! 0.0 local variables
+    integer     :: i, &
+                   nelements_l1b
+
+    integer(i4_) :: iprint
+    integer(i4_) :: ktdexp(kelem)
+    integer(i4_) :: bufr_error_flag
+
+    ! 1.0 build sections
+    call buprq(1,0,0)
+
+    ! 1.1 set section 1 again to fill proper date and time
+    call set_L1B_bufr_sec1( key_year,key_month,key_day,key_hour,key_minute ) 
+ 
+    ! 1.2 section 2
+    call set_L1B_bufr_sec2( nsubset )
+
+    ! 1.3 section 3
+    call set_L1B_bufr_sec3( nsubset )
+
+
+    ! 2.0 check template
+! (bufr_test == .true.) is not allowed in Fortran90
+! just use the following:
+    iprint = 0
+    if (bufr_test) then
+      iprint = 1
+      write(*, '(a)'     ) ' L1B EE2BUFR: PRINT template '
+    endif
+    bufr_error_flag = 0
+    call buxdes(iprint,ksec1,ktdlst_size,ktdlst,krdlen,kdata,kelem, &
+             ktdexp_size,ktdexp,BufrMsg%cnames,BufrMsg%cunits,bufr_error_flag)
+    !print *,'iprint = ',iprint
+    !stop 1
+    if(bufr_error_flag.gt.0) then
+      print*,' ERROR buxdes  ------- ', bufr_error_flag
+      stop 2
+    endif
+
+    nelements_l1b = NELEMENTS_L1B_HEAD &
+                  + NELEMENTS_L1B_OBS &
+                  + 1 &
+                  + kdata(1) * NELEMENTS_L1B_MEAS
+
+    if(ktdexp_size /= nelements_l1b) then
+      write(*, '(a)'     ) ' L1B EE2BUFR: ERROR unexpected template length '
+      write(*, '(a,2i15)' ) ' ktdexp_size /= NELEMENTS_L1B ', ktdexp_size, nelements_l1b
+      stop 2
+    endif
+
+
+    ! 3.0 encode message
+    bufr_error_flag = 0
+    call bufren( &
+             ksec0, ksec1, ksec2, ksec3, ksec4, &
+             ktdlst_size, ktdlst, krdlen, kdata, &
+             ktdexp_size, kvals, BufrMsg%values, &
+             BufrMsg%cvals, BufrMsg%SizeWords, BufrMsg%Buffer, & 
+             bufr_error_flag )
+
+! WARNING: the length of the encoded message is returned in words
+! in the BufrMsg%SizeWords variable (not in bytes!!!!)
+
+    if(bufr_error_flag.gt.0) then
+      print*,' ERROR bufren  ------- ', bufr_error_flag
+      stop 2
+    endif
+
+    if(bufr_test) then
+      write(*, '(a)'     ) ' -------------- L1B_bufr_encode_finish -------'
+      write(*, '(a,i15)' ) ' BufrMsg%SizeWords   ', BufrMsg%SizeWords
+      write(*, '(a)'     ) ' ------ BufrMsg%Buffer '
+      write(*, '(i15)' ) (BufrMsg%Buffer(i),i=1,BufrMsg%SizeWords)
+    endif
+
+    ! Moved from L1B_ee2bufr
+    BufrMsg%SizeBytes = BufrMsg%SizeWords*4_i4_
+
+    return
+  end subroutine L1B_bufr_encode_finish
+  !  #]
+  !---------------------------------
+  ! 20.0 fill_L1B_bufr_header
+  subroutine fill_L1B_bufr_header( L1B_Headers, L1B, isubset, &
+                                   BufrMsg, &
+                                   year,month,day,hour,minute, &
+                                   lat, lon, FakeDateTime, FakeDate, FakeYear)
+    !  #[
+    ! arguments
+    TYPE(L1B_HDR_DataType),  intent(in)  :: L1B_Headers
+    TYPE(L1B_BRC_DataType),  intent(in)  :: L1B
+    integer,                 intent(in)  :: isubset
+    TYPE(BufrMessageType),   intent(inout) :: BufrMsg
+    integer,             intent(out) :: year,month,day,hour,minute
+    real(r8_),           intent(out) :: lat, lon
+    TYPE(DateTimeType), optional, intent(in) :: FakeDateTime
+    TYPE(DateTimeType), optional, intent(in) :: FakeDate
+    integer,            optional, intent(in) :: FakeYear
+
+    ! local variables
+    Type(date_type)        :: date
+    Type(time_type)        :: time
+
+    integer                :: no_start, no_stop
+    integer                :: i
+
+    real(r8_)              :: tmp_lon
+
+    real(r8_), dimension(:), pointer :: values ! numerical data
+
+    ! Use local variable to point to BufrMsg%values
+    values => BufrMsg%values
+
+    ! initialise
+    no_start = (isubset-1) * ktdexp_size + 1
+
+    ! map elements
+    i = no_start-1
+
+    i=i+1;  values( i) = BCODE_SATID
+    i=i+1;  values( i) = BCODE_INSTRUMENT
+    i=i+1;  values( i) = BCODE_CENTRE
+    i=i+1;  values( i) = BCODE_SUBCENTRE
+
+    i=i+1;  values( i) = BCODE_TIME_SENSE_START
+
+    if (present(FakeDateTime)) then
+       date = Get_Date_from_DateTime( FakeDateTime )
+       time = Get_Time_from_DateTime( FakeDateTime )
+    else
+       if (present(FakeDate)) then
+          date = Get_Date_from_DateTime( FakeDate )
+          time = Get_Time_from_DateTime( L1B%Geoloc_ADS%start_of_obs_datetime )
+       else
+          date = Get_Date_from_DateTime( L1B%Geoloc_ADS%start_of_obs_datetime )
+          time = Get_Time_from_DateTime( L1B%Geoloc_ADS%start_of_obs_datetime )
+          if (present(FakeYear)) then
+             ! replace the year, but leave month-day and time info as it is
+             date%year = FakeYear
+          end if
+       end if
+    endif
+
+    i=i+1;  values( i) = date%year
+    i=i+1;  values( i) = date%month
+    i=i+1;  values( i) = date%day
+    i=i+1;  values( i) = time%hour
+    i=i+1;  values( i) = time%minute
+    i=i+1;  values( i) = time%second
+
+    i=i+1;  values( i) = BCODE_POS_LOS_GEOID
+
+    if (L1B%Geoloc_ADS%Obs_Geoloc%Geoloc_of_DEM_Intersection%&
+            lat_of_DEM_intersection .ne. missing_indicator_IntAl) then 
+       i=i+1;  values( i) = L1B%Geoloc_ADS%Obs_Geoloc%&
+                                Geoloc_of_DEM_Intersection%&
+                                lat_of_DEM_intersection / DEGREE_SCALE
+    else
+       i=i+1;  values( i) = RVIND
+    end if
+
+    ! TODO: consider use of tmp_lat and fill_one_element 
+    !       as per fill_L1B_bufr_data_meas?
+
+    if (L1B%Geoloc_ADS%Obs_Geoloc%Geoloc_of_DEM_Intersection%&
+            lon_of_DEM_intersection .ne. missing_indicator_IntAl) then
+       tmp_lon =  L1B%Geoloc_ADS%Obs_Geoloc%Geoloc_of_DEM_Intersection%&
+                      lon_of_DEM_intersection / DEGREE_SCALE
+    else
+       tmp_lon = RVIND
+    end if
+
+    if (.not. missing_real(tmp_lon)) then
+       if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+    end if
+    i=i+1;  values( i) = tmp_lon
+
+    ! TODO: consider use of fill_one_element as per fill_L1B_bufr_data_meas?
+
+    if (.not. missing_real(L1B%Geoloc_ADS%Obs_Geoloc%&
+                 Geoloc_of_DEM_Intersection%alt_of_DEM_intersection)) then
+       i=i+1;  values( i) = L1B%Geoloc_ADS%Obs_Geoloc%&
+                            Geoloc_of_DEM_Intersection%alt_of_DEM_intersection
+    else
+       i=i+1;  values( i) = RVIND
+    end if
+
+    ! TODO: consider use of tmp_alt and fill_one_element
+    !       as per fill_L1B_bufr_data_meas?
+
+    i=i+1;  values( i) = BCODE_DATA_HEA
+
+    ! product name
+    i=i+1;  values( i) = isubset * 1000 + 64;
+    BufrMsg%cvals( isubset ) = trim( L1B_Headers%MPH%product( 1:62) )
+
+    !print *,"TESTJOS: BufrMsg%cvals(i) item used for i=",isubset," values(",i,") = ",values(i) 
+    !print *,"TESTJOS: BufrMsg%cvals(i) = ["//trim(BufrMsg%cvals( isubset ))//"]"
+
+    ! return time / position
+    no_stop = i
+
+    i = (no_start-1)
+    year    = int(values( i + 6 ))
+    month   = int(values( i + 7 ))
+    day     = int(values( i + 8 ))
+    hour    = int(values( i + 9 ))
+    minute  = int(values( i +10 ))
+
+    lat     = values( i +13 )
+    lon     = values( i +14 )
+
+    ! test 
+    if(bufr_test) then
+        write(*, '(a)'    )     ' -------------- fill_L1B_bufr_header  -------'
+        write(*, '(a,2i15)' )   ' values no_start / no_stop  ', no_start, no_stop
+        write(*, '(a,5i15)' )   ' time      ', year,month,day,hour,minute
+        write(*, '(a,2f15.6)' ) ' position  ', lat, lon
+    endif
+
+    return
+  end subroutine fill_L1B_bufr_header
+  !  #]
+  !---------------------------------
+  ! 21.0 fill_L1B_bufr_data_obs
+  subroutine fill_L1B_bufr_data_obs( L1B, isubset, &
+                                     BufrMsg, &
+                                     error_flag, workaround)
+    !  #[
+
+    ! arguments
+    TYPE(L1B_BRC_DataType),  intent(in)    :: L1B
+    integer,                 intent(in)    :: isubset
+    TYPE(BufrMessageType),   intent(inout) :: BufrMsg
+    integer,                 intent(out)   :: error_flag
+    logical, optional,       intent(in)    :: workaround
+
+
+    ! local variables
+    integer                :: no_start, no_stop
+    integer                :: i, iprof, nprof, itrip, ntrip, ifreq, nfreq
+    integer                :: iwarn, last_used_index, NrHeightBins
+
+    real(r8_), dimension(:), pointer :: values ! numerical data
+
+    ! Use local variable to point to BufrMsg%values
+    values => BufrMsg%values
+
+    ! initialise
+    error_flag = no_error
+    no_start = (isubset-1) * ktdexp_size + NELEMENTS_L1B_HEAD + 1
+
+    ! map elements
+    i = no_start-1
+
+    ! GEO
+    last_used_index = i
+    NrHeightBins    = 24
+    call FillValuesObsGeolocation(values,NrHeightBins,last_used_index, &
+                                  L1B%Geoloc_ADS%Obs_Geoloc,error_flag,&
+                                  workaround=workaround)
+    if (error_flag .ne. no_error) return
+    i = last_used_index
+
+    ! PCD
+    i=i+1;  values( i) = BCODE_DATA_PCD
+
+    nprof = size( L1B%PCD_ADS%Observation_PCD%Obs_Alt_Bin_PCD ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : PCD unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    iwarn = 0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      if ( abs(L1B%PCD_ADS%Observation_PCD%Obs_Alt_Bin_PCD(iprof)%scattering_ratio - 0.0) .lt. delta ) then
+         ! 0.0 signals missing here. This may occur in old L1B files. Do we still need this?
+        iwarn=iwarn+1
+        i=i+1
+      else
+!        i=i+1;  values( i) = 10.0 * log10( L1B%PCD_ADS%Observation_PCD%Obs_Alt_Bin_PCD(iprof)%scattering_ratio )
+         ! replaced by
+         call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%&
+                               Obs_Alt_Bin_PCD(iprof)%scattering_ratio,&
+                               ADM_backscatter_ratio,&
+                               "scattering_ratio",dB_encode=.true.,&
+                               workaround=workaround)
+      endif
+
+      call fill_one_element(values, i, L1B%PCD_ADS%Observation_PCD%&
+                            Obs_Alt_Bin_PCD(iprof)%Mie_SNR,&
+                            ADM_mie_snr, "Mie_SNR", dB_encode=.false.,&
+                            workaround=workaround)
+
+    end do
+    if ( iwarn > 0 ) then
+        write(*,*) "Warning: fill_L1B_bufr_data_obs : PCD ZERO scattering_ratio for ", iwarn, " profiles" 
+    endif
+
+    ! Mie hlos stdev
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+!      i=i+1;  values( i) = L1B%PCD_ADS%Observation_PCD%Obs_Alt_Bin_PCD(iprof)%Mie_wind_velocity_std_dev
+      ! replaced by:
+      call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%&
+                            Obs_Alt_Bin_PCD(iprof)%Mie_wind_velocity_std_dev,&
+                            ADM_hlos_velocity,&
+                            "Mie_wind_velocity_std_dev",workaround=workaround)
+    end do
+
+    ! Rayleigh hlos stdev
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+!      i=i+1;  values( i) = L1B%PCD_ADS%Observation_PCD%Obs_Alt_Bin_PCD(iprof)%Rayleigh_wind_velocity_std_dev
+      ! replaced by:
+      call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%&
+                     Obs_Alt_Bin_PCD(iprof)%Rayleigh_wind_velocity_std_dev,&
+                     ADM_hlos_velocity,&
+                     "Rayleigh_wind_velocity_std_dev",workaround=workaround)
+    end do
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_meas_laser_freq_unlocked,&
+                          ADM_meas_quality_count,"nr_meas_laser_freq_unlocked",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_ref_laser_freq_unlocked,&
+                          ADM_ref_pulse_quality_count,"nr_ref_laser_freq_unlocked",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_sat_not_on_target_meas,&
+                          ADM_meas_quality_count,"nr_sat_not_on_target_meas",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_corrupt_mie_meas,&
+                          ADM_meas_quality_count,"nr_corrupt_mie_meas",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_corrupt_rayleigh_meas,&
+                          ADM_meas_quality_count,"nr_corrupt_rayleigh_meas",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_corrupt_mie_ref_pulses,&
+                          ADM_ref_pulse_quality_count,"nr_corrupt_mie_ref_pulses",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_corrupt_rayleigh_ref_pulses,&
+                          ADM_ref_pulse_quality_count,"nr_corrupt_rayleigh_ref_pulses",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%avg_laser_freq_offset,&
+                          ADM_average_laser_freq_offset,"avg_laser_freq_offset",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%avg_laser_freq_offset,&
+                          ADM_average_laser_freq_offset,"avg_laser_freq_offset",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%avg_UV_energy,&
+                          ADM_average_uv_energy,"avg_UV_energy",scale=1.e-3_r8_,&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%avg_UV_energy,&
+                          ADM_average_uv_energy,"avg_UV_energy",scale=1.e-3_r8_,&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_invalid_mie_peak,&
+                          ADM_invalid_mie_peak_count,"nr_invalid_mie_peak",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_mie_invalid_meas,&
+                          ADM_meas_quality_count,"nr_mie_invalid_meas",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_mie_invalid_ref_pulses,&
+                          ADM_ref_pulse_quality_count,"nr_mie_invalid_ref_pulses",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_rayleigh_invalid_meas,&
+                          ADM_meas_quality_count,"nr_rayleigh_invalid_meas",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%nr_rayleigh_invalid_ref_pulses,&
+                          ADM_ref_pulse_quality_count,"nr_rayleigh_invalid_ref_pulses",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%mie_mean_emitted_freq,&
+                          ADM_mean_emitted_freq,"mie_mean_emitted_freq",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%mie_mean_emitted_freq,&
+                          ADM_mean_emitted_freq,"mie_mean_emitted_freq",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%rayleigh_mean_emitted_freq,&
+                          ADM_mean_emitted_freq,"rayleigh_mean_emitted_freq",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i,L1B%PCD_ADS%Observation_PCD%rayleigh_mean_emitted_freq,&
+                          ADM_mean_emitted_freq,"rayleigh_mean_emitted_freq",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    ! GWD
+    i=i+1;  values( i) = BCODE_DATA_GWD
+
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+    !i=i+1;  values( i) = L1B%GWD_ADS%Mie_ground_corr_velocity
+    ! replaced by:
+    call fill_one_element(values, i,L1B%GWD_ADS%Mie_ground_corr_velocity,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "Mie_ground_corr_velocity",workaround=workaround)
+
+    !i=i+1;  values( i) = L1B%GWD_ADS%Mie_grnd_corr_wght_factor
+    ! replaced by:
+    call fill_one_element(values, i,L1B%GWD_ADS%Mie_grnd_corr_wght_factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "Mie_grnd_corr_wght_factor",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%HBE_Mie_grnd_corr_vel,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "HBE_Mie_grnd_corr_vel", workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Mie_Harmonic_Corr_Factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "HBE_Mie_Harmonic_Corr_Factor",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Mie_ch_tot_zero_wind_corr,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "Mie_ch_tot_zero_wind_corr",workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+    !i=i+1;  values( i) = L1B%GWD_ADS%Rayleigh_ground_corr_velocity
+    ! replaced by:
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayleigh_ground_corr_velocity,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "Rayleigh_ground_corr_velocity",workaround=workaround)
+
+    !i=i+1;  values( i) = L1B%GWD_ADS%Rayleigh_grnd_corr_wght_factor
+    ! replaced by:
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayleigh_grnd_corr_wght_factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "Rayleigh_grnd_corr_wght_factor",workaround=workaround)
+
+
+    call fill_one_element(values, i,L1B%GWD_ADS%HBE_Rayl_grnd_corr_vel,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "HBE_Rayl_grnd_corr_vel", workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayl_Harmonic_Corr_Factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "HBE_Rayl_Harmonic_Corr_Factor",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayl_ch_tot_zero_wind_corr,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "Rayl_ch_tot_zero_wind_corr",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayl_Corr_With_Mie_Wght_Factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "Rayl_Corr_With_Mie_Wght_Factor",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Rayl_Corr_With_MH_Wght_Factor,&
+                          ADM_LOS_ground_corr_wght_factor,&
+                          "Rayl_Corr_With_MH_Wght_Factor",workaround=workaround)
+
+    call fill_one_element(values, i,L1B%GWD_ADS%Mie_Rayl_Correction_Offset,&
+                          ADM_LOS_ground_corr_velocity,&
+                          "Mie_Rayl_Correction_Offset",workaround=workaround)
+
+    ! MEAS
+    i=i+1;  values( i) = BCODE_DATA_MEA
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+    !i=i+1;  values( i) = L1B%Meas_ADS%Mie_time_delays%background_integration_time
+    ! replaced by:
+    call fill_one_element(values, i,L1B%Meas_ADS%Mie_time_delays%background_integration_time,&
+                          ADM_background_integration_time,&
+                          "background_integration_time",workaround=workaround)
+
+    nprof = size( L1B%Meas_ADS%Mie_time_delays%bin_layer_integration_time ) 
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Mie Meas unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+      !i=i+1;  values( i) = L1B%Meas_ADS%Mie_time_delays%bin_layer_integration_time(iprof)
+      ! replaced by:
+      call fill_one_element(values, i,L1B%Meas_ADS%Mie_time_delays%bin_layer_integration_time(iprof),&
+                            ADM_bin_integration_time,&
+                            "bin_integration_time",workaround=workaround)
+    end do
+
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+    !i=i+1;  values( i) = L1B%Meas_ADS%Rayleigh_time_delays%background_integration_time
+    ! replaced by:
+    call fill_one_element(values, i,L1B%Meas_ADS%Rayleigh_time_delays%background_integration_time,&
+                          ADM_background_integration_time,&
+                          "background_integration_time",workaround=workaround)
+
+    nprof = size( L1B%Meas_ADS%Rayleigh_time_delays%bin_layer_integration_time ) 
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Rayleigh Meas unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+      !i=i+1;  values( i) = L1B%Meas_ADS%Rayleigh_time_delays%bin_layer_integration_time(iprof)
+       ! replaced by:
+      call fill_one_element(values, i,L1B%Meas_ADS%Rayleigh_time_delays%bin_layer_integration_time(iprof),&
+                            ADM_bin_integration_time,&
+                            "bin_integration_time",workaround=workaround)
+    end do
+
+    ! WV
+    i=i+1;  values( i) = BCODE_DATA_WV
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    ! NOTE: this name is misleading. The loop iterates over the nr of bins
+    !       for a given progile, and not over a collection of profiles !!!
+    ! TODO: rename the variables nprof and iprof below to reflect this.
+    nprof = size( L1B%WV_MDS%Obs_Wind_Profile%Mie_alt_bin_wind_info ) 
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Mie WV unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+
+      i=i+1;  values( i) = code_wind_bin_quality_flag( L1B%WV_MDS%Obs_Wind_Profile%Mie_alt_bin_wind_info(iprof)%bin_quality_flag )
+      !i=i+1;  values( i) = L1B%WV_MDS%Obs_Wind_Profile%Mie_alt_bin_wind_info(iprof)%wind_velocity
+      ! replaced by:
+      call fill_one_element(values, i,L1B%WV_MDS%Obs_Wind_Profile%&
+                            Mie_alt_bin_wind_info(iprof)%wind_velocity,&
+                            ADM_hlos_velocity, "WV MDS, Mie: ADM_hlos_velocity",&
+                            workaround=workaround)
+    end do
+
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    ! NOTE: this name is misleading. The loop iterates over the nr of bins
+    !       for a given progile, and not over a collection of profiles !!!
+    ! TODO: rename the variables nprof and iprof below to reflect this.
+    nprof = size( L1B%WV_MDS%Obs_Wind_Profile%Rayleigh_alt_bin_wind_info ) 
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Rayleigh WV unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+
+      i=i+1;  values( i) = code_wind_bin_quality_flag( L1B%WV_MDS%Obs_Wind_Profile%&
+                                                           Rayleigh_alt_bin_wind_info(iprof)%bin_quality_flag )
+      !i=i+1;  values( i) = L1B%WV_MDS%Obs_Wind_Profile%Rayleigh_alt_bin_wind_info(iprof)%wind_velocity
+      ! replaced by:
+      call fill_one_element(values, i,L1B%WV_MDS%Obs_Wind_Profile%&
+                            Rayleigh_alt_bin_wind_info(iprof)%wind_velocity,&
+                            ADM_hlos_velocity,"WV MDS, Rayleigh: ADM_hlos_velocity",&
+                            workaround=workaround)
+    end do
+
+
+    ! CC - calibration and characterization
+    i=i+1;  values( i) = BCODE_DATA_CC
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Laser_Wavelength
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i,&
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Laser_Wavelength,&
+            ADM_laser_wavelength,"laser_wavelength",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Mie_Err_Quant_K1
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Mie_Err_Quant_K1,&
+            ADM_error_quantifier,"Mie_Err_Quant_K1",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Mie_Err_Quant_K2
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Mie_Err_Quant_K2,&
+            ADM_error_quantifier,"Mie_Err_Quant_K2",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Mie_Err_Quant_K3
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Mie_Err_Quant_K3,&
+            ADM_error_quantifier,"Mie_Err_Quant_K3",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Rayl_Err_Quant_Ka2
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Rayl_Err_Quant_Ka2,&
+            ADM_error_quantifier,"Rayl_Err_Quant_Ka2",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Rayl_Err_Quant_Ka3
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Rayl_Err_Quant_Ka3,&
+            ADM_error_quantifier,"Rayl_Err_Quant_Ka3",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Rayl_Err_Quant_Kb2
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Rayl_Err_Quant_Kb2,&
+            ADM_error_quantifier,"Rayl_Err_Quant_Kb2",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Err_Quant%Rayl_Err_Quant_Kb3
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+            Err_Quant%Rayl_Err_Quant_Kb3,&
+            ADM_error_quantifier,"Rayl_Err_Quant_Kb3",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+
+    if (associated(L1B%Cal_ADS)) then
+       ! Tripod
+       ntrip = size( L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+                         Tripod_Obscur_Corr ) 
+       
+       if ( ntrip /= NTRIPOD_CORR ) then
+          write(*,*) "Error: fill_L1B_bufr_data_obs : "//&
+               "Obs unexpected Dimension Tripod correction ", ntrip
+          stop 2
+       endif
+    else
+       ntrip = NTRIPOD_CORR
+    end if
+    
+    do itrip=1,ntrip
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%Tripod_Obscur_Corr(itrip)
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Sat_Char_Data%&
+               Tripod_Obscur_Corr(itrip),&
+               ADM_tripod_correction,"Tripod_Obscur_Corr",&
+               workaround=workaround)
+       else
+          i=i+1
+       end if
+    enddo
+
+    ! Response Calibration
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       if( L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Calib_Valid ) then
+          values( i) = 0
+       else
+          values( i) = 1
+       endif
+    endif
+
+    ! -- frequency step
+    if (associated(L1B%Cal_ADS)) then
+       nfreq = size( L1B%Cal_ADS%L1B_Char_Data%&
+                         Mie_Resp_Calib_Data%Mie_Freq_Step_Res ) 
+
+       if ( nfreq > NFREQUENCY_STEP ) then
+          write(*,*) "Error: fill_L1B_bufr_data_obs : "//&
+               "Obs Mie unexpected Dimension Frequency step ", nfreq
+          stop 2
+       endif
+    else
+       nfreq = NFREQUENCY_STEP
+    end if
+    
+    do ifreq=1,nfreq
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Freq_Step_Res(ifreq)%Freq_Offset
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Freq_Offset, &
+               ADM_sat_channel_freq_offset,"MRC: Freq_Offset",&
+               workaround=workaround)
+       else
+          i=i+1 
+       end if
+
+    
+       i=i+1;
+       if (associated(L1B%Cal_ADS)) then
+          if ( L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Freq_Valid ) then
+             values( i)=0
+          else
+             values( i)=1
+          endif
+       end if
+    
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+       !                        Mie_Freq_Step_Res(ifreq)%Meas_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Meas_Resp,&
+               ADM_meas_response,"MRC: Meas_Resp",&
+               workaround=workaround)
+       else
+          i=i+1 
+       end if
+    
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+       !                         Mie_Freq_Step_Res(ifreq)%Meas_Err_Mie_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Meas_Err_Mie_Resp,&
+               ADM_meas_response_error,"MRC: Meas_Resp_error",&
+               workaround=workaround)
+       else
+          i=i+1 
+       end if
+       
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+       !                         Mie_Freq_Step_Res(ifreq)%Ref_Pulse_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Ref_Pulse_Resp,&
+               ADM_ref_pulse_response,"MRC: Ref_Pulse_Resp",&
+               workaround=workaround)
+       else
+          i=i+1 
+       end if
+       
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+       !                         Mie_Freq_Step_Res(ifreq)%Ref_Pulse_Err_Mie_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+               Mie_Freq_Step_Res(ifreq)%Ref_Pulse_Err_Mie_Resp,&
+               ADM_ref_pulse_response_error,"MRC: Ref_Pulse_Err_Mie_Resp",&
+               workaround=workaround)
+       else
+          i=i+1 
+       end if
+    enddo
+
+    ! This next do loop is not needed. The values array is already initialised
+    ! at RVIND before we start filling it, so incrementing i would be
+    ! sufficient here. JK
+
+    ! -- Mie frequency step padding
+    do ifreq=1+nfreq,NFREQUENCY_STEP
+      i=i+1;  values( i) = RVIND
+      ! check if NVIND really is the missing value to use here. NO it is not. JK
+      i=i+1;  values( i) = RVIND !NVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+    enddo
+
+    ! -- response calib
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Meas_Resp_Calib%Meas_Mean_Sensitivity
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Meas_Resp_Calib%Meas_Mean_Sensitivity,&
+            ADM_meas_response_slope,"MRC: Meas_Mean_Sensitivity",&
+            workaround=workaround)    
+    else
+       i=i+1 
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Meas_Resp_Calib%Meas_Zero_Freq
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Meas_Resp_Calib%Meas_Zero_Freq,&
+            ADM_meas_response_intercept,"MRC: Meas_Zero_Freq",&
+            workaround=workaround)
+    else
+       i=i+1 
+    end if
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Meas_Resp_Calib%Meas_Err_Mie_Resp_Stdev
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Meas_Resp_Calib%Meas_Err_Mie_Resp_Stdev,&
+            ADM_meas_response_stddev,"MRC: Meas_Err_Mie_Resp_Stdev",&
+            workaround=workaround)
+    else
+       i=i+1 
+    end if
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Mean_Sensitivity
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Mean_Sensitivity,&
+            ADM_ref_pulse_response_slope,"MRC: Ref_Pulse_Mean_Sensitivity",&
+            workaround=workaround)
+    else
+       i=i+1 
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Zero_Freq
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Zero_Freq,&
+            ADM_ref_pulse_response_intercpt,"MRC: Ref_Pulse_Zero_Freq",&
+            workaround=workaround)
+    else
+       i=i+1 
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Err_Mie_Resp_Stdev
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Mie_Resp_Calib_Data%&
+            Mie_Ref_Pulse_Resp_Calib%Ref_Pulse_Err_Mie_Resp_Stdev,&
+            ADM_ref_pulse_response_stddev,"MRC: Ref_Pulse_Err_Mie_Resp_Stdev",&
+            workaround=workaround)
+    else
+       i=i+1 
+    end if
+    
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       values( i) = code_meas_calibration_flag( L1B%Cal_ADS%L1B_Char_Data%&
+                                       Mie_Resp_Calib_Data%Meas_Calib_Valid )
+    end if
+
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       values( i) = code_refp_calibration_flag( L1B%Cal_ADS%L1B_Char_Data%&
+                                  Mie_Resp_Calib_Data%Ref_Pulse_Calib_Valid )
+    end if
+
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       if( L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Calib_Valid ) then
+          values( i) = 0
+       else
+          values( i) = 1
+       endif
+    end if
+    
+    ! -- frequency step
+    if (associated(L1B%Cal_ADS)) then
+       nfreq = size( L1B%Cal_ADS%L1B_Char_Data%&
+                         Rayl_Resp_Calib_Data%Rayl_Freq_Step_Res ) 
+       
+       if ( nfreq > NFREQUENCY_STEP ) then
+          write(*,*) "Error: fill_L1B_bufr_data_obs : "//&
+               "Obs Rayleigh unexpected Dimension Frequency step ", nfreq
+          stop 2
+       endif
+    else
+       nfreq = NFREQUENCY_STEP
+    end if
+    
+    do ifreq=1,nfreq
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+       !                        Rayl_Freq_Step_Res(ifreq)%Freq_Offset
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+               Rayl_Freq_Step_Res(ifreq)%Freq_Offset,&
+               ADM_sat_channel_freq_offset,"RRC: Freq_Offset",&
+               workaround=workaround)
+       else
+          i = i+1
+       end if
+
+       i=i+1
+       if (associated(L1B%Cal_ADS)) then
+          if( L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+                  Rayl_Freq_Step_Res(ifreq)%Freq_Valid ) then
+             values( i)=0
+          else
+             values( i)=1
+          endif
+       end if
+       
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+       !                     Rayl_Freq_Step_Res(ifreq)%Meas_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+               Rayl_Freq_Step_Res(ifreq)%Meas_Resp,&
+               ADM_meas_response,"RRC: Meas_Resp",&
+               workaround=workaround)
+       else
+          i=i+1
+       end if
+       
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+       !                         Rayl_Freq_Step_Res(ifreq)%Meas_Err_Rayl_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+               Rayl_Freq_Step_Res(ifreq)%Meas_Err_Rayl_Resp,&
+               ADM_meas_response_error,"RRC: Meas_Resp_Error",&
+               workaround=workaround)
+       else
+          i=i+1
+       end if
+       
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+       !                         Rayl_Freq_Step_Res(ifreq)%Ref_Pulse_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+               Rayl_Freq_Step_Res(ifreq)%Ref_Pulse_Resp,&
+               ADM_ref_pulse_response,"RRC: Ref_Pulse_Resp",&
+               workaround=workaround)
+       else
+          i=i+1
+       end if
+
+       !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+       !                         Rayl_Freq_Step_Res(ifreq)%Ref_Pulse_Err_Rayl_Resp
+       ! replaced by:
+       if (associated(L1B%Cal_ADS)) then
+          call fill_one_element(values, i, &
+               L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+               Rayl_Freq_Step_Res(ifreq)%Ref_Pulse_Err_Rayl_Resp,&
+               ADM_ref_pulse_response_error,"RRC: Ref_Pulse_Resp_Error",&
+               workaround=workaround)
+       else
+          i=i+1
+       end if
+
+    enddo
+
+    ! -- Rayleigh frequency step padding
+    do ifreq=1+nfreq,NFREQUENCY_STEP
+      i=i+1;  values( i) = RVIND
+      ! check if NVIND really is the missing value to use here. NO it is not. JK
+      i=i+1;  values( i) = RVIND ! NVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+      i=i+1;  values( i) = RVIND
+    enddo
+
+    ! -- response calib
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Meas_Resp_Calib%Meas_Mean_Sensitivity
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Meas_Resp_Calib%Meas_Mean_Sensitivity,&
+            ADM_meas_response_slope,"RRC: Meas_Mean_Sensitivity",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Meas_Resp_Calib%Meas_Zero_Freq
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Meas_Resp_Calib%Meas_Zero_Freq,&
+            ADM_meas_response_intercept,"RRC: Meas_Zero_Freq",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Meas_Resp_Calib%Meas_Err_Rayl_Resp_Stdev
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Meas_Resp_Calib%Meas_Err_Rayl_Resp_Stdev,&
+            ADM_meas_response_stddev,"RRC: Meas_Err_Resp_Stdev",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+    
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Mean_Sensitivity
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Mean_Sensitivity,&
+            ADM_ref_pulse_response_slope,"RRC: Ref_Pulse_Mean_Sensitivity",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Zero_Freq
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Zero_Freq,&
+            ADM_ref_pulse_response_intercpt,"RRC: Ref_Pulse_Zero_Freq",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+
+    !i=i+1;  values( i) = L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Err_Rayl_Resp_Stdev
+    ! replaced by:
+    if (associated(L1B%Cal_ADS)) then
+       call fill_one_element(values, i, &
+            L1B%Cal_ADS%L1B_Char_Data%Rayl_Resp_Calib_Data%&
+            Rayl_Ref_Pulse_Resp_Calib%Ref_Pulse_Err_Rayl_Resp_Stdev,&
+            ADM_ref_pulse_response_stddev,"RRC: Ref_Pulse_Err_Resp_Stdev",&
+            workaround=workaround)
+    else
+       i=i+1
+    end if
+
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       values( i) = code_meas_calibration_flag( L1B%Cal_ADS%&
+            L1B_Char_Data%Rayl_Resp_Calib_Data%Meas_Calib_Valid )
+    end if
+
+    i=i+1
+    if (associated(L1B%Cal_ADS)) then
+       values( i) = code_refp_calibration_flag( L1B%Cal_ADS%&
+            L1B_Char_Data%Rayl_Resp_Calib_Data%Ref_Pulse_Calib_Valid )
+    end if
+    
+    ! return position
+    no_stop = i
+
+    ! test 
+    if(bufr_test) then
+        write(*, '(a)'    )    ' -------------- fill_L1B_bufr_data_obs  -------'
+        write(*, '(a,2i15)' ) ' values no_start / no_stop  ', no_start, no_stop
+    endif
+
+    return
+  end subroutine fill_L1B_bufr_data_obs
+  !  #]
+  !---------------------------------
+  ! 22.0 fill_L1B_bufr_data_meas
+  subroutine fill_L1B_bufr_data_meas( L1B, imeas, isubset, BufrMsg, workaround)
+    !  #[
+
+    ! arguments
+    TYPE(L1B_BRC_DataType),  intent(in)    :: L1B
+    integer,                 intent(in)    :: imeas
+    integer,                 intent(in)    :: isubset
+    TYPE(BufrMessageType),   intent(inout) :: BufrMsg
+    logical, optional,       intent(in)    :: workaround
+
+    ! local variables
+    integer                :: no_start, no_stop
+    integer                :: i, iprof, nprof, ispec, nspec!, k ! not used
+
+    integer                :: iwarn
+
+    real(r8_)              :: tmp_lat
+    real(r8_)              :: tmp_lon
+    real(r8_)              :: tmp_alt
+
+    real(r8_), dimension(:), pointer :: values ! numerical data
+
+    ! Use local variable to point to BufrMsg%values
+    values => BufrMsg%values
+
+    ! initialise
+    no_start = (isubset-1) * ktdexp_size &
+             + NELEMENTS_L1B_HEAD &
+             + NELEMENTS_L1B_OBS &
+             + 1 &
+             + (imeas-1) * NELEMENTS_L1B_MEAS &
+             + 1
+
+    ! map elements
+    i = no_start-1
+
+    ! measurement index
+    i=i+1;  values( i) = imeas
+
+    ! GEO
+    i=i+1;  values( i) = BCODE_DATA_GEO
+
+    i=i+1;  values( i) = BCODE_POS_LOS_GEOID
+
+!    i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%AOCS_LOS_Velocity
+    ! replaced by:
+! TODO: if we ever decide to use the L1B encoder again, we should convert LOS to HLOS here!
+    call fill_one_element(values, i,L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+                       AOCS_LOS_Velocity,ADM_HLos_Velocity,"AOCS_LOS_Velocity",&
+                       workaround=workaround)
+
+    ! note that this also works if both fields are missing,
+    ! since then it does not matter which one you copy
+    if (L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Geoloc_of_DEM_Intersection%&
+            lat_of_DEM_intersection .ne. missing_indicator_IntAl) then
+       tmp_lat = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+            Geoloc_of_DEM_Intersection%lat_of_DEM_intersection / DEGREE_SCALE
+    else
+       tmp_lat = RVIND
+    end if
+
+    !i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+    !                         lat_of_DEM_intersection / DEGREE_SCALE
+    !i=i+1;  values( i) = tmp_lat
+    ! replaced by:
+    call fill_one_element(values, i, tmp_lat,&
+                  DD_latitude_high_accuracy,"Latitude_of_DEM_intersection",&
+                  workaround=workaround)
+
+    if (L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Geoloc_of_DEM_Intersection%&
+            lon_of_DEM_intersection .ne. missing_indicator_IntAl) then
+       tmp_lon = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+            Geoloc_of_DEM_Intersection%lon_of_DEM_intersection / DEGREE_SCALE
+    else
+       tmp_lon = RVIND
+    end if
+
+    if (.not. missing_real(tmp_lon)) then
+       if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+    end if
+
+    !i=i+1;  values( i) = tmp_lon
+    ! replaced by:
+    call fill_one_element(values, i, tmp_lon, &
+              DD_longitude_high_accuracy,"Longitude_of_DEM_intersection",&
+              workaround=workaround)
+
+    if (.not. missing_real(L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+                   Geoloc_of_DEM_Intersection%alt_of_DEM_intersection)) then
+       tmp_alt = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%&
+            Geoloc_of_DEM_Intersection%alt_of_DEM_intersection
+    else
+       tmp_alt = RVIND
+    end if
+
+    !i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%alt_of_DEM_intersection
+    !i=i+1;  values( i) = tmp_alt
+    ! replaced by:
+    call fill_one_element(values, i, tmp_alt, &
+                          ADM_height_bin_altitude,"Altitude_of_DEM_intersection",&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    nprof = size( L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : Mie unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+      !i=i+1; values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc(iprof)%lat_of_height_bin/DEGREE_SCALE 
+      ! replaced by:
+      call fill_one_element(values, i,  L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc(iprof)%&
+                            lat_of_height_bin / DEGREE_SCALE, &
+                            DD_latitude_high_accuracy,"Latitude_of_height_bin",&
+                            workaround=workaround)
+
+      tmp_lon = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc(iprof)%lon_of_height_bin / DEGREE_SCALE
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+
+      !i=i+1;  values( i) = tmp_lon
+      ! replaced by:
+      call fill_one_element(values, i,  tmp_lon, &
+                            DD_longitude_high_accuracy,"Longitude_of_height_bin",&
+                            workaround=workaround)
+
+      !i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc(iprof)%alt_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i, L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Mie_Rangebin_Geoloc(iprof)%alt_of_height_bin, &
+                            ADM_height_bin_altitude,"Altitude_of_height_bin",&
+                            workaround=workaround)
+    end do
+
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    nprof = size( L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : Rayleigh unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+      !i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc(iprof)%lat_of_height_bin / DEGREE_SCALE 
+      ! replaced by:
+      call fill_one_element(values, i,  L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc(iprof)%&
+                            lat_of_height_bin / DEGREE_SCALE, &
+                            DD_latitude_high_accuracy,"Latitude_of_height_bin",&
+                            workaround=workaround)
+
+      tmp_lon = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc(iprof)%lon_of_height_bin / DEGREE_SCALE
+      if ( tmp_lon > DEGREE_REF_LON ) tmp_lon = tmp_lon - 2*DEGREE_REF_LON
+
+      !i=i+1;  values( i) = tmp_lon
+      ! replaced by:
+      call fill_one_element(values, i,  tmp_lon, &
+                            DD_longitude_high_accuracy,"Longitude_of_height_bin",&
+                            workaround=workaround)
+
+      !i=i+1;  values( i) = L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc(iprof)%alt_of_height_bin
+      ! replaced by:
+      call fill_one_element(values, i, L1B%Geoloc_ADS%Meas_Geoloc(imeas)%Rayleigh_Rangebin_Geoloc(iprof)%alt_of_height_bin, &
+                            ADM_height_bin_altitude,"Altitude_of_height_bin",&
+                            workaround=workaround)
+    end do
+
+    ! PCD
+    i=i+1;  values( i) = BCODE_DATA_PCD
+
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+    !i=i+1;  values( i) = L1B%PCD_ADS%Measurement_PCD(imeas)%mie_mean_emitted_freq
+    ! replaced by:
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%mie_mean_emitted_freq, &
+                          ADM_sat_channel_freq_offset,"Mie_mean_emitted_freq",&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+       
+    !parameter no longer present in 1B input
+    ! i=i+1;  values( i) = L1B%PCD_ADS%Measurement_PCD(imeas)%mie_emitted_freq_std_dev
+
+!????? this one seems not present in the descriptor list definition ????
+! its a stub to replace the mie_emitted_freq_std_de defined above
+    i=i+1;  values( i) = RVIND
+
+    ! TODO November 2006
+    ! i=i+1;  values( i) = L1B%PCD_ADS%Measurement_PCD(imeas)%reference_pulse_FWHM
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%num_mie_invalid_ref_pulses, &
+                          ADM_ref_pulse_quality_count,"num_mie_invalid_ref_pulses",&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+    !i=i+1;  values( i) = L1B%PCD_ADS%Measurement_PCD(imeas)%rayleigh_mean_emitted_freq
+    ! replaced by:
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%rayleigh_mean_emitted_freq, &
+                          ADM_sat_channel_freq_offset,"Rayleigh_mean_emitted_freq",&
+                          workaround=workaround)
+
+    i=i+1;  values( i) = BCODE_STATISTIC_STDEV
+    !i=i+1;  values( i) = L1B%PCD_ADS%Measurement_PCD(imeas)%rayleigh_emitted_freq_std_dev
+    ! replaced by:
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%rayleigh_emitted_freq_std_dev, &
+                          ADM_sat_channel_freq_offset,"Rayleigh_emitted_freq_std_dev",&
+                          workaround=workaround)
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%avg_laser_freq_offset, &
+                          ADM_average_laser_freq_offset,"avg_laser_freq_offset",scale=1.e9_r8_,&
+                          workaround=workaround)
+
+    i=i+1; values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%avg_laser_freq_offset, &
+                         ADM_average_laser_freq_offset,"avg_laser_freq_offset",scale=1.e9_r8_,&
+                         workaround=workaround)
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%avg_UV_energy, &
+                         ADM_average_uv_energy,"avg_UV_energy",scale=1.e-3_r8_,&
+                         workaround=workaround)
+
+    i=i+1; values( i) = BCODE_STATISTIC_STDEV
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%avg_UV_energy, &
+                          ADM_average_uv_energy,"avg_UV_energy",scale=1.e-3_r8_,&
+                          workaround=workaround)
+
+    call fill_one_element(values, i, L1B%PCD_ADS%Measurement_PCD(imeas)%vel_of_att_uncertainty_error, &
+                          ADM_hlos_velocity_error,"vel_of_att_uncertainty_error", &
+                          workaround=workaround)
+
+
+    nprof = size( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : PCD unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    iwarn = 0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+      if ( abs(L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%scattering_ratio - 0.0) .lt. delta ) then
+         ! 0.0 signals missing here. This may occur in old L1B files. Do we still need this?
+        iwarn=iwarn+1
+        i=i+1
+         ! note that the values array is initialised to RVIND=missing_indicator_real before we start to
+         ! fill it, so there is no need to fill the value in this case.
+      else
+         ! note that the proper missing indicator of -1 used in current L1B files
+         ! is already converted to RVIND=missing_indicator_real in our reading routine
+         ! so there is no need to check for that condition here
+
+!        i=i+1;  values( i) = 10.0 * log10( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%scattering_ratio )
+!replaced by:
+         call fill_one_element(values, i,L1B%PCD_ADS%Measurement_PCD(imeas)%&
+                                     Meas_Alt_Bin_PCD(iprof)%scattering_ratio,&
+                               ADM_backscatter_ratio,"scattering_ratio",dB_encode=.true.,&
+                               workaround=workaround)
+
+      endif
+    end do
+    if ( iwarn > 0 ) then
+        write(*,*) "Warning: fill_L1B_bufr_data_meas : PCD ZERO scattering_ratio for ", iwarn, " profiles" 
+    endif
+
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    iwarn = 0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+!      if ( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Mie_snr == 0.0 ) then
+!        iwarn=iwarn+1
+!        i=i+1
+!      else
+!        i=i+1;  values( i) = 10.0 * log10( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Mie_snr )
+         ! replaced by
+         call fill_one_element(values, i,L1B%PCD_ADS%Measurement_PCD(imeas)%&
+                               Meas_Alt_Bin_PCD(iprof)%Mie_snr, &
+                               ADM_SNR_high_accuracy,"Mie_snr",dB_encode=.true.,&
+                               workaround=workaround)
+!      endif
+    end do
+    if ( iwarn > 0 ) then
+        write(*,*) "Warning: fill_L1B_bufr_data_obs : PCD ZERO Mie_snr for ", iwarn, " profiles" 
+    endif
+
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY_A
+
+    iwarn = 0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+!      if ( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_A == 0.0 ) then
+!        iwarn=iwarn+1
+!        i=i+1
+!      else
+!        i=i+1;  values( i) = 10.0 * log10( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_A )
+         ! replaced by
+         call fill_one_element(values, i,L1B%PCD_ADS%Measurement_PCD(imeas)%&
+                               Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_A,&
+                               ADM_SNR_high_accuracy,"Rayleigh_snr_channel_A",dB_encode=.true.,&
+                               workaround=workaround)
+!      endif
+    end do
+    if ( iwarn > 0 ) then
+        write(*,*) "Warning: fill_L1B_bufr_data_obs : PCD ZERO Rayleigh_snr_channel_A for ", iwarn, " profiles" 
+    endif
+
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY_B
+
+    iwarn = 0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+!      if ( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_B == 0.0 ) then
+!        iwarn=iwarn+1
+!        i=i+1
+!      else
+!        i=i+1;  values( i) = 10.0 * log10( L1B%PCD_ADS%Measurement_PCD(imeas)%Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_B )
+         ! replaced by
+         call fill_one_element(values, i,L1B%PCD_ADS%Measurement_PCD(imeas)%&
+                               Meas_Alt_Bin_PCD(iprof)%Rayleigh_snr_channel_B,&
+                               ADM_SNR_high_accuracy,"Rayleigh_snr_channel_B",dB_encode=.true.,&
+                               workaround=workaround)
+!      endif
+    end do
+    if ( iwarn > 0 ) then
+        write(*,*) "Warning: fill_L1B_bufr_data_obs : PCD ZERO Rayleigh_snr_channel_B for ", iwarn, " profiles" 
+    endif
+
+    ! MEAS
+    i=i+1;  values( i) = BCODE_DATA_MEA
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    nspec = size( L1B%Meas_ADS%Mie_reference_pulses(imeas)%spectrometer_count ) 
+
+    if ( nspec /= NSPECTROMETER ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : Mie Meas unexpected Dimension spectrometer ", nspec
+      stop 2
+    endif
+
+    do ispec=1,nspec
+       !i=i+1;  values( i) = L1B%Meas_ADS%Mie_reference_pulses(imeas)%spectrometer_count(ispec)
+       ! replaced by
+       ! NOTE: should this not be the descriptor ADM_spectrometer_counts
+       ! in stead of ADM_reference_pulses ??????????????
+       ! Looks like a mistake in table D, definition 
+       ! of 331006=ADM_D_ref_pulse_properties to me. JK.
+       call fill_one_element(values, i,L1B%Meas_ADS%Mie_reference_pulses(imeas)%&
+                                    spectrometer_count(ispec),&
+                             ADM_reference_pulses,"Mie : ref_pulse_spectr_counts",&
+                             workaround=workaround)
+    end do
+
+    ! - Rayleigh A
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY_A
+    !i=i+1;  values( i) = L1B%Meas_ADS%Rayleigh_reference_pulses_A(imeas)%spectrometer_count
+    ! replaced by:
+    call fill_one_element(values, i,L1B%Meas_ADS%Rayleigh_reference_pulses_A(imeas)%&
+                                 spectrometer_count,&
+                          ADM_reference_pulses,"Rayl_A : ref_pulse_spectr_counts",&
+                          workaround=workaround)
+
+    ! - Rayleigh B
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY_B
+    !i=i+1;  values( i) = L1B%Meas_ADS%Rayleigh_reference_pulses_B(imeas)%spectrometer_count
+    ! replaced by:
+    call fill_one_element(values, i,L1B%Meas_ADS%Rayleigh_reference_pulses_B(imeas)%&
+                                 spectrometer_count,&
+                          ADM_reference_pulses,"Rayl_B : ref_pulse_spectr_counts",&
+                          workaround=workaround)
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    nprof = size( L1B%Meas_ADS%Mie_measurement_data(imeas)%Mie_spectra_alt_bin ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : Mie_spectra_alt_bin unexpected No profiles ", nprof
+      STOP 2
+    endif
+
+    nspec = size( L1B%Meas_ADS%Mie_measurement_data(imeas)%Mie_spectra_alt_bin(1)%spectrometer_count ) 
+
+    if ( nspec /= NSPECTROMETER ) then
+      write(*,*) "Error: fill_L1B_bufr_data_meas : Mie_spectra_alt_bin unexpected Dimension spectrometer ", nspec
+      STOP 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      do ispec=1,nspec
+         !i=i+1;  values( i) = L1B%Meas_ADS%Mie_measurement_data(imeas)%Mie_spectra_alt_bin(iprof)%spectrometer_count(ispec)
+         ! replaced by:
+         call fill_one_element(values, i,L1B%Meas_ADS%Mie_measurement_data(imeas)%&
+                                      Mie_spectra_alt_bin(iprof)%&
+                                      spectrometer_count(ispec),&
+                               ADM_spectrometer_counts,"Mie_bin_spectr_counts",&
+                               workaround=workaround)
+      end do
+
+    end do
+
+    ! US
+    i=i+1;  values( i) = BCODE_DATA_US
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    nprof = size( L1B%US_MDS%Meas_US(imeas)%Mie ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Mie US unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      i=i+1;  values( i) = code_data_quality_flag( L1B%US_MDS%Meas_US(imeas)%Mie(iprof)%Data_Quality_Flag )
+      !i=i+1;  values( i) = L1B%US_MDS%Meas_US(imeas)%Mie(iprof)%Useful_Signal
+      ! replaced by
+      call fill_one_element(values, i,L1B%US_MDS%Meas_US(imeas)%Mie(iprof)%Useful_Signal,&
+                            ADM_useful_signal,"Mie%Usefull_Signal",&
+                            workaround=workaround)
+    end do
+
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    nprof = size( L1B%US_MDS%Meas_US(imeas)%Rayleigh ) 
+    if ( nprof /= NPROFILE+1 ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Rayleigh US unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    ! set top upper bin index=0
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof-1
+
+      i=i+1;  values( i) = code_data_quality_flag( L1B%US_MDS%Meas_US(imeas)%Rayleigh(iprof)%Data_Quality_Flag )
+
+      i=i+1;  values( i) = BCODE_CHANNEL_RAY_A
+      !i=i+1;  values( i) = L1B%US_MDS%Meas_US(imeas)%Rayleigh(iprof)%Useful_Signal_Channel_A
+      ! replaced by
+      call fill_one_element(values, i,L1B%US_MDS%Meas_US(imeas)%Rayleigh(iprof)%Useful_Signal_Channel_A,&
+                            ADM_useful_signal,"Rayleigh%Usefull_Signal_Channel_A",&
+                            workaround=workaround)
+
+      i=i+1;  values( i) = BCODE_CHANNEL_RAY_B
+      !i=i+1;  values( i) = L1B%US_MDS%Meas_US(imeas)%Rayleigh(iprof)%Useful_Signal_Channel_B
+      ! replaced by
+      call fill_one_element(values, i,L1B%US_MDS%Meas_US(imeas)%Rayleigh(iprof)%Useful_Signal_Channel_B,&
+                            ADM_useful_signal,"Rayleigh%Usefull_Signal_Channel_B",&
+                            workaround=workaround)
+    end do
+
+
+    ! WV
+    i=i+1;  values( i) = BCODE_DATA_WV
+
+    ! - Mie
+    i=i+1;  values( i) = BCODE_CHANNEL_MIE
+
+    nprof = size( L1B%WV_MDS%Meas_Wind_Profile(imeas)%Mie_alt_bin_wind_info )
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Mie WV unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+
+      i=i+1;  values( i) = code_wind_bin_quality_flag( &
+           L1B%WV_MDS%Meas_Wind_Profile(imeas)%Mie_alt_bin_wind_info(iprof)%&
+           bin_quality_flag )
+
+      !i=i+1;  values( i) = L1B%WV_MDS%Meas_Wind_Profile(imeas)%Mie_alt_bin_wind_info(iprof)%wind_velocity
+      ! replaced by
+      call fill_one_element(values, i,L1B%WV_MDS%Meas_Wind_Profile(imeas)%Mie_alt_bin_wind_info(iprof)%wind_velocity,&
+                            ADM_hlos_velocity,"Mie%wind_velocity",&
+                            workaround=workaround)
+
+    end do
+
+    ! - Rayleigh
+    i=i+1;  values( i) = BCODE_CHANNEL_RAY
+
+    nprof = size( L1B%WV_MDS%Meas_Wind_Profile(imeas)%Rayleigh_alt_bin_wind_info )
+    if ( nprof /= NPROFILE ) then
+      write(*,*) "Error: fill_L1B_bufr_data_obs : Rayleigh WV unexpected No profiles ", nprof
+      stop 2
+    endif
+
+    do iprof=1,nprof
+      i=i+1;  values( i) = iprof
+
+      i=i+1;  values( i) = code_wind_bin_quality_flag( &
+           L1B%WV_MDS%Meas_Wind_Profile(imeas)%&
+           Rayleigh_alt_bin_wind_info(iprof)%bin_quality_flag )
+
+      !i=i+1;  values( i) = L1B%WV_MDS%Meas_Wind_Profile(imeas)%Rayleigh_alt_bin_wind_info(iprof)%wind_velocity
+      ! replaced by
+      call fill_one_element(values, i,L1B%WV_MDS%Meas_Wind_Profile(imeas)%&
+                            Rayleigh_alt_bin_wind_info(iprof)%wind_velocity,&
+                            ADM_hlos_velocity,"Rayleigh%wind_velocity",&
+                            workaround=workaround)
+    end do
+
+
+    ! return position
+    no_stop = i
+
+    ! test 
+    if(bufr_test) then
+        write(*, '(a)'    )    ' -------------- fill_L1B_bufr_data_meas  -------'
+        write(*, '(a,2i15)' ) ' values no_start / no_stop  ', no_start, no_stop
+    endif
+
+    return
+  end subroutine fill_L1B_bufr_data_meas
+  !  #]
+  !---------------------------------
+  ! A.1 code/decode sun visibility flag
+  function code_sun_visibility(ee_code) result(bufr_code)
+    !  #[
+    !
+    ! retrieve code value from
+    ! target_to_sun_visibility_flag
+    !
+    !   sun eclipsed by earth : -1 ==> 0
+    !   sun center visible    : +1 ==> 1
+    !   missing:              else ==> 3
+    
+    integer(IntAs), intent( in) :: ee_code
+    real(r8_)                   :: bufr_code ! result
+    ! remark: intent statements are not allowed for function results. JK.
+
+    select case (ee_code)
+      case(-1_IntAs)
+         bufr_code = 0._r8_
+      case(+1_IntAs)
+         bufr_code = 1._r8_
+      case default
+         write(*,*) "Warning: code_sun_visibility UNEXPECTED or missing: ",&
+                    ee_code
+         bufr_code = 3._r8_
+    end select
+
+  end function code_sun_visibility
+  !  #]
+  function decode_sun_visibility(bufr_code) result(ee_code)
+    !  #[
+    !
+    ! retrieve ee code value from bufr
+    ! target_to_sun_visibility_flag
+    !
+    !   sun eclipsed by earth : 0 ==> -1
+    !   sun center visible    : 1 ==> +1
+    !   missing:                3 ==> missing_indicator_IntAs
+
+    real(r8_), intent(in) :: bufr_code
+    integer(IntAs)        :: ee_code   ! result
+
+    select case (nint(bufr_code))
+      case(0)
+         ee_code = -1_IntAs
+      case(1)
+         ee_code = +1_IntAs
+      case default
+         print *,"Warning: decode_sun_visibility missing or unexpected value: ", bufr_code
+         ee_code = missing_indicator_IntAs
+    end select
+
+  end function decode_sun_visibility
+  !  #]
+  !---------------------------------
+  ! A.2 code_wind_bin_quality_flag()
+  function code_wind_bin_quality_flag(ee_code) result(bufr_code)
+    !  #[
+    !
+    ! retrieve code value from
+    ! bin_quality_flag
+    !
+    ! Modifications:
+    ! 19-Nov-2010 J. de Kloe  changed ee_code datatype to reflect change in 
+    !                         L1B IODD v3.11 
+
+    ! pre L1B IODD v3.11
+    !
+    ! table 017060 matches EE definition:
+    ! check range
+    !
+    !   bit no. ==> description
+    !       0       data overall invalid
+    !       1       mie/rayleigh peak not found
+    !       2       data saturation found
+    !       3       data spike found
+    !       4       reference pulse invalid
+    !       5       source packet invalid
+    !       6       laser frequency not locked
+    !       7       spacecraft attitude not on target
+    !   all 9       MISSING
+    !
+    ! L1B IODD v3.11
+    !
+    ! table 017060 matches EE definition:
+    ! check range
+    !
+    !   bit no.; flag no. ==> description
+    !       0        1      data overall invalid
+    !       1        2      SNR below SNR threshold
+    !       2        3      data saturation found
+    !       3        4      data spike found
+    !       4        5      reference pulse invalid
+    !       5        6      source packet invalid
+    !       6        7      laser frequency not locked
+    !       7        8      spacecraft attitude not on target
+    !       8        9      for mie: peak not found; 
+    !                       for rayleigh: response not found
+    !       9       10      absolute wind above wind velocity threshold
+    !       10-15   11-16   reserved for later use
+    !   all 16      all 16  MISSING
+  
+
+    !integer(IntAuc), intent( in) :: ee_code ! pre L1B IODD v3.11
+    integer(IntAus), intent( in) :: ee_code ! required since L1B IODD v3.11
+    integer                      :: bufr_code ! result
+    ! remark: intent statements are not allowed for function results. JK.
+
+    logical :: error_occurred
+
+    bufr_code = -1
+    error_occurred = .false.
+
+    ! pre L1B IODD v3.11
+    !if  ( ee_code >= 0 .and. ee_code < 255 ) then
+
+    ! required since L1B IODD v3.11
+    if  ( ee_code >= 0 .and. ee_code < 256*256-1 ) then
+      if  ( ee_code > 256-1 ) then
+         bufr_code = 256-1
+         write(*,*) "Warning: code_wind_bin_quality_flag out of range ", ee_code
+         write(*,*) "Warning: a BUFR template update is needed to allow"
+         write(*,*) "WARNING: storing this field properly..."
+      else
+         bufr_code = ee_code
+      end if
+    else
+      error_occurred = .true.
+    end if
+
+    if (error_occurred) then
+      write(*,*) "Warning: code_wind_bin_quality_flag UNEXPECTED ", ee_code
+      bufr_code = 511
+    end if
+
+  end function code_wind_bin_quality_flag
+  !  #]
+  !---------------------------------
+  ! A.3 code_data_quality_flag()
+  function code_data_quality_flag(ee_code) result(bufr_code)
+    !  #[
+  ! retrieve code value from
+  ! bin_quality_flag
+  !
+  ! table 017050 matches EE definition:
+  ! check range
+  !
+  !   bit no. ==> description
+  !       0       data overall valid
+  !       1       bin level validity
+  !       2       data saturation found
+  !       3       data spike found
+  !       4       measurement validity
+  !       5       source packet invalid
+  !       6       laser frequency not locked
+  !       7       spacecraft attitude not on target
+  !   all 9       MISSING
+  !
+  !
+    integer(IntAuc), intent( in) :: ee_code
+    integer                      :: bufr_code ! result
+    ! remark: intent statements are not allowed for function results. JK.
+
+    logical :: error_occurred
+
+    bufr_code = -1
+    error_occurred = .false.
+
+    if  ( ee_code >= 0 .and. ee_code <= 255 ) then
+      bufr_code = ee_code
+    else
+      error_occurred = .true.
+    end if
+
+    if (error_occurred) then
+      write(*,*) "Warning: code_data_quality_flag UNEXPECTED ", ee_code
+      bufr_code = 511
+    end if
+
+  end function code_data_quality_flag
+  !  #]
+  !---------------------------------
+  ! A.4 code_meas_calibration_flag()
+  function code_meas_calibration_flag(ee_code) result(bufr_code)
+    !  #[
+    !
+    ! retrieve code value from
+    ! Measuremnt_calibration_Flag
+    !
+    ! table 017224 matches EE definition:
+    !
+    !   bit no. ==> description
+    !       0       mean sensitivity within threshold range
+    !       1       error response standard deviation within threshold range
+    !       2       zero frequency response within threshold range
+    !       3       measurement data is monotonic
+    !   all 5       MISSING
+    !
+    TYPE(Meas_Calib_Valid_type), intent( in) :: ee_code
+    integer                                  :: bufr_code ! result
+    ! remark: intent statements are not allowed for function results. JK.
+
+    bufr_code = 0
+
+    if  ( ee_code%Mean_Sensitivity_Valid ) bufr_code = bufr_code+1
+    if  ( ee_code%Error_Resp_Stdev_Valid ) bufr_code = bufr_code+2
+    if  ( ee_code%Zero_Freq_Resp_Valid   ) bufr_code = bufr_code+4
+    if  ( ee_code%Data_Monotonic         ) bufr_code = bufr_code+8
+
+  end function code_meas_calibration_flag
+  !  #]
+  !---------------------------------
+  ! A.5 code_refp_calibration_flag()
+  function code_refp_calibration_flag(ee_code) result(bufr_code)
+    !  #[
+  !
+  ! retrieve code value from
+  ! Reference_Pulse_calibration_Flag
+  !
+  ! table 017225 matches EE definition:
+  !
+  !   bit no. ==> description
+  !       0       mean sensitivity within threshold range
+  !       1       error response standard deviation within threshold range
+  !       2       zero frequency response within threshold range
+  !       3       measurement data is monotonic
+  !   all 5       MISSING
+  !
+  !
+    TYPE(Ref_Pulse_Calib_Valid_type), intent( in) :: ee_code
+    integer                                       :: bufr_code ! result
+    ! remark: intent statements are not allowed for function results. JK.
+
+    bufr_code = 0
+
+    if  ( ee_code%Mean_Sensitivity_Valid ) bufr_code = bufr_code+1
+    if  ( ee_code%Error_Resp_Stdev_Valid ) bufr_code = bufr_code+2
+    if  ( ee_code%Zero_Freq_Resp_Valid   ) bufr_code = bufr_code+4
+    if  ( ee_code%Data_Monotonic         ) bufr_code = bufr_code+8
+
+  end function code_refp_calibration_flag
+  !  #]
+  ! ----------------------------
+end module L1B_BufrUtil
+

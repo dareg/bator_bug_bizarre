@@ -1,0 +1,552 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: facond.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACOND_MT64                                              &
+(    4) &                     (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, CDNOMA, KLNOMA, PVALCO,      &
+(    6) &                      KLONGD)
+(    7) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme de CODAGE d'un CHAMP HORIZONTAL destine a etre
+(   14) !      ecrit sur un fichier ARPEGE/ALADIN.
+(   15) !       ( COdage de (Nouvelles ?) Donnees )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !    ( Tableau ) PCHAMP (Entree) ==> Valeurs REELLES du champ a ecrire;
+(   23) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   24) !                                    par des coefficients spectraux;
+(   25) !                CDNOMA (Sortie) ==> Nom de l'article-champ a ecrire;
+(   26) !                KLNOMA (Sortie) ==> Nombre de caracteres utiles dans
+(   27) !                                    CDNOMA;
+(   28) !    ( Tableau ) PVALCO (Sortie) ==> Donnees destinees a l'ecriture;
+(   29) !                KLONGD (Sortie) ==> Nombre de valeurs (mots de 64 bits
+(   30) !                                    en principe) a ecrire.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 3
+
+(   31) !
+(   32) !    Remarques:
+(   33) !
+(   34) !    - PVALCO est type reel par commodite, et doit avoir une longueur
+(   35) !      suffisante pour stocker les donnees codees. Le dimensionnement
+(   36) !      "tous terrains" est (2+ILCHAM), qui permet le cas echeant de
+(   37) !      stocker un champ a pleine resolution sans codage effectif.
+(   38) !      (ILCHAM est le nombre de valeurs du champ a ecrire)
+(   39) !
+(   40) !    - CDNOMA doit avoir au moins FA%JPXNOM caracteres.
+(   41) !
+(   42) !
+(   43) TYPE(FA_COM) :: FA
+(   44) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KLNOMA, KLONGD
+(   45) !
+(   46) REAL (KIND=JPDBLR) PCHAMP (*), PVALCO (*), ZUNDF
+(   47) !
+(   48) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*)
+(   49) !
+(   50) INTEGER (KIND=JPLIKB) IREP, ILPRFU, ILSUFU, ILNOMU
+(   51) INTEGER (KIND=JPLIKB) IRANG, INIMES
+(   52) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, IRANGC
+(   53) INTEGER (KIND=JPLIKB) IB1PAR (FA%JPLB1P)
+(   54) !
+(   55) LOGICAL LLVERF, LLRLFI, LDCOSP, LLNOMU, LLNOPA, LLUNDF
+(   56) !
+(   57) CHARACTER CLPREF*(FA%JPXNOM), CLSUFF*(FA%JPXSUF)
+(   58) !
+(   59) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   60) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   61) LOGICAL                  LLFATA
+(   62) TYPE (FAGR1TAB)          YLGR1TAB
+(   63) 
+(   64) !**
+(   65) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   66) !-----------------------------------------------------------------------
+(   67) !
+(   68) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   69) IF (LHOOK) CALL DR_HOOK('FACOND_MT',0,ZHOOK_HANDLE)
+(   70) 
+(   71) LLUNDF = .FALSE.
+(   72) ZUNDF  = 0._JPDBLR
+(   73) KLONGD = 0
+(   74) CALL FACON1_MT64 (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(   75) &                 PCHAMP, LDCOSP, CDNOMA, KLNOMA, PVALCO,      &
+(   76) &                 KLONGD, LLUNDF, ZUNDF, YLGR1TAB)
+(   77) 
+(   78) IF (LHOOK) CALL DR_HOOK('FACOND_MT',1,ZHOOK_HANDLE)
+(   79) 
+(   80) END SUBROUTINE FACOND_MT64
+(   81) 
+(   82) ! Oct-2012 P. Marguinaud 64b LFI
+(   83) SUBROUTINE FACOND64                                       &
+(   84) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(   85) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(   86) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   87) &                  FA_COM_DEFAULT_INIT,  &
+(   88) &                  NEW_FA_DEFAULT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 4
+
+(   89) USE LFI_PRECISION
+(   90) IMPLICIT NONE
+(   91) ! Arguments
+(   92) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   93) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   94) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   95) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   96) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   97) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   98) LOGICAL                LDCOSP                                 ! IN   
+(   99) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  100) INTEGER (KIND=JPLIKB)  KLNOMA                                 !   OUT
+(  101) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  102) INTEGER (KIND=JPLIKB)  KLONGD                                 !   OUT
+(  103) 
+(  104) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  105) 
+(  106) CALL FACOND_MT64                                               &
+(  107) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  108) &           LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  109) 
+(  110) END SUBROUTINE FACOND64
+(  111) 
+(  112) SUBROUTINE FACOND                                          &
+(  113) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  114) &           LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  115) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(  116) &                  FA_COM_DEFAULT_INIT,  &
+(  117) &                  NEW_FA_DEFAULT
+(  118) USE LFI_PRECISION
+(  119) IMPLICIT NONE
+(  120) ! Arguments
+(  121) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  122) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  123) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  124) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  125) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  126) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  127) LOGICAL                LDCOSP                                 ! IN   
+(  128) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  129) INTEGER (KIND=JPLIKM)  KLNOMA                                 !   OUT
+(  130) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  131) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  132) 
+(  133) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  134) 
+(  135) CALL FACOND_MT                                                 &
+(  136) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  137) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  138) 
+(  139) END SUBROUTINE FACOND
+(  140) 
+(  141) SUBROUTINE FACOND_MT                                           &
+(  142) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  143) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  144) USE FA_MOD, ONLY : FA_COM
+(  145) USE LFI_PRECISION
+(  146) IMPLICIT NONE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 5
+
+(  147) ! Arguments
+(  148) TYPE (FA_COM)          FA                                     ! INOUT
+(  149) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  150) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  151) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  152) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  153) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  154) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  155) LOGICAL                LDCOSP                                 ! IN   
+(  156) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  157) INTEGER (KIND=JPLIKM)  KLNOMA                                 !   OUT
+(  158) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  159) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  160) ! Local integers
+(  161) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  162) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  163) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  164) INTEGER (KIND=JPLIKB)  ILNOMA                                 !   OUT
+(  165) INTEGER (KIND=JPLIKB)  ILONGD                                 !   OUT
+(  166) ! Convert arguments
+(  167) 
+(  168) INUMER     = INT (    KNUMER, JPLIKB)
+(  169) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  170) 
+(  171) CALL FACOND_MT64                                               &
+(  172) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, &
+(  173) &            LDCOSP, CDNOMA, ILNOMA, PVALCO, ILONGD)
+(  174) 
+(  175) KREP       = INT (      IREP, JPLIKM)
+(  176) KLNOMA     = INT (    ILNOMA, JPLIKM)
+(  177) KLONGD     = INT (    ILONGD, JPLIKM)
+(  178) 
+(  179) END SUBROUTINE FACOND_MT
+(  180) 
+(  181) !INTF KREP            OUT                               
+(  182) !INTF KNUMER        IN                                  
+(  183) !INTF CDPREF        IN                                  
+(  184) !INTF KNIVAU        IN                                  
+(  185) !INTF CDSUFF        IN                                  
+(  186) !INTF PCHAMP        IN    DIMS=*                        
+(  187) !INTF LDCOSP        IN                                  
+(  188) !INTF CDNOMA          OUT                               
+(  189) !INTF KLNOMA          OUT                               
+(  190) !INTF PVALCO          OUT DIMS=*                        
+(  191) !INTF KLONGD          OUT                               
+(  192) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 6
+
+(    1) # 1 "facond.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) ! Jan-2011 P. Marguinaud Thread-safe FA
+(    3) SUBROUTINE FACOND_MT64                                              &
+(    4) &                     (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(    5) &                      PCHAMP, LDCOSP, CDNOMA, KLNOMA, PVALCO,      &
+(    6) &                      KLONGD)
+(    7) USE FA_MOD, ONLY : FA_COM, FAGR1TAB
+(    8) USE PARKIND1, ONLY : JPRB
+(    9) USE YOMHOOK , ONLY : LHOOK, DR_HOOK
+(   10) USE LFI_PRECISION
+(   11) IMPLICIT NONE
+(   12) !****
+(   13) !      Sous-programme de CODAGE d'un CHAMP HORIZONTAL destine a etre
+(   14) !      ecrit sur un fichier ARPEGE/ALADIN.
+(   15) !       ( COdage de (Nouvelles ?) Donnees )
+(   16) !**
+(   17) !    Arguments : KREP   (Sortie) ==> Code-reponse du sous-programme;
+(   18) !                KNUMER (Entree) ==> Numero de l'unite logique;
+(   19) !                CDPREF (Entree) ==> Prefixe eventuel du nom d'article;
+(   20) !                KNIVAU (Entree) ==> Niveau vertical eventuel;
+(   21) !                CDSUFF (Entree) ==> Suffixe eventuel du nom d'article;
+(   22) !    ( Tableau ) PCHAMP (Entree) ==> Valeurs REELLES du champ a ecrire;
+(   23) !                LDCOSP (Entree) ==> Vrai si le champ est represente
+(   24) !                                    par des coefficients spectraux;
+(   25) !                CDNOMA (Sortie) ==> Nom de l'article-champ a ecrire;
+(   26) !                KLNOMA (Sortie) ==> Nombre de caracteres utiles dans
+(   27) !                                    CDNOMA;
+(   28) !    ( Tableau ) PVALCO (Sortie) ==> Donnees destinees a l'ecriture;
+(   29) !                KLONGD (Sortie) ==> Nombre de valeurs (mots de 64 bits
+(   30) !                                    en principe) a ecrire.
+(   31) !
+(   32) !    Remarques:
+(   33) !
+(   34) !    - PVALCO est type reel par commodite, et doit avoir une longueur
+(   35) !      suffisante pour stocker les donnees codees. Le dimensionnement
+(   36) !      "tous terrains" est (2+ILCHAM), qui permet le cas echeant de
+(   37) !      stocker un champ a pleine resolution sans codage effectif.
+(   38) !      (ILCHAM est le nombre de valeurs du champ a ecrire)
+(   39) !
+(   40) !    - CDNOMA doit avoir au moins FA%JPXNOM caracteres.
+(   41) !
+(   42) !
+(   43) TYPE(FA_COM) :: FA
+(   44) INTEGER (KIND=JPLIKB) KREP, KNUMER, KNIVAU, KLNOMA, KLONGD
+(   45) !
+(   46) REAL (KIND=JPDBLR) PCHAMP (*), PVALCO (*), ZUNDF
+(   47) !
+(   48) CHARACTER CDPREF*(*), CDSUFF*(*), CDNOMA*(*)
+(   49) !
+(   50) INTEGER (KIND=JPLIKB) IREP, ILPRFU, ILSUFU, ILNOMU
+(   51) INTEGER (KIND=JPLIKB) IRANG, INIMES
+(   52) INTEGER (KIND=JPLIKB) ILPREF, ILSUFF, ILCDNO, IRANGC
+(   53) INTEGER (KIND=JPLIKB) IB1PAR (FA%JPLB1P)
+(   54) !
+(   55) LOGICAL LLVERF, LLRLFI, LDCOSP, LLNOMU, LLNOPA, LLUNDF
+(   56) !
+(   57) CHARACTER CLPREF*(FA%JPXNOM), CLSUFF*(FA%JPXSUF)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 7
+
+(   58) !
+(   59) CHARACTER(LEN=FA%JPLMES) CLMESS 
+(   60) CHARACTER(LEN=FA%JPLSPX) CLNSPR
+(   61) LOGICAL                  LLFATA
+(   62) TYPE (FAGR1TAB)          YLGR1TAB
+(   63) # 64 "facond.F90"
+(   64) !**
+(   65) !     1.  -  CONTROLES ET INITIALISATIONS.
+(   66) !-----------------------------------------------------------------------
+(   67) !
+(   68) REAL(KIND=JPRB) :: ZHOOK_HANDLE
+(   69) IF (LHOOK) CALL DR_HOOK('FACOND_MT',0,ZHOOK_HANDLE)
+(   70) # 71 "facond.F90"
+(   71) LLUNDF = .FALSE.
+(   72) ZUNDF  = 0._JPDBLR
+(   73) KLONGD = 0
+(   74) CALL FACON1_MT64 (FA,  KREP,   KNUMER, CDPREF, KNIVAU, CDSUFF, &
+(   75) &                 PCHAMP, LDCOSP, CDNOMA, KLNOMA, PVALCO,      &
+(   76) &                 KLONGD, LLUNDF, ZUNDF, YLGR1TAB)
+(   77) # 78 "facond.F90"
+(   78) IF (LHOOK) CALL DR_HOOK('FACOND_MT',1,ZHOOK_HANDLE)
+(   79) # 80 "facond.F90"
+(   80) END SUBROUTINE FACOND_MT64
+(   81) # 82 "facond.F90"
+(   82) ! Oct-2012 P. Marguinaud 64b LFI
+(   83) SUBROUTINE FACOND64                                       &
+(   84) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(   85) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(   86) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+(   87) &                  FA_COM_DEFAULT_INIT,  &
+(   88) &                  NEW_FA_DEFAULT
+(   89) USE LFI_PRECISION
+(   90) IMPLICIT NONE
+(   91) ! Arguments
+(   92) INTEGER (KIND=JPLIKB)  KREP                                   !   OUT
+(   93) INTEGER (KIND=JPLIKB)  KNUMER                                 ! IN   
+(   94) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(   95) INTEGER (KIND=JPLIKB)  KNIVAU                                 ! IN   
+(   96) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(   97) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(   98) LOGICAL                LDCOSP                                 ! IN   
+(   99) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  100) INTEGER (KIND=JPLIKB)  KLNOMA                                 !   OUT
+(  101) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  102) INTEGER (KIND=JPLIKB)  KLONGD                                 !   OUT
+(  103) # 104 "facond.F90"
+(  104) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  105) # 106 "facond.F90"
+(  106) CALL FACOND_MT64                                               &
+(  107) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  108) &           LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  109) # 110 "facond.F90"
+(  110) END SUBROUTINE FACOND64
+(  111) # 112 "facond.F90"
+(  112) SUBROUTINE FACOND                                          &
+(  113) &           (KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  114) &           LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  115) USE FA_MOD, ONLY : FA => FA_COM_DEFAULT, &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 8
+
+(  116) &                  FA_COM_DEFAULT_INIT,  &
+(  117) &                  NEW_FA_DEFAULT
+(  118) USE LFI_PRECISION
+(  119) IMPLICIT NONE
+(  120) ! Arguments
+(  121) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  122) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  123) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  124) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  125) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  126) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  127) LOGICAL                LDCOSP                                 ! IN   
+(  128) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  129) INTEGER (KIND=JPLIKM)  KLNOMA                                 !   OUT
+(  130) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  131) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  132) # 133 "facond.F90"
+(  133) IF (.NOT. FA_COM_DEFAULT_INIT) CALL NEW_FA_DEFAULT ()
+(  134) # 135 "facond.F90"
+(  135) CALL FACOND_MT                                                 &
+(  136) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  137) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  138) # 139 "facond.F90"
+(  139) END SUBROUTINE FACOND
+(  140) # 141 "facond.F90"
+(  141) SUBROUTINE FACOND_MT                                           &
+(  142) &           (FA, KREP, KNUMER, CDPREF, KNIVAU, CDSUFF, PCHAMP, &
+(  143) &            LDCOSP, CDNOMA, KLNOMA, PVALCO, KLONGD)
+(  144) USE FA_MOD, ONLY : FA_COM
+(  145) USE LFI_PRECISION
+(  146) IMPLICIT NONE
+(  147) ! Arguments
+(  148) TYPE (FA_COM)          FA                                     ! INOUT
+(  149) INTEGER (KIND=JPLIKM)  KREP                                   !   OUT
+(  150) INTEGER (KIND=JPLIKM)  KNUMER                                 ! IN   
+(  151) CHARACTER (LEN=*)      CDPREF                                 ! IN   
+(  152) INTEGER (KIND=JPLIKM)  KNIVAU                                 ! IN   
+(  153) CHARACTER (LEN=*)      CDSUFF                                 ! IN   
+(  154) REAL (KIND=JPDBLR)     PCHAMP     (*)                         ! IN   
+(  155) LOGICAL                LDCOSP                                 ! IN   
+(  156) CHARACTER (LEN=*)      CDNOMA                                 !   OUT
+(  157) INTEGER (KIND=JPLIKM)  KLNOMA                                 !   OUT
+(  158) REAL (KIND=JPDBLR)     PVALCO     (*)                         !   OUT
+(  159) INTEGER (KIND=JPLIKM)  KLONGD                                 !   OUT
+(  160) ! Local integers
+(  161) INTEGER (KIND=JPLIKB)  IREP                                   !   OUT
+(  162) INTEGER (KIND=JPLIKB)  INUMER                                 ! IN   
+(  163) INTEGER (KIND=JPLIKB)  INIVAU                                 ! IN   
+(  164) INTEGER (KIND=JPLIKB)  ILNOMA                                 !   OUT
+(  165) INTEGER (KIND=JPLIKB)  ILONGD                                 !   OUT
+(  166) ! Convert arguments
+(  167) # 168 "facond.F90"
+(  168) INUMER     = INT (    KNUMER, JPLIKB)
+(  169) INIVAU     = INT (    KNIVAU, JPLIKB)
+(  170) # 171 "facond.F90"
+(  171) CALL FACOND_MT64                                               &
+(  172) &           (FA, IREP, INUMER, CDPREF, INIVAU, CDSUFF, PCHAMP, &
+(  173) &            LDCOSP, CDNOMA, ILNOMA, PVALCO, ILONGD)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:54:51      page 9
+
+(  174) # 175 "facond.F90"
+(  175) KREP       = INT (      IREP, JPLIKM)
+(  176) KLNOMA     = INT (    ILNOMA, JPLIKM)
+(  177) KLONGD     = INT (    ILONGD, JPLIKM)
+(  178) # 179 "facond.F90"
+(  179) END SUBROUTINE FACOND_MT
+(  180) # 181 "facond.F90"
+(  181) !INTF KREP            OUT                               
+(  182) !INTF KNUMER        IN                                  
+(  183) !INTF CDPREF        IN                                  
+(  184) !INTF KNIVAU        IN                                  
+(  185) !INTF CDSUFF        IN                                  
+(  186) !INTF PCHAMP        IN    DIMS=*                        
+(  187) !INTF LDCOSP        IN                                  
+(  188) !INTF CDNOMA          OUT                               
+(  189) !INTF KLNOMA          OUT                               
+(  190) !INTF PVALCO          OUT DIMS=*                        
+(  191) !INTF KLONGD          OUT                               

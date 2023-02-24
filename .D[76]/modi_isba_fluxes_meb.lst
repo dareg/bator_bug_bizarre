@@ -1,0 +1,261 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:45      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:45      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_isba_fluxes_meb.F90
+
+(    1) !depfile:isba_fluxes_meb.F90
+(    2) MODULE MODI_ISBA_FLUXES_MEB
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_FLUXES_MEB(KK, PK, PEK, DK, DEK, DMK, PRHOA, PLTT, PSIGMA_F,PSIGMA_FN, &
+(    5)                                  PRN_V, PRN_G, PLWNET_V_DTV, PLWNET_V_DTG, PLWNET_V_DTN, &
+(    6)                                  PLWNET_G_DTV, PLWNET_G_DTG, PLWNET_G_DTN, PLWNET_N_DTV, &
+(    7)                                  PLWNET_N_DTG, PLWNET_N_DTN, PTHRMA_TA, PTHRMB_TA,       &
+(    8)                                  PTHRMA_TC, PTHRMB_TC, PTHRMA_TG, PTHRMB_TG, PTHRMA_TV,  &
+(    9)                                  PTHRMB_TV, PTHRMA_TN, PTHRMB_TN, PQSAT_G, PQSAT_V,      &
+(   10)                                  PQSATI_N, PPSNA, PPSNCV, PFROZEN1,PLEG_DELTA,           &
+(   11)                                  PLEGI_DELTA, PHUGI, PHVG, PHVN, PFLXC_CA, PFLXC_GV,     &
+(   12)                                  PFLXC_VG_C, PFLXC_VN_C, PFLXC_GN, PFLXC_N_A, PFLXC_MOM, &
+(   13)                                  PFLXC_CV, PHVGS, PHVNS, PTG, PDQSAT_G, PDQSAT_V,        &
+(   14)                                  PDQSATI_N, PTA_IC, PQA_IC, PDELTA_V, PDELTAT_G,         &
+(   15)                                  PDELTAT_V, PDELTAT_N, PSW_UP, PSW_RAD, PLW_RAD, PLW_UP, &
+(   16)                                  PH_N_A, PEVAP_C_A, PEVAP_N_A, PLEG, PLEGI, PLES, PLEL,  &
+(   17)                                  PEVAPN, PEMIS                             )
+(   18) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_PE_t, ISBA_P_t
+(   19) USE MODD_DIAG_n, ONLY : DIAG_t
+(   20) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   21) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   22) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   23) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   24) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   25) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   26) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   27) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   28) REAL, DIMENSION(:),   INTENT(IN)   :: PRHOA, PLTT
+(   29) REAL, DIMENSION(:),   INTENT(IN)   :: PSIGMA_F, PSIGMA_FN
+(   30) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_V_DTV, PLWNET_V_DTG, PLWNET_V_DTN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:45      page 3
+
+(   31) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_G_DTV, PLWNET_G_DTG, PLWNET_G_DTN
+(   32) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_N_DTV, PLWNET_N_DTG, PLWNET_N_DTN
+(   33) REAL, DIMENSION(:),   INTENT(IN)   :: PTHRMA_TA, PTHRMB_TA, PTHRMA_TC, PTHRMB_TC,                     &
+(   34)                                       PTHRMA_TG, PTHRMB_TG, PTHRMA_TV, PTHRMB_TV, PTHRMA_TN, PTHRMB_TN
+(   35) REAL, DIMENSION(:),   INTENT(IN)   :: PQSAT_G, PQSAT_V, PQSATI_N
+(   36) REAL, DIMENSION(:),   INTENT(IN)   :: PPSNA, PPSNCV, PFROZEN1
+(   37) REAL, DIMENSION(:),   INTENT(IN)   :: PLEG_DELTA, PLEGI_DELTA, PHUGI, PHVG, PHVN
+(   38) REAL, DIMENSION(:),   INTENT(IN)   :: PFLXC_CA, PFLXC_GV, PFLXC_VG_C, PFLXC_VN_C, PFLXC_GN, PFLXC_N_A,   &
+(   39)                                       PFLXC_CV, PFLXC_MOM
+(   40) REAL, DIMENSION(:,:), INTENT(IN)   :: PTG
+(   41) REAL, DIMENSION(:),   INTENT(IN)   :: PDQSAT_G, PDQSAT_V, PDQSATI_N
+(   42) REAL, DIMENSION(:),   INTENT(IN)   :: PHVGS, PHVNS
+(   43) REAL, DIMENSION(:),   INTENT(IN)   :: PTA_IC, PQA_IC
+(   44) REAL, DIMENSION(:),   INTENT(IN)   :: PSW_UP, PSW_RAD, PLW_RAD
+(   45) REAL, DIMENSION(:),   INTENT(IN)   :: PDELTA_V
+(   46) REAL, DIMENSION(:),   INTENT(IN)   :: PDELTAT_V, PDELTAT_N, PDELTAT_G
+(   47) REAL, DIMENSION(:),   INTENT(OUT)  :: PRN_V, PRN_G
+(   48) REAL, DIMENSION(:),   INTENT(OUT)  :: PLW_UP  
+(   49) REAL, DIMENSION(:),   INTENT(OUT)  :: PH_N_A
+(   50) REAL, DIMENSION(:),   INTENT(OUT)  :: PEVAP_C_A,  PEVAP_N_A, PEVAPN
+(   51) REAL, DIMENSION(:),   INTENT(OUT)  :: PLEG, PLEGI, PLES, PLEL
+(   52) REAL, DIMENSION(:),   INTENT(OUT)  :: PEMIS
+(   53) END SUBROUTINE ISBA_FLUXES_MEB
+(   54) 
+(   55) END INTERFACE
+(   56) END MODULE MODI_ISBA_FLUXES_MEB
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:51:45      page 4
+
+(    1) # 1 "modi_isba_fluxes_meb.F90"
+(    1) !depfile:isba_fluxes_meb.F90
+(    2) MODULE MODI_ISBA_FLUXES_MEB
+(    3) INTERFACE
+(    4)       SUBROUTINE ISBA_FLUXES_MEB(KK, PK, PEK, DK, DEK, DMK, PRHOA, PLTT, PSIGMA_F,PSIGMA_FN, &
+(    5)                                  PRN_V, PRN_G, PLWNET_V_DTV, PLWNET_V_DTG, PLWNET_V_DTN, &
+(    6)                                  PLWNET_G_DTV, PLWNET_G_DTG, PLWNET_G_DTN, PLWNET_N_DTV, &
+(    7)                                  PLWNET_N_DTG, PLWNET_N_DTN, PTHRMA_TA, PTHRMB_TA,       &
+(    8)                                  PTHRMA_TC, PTHRMB_TC, PTHRMA_TG, PTHRMB_TG, PTHRMA_TV,  &
+(    9)                                  PTHRMB_TV, PTHRMA_TN, PTHRMB_TN, PQSAT_G, PQSAT_V,      &
+(   10)                                  PQSATI_N, PPSNA, PPSNCV, PFROZEN1,PLEG_DELTA,           &
+(   11)                                  PLEGI_DELTA, PHUGI, PHVG, PHVN, PFLXC_CA, PFLXC_GV,     &
+(   12)                                  PFLXC_VG_C, PFLXC_VN_C, PFLXC_GN, PFLXC_N_A, PFLXC_MOM, &
+(   13)                                  PFLXC_CV, PHVGS, PHVNS, PTG, PDQSAT_G, PDQSAT_V,        &
+(   14)                                  PDQSATI_N, PTA_IC, PQA_IC, PDELTA_V, PDELTAT_G,         &
+(   15)                                  PDELTAT_V, PDELTAT_N, PSW_UP, PSW_RAD, PLW_RAD, PLW_UP, &
+(   16)                                  PH_N_A, PEVAP_C_A, PEVAP_N_A, PLEG, PLEGI, PLES, PLEL,  &
+(   17)                                  PEVAPN, PEMIS                             )
+(   18) USE MODD_ISBA_n, ONLY : ISBA_K_t, ISBA_PE_t, ISBA_P_t
+(   19) USE MODD_DIAG_n, ONLY : DIAG_t
+(   20) USE MODD_DIAG_EVAP_ISBA_n, ONLY : DIAG_EVAP_ISBA_t
+(   21) USE MODD_DIAG_MISC_ISBA_n, ONLY : DIAG_MISC_ISBA_t
+(   22) TYPE(ISBA_K_t), INTENT(INOUT) :: KK
+(   23) TYPE(ISBA_P_t), INTENT(INOUT) :: PK
+(   24) TYPE(ISBA_PE_t), INTENT(INOUT) :: PEK
+(   25) TYPE(DIAG_t), INTENT(INOUT) :: DK
+(   26) TYPE(DIAG_EVAP_ISBA_t), INTENT(INOUT) :: DEK
+(   27) TYPE(DIAG_MISC_ISBA_t), INTENT(INOUT) :: DMK
+(   28) REAL, DIMENSION(:),   INTENT(IN)   :: PRHOA, PLTT
+(   29) REAL, DIMENSION(:),   INTENT(IN)   :: PSIGMA_F, PSIGMA_FN
+(   30) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_V_DTV, PLWNET_V_DTG, PLWNET_V_DTN
+(   31) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_G_DTV, PLWNET_G_DTG, PLWNET_G_DTN
+(   32) REAL, DIMENSION(:),   INTENT(IN)   :: PLWNET_N_DTV, PLWNET_N_DTG, PLWNET_N_DTN
+(   33) REAL, DIMENSION(:),   INTENT(IN)   :: PTHRMA_TA, PTHRMB_TA, PTHRMA_TC, PTHRMB_TC,                     &
+(   34)                                       PTHRMA_TG, PTHRMB_TG, PTHRMA_TV, PTHRMB_TV, PTHRMA_TN, PTHRMB_TN
+(   35) REAL, DIMENSION(:),   INTENT(IN)   :: PQSAT_G, PQSAT_V, PQSATI_N
+(   36) REAL, DIMENSION(:),   INTENT(IN)   :: PPSNA, PPSNCV, PFROZEN1
+(   37) REAL, DIMENSION(:),   INTENT(IN)   :: PLEG_DELTA, PLEGI_DELTA, PHUGI, PHVG, PHVN
+(   38) REAL, DIMENSION(:),   INTENT(IN)   :: PFLXC_CA, PFLXC_GV, PFLXC_VG_C, PFLXC_VN_C, PFLXC_GN, PFLXC_N_A,   &
+(   39)                                       PFLXC_CV, PFLXC_MOM
+(   40) REAL, DIMENSION(:,:), INTENT(IN)   :: PTG
+(   41) REAL, DIMENSION(:),   INTENT(IN)   :: PDQSAT_G, PDQSAT_V, PDQSATI_N
+(   42) REAL, DIMENSION(:),   INTENT(IN)   :: PHVGS, PHVNS
+(   43) REAL, DIMENSION(:),   INTENT(IN)   :: PTA_IC, PQA_IC
+(   44) REAL, DIMENSION(:),   INTENT(IN)   :: PSW_UP, PSW_RAD, PLW_RAD
+(   45) REAL, DIMENSION(:),   INTENT(IN)   :: PDELTA_V
+(   46) REAL, DIMENSION(:),   INTENT(IN)   :: PDELTAT_V, PDELTAT_N, PDELTAT_G
+(   47) REAL, DIMENSION(:),   INTENT(OUT)  :: PRN_V, PRN_G
+(   48) REAL, DIMENSION(:),   INTENT(OUT)  :: PLW_UP  
+(   49) REAL, DIMENSION(:),   INTENT(OUT)  :: PH_N_A
+(   50) REAL, DIMENSION(:),   INTENT(OUT)  :: PEVAP_C_A,  PEVAP_N_A, PEVAPN
+(   51) REAL, DIMENSION(:),   INTENT(OUT)  :: PLEG, PLEGI, PLES, PLEL
+(   52) REAL, DIMENSION(:),   INTENT(OUT)  :: PEMIS
+(   53) END SUBROUTINE ISBA_FLUXES_MEB
+(   54) # 55 "modi_isba_fluxes_meb.F90"
+(   55) END INTERFACE
+(   56) END MODULE MODI_ISBA_FLUXES_MEB

@@ -1,0 +1,259 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:29      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:29      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: fagribex.F90
+
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) SUBROUTINE FAGRIBEX (KSEC0,KSEC1,KSEC2,PSEC2,KSEC3,PSEC3,KSEC4, &
+(    3) &                     PSEC4,KLENP,KGRIB,KLENG,KWORD,HOPER,KRET)
+(    4) USE LFI_PRECISION
+(    5) IMPLICIT NONE
+(    6) INTEGER (KIND=JPLIKB) :: KSEC0 (:)
+(    7) INTEGER (KIND=JPLIKB) :: KSEC1 (:)
+(    8) INTEGER (KIND=JPLIKB) :: KSEC2 (:)
+(    9) INTEGER (KIND=JPLIKB) :: KSEC3 (:)
+(   10) INTEGER (KIND=JPLIKB) :: KSEC4 (:)
+(   11) INTEGER (KIND=JPDBLR) :: KGRIB (*)
+(   12) INTEGER (KIND=JPLIKB) :: KLENP
+(   13) INTEGER (KIND=JPLIKB) :: KLENG
+(   14) INTEGER (KIND=JPLIKB) :: KWORD 
+(   15) INTEGER (KIND=JPLIKB) :: KRET
+(   16) REAL (KIND=JPDBLR)    :: PSEC2 (:) 
+(   17) REAL (KIND=JPDBLR)    :: PSEC3 (:) 
+(   18) REAL (KIND=JPDBLR)    :: PSEC4 (*)
+(   19) CHARACTER(LEN=*)      :: HOPER
+(   20) !
+(   21) INTEGER (KIND=JPLIKM) :: ISEC0 (SIZE(KSEC0))
+(   22) INTEGER (KIND=JPLIKM) :: ISEC1 (SIZE(KSEC1))
+(   23) INTEGER (KIND=JPLIKM) :: ISEC2 (SIZE(KSEC2))
+(   24) INTEGER (KIND=JPLIKM) :: ISEC3 (SIZE(KSEC3))
+(   25) INTEGER (KIND=JPLIKM) :: ISEC4 (SIZE(KSEC4))
+(   26) INTEGER (KIND=JPLIKM) :: ILENP
+(   27) INTEGER (KIND=JPLIKM) :: ILENG
+(   28) INTEGER (KIND=JPLIKM) :: IWORD 
+(   29) INTEGER (KIND=JPLIKM) :: IRET
+(   30) !
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:29      page 3
+
+(   31) ISEC0 = INT (KSEC0, JPLIKM)
+(   32) ISEC1 = INT (KSEC1, JPLIKM)
+(   33) ISEC2 = INT (KSEC2, JPLIKM)
+(   34) ISEC3 = INT (KSEC3, JPLIKM)
+(   35) ISEC4 = INT (KSEC4, JPLIKM)
+(   36) ILENP = INT (KLENP, JPLIKM)
+(   37) ILENG = INT (KLENG, JPLIKM)
+(   38) IWORD = INT (KWORD, JPLIKM)
+(   39) IRET  = INT (KRET , JPLIKM)
+(   40) 
+(   41) CALL GRIBEX (ISEC0,ISEC1,ISEC2,PSEC2,ISEC3,PSEC3,ISEC4, &
+(   42) &             PSEC4,ILENP,KGRIB,ILENG,IWORD,HOPER,IRET)
+(   43) 
+(   44) KSEC0 = INT (ISEC0, JPLIKB)
+(   45) KSEC1 = INT (ISEC1, JPLIKB)
+(   46) KSEC2 = INT (ISEC2, JPLIKB)
+(   47) KSEC3 = INT (ISEC3, JPLIKB)
+(   48) KSEC4 = INT (ISEC4, JPLIKB)
+(   49) KLENP = INT (ILENP, JPLIKB)
+(   50) KLENG = INT (ILENG, JPLIKB)
+(   51) KWORD = INT (IWORD, JPLIKB)
+(   52) KRET  = INT (IRET , JPLIKB)
+(   53) 
+(   54) END SUBROUTINE FAGRIBEX
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:39:29      page 4
+
+(    1) # 1 "fagribex.F90"
+(    1) ! Oct-2012 P. Marguinaud 64b LFI
+(    2) SUBROUTINE FAGRIBEX (KSEC0,KSEC1,KSEC2,PSEC2,KSEC3,PSEC3,KSEC4, &
+(    3) &                     PSEC4,KLENP,KGRIB,KLENG,KWORD,HOPER,KRET)
+(    4) USE LFI_PRECISION
+(    5) IMPLICIT NONE
+(    6) INTEGER (KIND=JPLIKB) :: KSEC0 (:)
+(    7) INTEGER (KIND=JPLIKB) :: KSEC1 (:)
+(    8) INTEGER (KIND=JPLIKB) :: KSEC2 (:)
+(    9) INTEGER (KIND=JPLIKB) :: KSEC3 (:)
+(   10) INTEGER (KIND=JPLIKB) :: KSEC4 (:)
+(   11) INTEGER (KIND=JPDBLR) :: KGRIB (*)
+(   12) INTEGER (KIND=JPLIKB) :: KLENP
+(   13) INTEGER (KIND=JPLIKB) :: KLENG
+(   14) INTEGER (KIND=JPLIKB) :: KWORD 
+(   15) INTEGER (KIND=JPLIKB) :: KRET
+(   16) REAL (KIND=JPDBLR)    :: PSEC2 (:) 
+(   17) REAL (KIND=JPDBLR)    :: PSEC3 (:) 
+(   18) REAL (KIND=JPDBLR)    :: PSEC4 (*)
+(   19) CHARACTER(LEN=*)      :: HOPER
+(   20) !
+(   21) INTEGER (KIND=JPLIKM) :: ISEC0 (SIZE(KSEC0))
+(   22) INTEGER (KIND=JPLIKM) :: ISEC1 (SIZE(KSEC1))
+(   23) INTEGER (KIND=JPLIKM) :: ISEC2 (SIZE(KSEC2))
+(   24) INTEGER (KIND=JPLIKM) :: ISEC3 (SIZE(KSEC3))
+(   25) INTEGER (KIND=JPLIKM) :: ISEC4 (SIZE(KSEC4))
+(   26) INTEGER (KIND=JPLIKM) :: ILENP
+(   27) INTEGER (KIND=JPLIKM) :: ILENG
+(   28) INTEGER (KIND=JPLIKM) :: IWORD 
+(   29) INTEGER (KIND=JPLIKM) :: IRET
+(   30) !
+(   31) ISEC0 = INT (KSEC0, JPLIKM)
+(   32) ISEC1 = INT (KSEC1, JPLIKM)
+(   33) ISEC2 = INT (KSEC2, JPLIKM)
+(   34) ISEC3 = INT (KSEC3, JPLIKM)
+(   35) ISEC4 = INT (KSEC4, JPLIKM)
+(   36) ILENP = INT (KLENP, JPLIKM)
+(   37) ILENG = INT (KLENG, JPLIKM)
+(   38) IWORD = INT (KWORD, JPLIKM)
+(   39) IRET  = INT (KRET , JPLIKM)
+(   40) # 41 "fagribex.F90"
+(   41) CALL GRIBEX (ISEC0,ISEC1,ISEC2,PSEC2,ISEC3,PSEC3,ISEC4, &
+(   42) &             PSEC4,ILENP,KGRIB,ILENG,IWORD,HOPER,IRET)
+(   43) # 44 "fagribex.F90"
+(   44) KSEC0 = INT (ISEC0, JPLIKB)
+(   45) KSEC1 = INT (ISEC1, JPLIKB)
+(   46) KSEC2 = INT (ISEC2, JPLIKB)
+(   47) KSEC3 = INT (ISEC3, JPLIKB)
+(   48) KSEC4 = INT (ISEC4, JPLIKB)
+(   49) KLENP = INT (ILENP, JPLIKB)
+(   50) KLENG = INT (ILENG, JPLIKB)
+(   51) KWORD = INT (IWORD, JPLIKB)
+(   52) KRET  = INT (IRET , JPLIKB)
+(   53) # 54 "fagribex.F90"
+(   54) END SUBROUTINE FAGRIBEX

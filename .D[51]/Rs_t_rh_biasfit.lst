@@ -1,0 +1,2731 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: Rs_t_rh_biasfit.F90
+
+(    1)       PROGRAM BIASFIT
+(    2) !---------------------------------------------------------------------
+(    3) !     TEMP Temperature bias calculation for ERA40
+(    4) !     Fit bias statistics vertically 
+(    5) !     Automatic procedure
+(    6) !     Spline fitting
+(    7) !     Several artificial adjustments
+(    8) !                                                                     
+(    9) !     CREATED                                1999  12  6    BY NOGI   
+(   10) !     MODIFIED                               2000   2 29       NOGI   
+(   11) !     MODIFIED (POLYNOMIAL->SPLINE)          2000  10  6       NOGI   
+(   12) !---------------------------------------------------------------------
+(   13) !
+(   14) !---------------------------------------------------------------------
+(   15) !  DEFINITION
+(   16) !    CATEGORY : COUNTRIES, REGIONS OF BIAS CORRECTION TABLE
+(   17) !    CLASS    : CLASSIFICATION BY SOLAR ELEVATION
+(   18) !---------------------------------------------------------------------
+(   19) 
+(   20)       implicit none
+(   21) 
+(   22)       REAL*8 RMIS, RMISS, WEIGN, RNCUT, zaux
+(   23)       INTEGER*4 IMIS, NXCG, NXLV, NXAG, NXAL, NXDG, NCUT
+(   24) 
+(   25)       INTEGER*4 m, n, l, itmo, ityr, itgcym
+(   26)       REAL*8 htb, hlb, xbfdp, xbfda, xbfdi
+(   27) 
+(   28)       INTEGER*4 IMEAN,ISPLF,IARTF,IABC,IAVPR1,IAVPR2,IRADIAT,IRED,IRADMEAN,IMULT,IEXT,IOLDW,Irest,ICAP7
+(   29) 
+(   30)       INTEGER*4 ISYR,ISMO,ISDY,ISHR,ISMN, IEYR,IEMO,IEDY,IEHR,IEMN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 3
+
+(   31) 
+(   32)       PARAMETER (RMIS=1.7e38)     ! missing value for real*4
+(   33)       PARAMETER (RMISS=-9999.99)  ! missing value for real*4
+(   34)       PARAMETER (IMIS=2147483647) ! missing value for integer*4
+(   35)       PARAMETER (NXCG =  500)     ! number of category
+(   36)       PARAMETER (NXLV =   16)     ! number of levels
+(   37)       PARAMETER (NXAG =    4)     ! number of solar angle groups
+(   38)       PARAMETER (NXAL =    5)     ! NXAG + a profile for all angles
+(   39)       PARAMETER (NXDG =  100)     ! maximum separated sequence of station ID
+(   40)       PARAMETER (WEIGN=0.0001)    ! weight factor for no data
+(   41)       PARAMETER (NCUT = 20. )     ! Cut off for minimum observation
+(   42)       PARAMETER (RNCUT = 1./NCUT )! 
+(   43) 
+(   44) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY 
+(   45)       INTEGER*4, DIMENSION (NXLV,NXAL,NXCG)     :: NMR    ! number of cases
+(   46)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: BIR    ! obs-fg departure
+(   47)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: AUX_BIR! obs-fg departure
+(   48)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: BIC    ! bias
+(   49)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: AUX_BIC! bias
+(   50)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: RMR    ! RMS of obs-fg departure
+(   51)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: STR    ! STD of obs-fg departure
+(   52)       REAL   *8, DIMENSION (NXLV)               :: HLV    ! standard pressure levels
+(   53)       REAL   *8, DIMENSION (NXLV)               :: HLVL   ! log10 of HLV
+(   54)       INTEGER*4, DIMENSION (NXDG,NXCG)          :: IDSTA  ! start of station group ID
+(   55)       INTEGER*4, DIMENSION (NXDG,NXCG)          :: IDEND  ! end of station group ID
+(   56)       INTEGER*4                                 :: NCTG   ! number of station groups
+(   57)       INTEGER*4                                 :: MINSQ  ! start time in sequential minutes
+(   58)                                                           ! since 1801.1.1.00.00UTC
+(   59)       INTEGER*4                                 :: MAXSQ  ! end time in sequential minutes
+(   60)                                                           ! since 1801.1.1.00.00UTC     
+(   61)       INTEGER*4                                 :: NALL   ! total number of observations in station group
+(   62)       CHARACTER(LEN= 32)                        :: CEXP   ! experiment identifier (number)
+(   63)       CHARACTER(LEN= 12)                        :: CQC    ! quality control information
+(   64)       CHARACTER(LEN=  5)                        :: CHOMOV ! Homogenized version table
+(   65)       CHARACTER(LEN= 64), DIMENSION (NXDG,NXCG) :: CNTRY  ! names of categories
+(   66)       CHARACTER(LEN= 64), DIMENSION (NXCG)      :: CDG
+(   67)       CHARACTER(LEN= 64), DIMENSION (NXCG)      :: CDGNEW
+(   68)       CHARACTER(LEN= 37)                        :: CDATE  ! date in character
+(   69) 
+(   70)       INTEGER*4                                 :: IRAD
+(   71)       INTEGER*4                                 :: CFLAG(NXCG),IHOMO
+(   72) 
+(   73) 
+(   74)       INTEGER*4, DIMENSION (NXAL,NXLV)          :: NUM    ! sample number for each angl. and level.
+(   75)       REAL   *8, DIMENSION (NXAG,NXLV)          :: XBID,& ! 
+(   76)      &                                             XSTDID,&    ! 
+(   77)      &                                             WEIGHT,&    ! weight of fitting of ..
+(   78)      &                                             WEIGHT_aux,&! weight of fitting of ..
+(   79)      &                                             STDV        ! standard deviation of ..
+(   80)       REAL   *8, DIMENSION (NXAL,NXLV)          :: AUX_XBFD
+(   81)       REAL   *8, DIMENSION (NXAL,NXLV)          :: XBFD        ! fitted and correction profiles
+(   82)       REAL   *8, DIMENSION (2,NXLV)             :: KKK
+(   83)       REAL   *8, DIMENSION (NXLV)               :: NRED
+(   84)       REAL   *4, DIMENSION (NXLV)               :: CRN,CRP
+(   85)       INTEGER*4, DIMENSION (NXCG)               :: NSMP
+(   86)       INTEGER*4, DIMENSION (NXCG)               :: NCCC
+(   87) 
+(   88)       REAL   *8, DIMENSION (NXLV)               :: REFRED
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 4
+
+(   89)       LOGICAL                                   :: LFIRST,ONLY_RADIATIVE
+(   90)       LOGICAL                                   :: LRADIATIVE_extended(NXAG,NXLV)
+(   91)       LOGICAL                                   :: LRADIATIVE, Lcheck_LRADIATIVE,LRADIATIVE_extended_switch
+(   92)       REAL   *8                                 :: SSBAF
+(   93)       REAL   *8                                 :: XMIN,XMAX,RDAT,ADAT,DDAT
+(   94)       INTEGER*4                                 :: IBAF,BAFFAIL      ! parameters for spline fitting
+(   95)       REAL   *8, DIMENSION (NXLV)               :: WORKBAF1,XBAF      ! parameters for spline fitting
+(   96)       REAL   *8, DIMENSION (200)                :: WORKBAF2,CBAF,LAMDA ! parameters for spline fitting
+(   97) 
+(   98)       INTEGER*4                                 :: IERR,NXLV_RAD
+(   99)       LOGICAL                                   :: LMEAN_BIAS, LRADIATIVE_AND_MEAN_BIAS
+(  100)       LOGICAL                                   :: Lspline_fitting, LARTIfICIAL_ADJUSTMENT
+(  101)       LOGICAL                                   :: LABSOLUTE_CORRECTION, LADJUST_AVERAGE_PROFILE
+(  102)       LOGICAL                                   :: LCRITERIA_AVERAGE_PROFILE, LREDUCE_FEW_DATA
+(  103)       LOgical                                   :: LRADIATIVE_BIAS
+(  104) 
+(  105)       LOGICAL                                   :: ll_print
+(  106)       LOGICAL                                   :: ll_old_style_w_calc, lrestore_dep
+(  107) 
+(  108) ! --- STANDARD LEVLEL
+(  109)       DATA HLV/1000.,925.,850.,700.,500., &
+(  110)      &          400.,300.,250.,200.,150., &
+(  111)      &          100., 70., 50., 30., 20., &
+(  112)      &           10./
+(  113) 
+(  114) ! --- DEFAULT RATIOS FOR ADJUSTMENTS
+(  115)       DATA REFRED/0.0,0.0,0.2,0.4,0.8,1.0,1.0,1.0, &
+(  116)      &            1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0/
+(  117) 
+(  118)       NAMELIST /BCOR/IMEAN,REFRED,IOLDW,IREST,ICAP7
+(  119)                      ! REFRED : default adjustment ratio of biases for
+(  120)                      ! systematic reduction at each standard level
+(  121)                      ! to be applied for all categories  
+(  122) 
+(  123)       NAMELIST /ADJU/ISPLF,IARTF,IABC,IAVPR1,IAVPR2,IRADIAT,IRED,IRADMEAN,IMULT,IEXT
+(  124)                      ! ISPLF : spline fitting on(1)/off(0)
+(  125)                      ! IARTF : artificial adjustments on(1)/off(0)
+(  126)                      ! IABC  : fitted profile check against the original 1(on)/0(off)
+(  127)                      ! IAVPR1: average profile check 1 on(1)/off(0)
+(  128)                      ! IAVPR2: average profile check 2 on(1)/off(0)
+(  129)                      ! IRADIAT: radiative biaS
+(  130)                      ! IRED  : reduction if too few data on(1)/off(0)
+(  131)                      ! IRADMEAN : RADIATIVE AND MEAN BIAS
+(  132)                      ! IMULT : MULTIPLE FOR CHECK 1 AND 2 (1 FOR t AND 1O FOR rh)
+(  133)                      ! IEXT  : RADAITIVE BIAS EXTENDED CHECK 1(ON)/0(OFF)
+(  134) 
+(  135) 
+(  136)       READ(5,BCOR,IOSTAT=IERR)
+(  137)       READ(5,ADJU,IOSTAT=IERR)
+(  138) 
+(  139) ! NOTICE! CATEGORY NAMES HAVE 64 CHARACTERS.
+(  140) 
+(  141) ! === READ VERTICAL PROFILES OF DEPARTURE (OBS-FG) STATISTICS
+(  142) !     FOR EACH CLASS DEPENDING ON SOLAR ANGLE
+(  143)       
+(  144)       LFIRST                      =.TRUE.
+(  145) 
+(  146)       LMEAN_BIAS = .TRUE.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 5
+
+(  147)       LRADIATIVE_AND_MEAN_BIAS = .true.
+(  148)       IF(IRADMEAN == 0) LRADIATIVE_AND_MEAN_BIAS = .false.
+(  149)       
+(  150)       LSPLINE_FITTING = .true.
+(  151)       if(ISPLF == 0) LSPLINE_FITTING = .FALSE.
+(  152)       LARTIfICIAL_ADJUSTMENT = .true.
+(  153)       if(IARTF == 0) LARTIfICIAL_ADJUSTMENT = .FALSE.
+(  154)       LABSOLUTE_CORRECTION = .TRUE.
+(  155)       if(IABC == 0)  LABSOLUTE_CORRECTION = .FALSE.
+(  156)       LADJUST_AVERAGE_PROFILE = .TRUE.
+(  157)       IF(IAVPR1 == 0) LADJUST_AVERAGE_PROFILE = .false.
+(  158)       LCRITERIA_AVERAGE_PROFILE = .TRUE.
+(  159)       IF(IAVPR2 == 0) LCRITERIA_AVERAGE_PROFILE = .FALSE.
+(  160)       LREDUCE_FEW_DATA = .TRUE.
+(  161)       IF(IRED == 0) LREDUCE_FEW_DATA = .FALSE.
+(  162)       LRADIATIVE_AND_MEAN_BIAS = .true.
+(  163)       IF(IRADMEAN == 0) LRADIATIVE_AND_MEAN_BIAS = .false.
+(  164)       LRADIATIVE_BIAS=.TRUE.
+(  165)       IF(IRADIAT == 0) LRADIATIVE_BIAS = .false.
+(  166)  
+(  167)       LRADIATIVE_extended_switch = .true.
+(  168)       if(iext == 0 ) LRADIATIVE_extended_switch = .false.
+(  169) 
+(  170)       ll_old_style_w_calc    = .true.
+(  171)       if(IOLDW == 0 ) ll_old_style_w_calc = .false.
+(  172)       lrestore_dep           = .true.
+(  173)       if(Irest == 0)  lrestore_dep        = .false.       
+(  174) 
+(  175)       ll_print               = .false.
+(  176)  
+(  177)       write(6,*) ' Spline Fit: ',ISPLF,' ICAP7: ',ICAP7
+(  178)       write(6,*) ' Artificial Adj: ',IARTF,IABC,IAVPR1,IAVPR2
+(  179)       write(6,*) ' Radiative Bias ',IRADIAT,IRADMEAN
+(  180)       write(6,*) ' Reduction: ',IRED
+(  181)       write(6,*) ' Multiplier: ',IMULT,' Extensive Check: ', IEXT
+(  182)       write(6,*) ' Old Style Weights: ',ioldw,' Rstore Departures: ',Irest
+(  183) 
+(  184)       NMR = 0
+(  185)       NSMP= 0
+(  186)       CALL MIX_OUTSTAT(NXCG,NXLV,NXAL,NXDG,      &
+(  187)      &                 BIC,BIR,RMR,STR,HLV,      &
+(  188)      &                 NMR,IDSTA,IDEND,CFLAG,    &
+(  189)      &                 NCTG,MINSQ,MAXSQ,IHOMO,   &
+(  190)      &                 CEXP,CQC,CNTRY,CDG,       &
+(  191)      &                 NSMP,NCCC)
+(  192) 
+(  193)       CALL SYMDHM (ISYR,ISMO,ISDY,ISHR,ISMN, MINSQ)
+(  194)       CALL SYMDHM (IEYR,IEMO,IEDY,IEHR,IEMN, MAXSQ)
+(  195) 
+(  196)       CDATE = '19XX.XX.XX XXUTC --- 19XX.XX.XX XXUTC'
+(  197)       WRITE(CDATE( 1: 4),'(I4.4)') ISYR
+(  198)       WRITE(CDATE( 6: 7),'(I2.2)') ISMO
+(  199)       WRITE(CDATE( 9:10),'(I2.2)') ISDY
+(  200)       WRITE(CDATE(12:13),'(I2.2)') ISHR
+(  201)       WRITE(CDATE(22:25),'(I4.4)') IEYR
+(  202)       WRITE(CDATE(27:28),'(I2.2)') IEMO
+(  203)       WRITE(CDATE(30:31),'(I2.2)') IEDY
+(  204)       WRITE(CDATE(33:34),'(I2.2)') IEHR
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 6
+
+(  205) 
+(  206)       WHERE ( NMR == 0 )
+(  207)          BIC     = RMIS
+(  208)          BIR     = RMIS
+(  209)          STR     = RMIS
+(  210)          RMR     = RMIS
+(  211)       ENDWHERE
+(  212) 
+(  213) ! --- STATION GROUP NAMES
+(  214)       DO N=1,NCTG   !number of station groups
+(  215)         IF (NCCC(N).EQ.1) WRITE(CDGNEW(N),'(A64)') CNTRY(1,N)
+(  216)         IF (NCCC(N).GT.1) WRITE(CDGNEW(N),'(A64)') CDG(N)
+(  217)       END DO
+(  218) 
+(  219) 
+(  220) ! ---  RESCALING OF VERTICAL COORDINATES FOR NAG-ROUTINE     
+(  221)       DO L=1,NXLV
+(  222)         HLVL(L) = -LOG10(HLV(L))  ! It should be negative for NAG.
+(  223)       END DO
+(  224) 
+(  225) ! === DEFAULT BIAS CORRECTION SWITCH TABLE
+(  226) ! --- BIAS CORRECTION TARGET MONTH SHOULD BE THE NEXT MONTH OF 
+(  227) !     THE STATISTICS PERIOD. = THE NEXT MONTH OF 'IEYR','IEMO'
+(  228)       ITMO = IEMO + 1
+(  229)       ITYR = IEYR
+(  230)       IF (ITMO.EQ.13) THEN
+(  231)         ITMO = 1
+(  232)         ITYR = ITYR+1
+(  233)       END IF
+(  234)       ITGCYM = ITYR*100 + ITMO
+(  235) 
+(  236) 
+(  237)       IRAD = 1
+(  238)       IF(LMEAN_BIAS .AND. LRADIATIVE_AND_MEAN_BIAS ) THEN
+(  239)         iRAD = 0
+(  240)       endif
+(  241) 
+(  242) ! === CALCULATION FOR EACH CATEGORY
+(  243) 
+(  244) ! --- MAKE WEIGHT OF CLASSES WITH VERY FEW DATA ALMOST ZERO
+(  245) !     loop over station groups
+(  246) 
+(  247)       STATION_GROUP_LOOP: DO N=1,NCTG   ! number of station groups
+(  248) 
+(  249)         write(6,'('' '')')
+(  250)         write(6,'('' Station Group or Sonde name: '',i3,x,A)') N,TRIM(CDGnew(N))
+(  251) 
+(  252)         DO L=1,NXLV
+(  253)           DO M=1,NXAG
+(  254)             XBID(M,L) = BIR(L,M,N)
+(  255)             IF(BIR(L,M,N).EQ.RMIS .OR. BIR(L,M,N).EQ. -99.00) THEN
+(  256)               XBID(M,L) = 0.
+(  257)             END IF
+(  258)           END DO
+(  259)         END DO
+(  260) 
+(  261) 
+(  262)         NALL = 0 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 7
+
+(  263)         DO L=1,NXLV
+(  264)           DO M=1,NXAG
+(  265)             NALL = NALL+NMR(L,M,N)
+(  266)           END DO
+(  267)         END DO
+(  268) 
+(  269)         if(ll_print) then
+(  270)           WRITE(6,'('' copy input data'')')
+(  271)           DO L=1,NXLV
+(  272)             WRITE(6,'('' '',i4,x,4(f8.2,x))') NINT(HLV(L)),(XBID(M,L),M=1,NXAG)
+(  273)             WRITE(6,'('' '',i4,x,5(i8  ,x))') NINT(HLV(L)),(nmr(L,M,N),M=1,NXAL)
+(  274)           END DO
+(  275)           write(6,'('' '')')
+(  276)           write(6,'('' No of data: '',i10)') NALL
+(  277)         endif
+(  278) 
+(  279) 
+(  280)         IF (NALL.EQ.0) CYCLE STATION_GROUP_LOOP  ! no cases in this station group
+(  281)         
+(  282)         DO L=1,NXLV
+(  283)           DO M=1,NXAG  
+(  284)             if(ll_old_style_w_calc) then
+(  285)               WEIGHT(M,L) = FLOAT(NMR(L,M,N))/FLOAT(NALL)*100.
+(  286)             else
+(  287) !             WRITE(6,'('' '',i4,x,i6,x,i6)') NINT(HLV(L)),NMR(L,M,N),NMR(L,NXAL,N)
+(  288)               if(NMR(L,NXAL,N) /= 0) then
+(  289)                 WEIGHT(M,L) = FLOAT(NMR(L,M,N))/FLOAT(NMR(L,NXAL,N))
+(  290)               else
+(  291)                 WEIGHT(M,L) = WEIGN
+(  292)               endif
+(  293)             endif
+(  294)           END DO
+(  295)           WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+(  296)           DO M=1,NXAG  
+(  297)             IF (BIR(L,M,N).EQ.RMIS) THEN
+(  298)               WEIGHT(M,L) = WEIGN   ! weight factor for no data = 0.0001
+(  299)             END IF
+(  300) 
+(  301)             IF (STR(L,M,N).NE.RMIS) THEN
+(  302)               STDV(M,L) = STR(L,M,N)
+(  303)             ELSE
+(  304)               STDV(M,L) = RMIS
+(  305)             END IF
+(  306) 
+(  307)             NUM(M,L) = NMR(L,M,N)
+(  308)           END DO
+(  309)           WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+(  310)         END DO
+(  311) 
+(  312)         DO L=1,NXLV
+(  313)           NUM(NXAL,L) = NMR(L,NXAL,N)
+(  314)         END DO
+(  315) 
+(  316)         if(ll_print) then
+(  317)           write(6,'('' WEIGHTS: '',i10)') NALL
+(  318)           DO L=1,NXLV
+(  319)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+(  320)           END DO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 8
+
+(  321)         endif
+(  322) !   --- INITIALIZATIONS
+(  323) 
+(  324)         XBFD                  = 0.
+(  325) 
+(  326)         if(Lspline_FITTING) THEN
+(  327) !   ===   FIT PROFILE (SPLINE FITTING)
+(  328) !         Interior knots used in splines
+(  329)           if(icap7 == 12) then
+(  330)             LAMDA( 5)=-LOG10(850.)
+(  331)             LAMDA( 6)=-LOG10(400.)
+(  332)             LAMDA( 7)=-LOG10(100.)
+(  333)             LAMDA( 8)=-LOG10( 20.)
+(  334)           else if(icap7 == 14) then
+(  335)             LAMDA( 5)=-LOG10(925.)
+(  336)             LAMDA( 6)=-LOG10(850.)
+(  337)             LAMDA( 7)=-LOG10(500.)
+(  338)             LAMDA( 8)=-LOG10(300.)
+(  339)             LAMDA( 9)=-LOG10(100.)
+(  340)             LAMDA(10)=-LOG10( 20.)
+(  341)           else if(icap7 == 16) then
+(  342)             LAMDA( 5)=-LOG10(925.)
+(  343)             LAMDA( 6)=-LOG10(850.)
+(  344)             LAMDA( 7)=-LOG10(700.)
+(  345)             LAMDA( 8)=-LOG10(500.)
+(  346)             LAMDA( 9)=-LOG10(300.)
+(  347)             LAMDA(10)=-LOG10(200.)
+(  348)             LAMDA(11)=-LOG10(100.)
+(  349)             LAMDA(12)=-LOG10( 20.)
+(  350)           else
+(  351)             WRITE(6,*)'ERROR IN Setting LAMDA: ',icap7
+(  352)             CALL ABORT
+(  353)           endif
+(  354) 
+(  355)           DO IBAF=1,NXAG
+(  356)            XBAF=HLVL
+(  357)            CALL E02BAF (NXLV,icaP7,XBAF,XBID(IBAF,:),WEIGHT(IBAF,:),  &
+(  358)      &                  LAMDA,WORKBAF1,WORKBAF2,CBAF,SSBAF,BAFFAIL)
+(  359)             DO L=1,NXLV
+(  360)               BAFFAIL=0
+(  361)               CALL E02BBF (icap7,LAMDA,CBAF,XBAF(L),XBFD(IBAF,L),BAFFAIL)
+(  362)             END DO
+(  363)           END DO
+(  364)         else
+(  365)           XBFD(1:NXAG,:) = XBID
+(  366)         endif
+(  367) 
+(  368)         if(ll_print) then
+(  369)           WRITE(6,'('' AFTER E02 (XBID, WEIGHT, XBFD)'')')
+(  370)            DO L=1,NXLV
+(  371)              WRITE(6,'('' '',i4,x,4(f6.2,x),x,4(f6.2,x),x,5(f6.2,x),x,4(f6.2,x)    )') &
+(  372)               & NINT(HLV(L)),&
+(  373)               & (XBID  (M,L),M=1,NXAG),(WEIGHT(m,L),M=1,NXAG),(XBFD  (M,L),M=1,NXAL),&
+(  374)               & (XBFD  (M,L)-XBID  (M,L),M=1,NXAG)
+(  375)            END DO
+(  376)         endif
+(  377) 
+(  378) !   --- DELETE PROFILES WITH NO DATA
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 9
+
+(  379) !   ----  UA 2003-01-14
+(  380) !   --- WEIGHT IS ONLY NXAG LONG
+(  381) !   --- SPLIT LOOP IN TWO PARTS
+(  382) !   ----  UA 2003-01-14
+(  383) 
+(  384)         DO L=1,NXLV
+(  385)            DO M=1,NXAL
+(  386)              IF (NUM(M,L).LE.0) THEN
+(  387)                XBFD(M,L) = RMIS
+(  388)              END IF
+(  389)            END DO
+(  390) 
+(  391)            DO M=1,NXAG
+(  392)              IF (NUM(M,L).LE.0) THEN
+(  393)                WEIGHT(M,L) = 0.
+(  394)              END IF
+(  395)            END DO
+(  396)         END DO
+(  397) 
+(  398)         if(ll_print) then
+(  399)           WRITE(6,'('' AFTER no data check (XBFD, WEIGHT, NUM)'')')
+(  400)           DO L=1,NXLV
+(  401)             WRITE(6,'('' '',i4,x,5(f6.2,x),x,4(f6.2,x),x,5(I6  ,x))') &
+(  402)              & NINT(HLV(L)),(XBFD  (M,L),M=1,NXAL),(WEIGHT(m,L),M=1,NXAG),(NUM   (M,L),M=1,NXAl)
+(  403)           END DO
+(  404)         endif
+(  405) 
+(  406) !   --- CALCULATE FITTED PROFILE FOR 'ALL' (I.E. WEIGHTED AVERAGE PROFILE)
+(  407) !       MEAN FITTED BIAS
+(  408) 
+(  409)         WRITE(6,'('' FITTED - BIAS: '',i1)') IMEAN
+(  410)         call flush(6)
+(  411)         WEIGHT_aux = WEIGHT
+(  412)         IF(     IMEAN == 1) THEN
+(  413)           WEIGHT_aux = WEIGHT
+(  414)         else if(IMEAN == 2) then
+(  415)           WEIGHT_AUX(1,:) = 0.
+(  416)           WEIGHT_AUX(2,:) = 0.
+(  417)         else if(IMEAN == 3) then
+(  418)           WEIGHT_AUX(3,:) = 0.
+(  419)           WEIGHT_AUX(4,:) = 0.
+(  420)         else
+(  421)           WRITE(6,'('' ERROR: UNKNOWN MEAN CALCULATOR; STOP)'')')
+(  422)           stop
+(  423)         endif
+(  424)          
+(  425)         DO L=1,NXLV
+(  426)           IF(WEIGHT_AUX(1,L)+WEIGHT_AUX(2,L)+WEIGHT_AUX(3,L)+WEIGHT_AUX(4,L).NE.0) THEN
+(  427)             XBFD(NXAL,L) = (WEIGHT_AUX(1,L)*XBFD(1,L)   &
+(  428)      &                     +WEIGHT_AUX(2,L)*XBFD(2,L)   &
+(  429)      &                     +WEIGHT_AUX(3,L)*XBFD(3,L)   &
+(  430)      &                     +WEIGHT_AUX(4,L)*XBFD(4,L))  &
+(  431)      &                   / (WEIGHT_AUX(1,L)+WEIGHT_AUX(2,L) &
+(  432)      &                     +WEIGHT_AUX(3,L)+WEIGHT_AUX(4,L))
+(  433) !           if(Lspline_FITTING) THEN
+(  434) !             If(lrestore_dep) then
+(  435) !               XBFD(1:NXAG,L) = XBID(1:NXAG,L)
+(  436) !             endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 10
+
+(  437) !           endif
+(  438)           ELSE
+(  439)             XBFD(NXAL,L) = RMIS
+(  440)           END IF
+(  441)           if(ll_print) then
+(  442)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  443)           endif
+(  444)         END DO
+(  445) !       Variable 'WEIGHT' is no longer needed.
+(  446) !       if(Lspline_FITTING) THEN
+(  447) !       endif
+(  448) 
+(  449) 
+(  450) !   === SOME ARTIFICIAL ADJUSTMENTS ARE APPLIED TO THE FITTED PROFILES
+(  451) 
+(  452)         if(LARTIfICIAL_ADJUSTMENT) then
+(  453) 
+(  454)           WRITE(6,'('' ARTIfICIAL ADJUSTMENTS '')')
+(  455) 
+(  456)           HTB = HLVL(NXLV)-HLVL(1)   ! -(log10(10)-log10(1000)) = 2
+(  457) 
+(  458) !   --- 1.ABSOLUTE OF CORRECTION PROFILES MUST BE SMALLER THAN ORIGINAL.
+(  459) 
+(  460)           if(LABSOLUTE_CORRECTION) then
+(  461)             WRITE(6,'('' CORRECTION PROFILES MUST BE SMALLER THAN ORIGINAL '')')
+(  462) 
+(  463)             DO L=1,NXLV
+(  464)               DO M=1,NXAL
+(  465)                 IF (XBFD(M,L).NE.RMIS) THEN
+(  466)                   IF(ABS(XBFD(M,L)).GT.0.5*IMULT) THEN
+(  467) !           except cases of below 0.5deg/5% (0.5 was defined subjectively.)
+(  468)                     IF (XBFD(M,L).GT.0.) THEN
+(  469)                       IF (XBFD(M,L).GT.ABS(BIR(L,M,N)))  XBFD(M,L) =  ABS(BIR(L,M,N))
+(  470)                     ELSE
+(  471)                       IF (XBFD(M,L).LT.-ABS(BIR(L,M,N))) XBFD(M,L) = -ABS(BIR(L,M,N))
+(  472)                     END IF
+(  473)                   END IF
+(  474)                 END IF
+(  475)               END DO
+(  476)               if(ll_print) then
+(  477)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  478)               endif
+(  479)             END DO
+(  480)           endif
+(  481) 
+(  482) !   --- 2.ADJUST AVERAGE PROFILE
+(  483) !         CRITERION LINES FROM ZERO FOR AVERAGE PROFILE
+(  484) !         AVERAGE PROFILE IS BETTER TO BE NORMAL.
+(  485) 
+(  486)           if(LADJUST_AVERAGE_PROFILE) then
+(  487)             WRITE(6,'('' ADJUST AVERAGE PROFILE '')')
+(  488)             DO L=1,NXLV
+(  489)               HLB    =  HLVL(L)-HLVL(1)
+(  490)               CRN(L) = -HLB/HTB*(4.0*imult)
+(  491)               CRP(L) =  HLB/HTB*(4.0*imult)
+(  492) 
+(  493)             ! |0.0| at 1000hPa, |1.0| at 100hPa, |4.0| at 10hPa
+(  494)             ! These criteria were defined subjectively.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 11
+
+(  495)               IF (XBFD(NXAL,L).NE.RMIS) THEN
+(  496)                 XBFDP = 0. ; XBFDA = 0.
+(  497)                 XBFDP = XBFD(NXAL,L)
+(  498)                 IF (XBFD(NXAL,L).LT.CRN(L)) XBFD(NXAL,L) = CRN(L)
+(  499)                 IF (XBFD(NXAL,L).GT.CRP(L)) XBFD(NXAL,L) = CRP(L)
+(  500) 
+(  501)             ! RELAXATION OF VERTICAL SUDDEN CHANGE
+(  502)                 IF (L.GE.2.AND.L.LE.NXLV-1) THEN
+(  503)                   IF (XBFD(NXAL,L-1).NE.RMIS.AND.   &
+(  504)      &                XBFD(NXAL,L)  .NE.RMIS.AND.   &
+(  505)      &                XBFD(NXAL,L+1).NE.RMIS) THEN
+(  506)                     XBFDI = XBFD(NXAL,L-1)                   &
+(  507)      &                    + (XBFD(NXAL,L+1)-XBFD(NXAL,L-1))  &
+(  508)      &                    * (HLVL(L)  -HLVL(L-1))            &
+(  509)      &                    / (HLVL(L+1)-HLVL(L-1)) 
+(  510)                     IF (XBFD(NXAL,L)-XBFDI.GT.1.0) THEN  
+(  511)                 ! 1.0 is subjectively defined.
+(  512)                       XBFD(NXAL,L) = XBFDI + 1.0
+(  513)                     ELSE IF (XBFD(NXAL,L)-XBFDI.LT.-1.0) THEN
+(  514)                       XBFD(NXAL,L) = XBFDI - 1.0
+(  515)                     END IF
+(  516)                   END IF
+(  517)                 END IF
+(  518) 
+(  519)                 XBFDA = XBFD(NXAL,L) - XBFDP
+(  520)                 if(ll_print) then
+(  521)                   WRITE(6,'('' '',i4,x,10(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),XBFDA,CRN(L),CRP(L),hlb,htb
+(  522)                 endif
+(  523) 
+(  524)                 IF (XBFDA.NE.0.) THEN
+(  525)                   DO M=1,NXAG
+(  526)                     IF (XBFD(M,L).NE.RMIS) THEN
+(  527)                       XBFD(M,L) = XBFD(M,L) + XBFDA
+(  528)                     END IF
+(  529)                   END DO
+(  530)                 END IF
+(  531)                 if(ll_print) then
+(  532)                   WRITE(6,'('' '',i4,x,6(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),XBFDA
+(  533)                 endif
+(  534)               END IF
+(  535)               if(ll_print) then
+(  536)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  537)               endif
+(  538)             END DO
+(  539) 
+(  540)             WRITE(6,'('' '')')
+(  541)             if(ll_print) then
+(  542)               DO L=1,NXLV
+(  543)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD  (M,L),M=1,NXAL)
+(  544)               END DO
+(  545)             endif
+(  546) 
+(  547)           endif
+(  548) 
+(  549) !   --- 3.CRITERIA LINES FROM AVERAGE PROFILE
+(  550) 
+(  551)           if(LCRITERIA_AVERAGE_PROFILE) then
+(  552) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 12
+
+(  553)             WRITE(6,'('' CRITERIA LINES FROM AVERAGE PROFILE '')')
+(  554)             HTB = HLVL(NXLV)-HLVL(1)
+(  555)             DO L=1,NXLV
+(  556)               HLB = HLVL(L)-HLVL(1)
+(  557)               CRN(L) = -HLB/HTB*(2.0*imult) - imult
+(  558)               CRP(L) =  HLB/HTB*(2.0*imult) + imult
+(  559)           ! |1.0| at 1000hPa, |1.5| at 100hPa, |3.0| at 10hPa
+(  560)           ! These criteria were defined subjectively.
+(  561)               DO M=1,NXAG
+(  562)                 IF (XBFD(M,L).NE.RMIS.AND.XBFD(NXAL,L).NE.RMIS) THEN ! departure from
+(  563)                   IF (     XBFD(M,L)-XBFD(NXAL,L).LT.CRN(L)) THEN   ! average profile
+(  564)                     XBFD(M,L) = XBFD(NXAL,L) + CRN(L)
+(  565)                   ELSE IF (XBFD(M,L)-XBFD(NXAL,L).GT.CRP(L)) THEN
+(  566)                     XBFD(M,L) = XBFD(NXAL,L) + CRP(L)
+(  567)                   END IF
+(  568)                 END IF
+(  569)               END DO
+(  570)               if(ll_print) then
+(  571)                 WRITE(6,'('' '',i4,x,7(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),CRN(L),CRP(L)
+(  572)               endif
+(  573)             END DO
+(  574)           endif
+(  575)     
+(  576) !   === ARTIFICIAL ADJUSTMENT END
+(  577)         endif
+(  578) 
+(  579) !        
+(  580) !       4. Decide if radiative bias
+(  581) 
+(  582) !         Calculate mean radiative profile for low and high solar 
+(  583) !         elevations respectively. Calculate gradient as mean over 
+(  584) !         three levels. The profile is radiative if low solar elev. 
+(  585) !         values/gradients are smaller/higher than high solar elev.
+(  586) !         ones.
+(  587) !        
+(  588) 
+(  589)         if(lradiative_bias) then
+(  590)           WRITE(6,'('' Decide if radiative bias '')')
+(  591)           LRADIATIVE = .TRUE.
+(  592)           LRADIATIVE_EXTENDED = .TRUE.
+(  593)           KKK(1,:) =   100.
+(  594)           KKK(2,:) = - 100.
+(  595) 
+(  596)           NXLV_RAD = NXLV-7 
+(  597) 
+(  598)           DO L=NXLV_RAD-1,NXLV-1
+(  599) 
+(  600)             IF (NUM(1,L).GT.0.OR.NUM(2,L).GT.0)  THEN
+(  601)               if(XBFD(1,L).ne.rmis.and.XBFD(2,L).ne.rmis.and.XBFD(NXAL,L).ne.rmis) then
+(  602)                 KKK(1,L)=((XBFD(1,L)-XBFD(NXAL,L))*NUM(1,L) +    &
+(  603)                          &(XBFD(2,L)-XBFD(NXAL,L))*NUM(2,L))/    &
+(  604)                          & FLOAT(SUM(NUM(:,L)))
+(  605)               endif
+(  606)             endif
+(  607)   
+(  608)             IF (NUM(3,L).GT.0.OR.NUM(4,L).GT.0)  THEN
+(  609)               if(XBFD(3,L).ne.rmis.and.XBFD(3,L).ne.rmis.and.XBFD(NXAL,L).ne.rmis) then
+(  610)                 KKK(2,L)=((XBFD(3,L)-XBFD(NXAL,L))*NUM(3,L) +    &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 13
+
+(  611)                          &(XBFD(4,L)-XBFD(NXAL,L))*NUM(4,L))/    &
+(  612)                          & FLOAT(SUM(NUM(:,L)))
+(  613)               endif
+(  614)             endif
+(  615) 
+(  616)             if(LRADIATIVE_extended_switch) then
+(  617)               LRADIATIVE_EXTENded(:,l) = (LRADIATIVE_EXTENded(:,l) .AND. KKK(1,L).LT.KKK(2,L))
+(  618)               if(ll_print) then
+(  619)                 WRITE(6,*) L,LRADIATIVE_EXTENded(:,l),KKK(:,L)
+(  620)               endif
+(  621)             else
+(  622)               LRADIATIVE      = (LRADIATIVE      .AND. KKK(1,L).LT.KKK(2,L))
+(  623)               if(ll_print) then
+(  624)                 WRITE(6,*) L,LRADIATIVE,KKK(:,L)
+(  625)               endif
+(  626)             endif
+(  627) 
+(  628)           ENDDO
+(  629) 
+(  630)           DO L=NXLV,NXLV_RAD+2,-1
+(  631) 
+(  632)             KKK(1,L  ) =  (KKK(1,L)- KKK(1,L-1)) / (LOG(HLV(L)/HLV(L-1))) 
+(  633)   
+(  634)             KKK(2,L  ) =  (KKK(2,L)- KKK(2,L-1)) / (LOG(HLV(L)/HLV(L-1))) 
+(  635) 
+(  636)           ENDDO
+(  637)   
+(  638)           DO L=NXLV-1,NXLV_RAD+2,-1
+(  639)             KKK(1,L)   = SUM(KKK(1,L-3:L))*0.25
+(  640)             KKK(2,L)   = SUM(KKK(2,L-3:L))*0.25
+(  641)             if(LRADIATIVE_extended_switch) then
+(  642)               LRADIATIVE_extended(:,l) = (LRADIATIVE_extended(:,l).AND. &
+(  643)      &                      (KKK(1,L).GT.KKK(2,L) .OR. ABS(KKK(1,L)-KKK(2,L)).LT.0.1))
+(  644)               WRITE(6,*) L,LRADIATIVE_extended(:,l),KKK(:,L)
+(  645)             else
+(  646)               LRADIATIVE      = (LRADIATIVE     .AND. &
+(  647)      &                    (KKK(1,L).GT.KKK(2,L) .OR. ABS(KKK(1,L)-KKK(2,L)).LT.0.1))
+(  648)               WRITE(6,*) L,LRADIATIVE     ,KKK(:,L)
+(  649)             endif
+(  650)           ENDDO
+(  651) 
+(  652)           KKK(1,NXLV) =  KKK(1,NXLV-1) 
+(  653)           KKK(2,NXLV) =  KKK(2,NXLV-1) 
+(  654)         endif
+(  655)  
+(  656) !
+(  657) !   --- 5.ADDJUST CORRECTION VALUE IN CASE OF FEW DATA (less then 1% or fewer then 20)
+(  658) !         above 100hPa
+(  659) !
+(  660)         !
+(  661)         ! If the total amount of observations for 
+(  662)         ! for this class is < NCUT
+(  663)         ! or this profile contains < 1% of the data
+(  664)         ! adjust the correction to mean or a radiative 
+(  665)         ! profile
+(  666)         ! 
+(  667) 
+(  668)         if(LREDUCE_FEW_DATA) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 14
+
+(  669)           write(6,'('' REDUCE CORRECTION VALUE IN CASE OF FEW DATA '')')
+(  670)           DO L=NXLV,1,-1
+(  671)             DO M=1,NXAG
+(  672) 
+(  673) !             no data or missing mean (do nothing)
+(  674) 
+(  675)               IF (XBFD(M,L).NE.RMIS.AND.NUM(NXAL,L).GT.0.AND.XBFD(NXAL,L).NE.RMIS) THEN
+(  676) 
+(  677) ! why myltiply by 100
+(  678) 
+(  679)                 RDAT = FLOAT(NUM(M,L))/FLOAT(NUM(NXAL,L))*100. ! 1%
+(  680)   
+(  681)                 DDAT = NUM(M,L)*RNCUT ! less then NCUT         ! 20
+(  682) 
+(  683) !               not enough data
+(  684) 
+(  685)                 IF (RDAT.LT.1.0.OR.DDAT.LT.1.0) THEN  
+(  686) 
+(  687) !                 ABOVE 100Hpa (if radiative extrapolate, otherwise keep mean)
+(  688) 
+(  689)                   IF(HLV(L).LT.HLV(NXLV_RAD+2))   THEN
+(  690) 
+(  691) !
+(  692) !                   If the corrections are radiative we extrapolate it
+(  693) !
+(  694)                     if(LRADIATIVE_extended_switch) then
+(  695)                       Lcheck_LRADIATIVE = LRADIATIVE_extended(m,l)
+(  696)                       print *,L,HLV(L),M,LRADIATIVE_extended
+(  697)                     else
+(  698)                       Lcheck_LRADIATIVE = LRADIATIVE
+(  699)                       print *,L,HLV(L),M,LRADIATIVE     
+(  700)                     endif
+(  701) 
+(  702) !                   if radiative extrapolate
+(  703) 
+(  704)                     IF (Lcheck_LRADIATIVE     ) THEN
+(  705)   
+(  706)                      XBFD(M,L) = -KKK((M-1)/2+1,L) * LOG(HLV(L)) + XBFD(NXAL,L) 
+(  707) 
+(  708) !                   otherwise keep the mean
+(  709) 
+(  710)                     ELSE
+(  711)                       XBFD(M,L) = XBFD(NXAL,L) 
+(  712)                     ENDIF
+(  713) 
+(  714) !                 BELOW 100hPa (KEEP THE the MEAN)
+(  715) 
+(  716)                   ELSE
+(  717)                     XBFD(M,L) = XBFD(NXAL,L) 
+(  718)                   END IF
+(  719) 
+(  720)                 END IF
+(  721) 
+(  722)               END IF
+(  723) 
+(  724)             END DO
+(  725)           END DO
+(  726)           if(ll_print) then
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 15
+
+(  727)             DO L=1,NXLV
+(  728)               WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  729)             END DO
+(  730)           endif
+(  731) 
+(  732)         endif
+(  733) 
+(  734) 
+(  735) !   === MAKE DECISION OF BIAS CORRECTION SWITCH
+(  736) 
+(  737)         ONLY_RADIATIVE = .TRUE.
+(  738)         IF(LMEAN_BIAS .AND. LRADIATIVE_AND_MEAN_BIAS ) THEN
+(  739)           IF(IRAD /= 1) ONLY_RADIATIVE = .FALSE.
+(  740)         ENDIF
+(  741) 
+(  742)         write(6,'('' MAKE DECISION '')')
+(  743) 
+(  744)         IF (ONLY_RADIATIVE ) THEN
+(  745)           DO L=1,NXLV
+(  746)             DO M=1,NXAG
+(  747)               IF(NUM(M,L).GT.0) then
+(  748)                 if(XBFD(NXAL,L).ne.rmis) then
+(  749)                   if(XBFD(M,L).ne.rmis)    then
+(  750)                     if(NINT(XBFD(M,L)*100.).NE.0) THEN
+(  751)                       XBFD(M,L) = XBFD(M,L)-XBFD(NXAL,L)
+(  752)                     END IF
+(  753)                   END IF
+(  754)                 else
+(  755)                   write(6,'('' MEAN MISSING FOR: '',I2,x,i4)') M,NINT(HLV(L))
+(  756)                   XBFD(M,L) = rmis
+(  757)                 END IF
+(  758)               END IF
+(  759)             END DO
+(  760) 
+(  761)             IF(.NOT.LMEAN_BIAS) THEN
+(  762)               XBFD(NXAL,L) = 0.
+(  763)             ENDIF
+(  764) 
+(  765)           END DO
+(  766)         ENDIF
+(  767)         if(ll_print) then
+(  768)           DO L=1,NXLV
+(  769)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  770)           END DO
+(  771)         endif
+(  772) 
+(  773) 
+(  774) !   === HOW MUCH THE BIASES SHOULD BE ACTUALLY CORRECTED?
+(  775) 
+(  776) !   --- BIAS CORRECTION ADJUSTMENT
+(  777)         WRITE(6,'('' HOW MUCH THE BIASES SHOULD BE ACTUALLY CORRECTED '')')
+(  778)         DO L=NXLV,1,-1
+(  779)         !
+(  780)         ! If the total amount of observations is < 2*NCUT
+(  781)         ! Reduce the average correction
+(  782)         ! 
+(  783)           zaux=NUM(NXAL,L)*0.5*RNCUT
+(  784)           NRED(L) = MIN(1._8,zaux) ! less than 50
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 16
+
+(  785)         endDO
+(  786) 
+(  787)         DO L=1,NXLV
+(  788)           DO M=1,NXAL
+(  789)             IF (XBFD(M,L).NE.RMIS) THEN
+(  790) !             XBFD(M,L) = XBFD(M,L) * REFRED(L) * NRED(L)
+(  791)               if(NUM(M,L) < 30 ) then
+(  792)                 XBFD(M,L) = 0.
+(  793)               endif
+(  794) !!          ELSE
+(  795) !!            XBFD(M,L) = 0.
+(  796)             END IF
+(  797)           END DO
+(  798)           if(ll_print) then
+(  799)             WRITE(6,'('' '',i4,x,5(f8.2,x),i5,x,2(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),NUM(NXAL,L),REFRED(L),NRED(L)
+(  800)           endif
+(  801)         END DO
+(  802) 
+(  803) 
+(  804) !   === CREATE CORRECTION TABLES
+(  805)         IF ( IHOMO == 0 ) THEN
+(  806)           CHOMOV='V00.0'
+(  807)         ENDIF
+(  808) 
+(  809) !   --- CREATE PROPOSED CORRECTION TABLE (CORCAND.T)
+(  810)         IF (LFIRST) THEN
+(  811)           WRITE(14,'(A37,X,A,X,I1,X,A)') CDATE,' HOMOGENIZED',IHOMO,CHOMOV
+(  812)           LFIRST=.FALSE.
+(  813)         END IF
+(  814)         WRITE(14,*)
+(  815)         WRITE(14,'(A64,I5)') CDGNEW(N),N
+(  816) 
+(  817)         DO L=1,NXLV
+(  818)           DO M=1,NXAL
+(  819)             AUX_XBFD(m,l  ) = XBFD(m,L  )
+(  820)             IF(XBFD(m,L)   == RMIS ) AUX_XBFD(m,L  ) = RMISS
+(  821) !           IF(XBFD(m,L)   == RMIS ) AUX_XBFD(m,L  ) = 0.
+(  822)             AUX_BIR (L,M,N) = BIR (L,M,N)
+(  823)             if(BIR (L,M,N) == RMIS ) AUX_BIR (L,M,N) = RMISS
+(  824) !           if(BIR (L,M,N) == RMIS ) AUX_BIR (L,M,N) = 0.
+(  825)             AUX_BIC (L,M,N) = BIC (L,M,N)
+(  826)             if(BIC (L,M,N) == RMIS ) AUX_BIC (L,M,N) = RMISS
+(  827) !           if(BIC (L,M,N) == RMIS ) AUX_BIC (L,M,N) = 0.
+(  828)           ENDDO
+(  829) 
+(  830)           WRITE(14,1400) NINT(HLV(L)),&
+(  831)                         &(AUX_BIR (L,M,N),M=1,NXAL),&
+(  832)                         &(AUX_XBFD(M,L  ),M=1,NXAL),&
+(  833)                         &(AUX_BIC (L,M,N),M=1,NXAL),&
+(  834)                         &(NMR     (L,M,N),M=1,NXAL)
+(  835)  1400     FORMAT (I5,5F8.2,5x,5F8.2,5x,5F8.2,5x,5i8)
+(  836)         ENDDO
+(  837) 
+(  838)       ENDDO STATION_GROUP_LOOP
+(  839) !     END DO ! (?) end DO N=1,NCTG   ! number of station groups
+(  840) 
+(  841) 
+(  842) ! === END FOR EACH CATEGORY
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 17
+
+(  843) 
+(  844) 
+(  845)       STOP
+(  846)       END PROGRAM BIASFIT
+(  847) 
+(  848)       SUBROUTINE MIX_OUTSTAT(NXCG,NXLV,NXAL,NXDG,&
+(  849)      &                       BIC,BIR,RMR,STR,HLV,&
+(  850)      &                       NMR,IDSTA,IDEND,CFLAG,&
+(  851)      &                       NCTG,MINSQ,MAXSQ,IHOMO,&
+(  852)      &                       CEXP,CQC,CNTRY,CDG,&
+(  853)      &                       NSMP,NCCC)
+(  854) 
+(  855) !     Mix OUTSTAT_YYYY_MM tables created by VRTPRFL
+(  856) !     Called by BIASFIT
+(  857) !
+(  858) !     Ulf Andrae, ECMWF, 200307
+(  859) !
+(  860)       IMPLICIT NONE
+(  861) 
+(  862) !---------------------------------------------------------------------
+(  863) 
+(  864)       INTEGER*4 :: NXCG,NXLV,NXAL,NXDG,LUNIN,n,nn,l,m
+(  865) 
+(  866) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY
+(  867)       INTEGER*4 , DIMENSION (NXLV,NXAL,NXCG) :: NMR,NM2 ! number of cases
+(  868) 
+(  869)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RNMR    ! numbera of cases real
+(  870)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: BIR,BIC,BIC2,BI2 ! obs-fg departure (bias)
+(  871)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RMR,RM2 ! RMS of obs-fg departure
+(  872)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: STR,ST2 ! STD of obs-fg departure
+(  873)       REAL*8 , DIMENSION (NXLV) :: HLV        ! standard pressure levels
+(  874) 
+(  875)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDSTA ! start of station group ID
+(  876)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDEND ! end of station group ID
+(  877)       INTEGER*4 :: CFLAG(NXCG),CFLAG2(NXCG)
+(  878) 
+(  879)       INTEGER*4  :: NCTG     ! number of station groups
+(  880)       INTEGER*4  :: MINSQ    ! start time in sequential minutes
+(  881)                           ! since 1801.1.1.00.00UTC
+(  882)       INTEGER*4  :: MAXSQ    ! end time in sequential minutes
+(  883)                           ! since 1801.1.1.00.00UTC
+(  884) 
+(  885)       CHARACTER(LEN=8) :: CFIN ='fort.101'
+(  886)       CHARACTER(LEN=*) :: CEXP  ! experiment identifier (number)
+(  887)       CHARACTER(LEN=*) :: CQC   ! quality control information
+(  888)       CHARACTER(LEN=*), DIMENSION (NXDG,NXCG) :: CNTRY ! names of categories
+(  889)       CHARACTER(LEN=*), DIMENSION (NXCG) :: CDG
+(  890) 
+(  891)       INTEGER*4 , DIMENSION (NXCG) :: NSMP,NSMP_local
+(  892)       INTEGER*4 , DIMENSION (NXCG) :: NCCC
+(  893) 
+(  894)       LOGICAL :: LH
+(  895) 
+(  896) !----  LOCAL
+(  897) 
+(  898)       INTEGER*4  :: MIQ,MAQ,IERR,ISLL,IOCR,IHOMO
+(  899) 
+(  900) !---------------------------------------------------------------------------------------
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 18
+
+(  901) 
+(  902) !     Init
+(  903) 
+(  904)       nm2  = 0
+(  905)       rm2  = 0.
+(  906)       st2  = 0.
+(  907)       bi2  = 0.
+(  908)       bic2 = 0.
+(  909) 
+(  910)       cflag2 = 0
+(  911) 
+(  912)       miq =  999999999
+(  913)       maq = -999999999
+(  914) 
+(  915) 
+(  916)       do lunin=251,300
+(  917)          NSMP_local = 0
+(  918) 
+(  919)          WRITE(CFIN(6:8),'(I3.3)')lunin
+(  920)          INQUIRE (FILE=cfin,EXIST=LH)
+(  921) 
+(  922)          IF (.NOT. LH ) CYCLE
+(  923) 
+(  924)          WRITE(6,*)' MIX',lunin
+(  925) 
+(  926)          CALL READ_OUTSTAT(LUNIN,NXCG,NXLV,NXAL,NXDG,&
+(  927)      &        BIC,BIR,RMR,STR,HLV,&
+(  928)      &        NMR,IDSTA,IDEND,CFLAG,&
+(  929)      &        NCTG,MINSQ,MAXSQ,&
+(  930)      &        CEXP,CQC,CNTRY,CDG,&
+(  931)      &        ISLL,IOCR,IHOMO,&
+(  932)      &        NSMP_local,NCCC)
+(  933) 
+(  934) 
+(  935)             nm2  = nm2  + nmr
+(  936)             bi2  = bi2  + bir    * nmr
+(  937)             bic2 = bic2 + bic    * nmr
+(  938)             rm2  = rm2  + rmr**2 * nmr
+(  939) 
+(  940)             cflag2 = MAX(cflag2,cflag)
+(  941) 
+(  942)             miq = MIN(miq,minsq)
+(  943)             maq = MAX(maq,maxsq)
+(  944) 
+(  945)             NSMP = NSMP + NSMP_local
+(  946) 
+(  947)       enddo
+(  948) 
+(  949)       rnmr = FLOAT(nm2)
+(  950)       where ( rnmr < 0.5  ) rnmr = 1.
+(  951)       rnmr = 1./rnmr
+(  952) 
+(  953)       nmr = nm2
+(  954)       bir = bi2  * rnmr
+(  955)       bic = bic2 * rnmr
+(  956)       rmr = SQRT ( rm2 * rnmr )
+(  957)       str = SQRT( ABS( rm2*rnmr - (bi2*rnmr)**2 ))
+(  958) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 19
+
+(  959)       cflag = cflag2
+(  960) 
+(  961)       minsq = miq
+(  962)       maxsq = maq
+(  963) 
+(  964)       return
+(  965)       end SUBROUTINE MIX_OUTSTAT
+(  966) 
+(  967) !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(  968) 
+(  969) !************************************************************************
+(  970)       SUBROUTINE SYMDHM(IY,IM,ID,IH,MN,ISEQ)
+(  971) !************************************************************************
+(  972) !*
+(  973) !*     Calculate year,month,date,hour,minute from
+(  974) !*     specified sequential minute since 1801.1.1.00.00UTC
+(  975) !*
+(  976) !*     ( OUT) IY    I*4  :   year
+(  977) !*     ( OUT) IM    I*4  :   month
+(  978) !*     ( OUT) ID    I*4  :   date
+(  979) !*     ( OUT) IH    I*4  :   hour
+(  980) !*     ( OUT) MN    I*4  :   minute
+(  981) !*     ( IN ) ISEQ  I*4  :   sequential minute
+(  982) !*
+(  983) !************************************************************************
+(  984)       IMPLICIT NONE
+(  985)       INTEGER :: IY,IM,ID,IH,MN,ISEQ
+(  986)       INTEGER :: ISEQ1,ISEQ2,ISQ,K
+(  987)       MN=MOD(ISEQ,60)
+(  988)       ISEQ1=ISEQ/60
+(  989)       GO TO 10
+(  990) !*
+(  991)       ENTRY STYMDH(IY,IM,ID,IH,ISEQ)
+(  992) !************************************************************************
+(  993) !*     Calculate year,month,date,hour from
+(  994) !*     specified sequential hour since 1801.1.1.00UTC
+(  995) !************************************************************************
+(  996) !*
+(  997)       ISEQ1=ISEQ
+(  998) !*
+(  999)    10 CONTINUE
+( 1000)       IH=MOD(ISEQ1,24)
+( 1001)       ISEQ2=ISEQ1/24+1
+( 1002)       GO TO 20
+( 1003) !*
+( 1004)       ENTRY STOYMD(IY,IM,ID,ISEQ)
+( 1005) !************************************************************************
+( 1006) !*     Calculate year,month,date from
+( 1007) !*     specified sequential date since 1801.1.1
+( 1008) !************************************************************************
+( 1009) !*
+( 1010)       ISEQ2=ISEQ
+( 1011) !*
+( 1012)    20 CONTINUE
+( 1013)       ISQ=ISEQ2
+( 1014)       IY=INT((ISQ+306-0.1)/365.25)+1802
+( 1015)    30 K=INT(365.25*(IY-1801)-306)
+( 1016)       K=K-((((IY-1501)/100)*3/4)-2)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 20
+
+( 1017)       IF (ISQ.LE.K) THEN
+( 1018)          IY=IY-1
+( 1019)          GO TO 30
+( 1020)       END IF
+( 1021)       ISQ=ISQ-K
+( 1022)       IM=INT((ISQ-0.5)/30.6)+3
+( 1023)       K=INT(30.6*(IM-3)+0.5)
+( 1024)       ID=ISQ-K
+( 1025)       IF (IM.GT.12) THEN
+( 1026)          IM=IM-12
+( 1027)          IY=IY+1
+( 1028)       END IF
+( 1029)       IY=IY-1
+( 1030)       RETURN
+( 1031)       END SUBROUTINE SYMDHM
+( 1032)       SUBROUTINE READ_OUTSTAT(LUNIN,NXCG,NXLV,NXAL,NXDG,&
+( 1033)      &                        BIC,BIR,RMR,STR,HLV,&
+( 1034)      &                        NMR,IDSTA,IDEND,CFLAG,&
+( 1035)      &                        NCTG,MINSQ,MAXSQ,&
+( 1036)      &                        CEXP,CQC,CNTRY,CDG,&
+( 1037)      &                        ISLL,IOCR,IHOMO,&
+( 1038)      &                        NSMP,NCCC)
+( 1039) 
+( 1040)       IMPLICIT NONE
+( 1041) 
+( 1042) !---------------------------------------------------------------------
+( 1043) 
+( 1044)       INTEGER*4  :: NXCG,NXLV,NXAL,NXDG,LUNIN
+( 1045) 
+( 1046) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY 
+( 1047)       INTEGER*4 , DIMENSION (NXLV,NXAL,NXCG) :: NMR ! number of cases
+( 1048) 
+( 1049)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: BIC,BIR ! obs-fg departure (bias)
+( 1050)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RMR ! RMS of obs-fg departure
+( 1051)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: STR ! STD of obs-fg departure
+( 1052)       REAL*8 , DIMENSION (NXLV) :: HLV        ! standard pressure levels
+( 1053)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDSTA ! start of station group ID
+( 1054)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDEND ! end of station group ID
+( 1055)       INTEGER*4  :: CFLAG(NXCG)
+( 1056) 
+( 1057)       INTEGER*4  :: NCTG     ! number of station groups
+( 1058)       INTEGER*4  :: MINSQ    ! start time in sequential minutes
+( 1059)                           ! since 1801.1.1.00.00UTC
+( 1060)       INTEGER*4  :: MAXSQ    ! end time in sequential minutes
+( 1061)                           ! since 1801.1.1.00.00UTC     
+( 1062)       INTEGER*4  :: ISLL,IOCR,N,NN,L,M,IHOMO
+( 1063)       INTEGER*4  :: combined_country_index,country_index,country_group_index
+( 1064) 
+( 1065)       CHARACTER(LEN=*) :: CEXP  ! experiment identifier (number)
+( 1066)       CHARACTER(LEN=*) :: CQC   ! quality control information
+( 1067)       CHARACTER(LEN=*), DIMENSION (NXDG,NXCG) :: CNTRY ! names of categories
+( 1068)       CHARACTER(LEN=*), DIMENSION (NXCG) :: CDG
+( 1069)       CHARACTER(LEN=8)  :: FILENAM
+( 1070)       INTEGER*4 , DIMENSION (NXAL,NXLV) :: NUM     ! sample number for each angl. and level.
+( 1071) 
+( 1072)       INTEGER*4 , DIMENSION (NXCG) :: NSMP
+( 1073)       INTEGER*4 , DIMENSION (NXCG) :: NCCC
+( 1074) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 21
+
+( 1075) !----  LOCAL
+( 1076) 
+( 1077)       INTEGER*4  IERR
+( 1078) 
+( 1079) !---------------------------------------------------------------------------------------
+( 1080)       WRITE(FILENAM,'(a5,I3.3)') 'fort.',LUNIN
+( 1081)       OPEN(LUNIN,FILE=FILENAM,STATUS='OLD',IOSTAT=IERR)
+( 1082) 
+( 1083)       IF(IERR.NE.0) THEN
+( 1084)          WRITE(6,*)'ERROR IN READ_OUTSTAT',IERR
+( 1085)          WRITE(6,*)'COULD NOT OPEN UNIT ',LUNIN
+( 1086)          CALL ABORT
+( 1087)       ENDIF
+( 1088) 
+( 1089) !     READ 
+( 1090) 
+( 1091) !     READ(LUNIN,'(A12,I12,12X,A12,3X,I1)') CEXP,NCTG,CQC,IHOMO
+( 1092)       READ(LUNIN,'(A32,I12,12X,A12,3X,I1)') CEXP,NCTG,CQC,IHOMO
+( 1093)       READ(LUNIN,'(4I12)') MINSQ,MAXSQ,ISLL,IOCR
+( 1094) 
+( 1095)       DO N=1,NCTG  ! number of station groups
+( 1096) 
+( 1097)         READ(LUNIN,*)
+( 1098)         READ(LUNIN,'(A64,3I8,X,I3,X,i3)') CDG(N),NSMP(N),NCCC(N),CFLAG(N),&
+( 1099)                                          &combined_country_index,country_index
+( 1100)         WRITE(6,'(A,X,3I8,X,I3,X,i3)') trim(CDG(N)),NSMP(N),NCCC(N),CFLAG(N),&
+( 1101)                                       &combined_country_index,country_index
+( 1102)         call flush(6)
+( 1103)         DO NN=1,NCCC(N)
+( 1104)           READ(LUNIN,'(A64,2I8,X,I3)') CNTRY(NN,N),IDSTA(NN,N),IDEND(NN,N),&
+( 1105)                                       &country_group_index
+( 1106) !         WRITE(6,'(A,X,2I8,X,I3)') trim(CNTRY(NN,N)),IDSTA(NN,N),IDEND(NN,N),&
+( 1107) !                                  &country_group_index
+( 1108)         call flush(6)
+( 1109)         END DO
+( 1110) 
+( 1111)         DO L=1,NXLV            ! number of pressure levels
+( 1112) 
+( 1113)           READ(lunin,'(F5.0,4(5(1X,F6.2),1X),5I6)') HLV(L), &
+( 1114)      &    (BIC(L,m,N),M=1,nxal), &
+( 1115)      &    (BIR(L,m,N),M=1,nxal), &
+( 1116)      &    (RMR(L,m,N),M=1,nxal), &
+( 1117)      &    (STR(L,m,N),M=1,nxal), &
+( 1118)      &    (NMR(L,m,N),M=1,nxal)
+( 1119) !         write(6,'(F5.0,4(5(1X,F6.2),1X),5I6)') HLV(L), &
+( 1120) !    &    (BIC(L,m,N),M=1,nxal), &
+( 1121) !    &    (BIR(L,m,N),M=1,nxal), &
+( 1122) !    &    (RMR(L,m,N),M=1,nxal), &
+( 1123) !    &    (STR(L,m,N),M=1,nxal), &
+( 1124) !    &    (NMR(L,m,N),M=1,nxal)
+( 1125)         call flush(6)
+( 1126) 
+( 1127)         END DO
+( 1128) 
+( 1129)       END DO
+( 1130) 
+( 1131)       CLOSE(LUNIN)
+( 1132) 
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 22
+
+( 1133)       RETURN
+( 1134)       END SUBROUTINE READ_OUTSTAT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 23
+
+(    1) # 1 "Rs_t_rh_biasfit.F90"
+(    1)       PROGRAM BIASFIT
+(    2) !---------------------------------------------------------------------
+(    3) !     TEMP Temperature bias calculation for ERA40
+(    4) !     Fit bias statistics vertically 
+(    5) !     Automatic procedure
+(    6) !     Spline fitting
+(    7) !     Several artificial adjustments
+(    8) !                                                                     
+(    9) !     CREATED                                1999  12  6    BY NOGI   
+(   10) !     MODIFIED                               2000   2 29       NOGI   
+(   11) !     MODIFIED (POLYNOMIAL->SPLINE)          2000  10  6       NOGI   
+(   12) !---------------------------------------------------------------------
+(   13) !
+(   14) !---------------------------------------------------------------------
+(   15) !  DEFINITION
+(   16) !    CATEGORY : COUNTRIES, REGIONS OF BIAS CORRECTION TABLE
+(   17) !    CLASS    : CLASSIFICATION BY SOLAR ELEVATION
+(   18) !---------------------------------------------------------------------
+(   19) # 20 "Rs_t_rh_biasfit.F90"
+(   20)       implicit none
+(   21) # 22 "Rs_t_rh_biasfit.F90"
+(   22)       REAL*8 RMIS, RMISS, WEIGN, RNCUT, zaux
+(   23)       INTEGER*4 IMIS, NXCG, NXLV, NXAG, NXAL, NXDG, NCUT
+(   24) # 25 "Rs_t_rh_biasfit.F90"
+(   25)       INTEGER*4 m, n, l, itmo, ityr, itgcym
+(   26)       REAL*8 htb, hlb, xbfdp, xbfda, xbfdi
+(   27) # 28 "Rs_t_rh_biasfit.F90"
+(   28)       INTEGER*4 IMEAN,ISPLF,IARTF,IABC,IAVPR1,IAVPR2,IRADIAT,IRED,IRADMEAN,IMULT,IEXT,IOLDW,Irest,ICAP7
+(   29) # 30 "Rs_t_rh_biasfit.F90"
+(   30)       INTEGER*4 ISYR,ISMO,ISDY,ISHR,ISMN, IEYR,IEMO,IEDY,IEHR,IEMN
+(   31) # 32 "Rs_t_rh_biasfit.F90"
+(   32)       PARAMETER (RMIS=1.7e38)     ! missing value for real*4
+(   33)       PARAMETER (RMISS=-9999.99)  ! missing value for real*4
+(   34)       PARAMETER (IMIS=2147483647) ! missing value for integer*4
+(   35)       PARAMETER (NXCG =  500)     ! number of category
+(   36)       PARAMETER (NXLV =   16)     ! number of levels
+(   37)       PARAMETER (NXAG =    4)     ! number of solar angle groups
+(   38)       PARAMETER (NXAL =    5)     ! NXAG + a profile for all angles
+(   39)       PARAMETER (NXDG =  100)     ! maximum separated sequence of station ID
+(   40)       PARAMETER (WEIGN=0.0001)    ! weight factor for no data
+(   41)       PARAMETER (NCUT = 20. )     ! Cut off for minimum observation
+(   42)       PARAMETER (RNCUT = 1./NCUT )! 
+(   43) # 44 "Rs_t_rh_biasfit.F90"
+(   44) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY 
+(   45)       INTEGER*4, DIMENSION (NXLV,NXAL,NXCG)     :: NMR    ! number of cases
+(   46)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: BIR    ! obs-fg departure
+(   47)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: AUX_BIR! obs-fg departure
+(   48)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: BIC    ! bias
+(   49)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: AUX_BIC! bias
+(   50)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: RMR    ! RMS of obs-fg departure
+(   51)       REAL   *8, DIMENSION (NXLV,NXAL,NXCG)     :: STR    ! STD of obs-fg departure
+(   52)       REAL   *8, DIMENSION (NXLV)               :: HLV    ! standard pressure levels
+(   53)       REAL   *8, DIMENSION (NXLV)               :: HLVL   ! log10 of HLV
+(   54)       INTEGER*4, DIMENSION (NXDG,NXCG)          :: IDSTA  ! start of station group ID
+(   55)       INTEGER*4, DIMENSION (NXDG,NXCG)          :: IDEND  ! end of station group ID
+(   56)       INTEGER*4                                 :: NCTG   ! number of station groups
+(   57)       INTEGER*4                                 :: MINSQ  ! start time in sequential minutes
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 24
+
+(   58)                                                           ! since 1801.1.1.00.00UTC
+(   59)       INTEGER*4                                 :: MAXSQ  ! end time in sequential minutes
+(   60)                                                           ! since 1801.1.1.00.00UTC     
+(   61)       INTEGER*4                                 :: NALL   ! total number of observations in station group
+(   62)       CHARACTER(LEN= 32)                        :: CEXP   ! experiment identifier (number)
+(   63)       CHARACTER(LEN= 12)                        :: CQC    ! quality control information
+(   64)       CHARACTER(LEN=  5)                        :: CHOMOV ! Homogenized version table
+(   65)       CHARACTER(LEN= 64), DIMENSION (NXDG,NXCG) :: CNTRY  ! names of categories
+(   66)       CHARACTER(LEN= 64), DIMENSION (NXCG)      :: CDG
+(   67)       CHARACTER(LEN= 64), DIMENSION (NXCG)      :: CDGNEW
+(   68)       CHARACTER(LEN= 37)                        :: CDATE  ! date in character
+(   69) # 70 "Rs_t_rh_biasfit.F90"
+(   70)       INTEGER*4                                 :: IRAD
+(   71)       INTEGER*4                                 :: CFLAG(NXCG),IHOMO
+(   72) # 74 "Rs_t_rh_biasfit.F90"
+(   74)       INTEGER*4, DIMENSION (NXAL,NXLV)          :: NUM    ! sample number for each angl. and level.
+(   75)       REAL   *8, DIMENSION (NXAG,NXLV)          :: XBID,& ! 
+(   76)      &                                             XSTDID,&    ! 
+(   77)      &                                             WEIGHT,&    ! weight of fitting of ..
+(   78)      &                                             WEIGHT_aux,&! weight of fitting of ..
+(   79)      &                                             STDV        ! standard deviation of ..
+(   80)       REAL   *8, DIMENSION (NXAL,NXLV)          :: AUX_XBFD
+(   81)       REAL   *8, DIMENSION (NXAL,NXLV)          :: XBFD        ! fitted and correction profiles
+(   82)       REAL   *8, DIMENSION (2,NXLV)             :: KKK
+(   83)       REAL   *8, DIMENSION (NXLV)               :: NRED
+(   84)       REAL   *4, DIMENSION (NXLV)               :: CRN,CRP
+(   85)       INTEGER*4, DIMENSION (NXCG)               :: NSMP
+(   86)       INTEGER*4, DIMENSION (NXCG)               :: NCCC
+(   87) # 88 "Rs_t_rh_biasfit.F90"
+(   88)       REAL   *8, DIMENSION (NXLV)               :: REFRED
+(   89)       LOGICAL                                   :: LFIRST,ONLY_RADIATIVE
+(   90)       LOGICAL                                   :: LRADIATIVE_extended(NXAG,NXLV)
+(   91)       LOGICAL                                   :: LRADIATIVE, Lcheck_LRADIATIVE,LRADIATIVE_extended_switch
+(   92)       REAL   *8                                 :: SSBAF
+(   93)       REAL   *8                                 :: XMIN,XMAX,RDAT,ADAT,DDAT
+(   94)       INTEGER*4                                 :: IBAF,BAFFAIL      ! parameters for spline fitting
+(   95)       REAL   *8, DIMENSION (NXLV)               :: WORKBAF1,XBAF      ! parameters for spline fitting
+(   96)       REAL   *8, DIMENSION (200)                :: WORKBAF2,CBAF,LAMDA ! parameters for spline fitting
+(   97) # 98 "Rs_t_rh_biasfit.F90"
+(   98)       INTEGER*4                                 :: IERR,NXLV_RAD
+(   99)       LOGICAL                                   :: LMEAN_BIAS, LRADIATIVE_AND_MEAN_BIAS
+(  100)       LOGICAL                                   :: Lspline_fitting, LARTIfICIAL_ADJUSTMENT
+(  101)       LOGICAL                                   :: LABSOLUTE_CORRECTION, LADJUST_AVERAGE_PROFILE
+(  102)       LOGICAL                                   :: LCRITERIA_AVERAGE_PROFILE, LREDUCE_FEW_DATA
+(  103)       LOgical                                   :: LRADIATIVE_BIAS
+(  104) # 105 "Rs_t_rh_biasfit.F90"
+(  105)       LOGICAL                                   :: ll_print
+(  106)       LOGICAL                                   :: ll_old_style_w_calc, lrestore_dep
+(  107) # 108 "Rs_t_rh_biasfit.F90"
+(  108) ! --- STANDARD LEVLEL
+(  109)       DATA HLV/1000.,925.,850.,700.,500., &
+(  110)      &          400.,300.,250.,200.,150., &
+(  111)      &          100., 70., 50., 30., 20., &
+(  112)      &           10./
+(  113) # 114 "Rs_t_rh_biasfit.F90"
+(  114) ! --- DEFAULT RATIOS FOR ADJUSTMENTS
+(  115)       DATA REFRED/0.0,0.0,0.2,0.4,0.8,1.0,1.0,1.0, &
+(  116)      &            1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0/
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 25
+
+(  117) # 118 "Rs_t_rh_biasfit.F90"
+(  118)       NAMELIST /BCOR/IMEAN,REFRED,IOLDW,IREST,ICAP7
+(  119)                      ! REFRED : default adjustment ratio of biases for
+(  120)                      ! systematic reduction at each standard level
+(  121)                      ! to be applied for all categories  
+(  122) # 123 "Rs_t_rh_biasfit.F90"
+(  123)       NAMELIST /ADJU/ISPLF,IARTF,IABC,IAVPR1,IAVPR2,IRADIAT,IRED,IRADMEAN,IMULT,IEXT
+(  124)                      ! ISPLF : spline fitting on(1)/off(0)
+(  125)                      ! IARTF : artificial adjustments on(1)/off(0)
+(  126)                      ! IABC  : fitted profile check against the original 1(on)/0(off)
+(  127)                      ! IAVPR1: average profile check 1 on(1)/off(0)
+(  128)                      ! IAVPR2: average profile check 2 on(1)/off(0)
+(  129)                      ! IRADIAT: radiative biaS
+(  130)                      ! IRED  : reduction if too few data on(1)/off(0)
+(  131)                      ! IRADMEAN : RADIATIVE AND MEAN BIAS
+(  132)                      ! IMULT : MULTIPLE FOR CHECK 1 AND 2 (1 FOR t AND 1O FOR rh)
+(  133)                      ! IEXT  : RADAITIVE BIAS EXTENDED CHECK 1(ON)/0(OFF)
+(  134) # 136 "Rs_t_rh_biasfit.F90"
+(  136)       READ(5,BCOR,IOSTAT=IERR)
+(  137)       READ(5,ADJU,IOSTAT=IERR)
+(  138) # 139 "Rs_t_rh_biasfit.F90"
+(  139) ! NOTICE! CATEGORY NAMES HAVE 64 CHARACTERS.
+(  140) # 141 "Rs_t_rh_biasfit.F90"
+(  141) ! === READ VERTICAL PROFILES OF DEPARTURE (OBS-FG) STATISTICS
+(  142) !     FOR EACH CLASS DEPENDING ON SOLAR ANGLE
+(  143)       
+(  144)       LFIRST                      =.TRUE.
+(  145) # 146 "Rs_t_rh_biasfit.F90"
+(  146)       LMEAN_BIAS = .TRUE.
+(  147)       LRADIATIVE_AND_MEAN_BIAS = .true.
+(  148)       IF(IRADMEAN == 0) LRADIATIVE_AND_MEAN_BIAS = .false.
+(  149)       
+(  150)       LSPLINE_FITTING = .true.
+(  151)       if(ISPLF == 0) LSPLINE_FITTING = .FALSE.
+(  152)       LARTIfICIAL_ADJUSTMENT = .true.
+(  153)       if(IARTF == 0) LARTIfICIAL_ADJUSTMENT = .FALSE.
+(  154)       LABSOLUTE_CORRECTION = .TRUE.
+(  155)       if(IABC == 0)  LABSOLUTE_CORRECTION = .FALSE.
+(  156)       LADJUST_AVERAGE_PROFILE = .TRUE.
+(  157)       IF(IAVPR1 == 0) LADJUST_AVERAGE_PROFILE = .false.
+(  158)       LCRITERIA_AVERAGE_PROFILE = .TRUE.
+(  159)       IF(IAVPR2 == 0) LCRITERIA_AVERAGE_PROFILE = .FALSE.
+(  160)       LREDUCE_FEW_DATA = .TRUE.
+(  161)       IF(IRED == 0) LREDUCE_FEW_DATA = .FALSE.
+(  162)       LRADIATIVE_AND_MEAN_BIAS = .true.
+(  163)       IF(IRADMEAN == 0) LRADIATIVE_AND_MEAN_BIAS = .false.
+(  164)       LRADIATIVE_BIAS=.TRUE.
+(  165)       IF(IRADIAT == 0) LRADIATIVE_BIAS = .false.
+(  166)  
+(  167)       LRADIATIVE_extended_switch = .true.
+(  168)       if(iext == 0 ) LRADIATIVE_extended_switch = .false.
+(  169) # 170 "Rs_t_rh_biasfit.F90"
+(  170)       ll_old_style_w_calc    = .true.
+(  171)       if(IOLDW == 0 ) ll_old_style_w_calc = .false.
+(  172)       lrestore_dep           = .true.
+(  173)       if(Irest == 0)  lrestore_dep        = .false.       
+(  174) # 175 "Rs_t_rh_biasfit.F90"
+(  175)       ll_print               = .false.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 26
+
+(  176)  
+(  177)       write(6,*) ' Spline Fit: ',ISPLF,' ICAP7: ',ICAP7
+(  178)       write(6,*) ' Artificial Adj: ',IARTF,IABC,IAVPR1,IAVPR2
+(  179)       write(6,*) ' Radiative Bias ',IRADIAT,IRADMEAN
+(  180)       write(6,*) ' Reduction: ',IRED
+(  181)       write(6,*) ' Multiplier: ',IMULT,' Extensive Check: ', IEXT
+(  182)       write(6,*) ' Old Style Weights: ',ioldw,' Rstore Departures: ',Irest
+(  183) # 184 "Rs_t_rh_biasfit.F90"
+(  184)       NMR = 0
+(  185)       NSMP= 0
+(  186)       CALL MIX_OUTSTAT(NXCG,NXLV,NXAL,NXDG,      &
+(  187)      &                 BIC,BIR,RMR,STR,HLV,      &
+(  188)      &                 NMR,IDSTA,IDEND,CFLAG,    &
+(  189)      &                 NCTG,MINSQ,MAXSQ,IHOMO,   &
+(  190)      &                 CEXP,CQC,CNTRY,CDG,       &
+(  191)      &                 NSMP,NCCC)
+(  192) # 193 "Rs_t_rh_biasfit.F90"
+(  193)       CALL SYMDHM (ISYR,ISMO,ISDY,ISHR,ISMN, MINSQ)
+(  194)       CALL SYMDHM (IEYR,IEMO,IEDY,IEHR,IEMN, MAXSQ)
+(  195) # 196 "Rs_t_rh_biasfit.F90"
+(  196)       CDATE = '19XX.XX.XX XXUTC --- 19XX.XX.XX XXUTC'
+(  197)       WRITE(CDATE( 1: 4),'(I4.4)') ISYR
+(  198)       WRITE(CDATE( 6: 7),'(I2.2)') ISMO
+(  199)       WRITE(CDATE( 9:10),'(I2.2)') ISDY
+(  200)       WRITE(CDATE(12:13),'(I2.2)') ISHR
+(  201)       WRITE(CDATE(22:25),'(I4.4)') IEYR
+(  202)       WRITE(CDATE(27:28),'(I2.2)') IEMO
+(  203)       WRITE(CDATE(30:31),'(I2.2)') IEDY
+(  204)       WRITE(CDATE(33:34),'(I2.2)') IEHR
+(  205) # 206 "Rs_t_rh_biasfit.F90"
+(  206)       WHERE ( NMR == 0 )
+(  207)          BIC     = RMIS
+(  208)          BIR     = RMIS
+(  209)          STR     = RMIS
+(  210)          RMR     = RMIS
+(  211)       ENDWHERE
+(  212) # 213 "Rs_t_rh_biasfit.F90"
+(  213) ! --- STATION GROUP NAMES
+(  214)       DO N=1,NCTG   !number of station groups
+(  215)         IF (NCCC(N).EQ.1) WRITE(CDGNEW(N),'(A64)') CNTRY(1,N)
+(  216)         IF (NCCC(N).GT.1) WRITE(CDGNEW(N),'(A64)') CDG(N)
+(  217)       END DO
+(  218) # 220 "Rs_t_rh_biasfit.F90"
+(  220) ! ---  RESCALING OF VERTICAL COORDINATES FOR NAG-ROUTINE     
+(  221)       DO L=1,NXLV
+(  222)         HLVL(L) = -LOG10(HLV(L))  ! It should be negative for NAG.
+(  223)       END DO
+(  224) # 225 "Rs_t_rh_biasfit.F90"
+(  225) ! === DEFAULT BIAS CORRECTION SWITCH TABLE
+(  226) ! --- BIAS CORRECTION TARGET MONTH SHOULD BE THE NEXT MONTH OF 
+(  227) !     THE STATISTICS PERIOD. = THE NEXT MONTH OF 'IEYR','IEMO'
+(  228)       ITMO = IEMO + 1
+(  229)       ITYR = IEYR
+(  230)       IF (ITMO.EQ.13) THEN
+(  231)         ITMO = 1
+(  232)         ITYR = ITYR+1
+(  233)       END IF
+(  234)       ITGCYM = ITYR*100 + ITMO
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 27
+
+(  235) # 237 "Rs_t_rh_biasfit.F90"
+(  237)       IRAD = 1
+(  238)       IF(LMEAN_BIAS .AND. LRADIATIVE_AND_MEAN_BIAS ) THEN
+(  239)         iRAD = 0
+(  240)       endif
+(  241) # 242 "Rs_t_rh_biasfit.F90"
+(  242) ! === CALCULATION FOR EACH CATEGORY
+(  243) # 244 "Rs_t_rh_biasfit.F90"
+(  244) ! --- MAKE WEIGHT OF CLASSES WITH VERY FEW DATA ALMOST ZERO
+(  245) !     loop over station groups
+(  246) # 247 "Rs_t_rh_biasfit.F90"
+(  247)       STATION_GROUP_LOOP: DO N=1,NCTG   ! number of station groups
+(  248) # 249 "Rs_t_rh_biasfit.F90"
+(  249)         write(6,'('' '')')
+(  250)         write(6,'('' Station Group or Sonde name: '',i3,x,A)') N,TRIM(CDGnew(N))
+(  251) # 252 "Rs_t_rh_biasfit.F90"
+(  252)         DO L=1,NXLV
+(  253)           DO M=1,NXAG
+(  254)             XBID(M,L) = BIR(L,M,N)
+(  255)             IF(BIR(L,M,N).EQ.RMIS .OR. BIR(L,M,N).EQ. -99.00) THEN
+(  256)               XBID(M,L) = 0.
+(  257)             END IF
+(  258)           END DO
+(  259)         END DO
+(  260) # 262 "Rs_t_rh_biasfit.F90"
+(  262)         NALL = 0 
+(  263)         DO L=1,NXLV
+(  264)           DO M=1,NXAG
+(  265)             NALL = NALL+NMR(L,M,N)
+(  266)           END DO
+(  267)         END DO
+(  268) # 269 "Rs_t_rh_biasfit.F90"
+(  269)         if(ll_print) then
+(  270)           WRITE(6,'('' copy input data'')')
+(  271)           DO L=1,NXLV
+(  272)             WRITE(6,'('' '',i4,x,4(f8.2,x))') NINT(HLV(L)),(XBID(M,L),M=1,NXAG)
+(  273)             WRITE(6,'('' '',i4,x,5(i8  ,x))') NINT(HLV(L)),(nmr(L,M,N),M=1,NXAL)
+(  274)           END DO
+(  275)           write(6,'('' '')')
+(  276)           write(6,'('' No of data: '',i10)') NALL
+(  277)         endif
+(  278) # 280 "Rs_t_rh_biasfit.F90"
+(  280)         IF (NALL.EQ.0) CYCLE STATION_GROUP_LOOP  ! no cases in this station group
+(  281)         
+(  282)         DO L=1,NXLV
+(  283)           DO M=1,NXAG  
+(  284)             if(ll_old_style_w_calc) then
+(  285)               WEIGHT(M,L) = FLOAT(NMR(L,M,N))/FLOAT(NALL)*100.
+(  286)             else
+(  287) !             WRITE(6,'('' '',i4,x,i6,x,i6)') NINT(HLV(L)),NMR(L,M,N),NMR(L,NXAL,N)
+(  288)               if(NMR(L,NXAL,N) /= 0) then
+(  289)                 WEIGHT(M,L) = FLOAT(NMR(L,M,N))/FLOAT(NMR(L,NXAL,N))
+(  290)               else
+(  291)                 WEIGHT(M,L) = WEIGN
+(  292)               endif
+(  293)             endif
+(  294)           END DO
+(  295)           WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 28
+
+(  296)           DO M=1,NXAG  
+(  297)             IF (BIR(L,M,N).EQ.RMIS) THEN
+(  298)               WEIGHT(M,L) = WEIGN   ! weight factor for no data = 0.0001
+(  299)             END IF
+(  300) # 301 "Rs_t_rh_biasfit.F90"
+(  301)             IF (STR(L,M,N).NE.RMIS) THEN
+(  302)               STDV(M,L) = STR(L,M,N)
+(  303)             ELSE
+(  304)               STDV(M,L) = RMIS
+(  305)             END IF
+(  306) # 307 "Rs_t_rh_biasfit.F90"
+(  307)             NUM(M,L) = NMR(L,M,N)
+(  308)           END DO
+(  309)           WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+(  310)         END DO
+(  311) # 312 "Rs_t_rh_biasfit.F90"
+(  312)         DO L=1,NXLV
+(  313)           NUM(NXAL,L) = NMR(L,NXAL,N)
+(  314)         END DO
+(  315) # 316 "Rs_t_rh_biasfit.F90"
+(  316)         if(ll_print) then
+(  317)           write(6,'('' WEIGHTS: '',i10)') NALL
+(  318)           DO L=1,NXLV
+(  319)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(WEIGHT(M,L),M=1,NXAG)
+(  320)           END DO
+(  321)         endif
+(  322) !   --- INITIALIZATIONS
+(  323) # 324 "Rs_t_rh_biasfit.F90"
+(  324)         XBFD                  = 0.
+(  325) # 326 "Rs_t_rh_biasfit.F90"
+(  326)         if(Lspline_FITTING) THEN
+(  327) !   ===   FIT PROFILE (SPLINE FITTING)
+(  328) !         Interior knots used in splines
+(  329)           if(icap7 == 12) then
+(  330)             LAMDA( 5)=-LOG10(850.)
+(  331)             LAMDA( 6)=-LOG10(400.)
+(  332)             LAMDA( 7)=-LOG10(100.)
+(  333)             LAMDA( 8)=-LOG10( 20.)
+(  334)           else if(icap7 == 14) then
+(  335)             LAMDA( 5)=-LOG10(925.)
+(  336)             LAMDA( 6)=-LOG10(850.)
+(  337)             LAMDA( 7)=-LOG10(500.)
+(  338)             LAMDA( 8)=-LOG10(300.)
+(  339)             LAMDA( 9)=-LOG10(100.)
+(  340)             LAMDA(10)=-LOG10( 20.)
+(  341)           else if(icap7 == 16) then
+(  342)             LAMDA( 5)=-LOG10(925.)
+(  343)             LAMDA( 6)=-LOG10(850.)
+(  344)             LAMDA( 7)=-LOG10(700.)
+(  345)             LAMDA( 8)=-LOG10(500.)
+(  346)             LAMDA( 9)=-LOG10(300.)
+(  347)             LAMDA(10)=-LOG10(200.)
+(  348)             LAMDA(11)=-LOG10(100.)
+(  349)             LAMDA(12)=-LOG10( 20.)
+(  350)           else
+(  351)             WRITE(6,*)'ERROR IN Setting LAMDA: ',icap7
+(  352)             CALL ABORT
+(  353)           endif
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 29
+
+(  354) # 355 "Rs_t_rh_biasfit.F90"
+(  355)           DO IBAF=1,NXAG
+(  356)            XBAF=HLVL
+(  357)            CALL E02BAF (NXLV,icaP7,XBAF,XBID(IBAF,:),WEIGHT(IBAF,:),  &
+(  358)      &                  LAMDA,WORKBAF1,WORKBAF2,CBAF,SSBAF,BAFFAIL)
+(  359)             DO L=1,NXLV
+(  360)               BAFFAIL=0
+(  361)               CALL E02BBF (icap7,LAMDA,CBAF,XBAF(L),XBFD(IBAF,L),BAFFAIL)
+(  362)             END DO
+(  363)           END DO
+(  364)         else
+(  365)           XBFD(1:NXAG,:) = XBID
+(  366)         endif
+(  367) # 368 "Rs_t_rh_biasfit.F90"
+(  368)         if(ll_print) then
+(  369)           WRITE(6,'('' AFTER E02 (XBID, WEIGHT, XBFD)'')')
+(  370)            DO L=1,NXLV
+(  371)              WRITE(6,'('' '',i4,x,4(f6.2,x),x,4(f6.2,x),x,5(f6.2,x),x,4(f6.2,x)    )') &
+(  372)               & NINT(HLV(L)),&
+(  373)               & (XBID  (M,L),M=1,NXAG),(WEIGHT(m,L),M=1,NXAG),(XBFD  (M,L),M=1,NXAL),&
+(  374)               & (XBFD  (M,L)-XBID  (M,L),M=1,NXAG)
+(  375)            END DO
+(  376)         endif
+(  377) # 378 "Rs_t_rh_biasfit.F90"
+(  378) !   --- DELETE PROFILES WITH NO DATA
+(  379) !   ----  UA 2003-01-14
+(  380) !   --- WEIGHT IS ONLY NXAG LONG
+(  381) !   --- SPLIT LOOP IN TWO PARTS
+(  382) !   ----  UA 2003-01-14
+(  383) # 384 "Rs_t_rh_biasfit.F90"
+(  384)         DO L=1,NXLV
+(  385)            DO M=1,NXAL
+(  386)              IF (NUM(M,L).LE.0) THEN
+(  387)                XBFD(M,L) = RMIS
+(  388)              END IF
+(  389)            END DO
+(  390) # 391 "Rs_t_rh_biasfit.F90"
+(  391)            DO M=1,NXAG
+(  392)              IF (NUM(M,L).LE.0) THEN
+(  393)                WEIGHT(M,L) = 0.
+(  394)              END IF
+(  395)            END DO
+(  396)         END DO
+(  397) # 398 "Rs_t_rh_biasfit.F90"
+(  398)         if(ll_print) then
+(  399)           WRITE(6,'('' AFTER no data check (XBFD, WEIGHT, NUM)'')')
+(  400)           DO L=1,NXLV
+(  401)             WRITE(6,'('' '',i4,x,5(f6.2,x),x,4(f6.2,x),x,5(I6  ,x))') &
+(  402)              & NINT(HLV(L)),(XBFD  (M,L),M=1,NXAL),(WEIGHT(m,L),M=1,NXAG),(NUM   (M,L),M=1,NXAl)
+(  403)           END DO
+(  404)         endif
+(  405) # 406 "Rs_t_rh_biasfit.F90"
+(  406) !   --- CALCULATE FITTED PROFILE FOR 'ALL' (I.E. WEIGHTED AVERAGE PROFILE)
+(  407) !       MEAN FITTED BIAS
+(  408) # 409 "Rs_t_rh_biasfit.F90"
+(  409)         WRITE(6,'('' FITTED - BIAS: '',i1)') IMEAN
+(  410)         call flush(6)
+(  411)         WEIGHT_aux = WEIGHT
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 30
+
+(  412)         IF(     IMEAN == 1) THEN
+(  413)           WEIGHT_aux = WEIGHT
+(  414)         else if(IMEAN == 2) then
+(  415)           WEIGHT_AUX(1,:) = 0.
+(  416)           WEIGHT_AUX(2,:) = 0.
+(  417)         else if(IMEAN == 3) then
+(  418)           WEIGHT_AUX(3,:) = 0.
+(  419)           WEIGHT_AUX(4,:) = 0.
+(  420)         else
+(  421)           WRITE(6,'('' ERROR: UNKNOWN MEAN CALCULATOR; STOP)'')')
+(  422)           stop
+(  423)         endif
+(  424)          
+(  425)         DO L=1,NXLV
+(  426)           IF(WEIGHT_AUX(1,L)+WEIGHT_AUX(2,L)+WEIGHT_AUX(3,L)+WEIGHT_AUX(4,L).NE.0) THEN
+(  427)             XBFD(NXAL,L) = (WEIGHT_AUX(1,L)*XBFD(1,L)   &
+(  428)      &                     +WEIGHT_AUX(2,L)*XBFD(2,L)   &
+(  429)      &                     +WEIGHT_AUX(3,L)*XBFD(3,L)   &
+(  430)      &                     +WEIGHT_AUX(4,L)*XBFD(4,L))  &
+(  431)      &                   / (WEIGHT_AUX(1,L)+WEIGHT_AUX(2,L) &
+(  432)      &                     +WEIGHT_AUX(3,L)+WEIGHT_AUX(4,L))
+(  433) !           if(Lspline_FITTING) THEN
+(  434) !             If(lrestore_dep) then
+(  435) !               XBFD(1:NXAG,L) = XBID(1:NXAG,L)
+(  436) !             endif
+(  437) !           endif
+(  438)           ELSE
+(  439)             XBFD(NXAL,L) = RMIS
+(  440)           END IF
+(  441)           if(ll_print) then
+(  442)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  443)           endif
+(  444)         END DO
+(  445) !       Variable 'WEIGHT' is no longer needed.
+(  446) !       if(Lspline_FITTING) THEN
+(  447) !       endif
+(  448) # 450 "Rs_t_rh_biasfit.F90"
+(  450) !   === SOME ARTIFICIAL ADJUSTMENTS ARE APPLIED TO THE FITTED PROFILES
+(  451) # 452 "Rs_t_rh_biasfit.F90"
+(  452)         if(LARTIfICIAL_ADJUSTMENT) then
+(  453) # 454 "Rs_t_rh_biasfit.F90"
+(  454)           WRITE(6,'('' ARTIfICIAL ADJUSTMENTS '')')
+(  455) # 456 "Rs_t_rh_biasfit.F90"
+(  456)           HTB = HLVL(NXLV)-HLVL(1)   ! -(log10(10)-log10(1000)) = 2
+(  457) # 458 "Rs_t_rh_biasfit.F90"
+(  458) !   --- 1.ABSOLUTE OF CORRECTION PROFILES MUST BE SMALLER THAN ORIGINAL.
+(  459) # 460 "Rs_t_rh_biasfit.F90"
+(  460)           if(LABSOLUTE_CORRECTION) then
+(  461)             WRITE(6,'('' CORRECTION PROFILES MUST BE SMALLER THAN ORIGINAL '')')
+(  462) # 463 "Rs_t_rh_biasfit.F90"
+(  463)             DO L=1,NXLV
+(  464)               DO M=1,NXAL
+(  465)                 IF (XBFD(M,L).NE.RMIS) THEN
+(  466)                   IF(ABS(XBFD(M,L)).GT.0.5*IMULT) THEN
+(  467) !           except cases of below 0.5deg/5% (0.5 was defined subjectively.)
+(  468)                     IF (XBFD(M,L).GT.0.) THEN
+(  469)                       IF (XBFD(M,L).GT.ABS(BIR(L,M,N)))  XBFD(M,L) =  ABS(BIR(L,M,N))
+(  470)                     ELSE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 31
+
+(  471)                       IF (XBFD(M,L).LT.-ABS(BIR(L,M,N))) XBFD(M,L) = -ABS(BIR(L,M,N))
+(  472)                     END IF
+(  473)                   END IF
+(  474)                 END IF
+(  475)               END DO
+(  476)               if(ll_print) then
+(  477)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  478)               endif
+(  479)             END DO
+(  480)           endif
+(  481) # 482 "Rs_t_rh_biasfit.F90"
+(  482) !   --- 2.ADJUST AVERAGE PROFILE
+(  483) !         CRITERION LINES FROM ZERO FOR AVERAGE PROFILE
+(  484) !         AVERAGE PROFILE IS BETTER TO BE NORMAL.
+(  485) # 486 "Rs_t_rh_biasfit.F90"
+(  486)           if(LADJUST_AVERAGE_PROFILE) then
+(  487)             WRITE(6,'('' ADJUST AVERAGE PROFILE '')')
+(  488)             DO L=1,NXLV
+(  489)               HLB    =  HLVL(L)-HLVL(1)
+(  490)               CRN(L) = -HLB/HTB*(4.0*imult)
+(  491)               CRP(L) =  HLB/HTB*(4.0*imult)
+(  492) # 493 "Rs_t_rh_biasfit.F90"
+(  493)             ! |0.0| at 1000hPa, |1.0| at 100hPa, |4.0| at 10hPa
+(  494)             ! These criteria were defined subjectively.
+(  495)               IF (XBFD(NXAL,L).NE.RMIS) THEN
+(  496)                 XBFDP = 0. ; XBFDA = 0.
+(  497)                 XBFDP = XBFD(NXAL,L)
+(  498)                 IF (XBFD(NXAL,L).LT.CRN(L)) XBFD(NXAL,L) = CRN(L)
+(  499)                 IF (XBFD(NXAL,L).GT.CRP(L)) XBFD(NXAL,L) = CRP(L)
+(  500) # 501 "Rs_t_rh_biasfit.F90"
+(  501)             ! RELAXATION OF VERTICAL SUDDEN CHANGE
+(  502)                 IF (L.GE.2.AND.L.LE.NXLV-1) THEN
+(  503)                   IF (XBFD(NXAL,L-1).NE.RMIS.AND.   &
+(  504)      &                XBFD(NXAL,L)  .NE.RMIS.AND.   &
+(  505)      &                XBFD(NXAL,L+1).NE.RMIS) THEN
+(  506)                     XBFDI = XBFD(NXAL,L-1)                   &
+(  507)      &                    + (XBFD(NXAL,L+1)-XBFD(NXAL,L-1))  &
+(  508)      &                    * (HLVL(L)  -HLVL(L-1))            &
+(  509)      &                    / (HLVL(L+1)-HLVL(L-1)) 
+(  510)                     IF (XBFD(NXAL,L)-XBFDI.GT.1.0) THEN  
+(  511)                 ! 1.0 is subjectively defined.
+(  512)                       XBFD(NXAL,L) = XBFDI + 1.0
+(  513)                     ELSE IF (XBFD(NXAL,L)-XBFDI.LT.-1.0) THEN
+(  514)                       XBFD(NXAL,L) = XBFDI - 1.0
+(  515)                     END IF
+(  516)                   END IF
+(  517)                 END IF
+(  518) # 519 "Rs_t_rh_biasfit.F90"
+(  519)                 XBFDA = XBFD(NXAL,L) - XBFDP
+(  520)                 if(ll_print) then
+(  521)                   WRITE(6,'('' '',i4,x,10(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),XBFDA,CRN(L),CRP(L),hlb,htb
+(  522)                 endif
+(  523) # 524 "Rs_t_rh_biasfit.F90"
+(  524)                 IF (XBFDA.NE.0.) THEN
+(  525)                   DO M=1,NXAG
+(  526)                     IF (XBFD(M,L).NE.RMIS) THEN
+(  527)                       XBFD(M,L) = XBFD(M,L) + XBFDA
+(  528)                     END IF
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 32
+
+(  529)                   END DO
+(  530)                 END IF
+(  531)                 if(ll_print) then
+(  532)                   WRITE(6,'('' '',i4,x,6(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),XBFDA
+(  533)                 endif
+(  534)               END IF
+(  535)               if(ll_print) then
+(  536)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  537)               endif
+(  538)             END DO
+(  539) # 540 "Rs_t_rh_biasfit.F90"
+(  540)             WRITE(6,'('' '')')
+(  541)             if(ll_print) then
+(  542)               DO L=1,NXLV
+(  543)                 WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD  (M,L),M=1,NXAL)
+(  544)               END DO
+(  545)             endif
+(  546) # 547 "Rs_t_rh_biasfit.F90"
+(  547)           endif
+(  548) # 549 "Rs_t_rh_biasfit.F90"
+(  549) !   --- 3.CRITERIA LINES FROM AVERAGE PROFILE
+(  550) # 551 "Rs_t_rh_biasfit.F90"
+(  551)           if(LCRITERIA_AVERAGE_PROFILE) then
+(  552) # 553 "Rs_t_rh_biasfit.F90"
+(  553)             WRITE(6,'('' CRITERIA LINES FROM AVERAGE PROFILE '')')
+(  554)             HTB = HLVL(NXLV)-HLVL(1)
+(  555)             DO L=1,NXLV
+(  556)               HLB = HLVL(L)-HLVL(1)
+(  557)               CRN(L) = -HLB/HTB*(2.0*imult) - imult
+(  558)               CRP(L) =  HLB/HTB*(2.0*imult) + imult
+(  559)           ! |1.0| at 1000hPa, |1.5| at 100hPa, |3.0| at 10hPa
+(  560)           ! These criteria were defined subjectively.
+(  561)               DO M=1,NXAG
+(  562)                 IF (XBFD(M,L).NE.RMIS.AND.XBFD(NXAL,L).NE.RMIS) THEN ! departure from
+(  563)                   IF (     XBFD(M,L)-XBFD(NXAL,L).LT.CRN(L)) THEN   ! average profile
+(  564)                     XBFD(M,L) = XBFD(NXAL,L) + CRN(L)
+(  565)                   ELSE IF (XBFD(M,L)-XBFD(NXAL,L).GT.CRP(L)) THEN
+(  566)                     XBFD(M,L) = XBFD(NXAL,L) + CRP(L)
+(  567)                   END IF
+(  568)                 END IF
+(  569)               END DO
+(  570)               if(ll_print) then
+(  571)                 WRITE(6,'('' '',i4,x,7(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),CRN(L),CRP(L)
+(  572)               endif
+(  573)             END DO
+(  574)           endif
+(  575)     
+(  576) !   === ARTIFICIAL ADJUSTMENT END
+(  577)         endif
+(  578) # 579 "Rs_t_rh_biasfit.F90"
+(  579) !        
+(  580) !       4. Decide if radiative bias
+(  581) # 582 "Rs_t_rh_biasfit.F90"
+(  582) !         Calculate mean radiative profile for low and high solar 
+(  583) !         elevations respectively. Calculate gradient as mean over 
+(  584) !         three levels. The profile is radiative if low solar elev. 
+(  585) !         values/gradients are smaller/higher than high solar elev.
+(  586) !         ones.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 33
+
+(  587) !        
+(  588) # 589 "Rs_t_rh_biasfit.F90"
+(  589)         if(lradiative_bias) then
+(  590)           WRITE(6,'('' Decide if radiative bias '')')
+(  591)           LRADIATIVE = .TRUE.
+(  592)           LRADIATIVE_EXTENDED = .TRUE.
+(  593)           KKK(1,:) =   100.
+(  594)           KKK(2,:) = - 100.
+(  595) # 596 "Rs_t_rh_biasfit.F90"
+(  596)           NXLV_RAD = NXLV-7 
+(  597) # 598 "Rs_t_rh_biasfit.F90"
+(  598)           DO L=NXLV_RAD-1,NXLV-1
+(  599) # 600 "Rs_t_rh_biasfit.F90"
+(  600)             IF (NUM(1,L).GT.0.OR.NUM(2,L).GT.0)  THEN
+(  601)               if(XBFD(1,L).ne.rmis.and.XBFD(2,L).ne.rmis.and.XBFD(NXAL,L).ne.rmis) then
+(  602)                 KKK(1,L)=((XBFD(1,L)-XBFD(NXAL,L))*NUM(1,L) +    &
+(  603)                          &(XBFD(2,L)-XBFD(NXAL,L))*NUM(2,L))/    &
+(  604)                          & FLOAT(SUM(NUM(:,L)))
+(  605)               endif
+(  606)             endif
+(  607)   
+(  608)             IF (NUM(3,L).GT.0.OR.NUM(4,L).GT.0)  THEN
+(  609)               if(XBFD(3,L).ne.rmis.and.XBFD(3,L).ne.rmis.and.XBFD(NXAL,L).ne.rmis) then
+(  610)                 KKK(2,L)=((XBFD(3,L)-XBFD(NXAL,L))*NUM(3,L) +    &
+(  611)                          &(XBFD(4,L)-XBFD(NXAL,L))*NUM(4,L))/    &
+(  612)                          & FLOAT(SUM(NUM(:,L)))
+(  613)               endif
+(  614)             endif
+(  615) # 616 "Rs_t_rh_biasfit.F90"
+(  616)             if(LRADIATIVE_extended_switch) then
+(  617)               LRADIATIVE_EXTENded(:,l) = (LRADIATIVE_EXTENded(:,l) .AND. KKK(1,L).LT.KKK(2,L))
+(  618)               if(ll_print) then
+(  619)                 WRITE(6,*) L,LRADIATIVE_EXTENded(:,l),KKK(:,L)
+(  620)               endif
+(  621)             else
+(  622)               LRADIATIVE      = (LRADIATIVE      .AND. KKK(1,L).LT.KKK(2,L))
+(  623)               if(ll_print) then
+(  624)                 WRITE(6,*) L,LRADIATIVE,KKK(:,L)
+(  625)               endif
+(  626)             endif
+(  627) # 628 "Rs_t_rh_biasfit.F90"
+(  628)           ENDDO
+(  629) # 630 "Rs_t_rh_biasfit.F90"
+(  630)           DO L=NXLV,NXLV_RAD+2,-1
+(  631) # 632 "Rs_t_rh_biasfit.F90"
+(  632)             KKK(1,L  ) =  (KKK(1,L)- KKK(1,L-1)) / (LOG(HLV(L)/HLV(L-1))) 
+(  633)   
+(  634)             KKK(2,L  ) =  (KKK(2,L)- KKK(2,L-1)) / (LOG(HLV(L)/HLV(L-1))) 
+(  635) # 636 "Rs_t_rh_biasfit.F90"
+(  636)           ENDDO
+(  637)   
+(  638)           DO L=NXLV-1,NXLV_RAD+2,-1
+(  639)             KKK(1,L)   = SUM(KKK(1,L-3:L))*0.25
+(  640)             KKK(2,L)   = SUM(KKK(2,L-3:L))*0.25
+(  641)             if(LRADIATIVE_extended_switch) then
+(  642)               LRADIATIVE_extended(:,l) = (LRADIATIVE_extended(:,l).AND. &
+(  643)      &                      (KKK(1,L).GT.KKK(2,L) .OR. ABS(KKK(1,L)-KKK(2,L)).LT.0.1))
+(  644)               WRITE(6,*) L,LRADIATIVE_extended(:,l),KKK(:,L)
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 34
+
+(  645)             else
+(  646)               LRADIATIVE      = (LRADIATIVE     .AND. &
+(  647)      &                    (KKK(1,L).GT.KKK(2,L) .OR. ABS(KKK(1,L)-KKK(2,L)).LT.0.1))
+(  648)               WRITE(6,*) L,LRADIATIVE     ,KKK(:,L)
+(  649)             endif
+(  650)           ENDDO
+(  651) # 652 "Rs_t_rh_biasfit.F90"
+(  652)           KKK(1,NXLV) =  KKK(1,NXLV-1) 
+(  653)           KKK(2,NXLV) =  KKK(2,NXLV-1) 
+(  654)         endif
+(  655)  
+(  656) !
+(  657) !   --- 5.ADDJUST CORRECTION VALUE IN CASE OF FEW DATA (less then 1% or fewer then 20)
+(  658) !         above 100hPa
+(  659) !
+(  660)         !
+(  661)         ! If the total amount of observations for 
+(  662)         ! for this class is < NCUT
+(  663)         ! or this profile contains < 1% of the data
+(  664)         ! adjust the correction to mean or a radiative 
+(  665)         ! profile
+(  666)         ! 
+(  667) # 668 "Rs_t_rh_biasfit.F90"
+(  668)         if(LREDUCE_FEW_DATA) THEN
+(  669)           write(6,'('' REDUCE CORRECTION VALUE IN CASE OF FEW DATA '')')
+(  670)           DO L=NXLV,1,-1
+(  671)             DO M=1,NXAG
+(  672) # 673 "Rs_t_rh_biasfit.F90"
+(  673) !             no data or missing mean (do nothing)
+(  674) # 675 "Rs_t_rh_biasfit.F90"
+(  675)               IF (XBFD(M,L).NE.RMIS.AND.NUM(NXAL,L).GT.0.AND.XBFD(NXAL,L).NE.RMIS) THEN
+(  676) # 677 "Rs_t_rh_biasfit.F90"
+(  677) ! why myltiply by 100
+(  678) # 679 "Rs_t_rh_biasfit.F90"
+(  679)                 RDAT = FLOAT(NUM(M,L))/FLOAT(NUM(NXAL,L))*100. ! 1%
+(  680)   
+(  681)                 DDAT = NUM(M,L)*RNCUT ! less then NCUT         ! 20
+(  682) # 683 "Rs_t_rh_biasfit.F90"
+(  683) !               not enough data
+(  684) # 685 "Rs_t_rh_biasfit.F90"
+(  685)                 IF (RDAT.LT.1.0.OR.DDAT.LT.1.0) THEN  
+(  686) # 687 "Rs_t_rh_biasfit.F90"
+(  687) !                 ABOVE 100Hpa (if radiative extrapolate, otherwise keep mean)
+(  688) # 689 "Rs_t_rh_biasfit.F90"
+(  689)                   IF(HLV(L).LT.HLV(NXLV_RAD+2))   THEN
+(  690) # 691 "Rs_t_rh_biasfit.F90"
+(  691) !
+(  692) !                   If the corrections are radiative we extrapolate it
+(  693) !
+(  694)                     if(LRADIATIVE_extended_switch) then
+(  695)                       Lcheck_LRADIATIVE = LRADIATIVE_extended(m,l)
+(  696)                       print *,L,HLV(L),M,LRADIATIVE_extended
+(  697)                     else
+(  698)                       Lcheck_LRADIATIVE = LRADIATIVE
+(  699)                       print *,L,HLV(L),M,LRADIATIVE     
+(  700)                     endif
+(  701) # 702 "Rs_t_rh_biasfit.F90"
+(  702) !                   if radiative extrapolate
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 35
+
+(  703) # 704 "Rs_t_rh_biasfit.F90"
+(  704)                     IF (Lcheck_LRADIATIVE     ) THEN
+(  705)   
+(  706)                      XBFD(M,L) = -KKK((M-1)/2+1,L) * LOG(HLV(L)) + XBFD(NXAL,L) 
+(  707) # 708 "Rs_t_rh_biasfit.F90"
+(  708) !                   otherwise keep the mean
+(  709) # 710 "Rs_t_rh_biasfit.F90"
+(  710)                     ELSE
+(  711)                       XBFD(M,L) = XBFD(NXAL,L) 
+(  712)                     ENDIF
+(  713) # 714 "Rs_t_rh_biasfit.F90"
+(  714) !                 BELOW 100hPa (KEEP THE the MEAN)
+(  715) # 716 "Rs_t_rh_biasfit.F90"
+(  716)                   ELSE
+(  717)                     XBFD(M,L) = XBFD(NXAL,L) 
+(  718)                   END IF
+(  719) # 720 "Rs_t_rh_biasfit.F90"
+(  720)                 END IF
+(  721) # 722 "Rs_t_rh_biasfit.F90"
+(  722)               END IF
+(  723) # 724 "Rs_t_rh_biasfit.F90"
+(  724)             END DO
+(  725)           END DO
+(  726)           if(ll_print) then
+(  727)             DO L=1,NXLV
+(  728)               WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  729)             END DO
+(  730)           endif
+(  731) # 732 "Rs_t_rh_biasfit.F90"
+(  732)         endif
+(  733) # 735 "Rs_t_rh_biasfit.F90"
+(  735) !   === MAKE DECISION OF BIAS CORRECTION SWITCH
+(  736) # 737 "Rs_t_rh_biasfit.F90"
+(  737)         ONLY_RADIATIVE = .TRUE.
+(  738)         IF(LMEAN_BIAS .AND. LRADIATIVE_AND_MEAN_BIAS ) THEN
+(  739)           IF(IRAD /= 1) ONLY_RADIATIVE = .FALSE.
+(  740)         ENDIF
+(  741) # 742 "Rs_t_rh_biasfit.F90"
+(  742)         write(6,'('' MAKE DECISION '')')
+(  743) # 744 "Rs_t_rh_biasfit.F90"
+(  744)         IF (ONLY_RADIATIVE ) THEN
+(  745)           DO L=1,NXLV
+(  746)             DO M=1,NXAG
+(  747)               IF(NUM(M,L).GT.0) then
+(  748)                 if(XBFD(NXAL,L).ne.rmis) then
+(  749)                   if(XBFD(M,L).ne.rmis)    then
+(  750)                     if(NINT(XBFD(M,L)*100.).NE.0) THEN
+(  751)                       XBFD(M,L) = XBFD(M,L)-XBFD(NXAL,L)
+(  752)                     END IF
+(  753)                   END IF
+(  754)                 else
+(  755)                   write(6,'('' MEAN MISSING FOR: '',I2,x,i4)') M,NINT(HLV(L))
+(  756)                   XBFD(M,L) = rmis
+(  757)                 END IF
+(  758)               END IF
+(  759)             END DO
+(  760) # 761 "Rs_t_rh_biasfit.F90"
+(  761)             IF(.NOT.LMEAN_BIAS) THEN
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 36
+
+(  762)               XBFD(NXAL,L) = 0.
+(  763)             ENDIF
+(  764) # 765 "Rs_t_rh_biasfit.F90"
+(  765)           END DO
+(  766)         ENDIF
+(  767)         if(ll_print) then
+(  768)           DO L=1,NXLV
+(  769)             WRITE(6,'('' '',i4,x,5(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL)
+(  770)           END DO
+(  771)         endif
+(  772) # 774 "Rs_t_rh_biasfit.F90"
+(  774) !   === HOW MUCH THE BIASES SHOULD BE ACTUALLY CORRECTED?
+(  775) # 776 "Rs_t_rh_biasfit.F90"
+(  776) !   --- BIAS CORRECTION ADJUSTMENT
+(  777)         WRITE(6,'('' HOW MUCH THE BIASES SHOULD BE ACTUALLY CORRECTED '')')
+(  778)         DO L=NXLV,1,-1
+(  779)         !
+(  780)         ! If the total amount of observations is < 2*NCUT
+(  781)         ! Reduce the average correction
+(  782)         ! 
+(  783)           zaux=NUM(NXAL,L)*0.5*RNCUT
+(  784)           NRED(L) = MIN(1._8,zaux) ! less than 50
+(  785)         endDO
+(  786) # 787 "Rs_t_rh_biasfit.F90"
+(  787)         DO L=1,NXLV
+(  788)           DO M=1,NXAL
+(  789)             IF (XBFD(M,L).NE.RMIS) THEN
+(  790) !             XBFD(M,L) = XBFD(M,L) * REFRED(L) * NRED(L)
+(  791)               if(NUM(M,L) < 30 ) then
+(  792)                 XBFD(M,L) = 0.
+(  793)               endif
+(  794) !!          ELSE
+(  795) !!            XBFD(M,L) = 0.
+(  796)             END IF
+(  797)           END DO
+(  798)           if(ll_print) then
+(  799)             WRITE(6,'('' '',i4,x,5(f8.2,x),i5,x,2(f8.2,x))') NINT(HLV(L)),(XBFD(M,L),M=1,NXAL),NUM(NXAL,L),REFRED(L),NRED(L)
+(  800)           endif
+(  801)         END DO
+(  802) # 804 "Rs_t_rh_biasfit.F90"
+(  804) !   === CREATE CORRECTION TABLES
+(  805)         IF ( IHOMO == 0 ) THEN
+(  806)           CHOMOV='V00.0'
+(  807)         ENDIF
+(  808) # 809 "Rs_t_rh_biasfit.F90"
+(  809) !   --- CREATE PROPOSED CORRECTION TABLE (CORCAND.T)
+(  810)         IF (LFIRST) THEN
+(  811)           WRITE(14,'(A37,X,A,X,I1,X,A)') CDATE,' HOMOGENIZED',IHOMO,CHOMOV
+(  812)           LFIRST=.FALSE.
+(  813)         END IF
+(  814)         WRITE(14,*)
+(  815)         WRITE(14,'(A64,I5)') CDGNEW(N),N
+(  816) # 817 "Rs_t_rh_biasfit.F90"
+(  817)         DO L=1,NXLV
+(  818)           DO M=1,NXAL
+(  819)             AUX_XBFD(m,l  ) = XBFD(m,L  )
+(  820)             IF(XBFD(m,L)   == RMIS ) AUX_XBFD(m,L  ) = RMISS
+(  821) !           IF(XBFD(m,L)   == RMIS ) AUX_XBFD(m,L  ) = 0.
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 37
+
+(  822)             AUX_BIR (L,M,N) = BIR (L,M,N)
+(  823)             if(BIR (L,M,N) == RMIS ) AUX_BIR (L,M,N) = RMISS
+(  824) !           if(BIR (L,M,N) == RMIS ) AUX_BIR (L,M,N) = 0.
+(  825)             AUX_BIC (L,M,N) = BIC (L,M,N)
+(  826)             if(BIC (L,M,N) == RMIS ) AUX_BIC (L,M,N) = RMISS
+(  827) !           if(BIC (L,M,N) == RMIS ) AUX_BIC (L,M,N) = 0.
+(  828)           ENDDO
+(  829) # 830 "Rs_t_rh_biasfit.F90"
+(  830)           WRITE(14,1400) NINT(HLV(L)),&
+(  831)                         &(AUX_BIR (L,M,N),M=1,NXAL),&
+(  832)                         &(AUX_XBFD(M,L  ),M=1,NXAL),&
+(  833)                         &(AUX_BIC (L,M,N),M=1,NXAL),&
+(  834)                         &(NMR     (L,M,N),M=1,NXAL)
+(  835)  1400     FORMAT (I5,5F8.2,5x,5F8.2,5x,5F8.2,5x,5i8)
+(  836)         ENDDO
+(  837) # 838 "Rs_t_rh_biasfit.F90"
+(  838)       ENDDO STATION_GROUP_LOOP
+(  839) !     END DO ! (?) end DO N=1,NCTG   ! number of station groups
+(  840) # 842 "Rs_t_rh_biasfit.F90"
+(  842) ! === END FOR EACH CATEGORY
+(  843) # 845 "Rs_t_rh_biasfit.F90"
+(  845)       STOP
+(  846)       END PROGRAM BIASFIT
+(  847) # 848 "Rs_t_rh_biasfit.F90"
+(  848)       SUBROUTINE MIX_OUTSTAT(NXCG,NXLV,NXAL,NXDG,&
+(  849)      &                       BIC,BIR,RMR,STR,HLV,&
+(  850)      &                       NMR,IDSTA,IDEND,CFLAG,&
+(  851)      &                       NCTG,MINSQ,MAXSQ,IHOMO,&
+(  852)      &                       CEXP,CQC,CNTRY,CDG,&
+(  853)      &                       NSMP,NCCC)
+(  854) # 855 "Rs_t_rh_biasfit.F90"
+(  855) !     Mix OUTSTAT_YYYY_MM tables created by VRTPRFL
+(  856) !     Called by BIASFIT
+(  857) !
+(  858) !     Ulf Andrae, ECMWF, 200307
+(  859) !
+(  860)       IMPLICIT NONE
+(  861) # 862 "Rs_t_rh_biasfit.F90"
+(  862) !---------------------------------------------------------------------
+(  863) # 864 "Rs_t_rh_biasfit.F90"
+(  864)       INTEGER*4 :: NXCG,NXLV,NXAL,NXDG,LUNIN,n,nn,l,m
+(  865) # 866 "Rs_t_rh_biasfit.F90"
+(  866) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY
+(  867)       INTEGER*4 , DIMENSION (NXLV,NXAL,NXCG) :: NMR,NM2 ! number of cases
+(  868) # 869 "Rs_t_rh_biasfit.F90"
+(  869)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RNMR    ! numbera of cases real
+(  870)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: BIR,BIC,BIC2,BI2 ! obs-fg departure (bias)
+(  871)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RMR,RM2 ! RMS of obs-fg departure
+(  872)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: STR,ST2 ! STD of obs-fg departure
+(  873)       REAL*8 , DIMENSION (NXLV) :: HLV        ! standard pressure levels
+(  874) # 875 "Rs_t_rh_biasfit.F90"
+(  875)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDSTA ! start of station group ID
+(  876)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDEND ! end of station group ID
+(  877)       INTEGER*4 :: CFLAG(NXCG),CFLAG2(NXCG)
+(  878) # 879 "Rs_t_rh_biasfit.F90"
+(  879)       INTEGER*4  :: NCTG     ! number of station groups
+(  880)       INTEGER*4  :: MINSQ    ! start time in sequential minutes
+(  881)                           ! since 1801.1.1.00.00UTC
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 38
+
+(  882)       INTEGER*4  :: MAXSQ    ! end time in sequential minutes
+(  883)                           ! since 1801.1.1.00.00UTC
+(  884) # 885 "Rs_t_rh_biasfit.F90"
+(  885)       CHARACTER(LEN=8) :: CFIN ='fort.101'
+(  886)       CHARACTER(LEN=*) :: CEXP  ! experiment identifier (number)
+(  887)       CHARACTER(LEN=*) :: CQC   ! quality control information
+(  888)       CHARACTER(LEN=*), DIMENSION (NXDG,NXCG) :: CNTRY ! names of categories
+(  889)       CHARACTER(LEN=*), DIMENSION (NXCG) :: CDG
+(  890) # 891 "Rs_t_rh_biasfit.F90"
+(  891)       INTEGER*4 , DIMENSION (NXCG) :: NSMP,NSMP_local
+(  892)       INTEGER*4 , DIMENSION (NXCG) :: NCCC
+(  893) # 894 "Rs_t_rh_biasfit.F90"
+(  894)       LOGICAL :: LH
+(  895) # 896 "Rs_t_rh_biasfit.F90"
+(  896) !----  LOCAL
+(  897) # 898 "Rs_t_rh_biasfit.F90"
+(  898)       INTEGER*4  :: MIQ,MAQ,IERR,ISLL,IOCR,IHOMO
+(  899) # 900 "Rs_t_rh_biasfit.F90"
+(  900) !---------------------------------------------------------------------------------------
+(  901) # 902 "Rs_t_rh_biasfit.F90"
+(  902) !     Init
+(  903) # 904 "Rs_t_rh_biasfit.F90"
+(  904)       nm2  = 0
+(  905)       rm2  = 0.
+(  906)       st2  = 0.
+(  907)       bi2  = 0.
+(  908)       bic2 = 0.
+(  909) # 910 "Rs_t_rh_biasfit.F90"
+(  910)       cflag2 = 0
+(  911) # 912 "Rs_t_rh_biasfit.F90"
+(  912)       miq =  999999999
+(  913)       maq = -999999999
+(  914) # 916 "Rs_t_rh_biasfit.F90"
+(  916)       do lunin=251,300
+(  917)          NSMP_local = 0
+(  918) # 919 "Rs_t_rh_biasfit.F90"
+(  919)          WRITE(CFIN(6:8),'(I3.3)')lunin
+(  920)          INQUIRE (FILE=cfin,EXIST=LH)
+(  921) # 922 "Rs_t_rh_biasfit.F90"
+(  922)          IF (.NOT. LH ) CYCLE
+(  923) # 924 "Rs_t_rh_biasfit.F90"
+(  924)          WRITE(6,*)' MIX',lunin
+(  925) # 926 "Rs_t_rh_biasfit.F90"
+(  926)          CALL READ_OUTSTAT(LUNIN,NXCG,NXLV,NXAL,NXDG,&
+(  927)      &        BIC,BIR,RMR,STR,HLV,&
+(  928)      &        NMR,IDSTA,IDEND,CFLAG,&
+(  929)      &        NCTG,MINSQ,MAXSQ,&
+(  930)      &        CEXP,CQC,CNTRY,CDG,&
+(  931)      &        ISLL,IOCR,IHOMO,&
+(  932)      &        NSMP_local,NCCC)
+(  933) # 935 "Rs_t_rh_biasfit.F90"
+(  935)             nm2  = nm2  + nmr
+(  936)             bi2  = bi2  + bir    * nmr
+(  937)             bic2 = bic2 + bic    * nmr
+(  938)             rm2  = rm2  + rmr**2 * nmr
+(  939) # 940 "Rs_t_rh_biasfit.F90"
+(  940)             cflag2 = MAX(cflag2,cflag)
+(  941) # 942 "Rs_t_rh_biasfit.F90"
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 39
+
+(  942)             miq = MIN(miq,minsq)
+(  943)             maq = MAX(maq,maxsq)
+(  944) # 945 "Rs_t_rh_biasfit.F90"
+(  945)             NSMP = NSMP + NSMP_local
+(  946) # 947 "Rs_t_rh_biasfit.F90"
+(  947)       enddo
+(  948) # 949 "Rs_t_rh_biasfit.F90"
+(  949)       rnmr = FLOAT(nm2)
+(  950)       where ( rnmr < 0.5  ) rnmr = 1.
+(  951)       rnmr = 1./rnmr
+(  952) # 953 "Rs_t_rh_biasfit.F90"
+(  953)       nmr = nm2
+(  954)       bir = bi2  * rnmr
+(  955)       bic = bic2 * rnmr
+(  956)       rmr = SQRT ( rm2 * rnmr )
+(  957)       str = SQRT( ABS( rm2*rnmr - (bi2*rnmr)**2 ))
+(  958) # 959 "Rs_t_rh_biasfit.F90"
+(  959)       cflag = cflag2
+(  960) # 961 "Rs_t_rh_biasfit.F90"
+(  961)       minsq = miq
+(  962)       maxsq = maq
+(  963) # 964 "Rs_t_rh_biasfit.F90"
+(  964)       return
+(  965)       end SUBROUTINE MIX_OUTSTAT
+(  966) # 967 "Rs_t_rh_biasfit.F90"
+(  967) !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(  968) # 969 "Rs_t_rh_biasfit.F90"
+(  969) !************************************************************************
+(  970)       SUBROUTINE SYMDHM(IY,IM,ID,IH,MN,ISEQ)
+(  971) !************************************************************************
+(  972) !*
+(  973) !*     Calculate year,month,date,hour,minute from
+(  974) !*     specified sequential minute since 1801.1.1.00.00UTC
+(  975) !*
+(  976) !*     ( OUT) IY    I*4  :   year
+(  977) !*     ( OUT) IM    I*4  :   month
+(  978) !*     ( OUT) ID    I*4  :   date
+(  979) !*     ( OUT) IH    I*4  :   hour
+(  980) !*     ( OUT) MN    I*4  :   minute
+(  981) !*     ( IN ) ISEQ  I*4  :   sequential minute
+(  982) !*
+(  983) !************************************************************************
+(  984)       IMPLICIT NONE
+(  985)       INTEGER :: IY,IM,ID,IH,MN,ISEQ
+(  986)       INTEGER :: ISEQ1,ISEQ2,ISQ,K
+(  987)       MN=MOD(ISEQ,60)
+(  988)       ISEQ1=ISEQ/60
+(  989)       GO TO 10
+(  990) !*
+(  991)       ENTRY STYMDH(IY,IM,ID,IH,ISEQ)
+(  992) !************************************************************************
+(  993) !*     Calculate year,month,date,hour from
+(  994) !*     specified sequential hour since 1801.1.1.00UTC
+(  995) !************************************************************************
+(  996) !*
+(  997)       ISEQ1=ISEQ
+(  998) !*
+(  999)    10 CONTINUE
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 40
+
+( 1000)       IH=MOD(ISEQ1,24)
+( 1001)       ISEQ2=ISEQ1/24+1
+( 1002)       GO TO 20
+( 1003) !*
+( 1004)       ENTRY STOYMD(IY,IM,ID,ISEQ)
+( 1005) !************************************************************************
+( 1006) !*     Calculate year,month,date from
+( 1007) !*     specified sequential date since 1801.1.1
+( 1008) !************************************************************************
+( 1009) !*
+( 1010)       ISEQ2=ISEQ
+( 1011) !*
+( 1012)    20 CONTINUE
+( 1013)       ISQ=ISEQ2
+( 1014)       IY=INT((ISQ+306-0.1)/365.25)+1802
+( 1015)    30 K=INT(365.25*(IY-1801)-306)
+( 1016)       K=K-((((IY-1501)/100)*3/4)-2)
+( 1017)       IF (ISQ.LE.K) THEN
+( 1018)          IY=IY-1
+( 1019)          GO TO 30
+( 1020)       END IF
+( 1021)       ISQ=ISQ-K
+( 1022)       IM=INT((ISQ-0.5)/30.6)+3
+( 1023)       K=INT(30.6*(IM-3)+0.5)
+( 1024)       ID=ISQ-K
+( 1025)       IF (IM.GT.12) THEN
+( 1026)          IM=IM-12
+( 1027)          IY=IY+1
+( 1028)       END IF
+( 1029)       IY=IY-1
+( 1030)       RETURN
+( 1031)       END SUBROUTINE SYMDHM
+( 1032)       SUBROUTINE READ_OUTSTAT(LUNIN,NXCG,NXLV,NXAL,NXDG,&
+( 1033)      &                        BIC,BIR,RMR,STR,HLV,&
+( 1034)      &                        NMR,IDSTA,IDEND,CFLAG,&
+( 1035)      &                        NCTG,MINSQ,MAXSQ,&
+( 1036)      &                        CEXP,CQC,CNTRY,CDG,&
+( 1037)      &                        ISLL,IOCR,IHOMO,&
+( 1038)      &                        NSMP,NCCC)
+( 1039) # 1040 "Rs_t_rh_biasfit.F90"
+( 1040)       IMPLICIT NONE
+( 1041) # 1042 "Rs_t_rh_biasfit.F90"
+( 1042) !---------------------------------------------------------------------
+( 1043) # 1044 "Rs_t_rh_biasfit.F90"
+( 1044)       INTEGER*4  :: NXCG,NXLV,NXAL,NXDG,LUNIN
+( 1045) # 1046 "Rs_t_rh_biasfit.F90"
+( 1046) ! --- ARRAYS FOR STATISTICS FOR EACH CATEGORY 
+( 1047)       INTEGER*4 , DIMENSION (NXLV,NXAL,NXCG) :: NMR ! number of cases
+( 1048) # 1049 "Rs_t_rh_biasfit.F90"
+( 1049)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: BIC,BIR ! obs-fg departure (bias)
+( 1050)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: RMR ! RMS of obs-fg departure
+( 1051)       REAL*8 , DIMENSION (NXLV,NXAL,NXCG) :: STR ! STD of obs-fg departure
+( 1052)       REAL*8 , DIMENSION (NXLV) :: HLV        ! standard pressure levels
+( 1053)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDSTA ! start of station group ID
+( 1054)       INTEGER*4 , DIMENSION (NXDG,NXCG) :: IDEND ! end of station group ID
+( 1055)       INTEGER*4  :: CFLAG(NXCG)
+( 1056) # 1057 "Rs_t_rh_biasfit.F90"
+( 1057)       INTEGER*4  :: NCTG     ! number of station groups
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 41
+
+( 1058)       INTEGER*4  :: MINSQ    ! start time in sequential minutes
+( 1059)                           ! since 1801.1.1.00.00UTC
+( 1060)       INTEGER*4  :: MAXSQ    ! end time in sequential minutes
+( 1061)                           ! since 1801.1.1.00.00UTC     
+( 1062)       INTEGER*4  :: ISLL,IOCR,N,NN,L,M,IHOMO
+( 1063)       INTEGER*4  :: combined_country_index,country_index,country_group_index
+( 1064) # 1065 "Rs_t_rh_biasfit.F90"
+( 1065)       CHARACTER(LEN=*) :: CEXP  ! experiment identifier (number)
+( 1066)       CHARACTER(LEN=*) :: CQC   ! quality control information
+( 1067)       CHARACTER(LEN=*), DIMENSION (NXDG,NXCG) :: CNTRY ! names of categories
+( 1068)       CHARACTER(LEN=*), DIMENSION (NXCG) :: CDG
+( 1069)       CHARACTER(LEN=8)  :: FILENAM
+( 1070)       INTEGER*4 , DIMENSION (NXAL,NXLV) :: NUM     ! sample number for each angl. and level.
+( 1071) # 1072 "Rs_t_rh_biasfit.F90"
+( 1072)       INTEGER*4 , DIMENSION (NXCG) :: NSMP
+( 1073)       INTEGER*4 , DIMENSION (NXCG) :: NCCC
+( 1074) # 1075 "Rs_t_rh_biasfit.F90"
+( 1075) !----  LOCAL
+( 1076) # 1077 "Rs_t_rh_biasfit.F90"
+( 1077)       INTEGER*4  IERR
+( 1078) # 1079 "Rs_t_rh_biasfit.F90"
+( 1079) !---------------------------------------------------------------------------------------
+( 1080)       WRITE(FILENAM,'(a5,I3.3)') 'fort.',LUNIN
+( 1081)       OPEN(LUNIN,FILE=FILENAM,STATUS='OLD',IOSTAT=IERR)
+( 1082) # 1083 "Rs_t_rh_biasfit.F90"
+( 1083)       IF(IERR.NE.0) THEN
+( 1084)          WRITE(6,*)'ERROR IN READ_OUTSTAT',IERR
+( 1085)          WRITE(6,*)'COULD NOT OPEN UNIT ',LUNIN
+( 1086)          CALL ABORT
+( 1087)       ENDIF
+( 1088) # 1089 "Rs_t_rh_biasfit.F90"
+( 1089) !     READ 
+( 1090) # 1091 "Rs_t_rh_biasfit.F90"
+( 1091) !     READ(LUNIN,'(A12,I12,12X,A12,3X,I1)') CEXP,NCTG,CQC,IHOMO
+( 1092)       READ(LUNIN,'(A32,I12,12X,A12,3X,I1)') CEXP,NCTG,CQC,IHOMO
+( 1093)       READ(LUNIN,'(4I12)') MINSQ,MAXSQ,ISLL,IOCR
+( 1094) # 1095 "Rs_t_rh_biasfit.F90"
+( 1095)       DO N=1,NCTG  ! number of station groups
+( 1096) # 1097 "Rs_t_rh_biasfit.F90"
+( 1097)         READ(LUNIN,*)
+( 1098)         READ(LUNIN,'(A64,3I8,X,I3,X,i3)') CDG(N),NSMP(N),NCCC(N),CFLAG(N),&
+( 1099)                                          &combined_country_index,country_index
+( 1100)         WRITE(6,'(A,X,3I8,X,I3,X,i3)') trim(CDG(N)),NSMP(N),NCCC(N),CFLAG(N),&
+( 1101)                                       &combined_country_index,country_index
+( 1102)         call flush(6)
+( 1103)         DO NN=1,NCCC(N)
+( 1104)           READ(LUNIN,'(A64,2I8,X,I3)') CNTRY(NN,N),IDSTA(NN,N),IDEND(NN,N),&
+( 1105)                                       &country_group_index
+( 1106) !         WRITE(6,'(A,X,2I8,X,I3)') trim(CNTRY(NN,N)),IDSTA(NN,N),IDEND(NN,N),&
+( 1107) !                                  &country_group_index
+( 1108)         call flush(6)
+( 1109)         END DO
+( 1110) # 1111 "Rs_t_rh_biasfit.F90"
+( 1111)         DO L=1,NXLV            ! number of pressure levels
+( 1112) # 1113 "Rs_t_rh_biasfit.F90"
+( 1113)           READ(lunin,'(F5.0,4(5(1X,F6.2),1X),5I6)') HLV(L), &
+( 1114)      &    (BIC(L,m,N),M=1,nxal), &
+( 1115)      &    (BIR(L,m,N),M=1,nxal), &
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:30:55      page 42
+
+( 1116)      &    (RMR(L,m,N),M=1,nxal), &
+( 1117)      &    (STR(L,m,N),M=1,nxal), &
+( 1118)      &    (NMR(L,m,N),M=1,nxal)
+( 1119) !         write(6,'(F5.0,4(5(1X,F6.2),1X),5I6)') HLV(L), &
+( 1120) !    &    (BIC(L,m,N),M=1,nxal), &
+( 1121) !    &    (BIR(L,m,N),M=1,nxal), &
+( 1122) !    &    (RMR(L,m,N),M=1,nxal), &
+( 1123) !    &    (STR(L,m,N),M=1,nxal), &
+( 1124) !    &    (NMR(L,m,N),M=1,nxal)
+( 1125)         call flush(6)
+( 1126) # 1127 "Rs_t_rh_biasfit.F90"
+( 1127)         END DO
+( 1128) # 1129 "Rs_t_rh_biasfit.F90"
+( 1129)       END DO
+( 1130) # 1131 "Rs_t_rh_biasfit.F90"
+( 1131)       CLOSE(LUNIN)
+( 1132) # 1133 "Rs_t_rh_biasfit.F90"
+( 1133)       RETURN
+( 1134)       END SUBROUTINE READ_OUTSTAT

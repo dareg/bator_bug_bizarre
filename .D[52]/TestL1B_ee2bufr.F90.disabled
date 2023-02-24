@@ -1,0 +1,290 @@
+program TestL1B_ee2bufr
+  !---------------------------------
+  !  #[ Documentation:
+  ! - program to test L1B_ee2bufr
+  !   print decoded BUFR subsets for comparison
+  !
+  ! - written by: M. Rohn (ECMWF)
+  !
+  ! - created    : 13-Dec-2005
+  !
+  ! Modifications:
+  !
+  !    14-Dec-2006 D. Tan     REALACC(6) for data after section 3
+  !    16-Jan-2008 J. de Kloe phase out integer kind i_
+  !    01-Apr-2009 J. de Kloe changed eps to have a value of 1e-6 in 
+  !                           stead of 1e-7
+  !    02-Apr-2009 J. de Kloe fix 3 bugs (found by David): index for 
+  !                           values array 
+  !                           actually used index i in stead of ivalue which
+  !                           caused the missing test to test the wrong value!
+  !    23-Apr-2009 J. de Kloe fixes for 64-bit linux
+  !    07-Apr-2010 D. Tan     Adapt to new L1B_BufrUtil interfaces
+  !    02-Nov-2012 J. de Kloe remove unused use imports
+  !
+  !  #]
+  !---------------------------------
+  ! --- declarations
+  !  #[ Modules used
+  USE ErrorHandler, only: no_error, error_cmdline_options
+  USE logging, only: program_abort
+  USE Compiler_Features, only: iargc_aeolus,getarg_aeolus
+  USE Numerics, only: i4_, r8_
+  USE L1B_BufrUtil, only: rvind, &
+                          kelem, kvals, &
+                          ksec0, ksec1, ksec2, ksec3, ksec4, &
+                          ktdlst_size,ktdlst, &
+                          key, &
+                          jbufl, &
+                          NMAX_OBS_SUBSET, &
+                          NELEMENTS_L1B_HEAD, &
+                          NELEMENTS_L1B_OBS, &
+                          NELEMENTS_L1B_MEAS
+!                          jsec0, jsec1, jsec2, jsec3, jsec4, &
+
+  !  #]
+  !  #[ variables
+  implicit none
+
+  ! constants
+  integer(i4_), parameter :: jbyte = 2048000, &
+                             jsup  = 9
+
+  real(r8_), parameter :: eps   = 1.e-6_r8_
+
+  ! local variables
+  integer(i4_) :: ksup(JSUP)
+  integer(i4_) :: ktdexp(kelem)
+  real(r8_)    :: val
+
+  integer :: i, istring, ivalue, &
+             no_element_start, &
+             no_element_end, &
+             imeasurement, &
+             nr_of_arguments, &
+             imessage, &
+             isubset, &
+             error_flag
+  integer(i4_) :: iunit_bufr, &
+                  kbufr_size_byte, &
+                  kbufr_size_word, &
+                  ktdexp_size, &
+                  bufr_error_flag
+
+  character(len=256) :: filename, &      ! without extension
+                        filename_bufr, & ! with    extension 
+                        carg
+
+  ! Arrays previously in L1B_BufrUtil.
+  ! Possible TODO: make allocatable or migrate to BufrMessageType?
+  integer(i4_) ::       kbufr(jbufl)
+  character(len=80)::   cvals(NMAX_OBS_SUBSET)
+  character(len=64)::   cnames(kelem)
+  character(len=24)::   cunits(kelem)
+  real(r8_)::           values(kvals)
+
+  !  #]
+  ! --- main
+  !  #[ 1.0 init
+  error_flag = no_error
+  
+  nr_of_arguments = iargc_aeolus()
+  IF (nr_of_arguments .ne. 3) THEN
+     print *,"Usage: TestL1B_ee2bufr <filename[without extension]> "//&
+          "<no-message> <no-subset>"
+     call program_abort(error_cmdline_options,"TestL1B_ee2bufr")
+  END IF
+
+  call getarg_aeolus(1,filename)
+
+  call getarg_aeolus(2,carg)
+  read (carg, '(I4)', iostat=error_flag) imessage
+
+  call getarg_aeolus(3,carg)
+  read (carg, '(I4)', iostat=error_flag) isubset
+  !  #]
+  !  #[ 2.0 open file
+  filename_bufr = trim( filename )//".BUFR"
+
+  call pbopen(iunit_bufr,filename_bufr,'R',bufr_error_flag)
+  if(bufr_error_flag.ne.0) then
+    print*,'Open error on ', filename_bufr
+    stop 2
+  end if
+  !  #]
+  !  #[ 3.0 read requested message
+  do i=1,imessage
+    call pbbufr(iunit_bufr, kbufr, JBYTE, kbufr_size_byte, bufr_error_flag)
+    if(bufr_error_flag.lt.0) then
+      print*,'Read error on ', filename_bufr
+      stop 2
+    end if
+  enddo
+  !  #]
+  !  #[ 4.0 decode message
+  kbufr_size_word = kbufr_size_byte/4_i4_ + 1_i4_
+
+  ! 4.1 sections
+  call bus012(kbufr_size_word,kbufr,ksup,ksec0,ksec1,ksec2,bufr_error_flag)
+  if(bufr_error_flag.ne.0) then
+    print*,'error bus012 ', bufr_error_flag
+    stop 2
+  end if
+
+  ! 4.2 message
+  call bufrex(kbufr_size_word,kbufr,ksup,ksec0,ksec1,ksec2,ksec3,ksec4, &
+              kelem,cnames,cunits,kvals,values,cvals, & 
+              bufr_error_flag)
+  if(bufr_error_flag.ne.0) then
+    print*,'error bufrex ', bufr_error_flag
+    stop 2
+  end if
+
+  ! 4.3 descriptor list
+  call busel(ktdlst_size, ktdlst, ktdexp_size, ktdexp, bufr_error_flag) 
+  if(bufr_error_flag.ne.0) then
+    print*,'error busel ', bufr_error_flag
+    stop 2
+  end if
+  !  #]
+  !  #[ 5.0 print 
+
+  ! 5.1 section 0
+  call buprs0(ksec0)
+
+  ! 5.2 section 1
+  call buprs1(ksec1)
+
+  ! 5.3 section 2
+  call buukey(ksec1, ksec2, key, ksup, bufr_error_flag)
+
+  call buprs2(ksup, key)
+
+  ! 5.4 section 3
+  !call buprs3(ksec3, ktdlst_size, ktdlst, ktdexp_size, ktdexp, kvals, cnames)
+
+
+  ! 5.5 print data
+
+  if ( isubset .gt.ksup(6) ) then
+    print*,' Number of subsets encoded : ', ksup(6)
+    print*,' Requested subset too large: ', isubset
+    stop 2
+  endif
+
+  write(*, *)
+  write(*, *) "REALACC(6)"
+
+  ! 5.5.1 header + obs scale
+  no_element_start = 1
+  no_element_end   = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS
+
+  ! the '/' character is not valid in Fortran90 formats to indicate
+  ! a newline (it is an extension to the language and thus not portable).
+  ! use an extra write statement, or the newline constant defined
+  ! in the Compiler_Features module to achive this.
+  !write(*, ('/," --- PRINT HEADER + OBS SCALE elements",/') )
+  write(*, *)
+  write(*, *) "--- PRINT HEADER + OBS SCALE elements"
+  write(*, *)
+
+  do i=no_element_start,no_element_end
+
+    ivalue = (isubset-1)*kelem + i
+    val    = values(ivalue)
+
+    if ( cunits(i)(1:8) == 'CCITTIA5' ) then 
+      istring = int(val)/1000
+      write(*, 102 ) i, cnames(i), cunits(i), cvals(istring)
+    else
+      if (val >= rvind-eps .and. val <= rvind+eps) then
+        write(*, 101 ) i, cnames(i), cunits(i)
+      else
+        write(*, 100 ) i, cnames(i), cunits(i), val
+      end if
+    endif
+
+  end do
+
+  ! 5.5.2 meas scale:
+  ! first
+  imeasurement = 1 
+ 
+  no_element_start = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS + 1 + (imeasurement-1) * NELEMENTS_L1B_MEAS
+  no_element_end   = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS + 1 + (imeasurement  ) * NELEMENTS_L1B_MEAS
+
+  ! the '/' character is not valid in Fortran90 formats to indicate
+  ! a newline (it is an extension to the language and thus not portable).
+  ! use an extra write statement, or the newline constant defined
+  ! in the Compiler_Features module to achive this.
+  !write(*, ('/," --- PRINT MEAS SCALE elements for MEAS No ",i6,/') ) imeasurement
+  write(*, *)
+  write(*, "(' --- PRINT MEAS SCALE elements for MEAS No ',i6)" ) imeasurement
+  write(*, *)
+
+  do i=no_element_start,no_element_end
+
+    ivalue = (isubset-1)*kelem + i
+    val    = values(ivalue)
+
+    if ( cunits(i)(1:4) .EQ. 'CCIT' ) then 
+      istring = ( int(val)-32 )/1000
+      write(*, 102 ) i, cnames(i), cunits(i), cvals(istring)
+    else
+      if (val >= rvind-eps .and. val <= rvind+eps) then
+        write(*, 101 ) i, cnames(i), cunits(i)
+      else
+        write(*, 100 ) i, cnames(i), cunits(i), val
+      end if
+    endif
+
+  end do
+  ! last
+  i = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS + 1
+  imeasurement = int(values(i))
+ 
+  no_element_start = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS + 1 + (imeasurement-1) * NELEMENTS_L1B_MEAS
+  no_element_end   = NELEMENTS_L1B_HEAD + NELEMENTS_L1B_OBS + 1 + (imeasurement  ) * NELEMENTS_L1B_MEAS
+
+  ! the '/' character is not valid in Fortran90 formats to indicate
+  ! a newline (it is an extension to the language and thus not portable).
+  ! use an extra write statement, or the newline constant defined
+  ! in the Compiler_Features module to achive this.
+  !write(*, ('/," --- PRINT MEAS SCALE elements for MEAS No ",i6,/') ) imeasurement
+  write(*, *)
+  write(*, "(' --- PRINT MEAS SCALE elements for MEAS No ',i6)" ) imeasurement
+  write(*, *)
+
+  do i=no_element_start,no_element_end
+
+    ivalue = (isubset-1)*kelem + i
+    val    = values(ivalue)
+
+    if ( cunits(i)(1:4) .EQ. 'CCIT' ) then 
+      istring = ( int(val)-32 )/1000
+      write(*, 102 ) i, cnames(i), cunits(i), cvals(istring)
+    else
+      if (val >= rvind-eps .and. val <= rvind+eps) then
+        write(*, 101 ) i, cnames(i), cunits(i)
+      else
+        write(*, 100 ) i, cnames(i), cunits(i), val
+      end if
+    endif
+
+  end do
+
+  write(*, *) "ENDREALACC"
+  !  #]
+  !  #[ 6.0 close file
+  call pbclose(iunit_bufr,bufr_error_flag)
+  if(bufr_error_flag.ne.0) then
+    print*,'Close error on ', filename_bufr
+    stop 2
+  end if
+  !  #]
+  !  #[ 7.0 format definition
+100 format(i6, " ", a64, " ", a20, " ", e20.10 )
+101 format(i6, " ", a64, " ", a20, " ", " MISSING " )
+102 format(i6, " ", a64, " ", a20, " ", a64 )
+  !  #]
+end program TestL1B_ee2bufr

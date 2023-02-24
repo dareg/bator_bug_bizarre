@@ -1,0 +1,249 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:21      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:21      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_trip_surface_flood.F90
+
+(    1) !depfile:trip_surface_flood.F90
+(    2) MODULE MODI_TRIP_SURFACE_FLOOD 
+(    3) INTERFACE
+(    4) SUBROUTINE TRIP_SURFACE_FLOOD (KLISTING,PTSTEP,OPRINT,OMASK_FLD,        &
+(    5)                                PTAB_F,PTAB_H,PTAB_VF,PAREA, PVEL,       &
+(    6)                                PLEN,PWIDTH,PN_FLOOD,PHC,                &
+(    7)                                PHS,PSURF_STO,PFLOOD_STO,PSOURCE,        &
+(    8)                                PFLOOD_STO2,PHFLOOD,PFFLOOD,PFLOOD_LEN,  &
+(    9)                                PWFLOOD,PQFR,PQRF,PVFIN,PVFOUT,PHSF,     &
+(   10)                                PFSTO_ALL,PFSTO2_ALL,PSOURCE_ALL,        &
+(   11)                                PFIN_ALL,PFOUT_ALL,PHF_ALL,PFF_ALL       ) 
+(   12) INTEGER, INTENT(IN)                  :: KLISTING
+(   13) REAL,    INTENT(IN)                  :: PTSTEP ! Trip timestep value (10800s)
+(   14) LOGICAL, INTENT(IN)                  :: OPRINT   !Printable budget key
+(   15) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_FLD  !Floodplain mask
+(   16) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_F  ! Flood fraction array
+(   17) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_H  ! Topo height array
+(   18) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_VF ! Flood volume array
+(   19) REAL,DIMENSION(:,:), INTENT(IN)      :: PAREA      ! Grid-cell area    [m²]
+(   20) REAL,DIMENSION(:,:), INTENT(IN)      :: PVEL       ! river velocity    [m/s]
+(   21) REAL,DIMENSION(:,:), INTENT(IN)      :: PLEN       ! river length       [m] 
+(   22) REAL,DIMENSION(:,:), INTENT(IN)      :: PWIDTH     ! river widths                 [m]
+(   23) REAL,DIMENSION(:,:), INTENT(IN)      :: PN_FLOOD   ! Manning coeficient over floodplains   [-] (0.1)
+(   24) REAL,DIMENSION(:,:), INTENT(IN)      :: PHC        ! River bed depth              [m]
+(   25) REAL,DIMENSION(:,:), INTENT(IN)      :: PHS        ! river channel height [m]
+(   26) REAL,DIMENSION(:,:), INTENT(IN)      :: PSURF_STO  ! river channel storage at t    [kg]
+(   27) REAL,DIMENSION(:,:), INTENT(IN)      :: PFLOOD_STO ! Floodplain water storage at t [kg]
+(   28) REAL,DIMENSION(:,:), INTENT(IN)      :: PSOURCE    ! precip-infiltration-evaporation [kg/s]
+(   29) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_STO2! Floodplain water storage at t+1  [kg]
+(   30) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHFLOOD    ! Floodplain water depth       [m]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:21      page 3
+
+(   31) REAL,DIMENSION(:,:), INTENT(OUT)     :: PFFLOOD    ! Fraction of flood [-]
+(   32) REAL,DIMENSION(:,:), INTENT(OUT)     :: PFLOOD_LEN ! Floodplain length along the river [m]
+(   33) REAL,DIMENSION(:,:), INTENT(OUT)     :: PWFLOOD    ! Floodplain width             [m]
+(   34) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQFR  ! Flood flow to river          [kg/s]
+(   35) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQRF  ! River flow to floodplain     [kg/s]
+(   36) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFIN ! River flow to flood velocity [m/s]
+(   37) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFOUT! Flood flow to river velocity [m/s]
+(   38) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHSF  ! River-Floodplain depth comparison [m] during dt
+(   39) REAL,                 INTENT(OUT)    :: PFSTO_ALL,PFSTO2_ALL,PSOURCE_ALL, &
+(   40)                                         PFIN_ALL,PFOUT_ALL,PHF_ALL,PFF_ALL 
+(   41) END SUBROUTINE TRIP_SURFACE_FLOOD
+(   42) 
+(   43) END INTERFACE
+(   44) END MODULE MODI_TRIP_SURFACE_FLOOD 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:31:21      page 4
+
+(    1) # 1 "modi_trip_surface_flood.F90"
+(    1) !depfile:trip_surface_flood.F90
+(    2) MODULE MODI_TRIP_SURFACE_FLOOD 
+(    3) INTERFACE
+(    4) SUBROUTINE TRIP_SURFACE_FLOOD (KLISTING,PTSTEP,OPRINT,OMASK_FLD,        &
+(    5)                                PTAB_F,PTAB_H,PTAB_VF,PAREA, PVEL,       &
+(    6)                                PLEN,PWIDTH,PN_FLOOD,PHC,                &
+(    7)                                PHS,PSURF_STO,PFLOOD_STO,PSOURCE,        &
+(    8)                                PFLOOD_STO2,PHFLOOD,PFFLOOD,PFLOOD_LEN,  &
+(    9)                                PWFLOOD,PQFR,PQRF,PVFIN,PVFOUT,PHSF,     &
+(   10)                                PFSTO_ALL,PFSTO2_ALL,PSOURCE_ALL,        &
+(   11)                                PFIN_ALL,PFOUT_ALL,PHF_ALL,PFF_ALL       ) 
+(   12) INTEGER, INTENT(IN)                  :: KLISTING
+(   13) REAL,    INTENT(IN)                  :: PTSTEP ! Trip timestep value (10800s)
+(   14) LOGICAL, INTENT(IN)                  :: OPRINT   !Printable budget key
+(   15) LOGICAL, DIMENSION(:,:), INTENT(IN)  :: OMASK_FLD  !Floodplain mask
+(   16) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_F  ! Flood fraction array
+(   17) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_H  ! Topo height array
+(   18) REAL,DIMENSION(:,:,:), INTENT(IN)    :: PTAB_VF ! Flood volume array
+(   19) REAL,DIMENSION(:,:), INTENT(IN)      :: PAREA      ! Grid-cell area    [m²]
+(   20) REAL,DIMENSION(:,:), INTENT(IN)      :: PVEL       ! river velocity    [m/s]
+(   21) REAL,DIMENSION(:,:), INTENT(IN)      :: PLEN       ! river length       [m] 
+(   22) REAL,DIMENSION(:,:), INTENT(IN)      :: PWIDTH     ! river widths                 [m]
+(   23) REAL,DIMENSION(:,:), INTENT(IN)      :: PN_FLOOD   ! Manning coeficient over floodplains   [-] (0.1)
+(   24) REAL,DIMENSION(:,:), INTENT(IN)      :: PHC        ! River bed depth              [m]
+(   25) REAL,DIMENSION(:,:), INTENT(IN)      :: PHS        ! river channel height [m]
+(   26) REAL,DIMENSION(:,:), INTENT(IN)      :: PSURF_STO  ! river channel storage at t    [kg]
+(   27) REAL,DIMENSION(:,:), INTENT(IN)      :: PFLOOD_STO ! Floodplain water storage at t [kg]
+(   28) REAL,DIMENSION(:,:), INTENT(IN)      :: PSOURCE    ! precip-infiltration-evaporation [kg/s]
+(   29) REAL,DIMENSION(:,:), INTENT(INOUT)   :: PFLOOD_STO2! Floodplain water storage at t+1  [kg]
+(   30) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHFLOOD    ! Floodplain water depth       [m]
+(   31) REAL,DIMENSION(:,:), INTENT(OUT)     :: PFFLOOD    ! Fraction of flood [-]
+(   32) REAL,DIMENSION(:,:), INTENT(OUT)     :: PFLOOD_LEN ! Floodplain length along the river [m]
+(   33) REAL,DIMENSION(:,:), INTENT(OUT)     :: PWFLOOD    ! Floodplain width             [m]
+(   34) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQFR  ! Flood flow to river          [kg/s]
+(   35) REAL,DIMENSION(:,:), INTENT(OUT)     :: PQRF  ! River flow to floodplain     [kg/s]
+(   36) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFIN ! River flow to flood velocity [m/s]
+(   37) REAL,DIMENSION(:,:), INTENT(OUT)     :: PVFOUT! Flood flow to river velocity [m/s]
+(   38) REAL,DIMENSION(:,:), INTENT(OUT)     :: PHSF  ! River-Floodplain depth comparison [m] during dt
+(   39) REAL,                 INTENT(OUT)    :: PFSTO_ALL,PFSTO2_ALL,PSOURCE_ALL, &
+(   40)                                         PFIN_ALL,PFOUT_ALL,PHF_ALL,PFF_ALL 
+(   41) END SUBROUTINE TRIP_SURFACE_FLOOD
+(   42) # 43 "modi_trip_surface_flood.F90"
+(   43) END INTERFACE
+(   44) END MODULE MODI_TRIP_SURFACE_FLOOD 

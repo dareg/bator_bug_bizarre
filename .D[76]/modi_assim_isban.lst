@@ -1,0 +1,245 @@
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:02      page 1
+
+Switches: -noasm -nodclchk -debug -nodlines -line -list
+          -idir .D[1]
+          -idir .D[2]
+          -idir .D[3]
+          -idir .D[4]
+          -idir .D[5]
+          -idir .D[6]
+          -idir .D[7]
+          -idir .D[8]
+          -idir .D[9]
+          -idir .D[10]
+          -idir .D[11]
+          -idir .D[12]
+          -idir .D[13]
+          -idir .D[14]
+          -idir .D[15]
+          -idir .D[16]
+          -idir .D[17]
+          -idir .D[18]
+          -idir .D[19]
+          -idir .D[20]
+          -idir .D[21]
+          -idir .D[22]
+          -idir .D[23]
+          -idir .D[24]
+          -idir .D[25]
+          -idir .D[26]
+          -idir .D[27]
+          -idir .D[28]
+          -idir .D[29]
+          -idir .D[30]
+          -idir .D[31]
+          -idir .D[32]
+          -idir .D[33]
+          -idir .D[34]
+          -idir .D[35]
+          -idir .D[36]
+          -idir .D[37]
+          -idir .D[38]
+          -idir .D[39]
+          -idir .D[40]
+          -idir .D[41]
+          -idir .D[42]
+          -idir .D[43]
+          -idir .D[44]
+          -idir .D[45]
+          -idir .D[46]
+          -idir .D[47]
+          -idir .D[48]
+          -idir .D[49]
+          -idir .D[50]
+          -idir .D[51]
+          -idir .D[52]
+          -idir .D[53]
+          -idir .D[54]
+          -idir .D[55]
+          -idir .D[56]
+          -idir .D[57]
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:02      page 2
+
+          -idir .D[58]
+          -idir .D[59]
+          -idir .D[60]
+          -idir .D[61]
+          -idir .D[62]
+          -idir .D[63]
+          -idir .D[64]
+          -idir .D[65]
+          -idir .D[66]
+          -idir .D[67]
+          -idir .D[68]
+          -idir .D[69]
+          -idir .D[70]
+          -idir .D[71]
+          -idir .D[72]
+          -idir .D[73]
+          -idir .D[74]
+          -idir .D[75]
+          -idir .D[76]
+          -idir .D[77]
+          -idir .D[78]
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/include
+          -idir /opt/softs/nvidia/hpc_sdk/Linux_x86_64/23.1/comm_libs/openmpi/openmpi-3.1.5/lib
+          -inform severe -opt 0 -nosave -object -noonetrip
+          -depchk on -nostandard     
+          -symbol -noupcase    
+
+Filename: modi_assim_isban.F90
+
+(    1) !depfile:assim_isban.F90
+(    2) MODULE MODI_ASSIM_ISBA_n 
+(    3) INTERFACE
+(    4) SUBROUTINE ASSIM_ISBA_n (IM, U, HPROGRAM, KI, &
+(    5)                         PCON_RAIN, PSTRAT_RAIN, PCON_SNOW, PSTRAT_SNOW,&
+(    6)                         PCLOUDS,   PLSM,        PEVAPTR,   PEVAP,      &
+(    7)                         PSWEC,     PTSC,        PUCLS,     PVCLS,      &
+(    8)                         PTS,       PT2M,        PHU2M,     PSWE,       &
+(    9)                         HTEST,     OD_MASKEXT,  PLON_IN,   PLAT_IN )
+(   10) USE MODD_SURFEX_n, ONLY : ISBA_MODEL_t
+(   11) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   12) USE PARKIND1,            ONLY : JPRB
+(   13) TYPE(ISBA_MODEL_t), INTENT(INOUT) :: IM
+(   14) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   15) CHARACTER(LEN=6),    INTENT(IN) :: HPROGRAM  ! program calling surf. schemes
+(   16) INTEGER,             INTENT(IN) :: KI
+(   17) REAL, DIMENSION(KI), INTENT(IN) :: PCON_RAIN
+(   18) REAL, DIMENSION(KI), INTENT(IN) :: PSTRAT_RAIN
+(   19) REAL, DIMENSION(KI), INTENT(IN) :: PCON_SNOW
+(   20) REAL, DIMENSION(KI), INTENT(IN) :: PSTRAT_SNOW
+(   21) REAL, DIMENSION(KI), INTENT(IN) :: PCLOUDS
+(   22) REAL, DIMENSION(KI), INTENT(IN) :: PLSM
+(   23) REAL, DIMENSION(KI), INTENT(IN) :: PEVAPTR
+(   24) REAL, DIMENSION(KI), INTENT(IN) :: PEVAP
+(   25) REAL, DIMENSION(KI), INTENT(IN) :: PSWEC
+(   26) REAL, DIMENSION(KI), INTENT(IN) :: PTSC
+(   27) REAL, DIMENSION(KI), INTENT(IN) :: PUCLS
+(   28) REAL, DIMENSION(KI), INTENT(IN) :: PVCLS
+(   29) REAL, DIMENSION(KI), INTENT(IN) :: PTS
+(   30) REAL, DIMENSION(KI), INTENT(IN) :: PT2M
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:02      page 3
+
+(   31) REAL, DIMENSION(KI), INTENT(IN) :: PHU2M
+(   32) REAL, DIMENSION(KI), INTENT(IN) :: PSWE
+(   33) CHARACTER(LEN=2),    INTENT(IN) :: HTEST ! must be equal to 'OK'
+(   34) LOGICAL,  DIMENSION (KI), INTENT(IN) ::  OD_MASKEXT
+(   35) REAL(KIND=JPRB), DIMENSION (:), INTENT(IN) ::  PLON_IN
+(   36) REAL(KIND=JPRB), DIMENSION (:), INTENT(IN) ::  PLAT_IN
+(   37) END SUBROUTINE ASSIM_ISBA_n
+(   38) 
+(   39) END INTERFACE
+(   40) END MODULE MODI_ASSIM_ISBA_n 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NVFORTRAN (Version     23.1)          02/24/2023  13:58:02      page 4
+
+(    1) # 1 "modi_assim_isban.F90"
+(    1) !depfile:assim_isban.F90
+(    2) MODULE MODI_ASSIM_ISBA_n 
+(    3) INTERFACE
+(    4) SUBROUTINE ASSIM_ISBA_n (IM, U, HPROGRAM, KI, &
+(    5)                         PCON_RAIN, PSTRAT_RAIN, PCON_SNOW, PSTRAT_SNOW,&
+(    6)                         PCLOUDS,   PLSM,        PEVAPTR,   PEVAP,      &
+(    7)                         PSWEC,     PTSC,        PUCLS,     PVCLS,      &
+(    8)                         PTS,       PT2M,        PHU2M,     PSWE,       &
+(    9)                         HTEST,     OD_MASKEXT,  PLON_IN,   PLAT_IN )
+(   10) USE MODD_SURFEX_n, ONLY : ISBA_MODEL_t
+(   11) USE MODD_SURF_ATM_n, ONLY : SURF_ATM_t
+(   12) USE PARKIND1,            ONLY : JPRB
+(   13) TYPE(ISBA_MODEL_t), INTENT(INOUT) :: IM
+(   14) TYPE(SURF_ATM_t), INTENT(INOUT) :: U
+(   15) CHARACTER(LEN=6),    INTENT(IN) :: HPROGRAM  ! program calling surf. schemes
+(   16) INTEGER,             INTENT(IN) :: KI
+(   17) REAL, DIMENSION(KI), INTENT(IN) :: PCON_RAIN
+(   18) REAL, DIMENSION(KI), INTENT(IN) :: PSTRAT_RAIN
+(   19) REAL, DIMENSION(KI), INTENT(IN) :: PCON_SNOW
+(   20) REAL, DIMENSION(KI), INTENT(IN) :: PSTRAT_SNOW
+(   21) REAL, DIMENSION(KI), INTENT(IN) :: PCLOUDS
+(   22) REAL, DIMENSION(KI), INTENT(IN) :: PLSM
+(   23) REAL, DIMENSION(KI), INTENT(IN) :: PEVAPTR
+(   24) REAL, DIMENSION(KI), INTENT(IN) :: PEVAP
+(   25) REAL, DIMENSION(KI), INTENT(IN) :: PSWEC
+(   26) REAL, DIMENSION(KI), INTENT(IN) :: PTSC
+(   27) REAL, DIMENSION(KI), INTENT(IN) :: PUCLS
+(   28) REAL, DIMENSION(KI), INTENT(IN) :: PVCLS
+(   29) REAL, DIMENSION(KI), INTENT(IN) :: PTS
+(   30) REAL, DIMENSION(KI), INTENT(IN) :: PT2M
+(   31) REAL, DIMENSION(KI), INTENT(IN) :: PHU2M
+(   32) REAL, DIMENSION(KI), INTENT(IN) :: PSWE
+(   33) CHARACTER(LEN=2),    INTENT(IN) :: HTEST ! must be equal to 'OK'
+(   34) LOGICAL,  DIMENSION (KI), INTENT(IN) ::  OD_MASKEXT
+(   35) REAL(KIND=JPRB), DIMENSION (:), INTENT(IN) ::  PLON_IN
+(   36) REAL(KIND=JPRB), DIMENSION (:), INTENT(IN) ::  PLAT_IN
+(   37) END SUBROUTINE ASSIM_ISBA_n
+(   38) # 39 "modi_assim_isban.F90"
+(   39) END INTERFACE
+(   40) END MODULE MODI_ASSIM_ISBA_n 
