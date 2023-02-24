@@ -1,1 +1,0 @@
-rm *.lst *.mod *.o
