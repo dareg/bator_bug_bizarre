@@ -1,8 +1,0 @@
-!depfile:open_aux_io_surf_ol.F90
-MODULE MODI_open_aux_io_surf_ol
-INTERFACE
-subroutine open_aux_io_surf_ol
-end subroutine open_aux_io_surf_ol
-
-END INTERFACE
-END MODULE MODI_open_aux_io_surf_ol

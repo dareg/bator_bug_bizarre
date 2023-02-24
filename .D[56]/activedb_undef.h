@@ -1,4 +1,0 @@
-
-#undef NACTIVEDB 
-#undef CACTIVEDB
-

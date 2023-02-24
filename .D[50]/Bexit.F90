@@ -1,7 +1,0 @@
-SUBROUTINE BEXIT(iret)
-USE PARKIND1  ,ONLY : JPIM
-implicit none
-INTEGER(KIND=JPIM), intent(in) :: iret
-CALL abor1('BEXIT')
-STOP 'BEXIT'
-END SUBROUTINE BEXIT

@@ -1,4 +1,0 @@
-
-REAL (KIND=JPRB) :: FZH, X, Y
-FZH(X,Y) = 1.0_JPRB+X/Y
-

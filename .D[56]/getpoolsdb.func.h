@@ -1,8 +1,0 @@
-INTERFACE
-FUNCTION getpoolsdb()
-USE PARKIND1  ,ONLY : JPIM
-implicit none
-INTEGER(KIND=JPIM) :: getpoolsdb
-END FUNCTION getpoolsdb
-
-END INTERFACE

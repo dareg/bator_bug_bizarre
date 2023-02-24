@@ -1,8 +1,0 @@
-INTERFACE
-FUNCTION getactivedb(kit)
-USE PARKIND1  ,ONLY : JPIM
-implicit none
-INTEGER(KIND=JPIM), INTENT(IN), OPTIONAL :: kit
-INTEGER(KIND=JPIM) :: getactivedb
-END FUNCTION getactivedb
-END INTERFACE
